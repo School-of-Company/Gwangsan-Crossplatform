@@ -55,7 +55,7 @@ jobs:
         run: npm ci
 
       - name: Build preview
-        run: eas build --platform all --profile preview --non-interactive
+        run: eas build --platform android --profile preview --non-interactive
 
   build-and-deploy:
     name: Build and Deploy
@@ -82,10 +82,9 @@ jobs:
         run: npm ci
 
       - name: Build for production
-        run: eas build --platform all --profile production --non-interactive
+        run: eas build --platform android --profile production --non-interactive
 
       - name: Submit to app stores
         run: |
-          eas submit --platform ios --non-interactive
           eas submit --platform android --non-interactive
 
