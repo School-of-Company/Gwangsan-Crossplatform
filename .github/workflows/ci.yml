@@ -30,11 +30,10 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-  build-preview:
-    name: Build Preview
+  expo-check:
+    name: Expo Configuration Check
     runs-on: ubuntu-latest
     needs: lint-and-test
-    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,32 +44,8 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Install dependencies
         run: npm ci
-
-      - name: Build preview
-        run: eas build --platform android --profile preview --non-interactive
-
-  build-and-deploy:
-    name: Build and Deploy
-    runs-on: ubuntu-latest
-    needs: lint-and-test
-    if: github.ref == 'refs/heads/release'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
@@ -78,13 +53,13 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for production
-        run: eas build --platform android --profile production --non-interactive
-
-      - name: Submit to app stores
+      - name: Validate Expo configuration
         run: |
-          eas submit --platform android --non-interactive
+          npx expo install --check
+          npx eas-cli@latest project:info
+
+      - name: Check build configuration
+        run: |
+          cat eas.json
+          cat app.json | grep -A 10 '"extra"'
 
