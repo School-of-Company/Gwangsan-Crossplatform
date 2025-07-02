@@ -4,29 +4,27 @@
     "slug": "my-expo-app",
     "version": "1.0.0",
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./src/app/favicon.ico"
     },
     "experiments": {
       "tsconfigPaths": true
     },
     "plugins": [],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./src/app/favicon.ico",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./src/app/favicon.ico",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./src/app/favicon.ico",
         "backgroundColor": "#ffffff"
       },
       "package": "com.ethen1264.myexpoapp"
