@@ -1,5 +1,5 @@
 import { OnboardingPage } from '~/view/onboarding';
 
-export function Onboarding() {
+export default function Onboarding() {
   return <OnboardingPage />;
 }

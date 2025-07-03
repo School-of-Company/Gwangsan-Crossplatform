@@ -3,6 +3,7 @@
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
     "version": "1.0.0",
+    "scheme": "gwangsan",
     "web": {
       "favicon": "./src/app/favicon.ico"
     },
@@ -20,7 +21,8 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.schoolofcompany.gwangsan"
     },
     "android": {
       "adaptiveIcon": {

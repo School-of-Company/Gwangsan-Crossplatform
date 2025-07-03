@@ -62,4 +62,3 @@ jobs:
         run: |
           cat eas.json
           cat app.json | grep -A 10 '"extra"'
-
