@@ -9,4 +9,4 @@ export default function SignupPage() {
       <Dropdown<string> label="회원가입" placeholder="지점섲낻" items={['exam1', 'exam2']} />
     </View>
   );
-} 
+}
