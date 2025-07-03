@@ -1,12 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import {
-  View,
-  Image,
-  Dimensions,
-  ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Image, Dimensions, ScrollView } from 'react-native';
 
 import image1 from '@/shared/assets/png/mainSlides/slide1.png';
 import image2 from '@/shared/assets/png/mainSlides/slide2.png';
@@ -16,7 +9,7 @@ import image5 from '@/shared/assets/png/mainSlides/slide5.png';
 import image6 from '@/shared/assets/png/mainSlides/slide6.png';
 
 const images = [image1, image2, image3, image4, image5, image6];
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const MainSlideViewer = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
