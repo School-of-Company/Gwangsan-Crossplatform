@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "expo": "^53.0.15",
-    "expo-constants": "~17.0.8",
-    "expo-linking": "~7.0.5",
-    "expo-router": "^4.0.0",
+    "expo-constants": "~17.1.6",
+    "expo-linking": "~7.1.6",
+    "expo-router": "~5.1.2",
     "expo-status-bar": "~2.2.3",
     "nativewind": "latest",
     "react": "^19.0.0",
