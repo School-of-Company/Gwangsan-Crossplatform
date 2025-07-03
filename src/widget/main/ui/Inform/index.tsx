@@ -7,7 +7,7 @@ export default function Inform() {
     <View className="flex gap-2 bg-white p-7">
       <Text className="text-titleSmall">광산구도시재생센터</Text>
       <Text className="mb-16 text-body2">수완세영</Text>
-      <View className="flex w-full flex-row justify-around">
+      <View className="flex w-full flex-row justify-around gap-5">
         <View
           style={{
             backgroundColor: '#fff',
@@ -24,7 +24,7 @@ export default function Inform() {
           }}
           className="flex justify-between gap-5">
           <Ionicons name="bag-outline" size={44} color="black" />
-          <Text className="text-titleMedium">물건</Text>
+          <Text className="font-cafe24 text-3xl">물건</Text>
         </View>
         <View
           style={{
@@ -41,7 +41,7 @@ export default function Inform() {
           }}
           className="flex items-center justify-between gap-5">
           <MaterialCommunityIcons name="headset" size={44} color="black" />
-          <Text className="text-titleMedium">서비스</Text>
+          <Text className="font-cafe24 text-3xl">서비스</Text>
         </View>
       </View>
     </View>

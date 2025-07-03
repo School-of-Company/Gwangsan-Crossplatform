@@ -5,6 +5,9 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        cafe24: ['Cafe24SsurroundOTF'],
+      },
       fontSize: {
         titleLarge: ['30px', { lineHeight: '120%', fontWeight: '600' }],
         titleMedium: ['26px', { lineHeight: '120%', fontWeight: '600' }],
