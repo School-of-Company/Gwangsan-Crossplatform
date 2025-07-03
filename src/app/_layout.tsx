@@ -4,7 +4,7 @@ import '../../global.css';
 
 export default function RootLayout() {
   return (
-    <View className="flex-1 bg-white">
+    <View className="mb-6 mt-12 flex-1 bg-white">
       <Stack
         screenOptions={{
           headerShown: false,
