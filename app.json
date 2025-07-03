@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "시민화폐 광산",
-    "slug": "시민화폐 광산",
+    "slug": "my-expo-app",
     "version": "1.0.0",
     "web": {
       "favicon": "./src/app/favicon.ico"
@@ -27,11 +27,11 @@
         "foregroundImage": "./src/app/favicon.ico",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ethen1264.myexpoapp"
+      "package": "com.schoolofcompany.gwangsan"
     },
     "extra": {
       "eas": {
-        "projectId": "eff79e81-4606-4e3f-8836-afce7492ea7b"
+        "projectId": "9d65e0fb-0ca0-4235-ba71-1e60a7843a0e"
       }
     }
   }
