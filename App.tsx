@@ -10,7 +10,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Pressable className="flex-1 bg-gray-100 p-6" onPress={Keyboard.dismiss}>
+      <Pressable className="flex-1 bg-white p-6" onPress={Keyboard.dismiss}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Signup" component={SignupPage} />
           <Stack.Screen name="Signin" component={SigninPage} />
