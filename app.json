@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "시민화폐 광산",
-    "slug": "시민화폐 광산",
+    "slug": "my-expo-app",
     "version": "1.0.0",
     "web": {
       "favicon": "./src/app/favicon.ico"
