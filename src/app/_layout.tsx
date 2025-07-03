@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { View, Keyboard } from 'react-native';
+import { View } from 'react-native';
 import '../../global.css';
 
 export default function RootLayout() {
