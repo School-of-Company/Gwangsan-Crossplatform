@@ -12,7 +12,7 @@ const images = [image1, image2, image3, image4, image5, image6];
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const MainSlideViewer = () => {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
 
   useEffect(() => {
