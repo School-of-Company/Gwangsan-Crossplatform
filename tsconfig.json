@@ -10,7 +10,7 @@
       "@/shared/*": ["src/shared/*"],
       "@/entity/*": ["src/entity/*"],
       "@/view/*": ["src/view/*"],
-      "@/widget/*": ["src/widget/*"],
+      "@/widget/*": ["src/widget/*"]
     }
   }
 }

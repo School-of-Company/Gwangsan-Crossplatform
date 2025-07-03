@@ -6,8 +6,8 @@
   "packages": [
     {
       "name": "nativewind",
-      "type": "styling"
-    }
+      "type": "styling",
+    },
   ],
   "flags": {
     "noGit": false,
@@ -16,16 +16,16 @@
     "importAlias": true,
     "packageManager": "npm",
     "eas": false,
-    "publish": false
+    "publish": false,
   },
   "packageManager": {
     "type": "npm",
-    "version": "10.8.2"
+    "version": "10.8.2",
   },
   "os": {
     "type": "Darwin",
     "platform": "darwin",
     "arch": "arm64",
-    "kernelVersion": "24.5.0"
-  }
+    "kernelVersion": "24.5.0",
+  },
 }
