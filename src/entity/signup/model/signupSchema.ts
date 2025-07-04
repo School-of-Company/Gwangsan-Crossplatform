@@ -16,7 +16,7 @@ export const passwordSchema = z
 export const passwordConfirmSchema = (password: string) =>
   z.string().refine((value) => value === password, {
     message: '비밀번호가 일치하지 않습니다',
-  }); 
+  });
 
 export const phoneSchema = z
   .string()
@@ -27,4 +27,4 @@ export const phoneSchema = z
 export const verificationCodeSchema = z
   .string()
   .min(1, '인증번호를 입력해주세요')
-  .regex(/^[0-9]+$/, '숫자만 입력 가능합니다'); 
+  .regex(/^[0-9]+$/, '숫자만 입력 가능합니다');

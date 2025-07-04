@@ -6,7 +6,6 @@ interface BackArrowProps {
   height?: number;
 }
 
-
 const BackArrow = ({ color = '#8F9094', width = 24, height = 24 }: BackArrowProps) => {
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">

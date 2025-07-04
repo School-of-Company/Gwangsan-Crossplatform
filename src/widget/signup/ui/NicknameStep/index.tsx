@@ -10,7 +10,7 @@ export default function NicknameStep() {
   const { formData, setField, nextStep } = useSignupStore();
   const [nickname, setNickname] = useState(formData.nickname);
   const [error, setError] = useState<string | null>(null);
-  
+
   const validateAndNext = () => {
     try {
       nicknameSchema.parse(nickname);
@@ -27,14 +27,13 @@ export default function NicknameStep() {
       }
     }
   };
-  
+
   return (
     <SignupForm
       title="회원가입"
       description="별칭을 입력해주세요"
       onNext={validateAndNext}
-      isNextDisabled={nickname.trim() === ''}
-    >
+      isNextDisabled={nickname.trim() === ''}>
       <View>
         <Input
           label="별칭"
@@ -45,11 +44,7 @@ export default function NicknameStep() {
             setError(null);
           }}
         />
-        <View className="h-6">
-          {error && (
-            <Text className="text-red-500">{error}</Text>
-          )}
-        </View>
+        <View className="h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
       </View>
     </SignupForm>
   );

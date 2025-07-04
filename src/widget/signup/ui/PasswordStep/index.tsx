@@ -12,22 +12,22 @@ export default function PasswordStep() {
   const [passwordConfirm, setPasswordConfirm] = useState(formData.passwordConfirm);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  
+
   const validateAndNext = () => {
     try {
       passwordSchema.parse(password);
       setPasswordError(null);
-      
+
       passwordConfirmSchema(password).parse(passwordConfirm);
       setConfirmError(null);
-      
+
       setField('password', password);
       setField('passwordConfirm', passwordConfirm);
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {
         const errorMessage = err.errors[0].message;
-        
+
         if (err.errors[0].path[0] === 'passwordConfirm') {
           setConfirmError(errorMessage);
         } else {
@@ -40,14 +40,13 @@ export default function PasswordStep() {
       }
     }
   };
-  
+
   return (
     <SignupForm
       title="회원가입"
       description="비밀번호를 입력해주세요"
       onNext={validateAndNext}
-      isNextDisabled={password.trim() === '' || passwordConfirm.trim() === ''}
-    >
+      isNextDisabled={password.trim() === '' || passwordConfirm.trim() === ''}>
       <View>
         <Input
           label="비밀번호"
@@ -60,12 +59,10 @@ export default function PasswordStep() {
           secureTextEntry={true}
         />
         <View className="h-6">
-          {passwordError && (
-            <Text className="text-red-500">{passwordError}</Text>
-          )}
+          {passwordError && <Text className="text-red-500">{passwordError}</Text>}
         </View>
       </View>
-      
+
       <View className="mt-4">
         <Input
           label="비밀번호 재입력"
@@ -78,9 +75,7 @@ export default function PasswordStep() {
           secureTextEntry={true}
         />
         <View className="h-6">
-          {confirmError && (
-            <Text className="text-red-500">{confirmError}</Text>
-          )}
+          {confirmError && <Text className="text-red-500">{confirmError}</Text>}
         </View>
       </View>
     </SignupForm>

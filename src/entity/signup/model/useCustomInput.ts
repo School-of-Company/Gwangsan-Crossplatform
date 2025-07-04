@@ -24,10 +24,10 @@ export function useCustomInput({ onSubmit }: UseCustomInputProps = {}) {
 
   const handleSubmitCustomItem = useCallback(() => {
     if (customItemText.trim() === '') return;
-    
+
     const newItem = customItemText.trim();
     onSubmit?.(newItem);
-    
+
     setCustomItemText('');
     setIsAddingCustomItem(false);
   }, [customItemText, onSubmit]);
@@ -45,4 +45,4 @@ export function useCustomInput({ onSubmit }: UseCustomInputProps = {}) {
     handleSubmitCustomItem,
     updateCustomItemText,
   };
-} 
+}

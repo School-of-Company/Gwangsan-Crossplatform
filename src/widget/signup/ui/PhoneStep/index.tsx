@@ -14,7 +14,7 @@ export default function PhoneStep() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  
+
   const requestVerification = () => {
     try {
       phoneSchema.parse(phone);
@@ -31,17 +31,17 @@ export default function PhoneStep() {
       }
     }
   };
-  
+
   const validateAndNext = () => {
     if (!isVerifying) {
       setPhoneError('인증을 먼저 진행해주세요');
       return;
     }
-    
+
     try {
       verificationCodeSchema.parse(verificationCode);
       setVerificationError(null);
-      
+
       setField('phone', phone);
       setField('verificationCode', verificationCode);
       nextStep();
@@ -55,14 +55,13 @@ export default function PhoneStep() {
       }
     }
   };
-  
+
   return (
     <SignupForm
       title="회원가입"
       description="전화번호를 입력해주세요"
       onNext={validateAndNext}
-      isNextDisabled={!isVerifying || verificationCode.trim() === ''}
-    >
+      isNextDisabled={!isVerifying || verificationCode.trim() === ''}>
       <View>
         <View className="flex-row items-end gap-2">
           <View className="flex-1">
@@ -79,23 +78,20 @@ export default function PhoneStep() {
               maxLength={11}
             />
           </View>
-          <Button 
+          <Button
             className={`h-16 items-center justify-center rounded-xl px-8 ${
               phone.length === 11 ? 'bg-[#8FC31D]' : 'bg-gray-300'
             }`}
             onPress={requestVerification}
-            disabled={phone.length !== 11}
-          >
-            <Text className="text-white font-medium">인증</Text>
+            disabled={phone.length !== 11}>
+            <Text className="font-medium text-white">인증</Text>
           </Button>
         </View>
         <View className="h-6">
-          {phoneError && (
-            <Text className="text-red-500">{phoneError}</Text>
-          )}
+          {phoneError && <Text className="text-red-500">{phoneError}</Text>}
         </View>
       </View>
-      
+
       {isVerifying && (
         <View className="mt-4">
           <Input
@@ -109,9 +105,7 @@ export default function PhoneStep() {
             keyboardType="numeric"
           />
           <View className="h-6">
-            {verificationError && (
-              <Text className="text-red-500">{verificationError}</Text>
-            )}
+            {verificationError && <Text className="text-red-500">{verificationError}</Text>}
           </View>
         </View>
       )}

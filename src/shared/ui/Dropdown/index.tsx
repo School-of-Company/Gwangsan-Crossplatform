@@ -15,7 +15,7 @@ export function Dropdown<T extends string>({
   items,
   placeholder,
   selectedItem,
-  onSelect
+  onSelect,
 }: DropdownProps<T>) {
   const [show, setShow] = useState(false);
   const [selected, setSelected] = useState<T | null>(selectedItem || null);

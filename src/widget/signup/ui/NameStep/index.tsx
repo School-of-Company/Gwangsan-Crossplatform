@@ -14,7 +14,7 @@ export default function NameStep() {
     resetStore();
     router.back();
   };
-  
+
   const handleNext = () => {
     if (name.trim() === '') {
       setError('이름을 입력해주세요');
@@ -23,15 +23,14 @@ export default function NameStep() {
     setField('name', name);
     nextStep();
   };
-  
+
   return (
     <SignupForm
       title="회원가입"
       description="이름을 입력해주세요"
       onNext={handleNext}
       onBack={handleBack}
-      isNextDisabled={name.trim() === ''}
-    >
+      isNextDisabled={name.trim() === ''}>
       <View>
         <Input
           label="이름"
@@ -42,11 +41,7 @@ export default function NameStep() {
             setError(null);
           }}
         />
-        <View className="h-6">
-          {error && (
-            <Text className="text-red-500">{error}</Text>
-          )}
-        </View>
+        <View className="h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
       </View>
     </SignupForm>
   );

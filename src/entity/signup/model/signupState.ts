@@ -1,10 +1,10 @@
-type SignupStep = 
-  | 'name' 
-  | 'nickname' 
-  | 'password' 
-  | 'phone' 
-  | 'dong' 
-  | 'place' 
+type SignupStep =
+  | 'name'
+  | 'nickname'
+  | 'password'
+  | 'phone'
+  | 'dong'
+  | 'place'
   | 'specialties'
   | 'recommender';
 

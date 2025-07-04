@@ -13,7 +13,7 @@ import {
 
 export default function SignupPageView(): React.ReactNode {
   const currentStep = useSignupStore((state) => state.currentStep);
-  
+
   switch (currentStep) {
     case 'name':
       return <NameStep />;
