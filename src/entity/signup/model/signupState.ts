@@ -3,10 +3,10 @@ type SignupStep =
   | 'nickname' 
   | 'password' 
   | 'phone' 
-  | 'location' 
-  | 'branch' 
-  | 'introduction' 
-  | 'referral';
+  | 'dong' 
+  | 'place' 
+  | 'specialties'
+  | 'recommender';
 
 export interface SignupState {
   currentStep: SignupStep;
@@ -17,10 +17,10 @@ export interface SignupState {
     passwordConfirm: string;
     phone: string;
     verificationCode: string;
-    location: string;
-    branch: string;
-    introduction: string;
-    referral: string;
+    dong: string;
+    place: string;
+    specialties: string[];
+    recommender: string;
   };
   setField: (field: string, value: string) => void;
   nextStep: () => void;
