@@ -2,10 +2,14 @@ import { View, Text, Image } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import gwangsanLogo from '@/shared/assets/png/gwangsanLogo.png';
 import { router } from 'expo-router';
+import { useSignupStore } from '@/shared/store/useSignupStore';
 
 export default function Complete() {
+  const { resetStore } = useSignupStore();
+
   const handleNext = () => {
     router.navigate('/onboarding');
+    resetStore();
   };
 
   return (
