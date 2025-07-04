@@ -5,14 +5,10 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-export function ErrorMessage({ error, className = "h-6" }: ErrorMessageProps) {
+export function ErrorMessage({ error, className = 'h-6' }: ErrorMessageProps) {
   return (
     <View className={className}>
-      {error && (
-        <Text className="text-red-500 text-sm">
-          {error}
-        </Text>
-      )}
+      {error && <Text className="text-sm text-red-500">{error}</Text>}
     </View>
   );
-} 
+}

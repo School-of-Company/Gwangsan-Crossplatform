@@ -27,7 +27,7 @@ export default function NameStep() {
 
   const handleNameChange = (text: string) => {
     setName(text);
-    if (error) setError(null); 
+    if (error) setError(null);
   };
 
   return (

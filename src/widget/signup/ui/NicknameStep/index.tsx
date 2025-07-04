@@ -31,7 +31,7 @@ export default function NicknameStep() {
 
   const handleNicknameChange = (text: string) => {
     setNickname(text);
-    if (error) setError(null); 
+    if (error) setError(null);
   };
 
   return (
