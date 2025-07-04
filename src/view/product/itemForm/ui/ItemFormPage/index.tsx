@@ -1,23 +1,25 @@
+import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ItemFormHeader } from '~/entity/product/itemForm';
-import { ItemFormContainer } from '~/widget/product/itemForm';
-import { Dimensions, View } from 'react-native';
+import ItemFormHeader from '~/entity/product/itemForm/ui/ItemFormHeader';
+import ItemFormContainer from '~/widget/product/itemForm/ui/ItemFormContainer';
+import ItemFormPointContainer from '~/widget/product/itemForm/ui/ItemFormPointContainer';
 
 const ItemFormPage = () => {
-  const { height } = Dimensions.get('window');
+  const [step, setStep] = useState(1);
 
-  const getSpacing = () => {
-    if (height < 700) return 24;
-    if (height < 900) return 32;
-    return 48;
-  };
+  let content;
+  if (step === 1) {
+    content = <ItemFormContainer onNext={() => setStep(2)} />;
+  } else if (step === 2) {
+    content = <ItemFormPointContainer onNext={() => setStep(3)} />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ItemFormHeader />
-      <View style={{ height: getSpacing() }} />
-      <ItemFormContainer />
+      <ItemFormHeader step={step} />
+      {content}
     </SafeAreaView>
   );
 };
+
 export default ItemFormPage;

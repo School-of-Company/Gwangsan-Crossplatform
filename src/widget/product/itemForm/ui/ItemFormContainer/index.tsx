@@ -5,7 +5,11 @@ import { TextField } from '~/shared/ui/TextField';
 import ImageUploader from '~/entity/product/itemForm/ui/ImageUploader';
 import { Button } from '~/shared/ui/Button';
 
-const ItemFormContainer = () => {
+interface Props {
+  onNext: () => void;
+}
+
+const ItemFormContainer = ({ onNext }: Props) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -33,7 +37,9 @@ const ItemFormContainer = () => {
         <ImageUploader />
       </View>
       <View className="mb-8 mt-12">
-        <Button disabled={!isValid}>다음</Button>
+        <Button disabled={!isValid} onPress={onNext}>
+          다음
+        </Button>
       </View>
     </KeyboardAvoidingView>
   );
