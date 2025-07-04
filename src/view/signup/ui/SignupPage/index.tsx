@@ -2,6 +2,7 @@ import { useSignupStore } from '@/entity/signup/model/signupStore';
 import {
   NameStep,
   NicknameStep,
+  PasswordStep,
 } from '@/widget/signup';
 
 export default function SignupPageView() {
@@ -12,6 +13,8 @@ export default function SignupPageView() {
       return <NameStep />;
     case 'nickname':
       return <NicknameStep />;
+    case 'password':
+      return <PasswordStep />;
     default:
       return <NameStep />;
   }
