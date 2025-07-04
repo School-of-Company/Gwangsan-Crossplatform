@@ -2,15 +2,16 @@ import { useState } from 'react';
 import SpecialtiesDropdown from '@/entity/signup/ui/SpecialtiesDropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '@/entity/signup/model/useSignupStore';
+import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
 import { View } from 'react-native';
 import { SPECIALTIES } from '@/shared/consts/specialties';
 
 export default function SpecialtiesStep() {
-  const { formData, setField, nextStep } = useSignupStore();
+  const { value: initialSpecialties, updateField } = useFormField('specialties');
+  const { nextStep } = useStepNavigation();
 
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(
-    Array.isArray(formData.specialties) ? formData.specialties : []
+    Array.isArray(initialSpecialties) ? initialSpecialties : []
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +21,7 @@ export default function SpecialtiesStep() {
       return;
     }
 
-    setField('specialties', selectedSpecialties);
+    updateField(selectedSpecialties);
     nextStep();
   };
 

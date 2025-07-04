@@ -2,15 +2,16 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { DONG } from '@/shared/consts/dong';
 
 export default function DongStep() {
-  const { formData, setField, nextStep } = useSignupStore();
+  const { value: initialDong, updateField } = useFormField('dong');
+  const { nextStep } = useStepNavigation();
   const [searchText, setSearchText] = useState('');
-  const [dong, setDong] = useState(formData.dong);
+  const [dong, setDong] = useState(initialDong);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -32,7 +33,7 @@ export default function DongStep() {
       setError('동네를 입력해주세요');
       return;
     }
-    setField('dong', dong);
+    updateField(dong);
     nextStep();
   };
 

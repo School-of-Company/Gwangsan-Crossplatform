@@ -3,15 +3,18 @@ import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
 import { phoneSchema, verificationCodeSchema } from '~/entity/signup/model/signupSchema';
 import { Text, View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 
 export default function PhoneStep() {
-  const { formData, setField, nextStep } = useSignupStore();
-  const [phone, setPhone] = useState(formData.phone);
-  const [verificationCode, setVerificationCode] = useState(formData.verificationCode);
+  const { value: initialPhone, updateField: updatePhone } = useFormField('phone');
+  const { value: initialVerificationCode, updateField: updateVerificationCode } = useFormField('verificationCode');
+  const { nextStep } = useStepNavigation();
+  
+  const [phone, setPhone] = useState(initialPhone);
+  const [verificationCode, setVerificationCode] = useState(initialVerificationCode);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -48,8 +51,8 @@ export default function PhoneStep() {
       verificationCodeSchema.parse(verificationCode);
       setVerificationError(null);
 
-      setField('phone', phone);
-      setField('verificationCode', verificationCode);
+      updatePhone(phone);
+      updateVerificationCode(verificationCode);
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {

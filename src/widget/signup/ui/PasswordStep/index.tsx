@@ -2,15 +2,18 @@ import { useState, useRef } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
 import { passwordSchema, passwordConfirmSchema } from '~/entity/signup/model/signupSchema';
 import { View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 
 export default function PasswordStep() {
-  const { formData, setField, nextStep } = useSignupStore();
-  const [password, setPassword] = useState(formData.password);
-  const [passwordConfirm, setPasswordConfirm] = useState(formData.passwordConfirm);
+  const { value: initialPassword, updateField: updatePassword } = useFormField('password');
+  const { value: initialPasswordConfirm, updateField: updatePasswordConfirm } = useFormField('passwordConfirm');
+  const { nextStep } = useStepNavigation();
+  
+  const [password, setPassword] = useState(initialPassword);
+  const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
@@ -40,8 +43,8 @@ export default function PasswordStep() {
     }
 
     if (!hasError) {
-      setField('password', password);
-      setField('passwordConfirm', passwordConfirm);
+      updatePassword(password);
+      updatePasswordConfirm(passwordConfirm);
       nextStep();
     }
   };

@@ -7,8 +7,8 @@ import {
   Platform,
 } from 'react-native';
 import { Button } from '@/shared/ui/Button';
-import { ReactNode } from 'react';
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { ReactNode, memo } from 'react';
+import { useStepNavigation } from '../../model/useSignupSelectors';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 
 interface SignupFormProps {
@@ -21,7 +21,7 @@ interface SignupFormProps {
   isNextDisabled?: boolean;
 }
 
-export default function SignupForm({
+function SignupForm({
   title,
   description,
   children,
@@ -30,7 +30,7 @@ export default function SignupForm({
   nextButtonText = '다음',
   isNextDisabled = false,
 }: SignupFormProps) {
-  const prevStep = useSignupStore((state) => state.prevStep);
+  const { prevStep } = useStepNavigation();
 
   return (
     <KeyboardAvoidingView
@@ -67,3 +67,5 @@ export default function SignupForm({
     </KeyboardAvoidingView>
   );
 }
+
+export default memo(SignupForm);

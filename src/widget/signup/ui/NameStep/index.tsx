@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 
-export default function NameStep() {
-  const { formData, setField, nextStep, resetStore } = useSignupStore();
-  const [name, setName] = useState(formData.name);
+function NameStep() {
+  const { value: initialName, updateField } = useFormField('name');
+  const { nextStep, resetStore } = useStepNavigation();
+  const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
@@ -21,7 +22,7 @@ export default function NameStep() {
       setError('이름을 입력해주세요');
       return;
     }
-    setField('name', name);
+    updateField(name);
     nextStep();
   };
 
@@ -57,3 +58,5 @@ export default function NameStep() {
     </SignupForm>
   );
 }
+
+export default memo(NameStep);

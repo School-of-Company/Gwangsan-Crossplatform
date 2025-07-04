@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
 import { PLACE } from '@/shared/consts/place';
 import { View } from 'react-native';
 
 export default function PlaceStep() {
-  const { formData, setField, nextStep } = useSignupStore();
-  const [place, setPlace] = useState(formData.place);
+  const { value: initialPlace, updateField } = useFormField('place');
+  const { nextStep } = useStepNavigation();
+  const [place, setPlace] = useState(initialPlace);
   const [error, setError] = useState<string | null>(null);
 
   const handleNext = () => {
@@ -16,7 +17,7 @@ export default function PlaceStep() {
       setError('지점을 선택해주세요');
       return;
     }
-    setField('place', place);
+    updateField(place);
     nextStep();
   };
 
