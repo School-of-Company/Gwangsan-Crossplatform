@@ -2,7 +2,7 @@ import { Image, Text, View } from 'react-native';
 
 export default function ReviewPost() {
   return (
-    <View className="flex flex-row gap-9 px-6">
+    <View className="flex flex-row gap-9 border-b border-b-gray-200 px-6 py-3">
       <Image
         source={require('@/shared/assets/png/onboardingSlide1.png')}
         className="size-24 rounded-lg"
