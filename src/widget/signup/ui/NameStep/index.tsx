@@ -2,13 +2,18 @@ import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { Text, View } from 'react-native';
 
 export default function NameStep() {
   const { formData, setField, nextStep } = useSignupStore();
   const [name, setName] = useState(formData.name);
+  const [error, setError] = useState<string | null>(null);
   
   const handleNext = () => {
-    if (name.trim() === '') return;
+    if (name.trim() === '') {
+      setError('이름을 입력해주세요');
+      return;
+    }
     setField('name', name);
     nextStep();
   };
@@ -20,12 +25,22 @@ export default function NameStep() {
       onNext={handleNext}
       isNextDisabled={name.trim() === ''}
     >
-      <Input
-        label="이름"
-        placeholder="본인의 이름을 입력해주세요"
-        value={name}
-        onChangeText={setName}
-      />
+      <View>
+        <Input
+          label="이름"
+          placeholder="본인의 이름을 입력해주세요"
+          value={name}
+          onChangeText={(text) => {
+            setName(text);
+            setError(null);
+          }}
+        />
+        <View className="h-6">
+          {error && (
+            <Text className="text-red-500">{error}</Text>
+          )}
+        </View>
+      </View>
     </SignupForm>
   );
 }
