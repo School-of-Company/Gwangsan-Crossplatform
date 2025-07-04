@@ -1,4 +1,4 @@
-import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import {
   NameStep,
   NicknameStep,

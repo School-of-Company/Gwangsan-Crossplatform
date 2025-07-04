@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 

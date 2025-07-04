@@ -1,8 +1,9 @@
 import CheckIcon from '@/shared/assets/svg/CheckIcon';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Text, TouchableOpacity, View, ScrollView, TextInput } from 'react-native';
-import { Button } from '@/shared/ui/Button';
+import { useMultiSelect } from '../../model/useMultiSelect';
+import { useCustomInput } from '../../model/useCustomInput';
 
 interface MultiSelectDropdownProps<T extends string> {
   label?: string;
@@ -22,52 +23,27 @@ export function MultiSelectDropdown<T extends string>({
   allowCustomInput = false
 }: MultiSelectDropdownProps<T>) {
   const [show, setShow] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>(externalSelectedItems || []);
-  const [isAddingCustomItem, setIsAddingCustomItem] = useState(false);
-  const [customItemText, setCustomItemText] = useState('');
-  const [allItems, setAllItems] = useState<string[]>([...items]);
-  const customInputRef = useRef<TextInput>(null);
+
+  const multiSelect = useMultiSelect({
+    items,
+    initialSelectedItems: externalSelectedItems,
+    onSelect,
+  });
+
+  const customInput = useCustomInput({
+    onSubmit: multiSelect.addCustomItem,
+  });
 
   const handleSelect = (item: string) => {
     if (item === '직접 입력...') {
-      setIsAddingCustomItem(true);
-      setTimeout(() => {
-        customInputRef.current?.focus();
-      }, 100);
+      customInput.activateCustomInput();
       return;
     }
 
-    let newSelectedItems: string[];
-    
-    if (selectedItems.includes(item)) {
-      newSelectedItems = selectedItems.filter((selectedItem) => selectedItem !== item);
-    } else {
-      newSelectedItems = [...selectedItems, item];
-    }
-    
-    setSelectedItems(newSelectedItems);
-    if (onSelect) {
-      onSelect(newSelectedItems as T[]);
-    }
+    multiSelect.handleSelect(item);
   };
 
-  const handleAddCustomItem = () => {
-    if (customItemText.trim() === '') return;
-    
-    const newItem = customItemText.trim();
-    setAllItems(prev => [...prev, newItem]);
-    setSelectedItems(prev => [...prev, newItem]);
-    if (onSelect) {
-      onSelect([...selectedItems, newItem] as T[]);
-    }
-    
-    setCustomItemText('');
-    setIsAddingCustomItem(false);
-  };
-
-  const displayText = selectedItems.length > 0 
-    ? selectedItems.join(', ') 
-    : placeholder || '선택해주세요';
+  const displayText = multiSelect.displayText || placeholder || '선택해주세요';
 
   return (
     <View className="relative flex w-full">
@@ -85,8 +61,8 @@ export function MultiSelectDropdown<T extends string>({
       {show && (
         <View className="absolute top-20 z-10 w-full rounded-xl border border-gray-200 bg-white shadow-md overflow-hidden">
           <ScrollView className="w-full">
-            {allItems.map((item) => {
-              const isSelected = selectedItems.includes(item);
+            {multiSelect.allItems.map((item) => {
+              const isSelected = multiSelect.isSelected(item);
               return (
                 <TouchableOpacity
                   key={item}
@@ -104,7 +80,7 @@ export function MultiSelectDropdown<T extends string>({
               );
             })}
             
-            {allowCustomInput && !isAddingCustomItem && (
+            {allowCustomInput && !customInput.isAddingCustomItem && (
               <TouchableOpacity
                 className="px-5 py-4 flex-row items-center bg-white"
                 onPress={() => handleSelect('직접 입력...')}>
@@ -117,23 +93,23 @@ export function MultiSelectDropdown<T extends string>({
               </TouchableOpacity>
             )}
             
-            {allowCustomInput && isAddingCustomItem && (
+            {allowCustomInput && customInput.isAddingCustomItem && (
               <View className="px-5 py-4 flex-row items-center bg-white">
                 <View className="w-8 h-8 items-center justify-center mr-3">
                   <Icon name="add-circle-outline" size={20} color="#0075C2" />
                 </View>
                 <TextInput
-                  ref={customInputRef}
+                  ref={customInput.customInputRef}
                   className="flex-1 text-body5 border-b border-gray-300"
                   placeholder="새로운 특기 입력"
-                  value={customItemText}
-                  onChangeText={setCustomItemText}
-                  onSubmitEditing={handleAddCustomItem}
+                  value={customInput.customItemText}
+                  onChangeText={customInput.updateCustomItemText}
+                  onSubmitEditing={customInput.handleSubmitCustomItem}
                   autoFocus
                 />
                 <TouchableOpacity 
                   className="ml-2 p-2"
-                  onPress={handleAddCustomItem}>
+                  onPress={customInput.handleSubmitCustomItem}>
                   <Icon name="checkmark-circle" size={20} color="#0075C2" />
                 </TouchableOpacity>
               </View>

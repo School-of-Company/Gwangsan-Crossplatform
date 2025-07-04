@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { MultiSelectDropdown } from '@/shared/ui/MultiSelectDropdown';
+import { MultiSelectDropdown } from '~/entity/signup/ui/SpecialtiesDropdown';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { Text, View } from 'react-native';
 
 const SPECIALTIES = ['빨래하기', '벌레잡기', '청소하기', '운전하기', '달리기', '이삿짐 나르기'];

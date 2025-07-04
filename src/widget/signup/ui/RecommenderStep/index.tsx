@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { nicknameSchema } from '@/entity/signup/model/validationSchema';
 import { Text, View } from 'react-native';
 import { ZodError } from 'zod';

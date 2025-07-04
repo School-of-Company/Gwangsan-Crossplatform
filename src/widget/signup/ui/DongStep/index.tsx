@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { DONG } from '@/shared/consts/dong';

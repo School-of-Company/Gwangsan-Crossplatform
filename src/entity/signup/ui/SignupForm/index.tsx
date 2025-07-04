@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode } from 'react';
-import { useSignupStore } from '@/entity/signup/model/signupStore';
+import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 
 interface SignupFormProps {
