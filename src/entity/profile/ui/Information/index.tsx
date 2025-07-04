@@ -3,7 +3,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function Information() {
   return (
-    <View className="flex flex-row justify-between bg-white p-6">
+    <View className="mb-3 flex flex-row justify-between bg-white p-6">
       <View className="flex flex-row gap-4">
         <Image
           source={require('~/shared/assets/png/defaultProfile.png')}
