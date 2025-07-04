@@ -9,9 +9,10 @@ import { ZodError } from 'zod';
 
 export default function PasswordStep() {
   const { value: initialPassword, updateField: updatePassword } = useFormField('password');
-  const { value: initialPasswordConfirm, updateField: updatePasswordConfirm } = useFormField('passwordConfirm');
+  const { value: initialPasswordConfirm, updateField: updatePasswordConfirm } =
+    useFormField('passwordConfirm');
   const { nextStep } = useStepNavigation();
-  
+
   const [password, setPassword] = useState(initialPassword);
   const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
   const [passwordError, setPasswordError] = useState<string | null>(null);

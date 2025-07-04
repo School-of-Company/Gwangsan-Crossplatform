@@ -29,15 +29,3 @@ export interface SignupState {
   goToStep: (step: SignupStep) => void;
   resetStore: () => void;
 }
-
-export const SIGNUP_STEPS: readonly SignupState['currentStep'][] = [
-  'name',
-  'nickname',
-  'password',
-  'phone',
-  'dong',
-  'place',
-  'specialties',
-  'recommender',
-  'complete',
-] as const;

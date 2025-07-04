@@ -37,5 +37,3 @@ export const useSignupStore = create<SignupState>((set) => ({
       formData: INITIAL_FORM_DATA,
     }),
 }));
-
-

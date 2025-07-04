@@ -10,9 +10,10 @@ import { ZodError } from 'zod';
 
 export default function PhoneStep() {
   const { value: initialPhone, updateField: updatePhone } = useFormField('phone');
-  const { value: initialVerificationCode, updateField: updateVerificationCode } = useFormField('verificationCode');
+  const { value: initialVerificationCode, updateField: updateVerificationCode } =
+    useFormField('verificationCode');
   const { nextStep } = useStepNavigation();
-  
+
   const [phone, setPhone] = useState(initialPhone);
   const [verificationCode, setVerificationCode] = useState(initialVerificationCode);
   const [phoneError, setPhoneError] = useState<string | null>(null);
