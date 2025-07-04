@@ -22,7 +22,7 @@ export interface SignupState {
     specialties: string[];
     recommender: string;
   };
-  setField: (field: string, value: string) => void;
+  setField: (field: string, value: string | string[]) => void;
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: SignupStep) => void;
