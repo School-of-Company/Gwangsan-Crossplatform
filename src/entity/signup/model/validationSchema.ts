@@ -17,3 +17,14 @@ export const passwordConfirmSchema = (password: string) =>
   z.string().refine((value) => value === password, {
     message: '비밀번호가 일치하지 않습니다',
   }); 
+
+export const phoneSchema = z
+  .string()
+  .min(11, '전화번호는 11자리여야 합니다')
+  .max(11, '전화번호는 11자리여야 합니다')
+  .regex(/^[0-9]+$/, '숫자만 입력 가능합니다');
+
+export const verificationCodeSchema = z
+  .string()
+  .min(1, '인증번호를 입력해주세요')
+  .regex(/^[0-9]+$/, '숫자만 입력 가능합니다'); 
