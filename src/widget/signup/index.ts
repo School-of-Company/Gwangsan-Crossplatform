@@ -2,4 +2,8 @@ export { default as NameStep } from './ui/NameStep';
 export { default as NicknameStep } from './ui/NicknameStep';
 export { default as PasswordStep } from './ui/PasswordStep';
 export { default as PhoneStep } from './ui/PhoneStep';
+export { default as DongStep } from './ui/DongStep';
+export { default as PlaceStep } from './ui/PlaceStep';
 export { default as Complete } from './ui/Complete';
+export { default as SpecialtiesStep } from './ui/SpecialtiesStep';
+export { default as RecommenderStep } from './ui/RecommenderStep';

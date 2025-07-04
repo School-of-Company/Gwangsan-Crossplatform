@@ -5,6 +5,10 @@ import {
   PasswordStep,
   Complete,
   PhoneStep,
+  DongStep,
+  PlaceStep,
+  SpecialtiesStep,
+  RecommenderStep,
 } from '@/widget/signup';
 
 export default function SignupPageView() {
@@ -19,6 +23,14 @@ export default function SignupPageView() {
       return <PasswordStep />;
     case 'phone':
       return <PhoneStep />;
+    case 'dong':
+      return <DongStep />;
+    case 'place':
+      return <PlaceStep />;
+    case 'specialties':
+      return <SpecialtiesStep />;
+    case 'recommender':
+      return <RecommenderStep />;
     default:
       return <Complete />;
   }
