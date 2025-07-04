@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+/ ** @type {import('tailwindcss').Config} */;
 module.exports = {
   content: ['./App.{js,ts,tsx}', './src/**/*.{js,ts,tsx}', './components/**/*.{js,ts,tsx}'],
 
@@ -11,7 +11,9 @@ module.exports = {
       fontSize: {
         titleLarge: ['30px', { lineHeight: '120%', fontWeight: '600' }],
         titleMedium: ['26px', { lineHeight: '120%', fontWeight: '600' }],
+        titleMedium2: ['24px', { lineHeight: '120%', fontWeight: '600' }],
         titleSmall: ['20px', { lineHeight: '130%', fontWeight: '600' }],
+        body1: ['18px', { lineHeight: '140%', fontWeight: '600' }],
         body2: ['18px', { lineHeight: '140%', fontWeight: '400' }],
         body3: ['16px', { lineHeight: '140%', fontWeight: '600' }],
         body4: ['16px', { lineHeight: '140%', fontWeight: '400' }],
