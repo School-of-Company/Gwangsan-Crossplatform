@@ -45,6 +45,14 @@ export default function DongStep() {
     }
   };
 
+  const handleSearchSubmit = () => {
+    if (filteredDongs.length === 1) {
+      handleSelectDong(filteredDongs[0]);
+    } else if (filteredDongs.length > 1) {
+      setShowResults(true);
+    }
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -57,8 +65,10 @@ export default function DongStep() {
           placeholder="동네를 검색해주세요"
           value={searchText}
           onChangeText={handleSearchChange}
+          onSubmitEditing={handleSearchSubmit}
           icon={<SearchIcon />}
           onFocus={() => setShowResults(true)}
+          returnKeyType="search"
         />
 
         {showResults && filteredDongs.length > 0 && (

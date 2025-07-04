@@ -34,6 +34,12 @@ export default function NicknameStep() {
     if (error) setError(null);
   };
 
+  const handleSubmit = () => {
+    if (nickname.trim() !== '') {
+      validateAndNext();
+    }
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -46,6 +52,8 @@ export default function NicknameStep() {
           placeholder="별칭을 입력해주세요"
           value={nickname}
           onChangeText={handleNicknameChange}
+          onSubmitEditing={handleSubmit}
+          returnKeyType="next"
         />
         <ErrorMessage error={error} />
       </View>

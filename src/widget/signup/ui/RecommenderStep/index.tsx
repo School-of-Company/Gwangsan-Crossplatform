@@ -34,6 +34,12 @@ export default function RecommenderStep() {
     if (error) setError(null);
   };
 
+  const handleSubmit = () => {
+    if (recommender.trim() !== '') {
+      validateAndNext();
+    }
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -46,6 +52,8 @@ export default function RecommenderStep() {
           placeholder="추천인 별칭을 입력해주세요"
           value={recommender}
           onChangeText={handleRecommenderChange}
+          onSubmitEditing={handleSubmit}
+          returnKeyType="done"
         />
         <ErrorMessage error={error} />
       </View>

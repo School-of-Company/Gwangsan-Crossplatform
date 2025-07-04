@@ -1,4 +1,11 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode } from 'react';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
@@ -26,26 +33,37 @@ export default function SignupForm({
   const prevStep = useSignupStore((state) => state.prevStep);
 
   return (
-    <View className="flex-1 gap-8 bg-white px-6">
-      <View className="mt-12 flex-row items-center">
-        <TouchableOpacity className="flex-row items-center" onPress={onBack || prevStep}>
-          <BackArrow />
-          <Text className="ml-2 text-gray-500">뒤로</Text>
-        </TouchableOpacity>
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      className="flex-1 bg-white"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <View className="flex-1 gap-8 px-6">
+          <View className="mt-12 flex-row items-center">
+            <TouchableOpacity className="flex-row items-center" onPress={onBack || prevStep}>
+              <BackArrow />
+              <Text className="ml-2 text-gray-500">뒤로</Text>
+            </TouchableOpacity>
+          </View>
 
-      <View>
-        <Text className="text-3xl font-bold">{title}</Text>
-        <Text className="mt-4 text-lg text-gray-700">{description}</Text>
-      </View>
+          <View>
+            <Text className="text-3xl font-bold">{title}</Text>
+            <Text className="mt-4 text-lg text-gray-700">{description}</Text>
+          </View>
 
-      <View className="mt-8">{children}</View>
+          <View className="mt-8 flex-1">{children}</View>
 
-      <View className="mb-8 mt-auto">
-        <Button onPress={onNext} disabled={isNextDisabled}>
-          {nextButtonText}
-        </Button>
-      </View>
-    </View>
+          <View className="mb-8 mt-auto">
+            <Button onPress={onNext} disabled={isNextDisabled}>
+              {nextButtonText}
+            </Button>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

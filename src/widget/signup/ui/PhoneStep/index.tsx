@@ -15,7 +15,7 @@ export default function PhoneStep() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  
+
   const verificationRef = useRef<TextInput>(null);
 
   const requestVerification = () => {

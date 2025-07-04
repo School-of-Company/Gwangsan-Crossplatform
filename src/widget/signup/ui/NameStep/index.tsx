@@ -30,6 +30,12 @@ export default function NameStep() {
     if (error) setError(null);
   };
 
+  const handleSubmit = () => {
+    if (name.trim() !== '') {
+      handleNext();
+    }
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -43,6 +49,8 @@ export default function NameStep() {
           placeholder="본인의 이름을 입력해주세요"
           value={name}
           onChangeText={handleNameChange}
+          onSubmitEditing={handleSubmit}
+          returnKeyType="next"
         />
         <ErrorMessage error={error} />
       </View>

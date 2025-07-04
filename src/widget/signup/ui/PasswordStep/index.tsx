@@ -13,7 +13,7 @@ export default function PasswordStep() {
   const [passwordConfirm, setPasswordConfirm] = useState(formData.passwordConfirm);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  
+
   const passwordConfirmRef = useRef<TextInput>(null);
 
   const validateAndNext = () => {
