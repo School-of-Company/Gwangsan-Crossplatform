@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { passwordSchema, passwordConfirmSchema } from '~/entity/signup/model/signupSchema';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { ZodError } from 'zod';
 
 export default function PasswordStep() {
@@ -14,31 +15,43 @@ export default function PasswordStep() {
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const validateAndNext = () => {
+    let hasError = false;
+
     try {
       passwordSchema.parse(password);
       setPasswordError(null);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setPasswordError(err.errors[0].message);
+        hasError = true;
+      }
+    }
 
+    try {
       passwordConfirmSchema(password).parse(passwordConfirm);
       setConfirmError(null);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        setConfirmError(err.errors[0].message);
+        hasError = true;
+      }
+    }
 
+    if (!hasError) {
       setField('password', password);
       setField('passwordConfirm', passwordConfirm);
       nextStep();
-    } catch (err) {
-      if (err instanceof ZodError) {
-        const errorMessage = err.errors[0].message;
-
-        if (err.errors[0].path[0] === 'passwordConfirm') {
-          setConfirmError(errorMessage);
-        } else {
-          setPasswordError(errorMessage);
-        }
-      } else if (err instanceof Error) {
-        setPasswordError(err.message);
-      } else {
-        setPasswordError('유효하지 않은 비밀번호입니다');
-      }
     }
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (passwordError) setPasswordError(null);
+  };
+
+  const handleConfirmChange = (text: string) => {
+    setPasswordConfirm(text);
+    if (confirmError) setConfirmError(null);
   };
 
   return (
@@ -52,15 +65,10 @@ export default function PasswordStep() {
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요"
           value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            setPasswordError(null);
-          }}
+          onChangeText={handlePasswordChange}
           secureTextEntry={true}
         />
-        <View className="h-6">
-          {passwordError && <Text className="text-red-500">{passwordError}</Text>}
-        </View>
+        <ErrorMessage error={passwordError} />
       </View>
 
       <View className="mt-4">
@@ -68,15 +76,10 @@ export default function PasswordStep() {
           label="비밀번호 재입력"
           placeholder="비밀번호를 다시 입력해주세요"
           value={passwordConfirm}
-          onChangeText={(text) => {
-            setPasswordConfirm(text);
-            setConfirmError(null);
-          }}
+          onChangeText={handleConfirmChange}
           secureTextEntry={true}
         />
-        <View className="h-6">
-          {confirmError && <Text className="text-red-500">{confirmError}</Text>}
-        </View>
+        <ErrorMessage error={confirmError} />
       </View>
     </SignupForm>
   );

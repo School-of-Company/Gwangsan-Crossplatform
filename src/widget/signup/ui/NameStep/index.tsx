@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 
 export default function NameStep() {
@@ -24,6 +25,11 @@ export default function NameStep() {
     nextStep();
   };
 
+  const handleNameChange = (text: string) => {
+    setName(text);
+    if (error) setError(null); 
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -36,12 +42,9 @@ export default function NameStep() {
           label="이름"
           placeholder="본인의 이름을 입력해주세요"
           value={name}
-          onChangeText={(text) => {
-            setName(text);
-            setError(null);
-          }}
+          onChangeText={handleNameChange}
         />
-        <View className="h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
+        <ErrorMessage error={error} />
       </View>
     </SignupForm>
   );

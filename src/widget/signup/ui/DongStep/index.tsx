@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Input } from '@/shared/ui/Input';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
@@ -23,6 +24,7 @@ export default function DongStep() {
     setDong(selectedDong);
     setSearchText(selectedDong);
     setShowResults(false);
+    if (error) setError(null);
   };
 
   const handleNext = () => {
@@ -32,6 +34,15 @@ export default function DongStep() {
     }
     setField('dong', dong);
     nextStep();
+  };
+
+  const handleSearchChange = (text: string) => {
+    setSearchText(text);
+    if (error) setError(null);
+    setShowResults(true);
+    if (text !== dong) {
+      setDong('');
+    }
   };
 
   return (
@@ -45,14 +56,7 @@ export default function DongStep() {
           label=""
           placeholder="동네를 검색해주세요"
           value={searchText}
-          onChangeText={(text) => {
-            setSearchText(text);
-            setError(null);
-            setShowResults(true);
-            if (text !== dong) {
-              setDong('');
-            }
-          }}
+          onChangeText={handleSearchChange}
           icon={<SearchIcon />}
           onFocus={() => setShowResults(true)}
         />
@@ -74,7 +78,7 @@ export default function DongStep() {
           </ScrollView>
         )}
 
-        <View className="mt-2 h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
+        <ErrorMessage error={error} className="mt-2 h-6" />
       </View>
     </SignupForm>
   );

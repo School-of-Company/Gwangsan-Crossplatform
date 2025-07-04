@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Dropdown } from '@/shared/ui/Dropdown';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { PLACE } from '@/shared/consts/place';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 export default function PlaceStep() {
   const { formData, setField, nextStep } = useSignupStore();
@@ -19,6 +20,11 @@ export default function PlaceStep() {
     nextStep();
   };
 
+  const handlePlaceSelect = (selectedPlace: string) => {
+    setPlace(selectedPlace);
+    if (error) setError(null);
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -29,10 +35,10 @@ export default function PlaceStep() {
         <Dropdown
           items={PLACE}
           selectedItem={place}
-          onSelect={setPlace}
+          onSelect={handlePlaceSelect}
           placeholder="지점을 선택해주세요"
         />
-        <View className="h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
+        <ErrorMessage error={error} />
       </View>
     </SignupForm>
   );

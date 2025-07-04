@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { nicknameSchema } from '~/entity/signup/model/signupSchema';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { ZodError } from 'zod';
 
 export default function RecommenderStep() {
@@ -28,6 +29,11 @@ export default function RecommenderStep() {
     }
   };
 
+  const handleRecommenderChange = (text: string) => {
+    setRecommender(text);
+    if (error) setError(null);
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -39,12 +45,9 @@ export default function RecommenderStep() {
           label="추천인"
           placeholder="추천인 별칭을 입력해주세요"
           value={recommender}
-          onChangeText={(text) => {
-            setRecommender(text);
-            setError(null);
-          }}
+          onChangeText={handleRecommenderChange}
         />
-        <View className="h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
+        <ErrorMessage error={error} />
       </View>
     </SignupForm>
   );

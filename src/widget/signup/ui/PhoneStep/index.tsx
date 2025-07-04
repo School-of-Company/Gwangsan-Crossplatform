@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { phoneSchema, verificationCodeSchema } from '~/entity/signup/model/signupSchema';
@@ -56,6 +57,17 @@ export default function PhoneStep() {
     }
   };
 
+  const handlePhoneChange = (text: string) => {
+    setPhone(text);
+    if (phoneError) setPhoneError(null);
+    setIsVerifying(false);
+  };
+
+  const handleVerificationChange = (text: string) => {
+    setVerificationCode(text);
+    if (verificationError) setVerificationError(null);
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -69,11 +81,7 @@ export default function PhoneStep() {
               label="전화번호"
               placeholder="전화번호를 입력해주세요"
               value={phone}
-              onChangeText={(text) => {
-                setPhone(text);
-                setPhoneError(null);
-                setIsVerifying(false);
-              }}
+              onChangeText={handlePhoneChange}
               keyboardType="numeric"
               maxLength={11}
             />
@@ -87,9 +95,7 @@ export default function PhoneStep() {
             <Text className="font-medium text-white">인증</Text>
           </Button>
         </View>
-        <View className="h-6">
-          {phoneError && <Text className="text-red-500">{phoneError}</Text>}
-        </View>
+        <ErrorMessage error={phoneError} />
       </View>
 
       {isVerifying && (
@@ -98,15 +104,10 @@ export default function PhoneStep() {
             label="전화번호 인증"
             placeholder="인증번호를 입력해주세요"
             value={verificationCode}
-            onChangeText={(text) => {
-              setVerificationCode(text);
-              setVerificationError(null);
-            }}
+            onChangeText={handleVerificationChange}
             keyboardType="numeric"
           />
-          <View className="h-6">
-            {verificationError && <Text className="text-red-500">{verificationError}</Text>}
-          </View>
+          <ErrorMessage error={verificationError} />
         </View>
       )}
     </SignupForm>

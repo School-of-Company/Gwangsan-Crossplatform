@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import SpecialtiesDropdown from '@/entity/signup/ui/SpecialtiesDropdown';
+import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '@/entity/signup/model/useSignupStore';
-import { Text, View } from 'react-native';
-
-const SPECIALTIES = ['빨래하기', '벌레잡기', '청소하기', '운전하기', '달리기', '이삿짐 나르기'];
+import { View } from 'react-native';
+import { SPECIALTIES } from '@/shared/consts/specialties';
 
 export default function SpecialtiesStep() {
   const { formData, setField, nextStep } = useSignupStore();
@@ -24,6 +24,11 @@ export default function SpecialtiesStep() {
     nextStep();
   };
 
+  const handleSpecialtiesSelect = (specialties: string[]) => {
+    setSelectedSpecialties(specialties);
+    if (error && specialties.length > 0) setError(null);
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -34,11 +39,11 @@ export default function SpecialtiesStep() {
         <SpecialtiesDropdown
           items={SPECIALTIES}
           selectedItems={selectedSpecialties}
-          onSelect={setSelectedSpecialties}
+          onSelect={handleSpecialtiesSelect}
           placeholder="특기를 선택해주세요"
           allowCustomInput={true}
         />
-        <View className="mt-2 h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
+        <ErrorMessage error={error} className="mt-2 h-6" />
       </View>
     </SignupForm>
   );
