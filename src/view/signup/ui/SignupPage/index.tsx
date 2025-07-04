@@ -3,6 +3,7 @@ import {
   NameStep,
   NicknameStep,
   PasswordStep,
+  Complete,
 } from '@/widget/signup';
 
 export default function SignupPageView() {
@@ -16,6 +17,6 @@ export default function SignupPageView() {
     case 'password':
       return <PasswordStep />;
     default:
-      return <NameStep />;
+      return <Complete />;
   }
 }
