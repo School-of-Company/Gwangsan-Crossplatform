@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode } from 'react';
 import { useSignupStore } from '@/entity/signup/model/signupStore';
+import BackArrow from '@/shared/assets/svg/BackArrow';
 
 interface SignupFormProps {
   title: string;
@@ -27,8 +28,9 @@ export default function SignupForm({
   return (
     <View className="flex-1 bg-white px-6 gap-8">
       <View className="mt-12 flex-row items-center">
-        <TouchableOpacity onPress={onBack || prevStep}>
-          <Text className="ml-2 text-gray-500">← 뒤로</Text>
+        <TouchableOpacity className="flex-row items-center" onPress={onBack || prevStep}>
+          <BackArrow />
+          <Text className="ml-2 text-gray-500">뒤로</Text>
         </TouchableOpacity>
       </View>
       
