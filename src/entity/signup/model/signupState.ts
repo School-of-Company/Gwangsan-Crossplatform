@@ -26,4 +26,5 @@ export interface SignupState {
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: SignupStep) => void;
+  resetStore: () => void;
 }

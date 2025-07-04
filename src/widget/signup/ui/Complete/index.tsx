@@ -1,11 +1,12 @@
 import { View, Text, Image } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import gwangsanLogo from '@/shared/assets/png/gwangsanLogo.png';
+import { router } from 'expo-router';
 
 export default function Complete() {
 
   const handleNext = () => {
-    console.log('handleNext');
+    router.navigate('/onboarding');
   };
 
   return (

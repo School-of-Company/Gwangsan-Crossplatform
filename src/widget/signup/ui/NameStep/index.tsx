@@ -3,11 +3,17 @@ import { Input } from '@/shared/ui/Input';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '@/entity/signup/model/signupStore';
 import { Text, View } from 'react-native';
+import { router } from 'expo-router';
 
 export default function NameStep() {
-  const { formData, setField, nextStep } = useSignupStore();
+  const { formData, setField, nextStep, resetStore } = useSignupStore();
   const [name, setName] = useState(formData.name);
   const [error, setError] = useState<string | null>(null);
+
+  const handleBack = () => {
+    resetStore();
+    router.back();
+  };
   
   const handleNext = () => {
     if (name.trim() === '') {
@@ -23,6 +29,7 @@ export default function NameStep() {
       title="회원가입"
       description="이름을 입력해주세요"
       onNext={handleNext}
+      onBack={handleBack}
       isNextDisabled={name.trim() === ''}
     >
       <View>

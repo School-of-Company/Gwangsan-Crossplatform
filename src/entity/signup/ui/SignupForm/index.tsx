@@ -8,6 +8,7 @@ interface SignupFormProps {
   description: string;
   children: ReactNode;
   onNext: () => void;
+  onBack?: () => void;
   nextButtonText?: string;
   isNextDisabled?: boolean;
 }
@@ -16,6 +17,7 @@ export default function SignupForm({
   title,
   description,
   children,
+  onBack,
   onNext,
   nextButtonText = '다음',
   isNextDisabled = false,
@@ -25,7 +27,7 @@ export default function SignupForm({
   return (
     <View className="flex-1 bg-white px-6 gap-8">
       <View className="mt-12 flex-row items-center">
-        <TouchableOpacity onPress={() => prevStep()}>
+        <TouchableOpacity onPress={onBack || prevStep}>
           <Text className="ml-2 text-gray-500">← 뒤로</Text>
         </TouchableOpacity>
       </View>

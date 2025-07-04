@@ -11,7 +11,7 @@ import {
   RecommenderStep,
 } from '@/widget/signup';
 
-export default function SignupPageView() {
+export default function SignupPageView(): React.ReactNode {
   const currentStep = useSignupStore((state) => state.currentStep);
   
   switch (currentStep) {

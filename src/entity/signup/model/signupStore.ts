@@ -32,4 +32,19 @@ export const useSignupStore = create<SignupState>((set) => ({
     return { currentStep: steps[prevIndex] };
   }),
   goToStep: (step: SignupState['currentStep']) => set({ currentStep: step }),
+  resetStore: () => set({
+    currentStep: 'name',
+    formData: {
+      name: '',
+      nickname: '',
+      password: '',
+      passwordConfirm: '',
+      phone: '',
+      verificationCode: '',
+      dong: '',
+      place: '',
+      specialties: [],
+      recommender: '',
+    }
+  }),
 }));
