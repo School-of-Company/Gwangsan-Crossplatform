@@ -1,4 +1,5 @@
-import { useSignupStore } from '~/entity/signup/model/useSignupStore';
+import { memo } from 'react';
+import { useCurrentStep } from '~/entity/signup/model/useSignupSelectors';
 import {
   NameStep,
   NicknameStep,
@@ -11,29 +12,23 @@ import {
   RecommenderStep,
 } from '@/widget/signup';
 
-export default function SignupPageView(): React.ReactNode {
-  const currentStep = useSignupStore((state) => state.currentStep);
+const STEP_COMPONENTS = {
+  name: NameStep,
+  nickname: NicknameStep,
+  password: PasswordStep,
+  phone: PhoneStep,
+  dong: DongStep,
+  place: PlaceStep,
+  specialties: SpecialtiesStep,
+  recommender: RecommenderStep,
+  complete: Complete,
+} as const;
 
-  switch (currentStep) {
-    case 'name':
-      return <NameStep />;
-    case 'nickname':
-      return <NicknameStep />;
-    case 'password':
-      return <PasswordStep />;
-    case 'phone':
-      return <PhoneStep />;
-    case 'dong':
-      return <DongStep />;
-    case 'place':
-      return <PlaceStep />;
-    case 'specialties':
-      return <SpecialtiesStep />;
-    case 'recommender':
-      return <RecommenderStep />;
-    case 'complete':
-      return <Complete />;
-    default:
-      return <Complete />;
-  }
+function SignupPageView(): React.ReactNode {
+  const currentStep = useCurrentStep();
+  const StepComponent = STEP_COMPONENTS[currentStep];
+
+  return <StepComponent />;
 }
+
+export default memo(SignupPageView);
