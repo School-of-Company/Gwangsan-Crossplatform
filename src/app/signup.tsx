@@ -1,5 +1,5 @@
-import SignupPageView from '@/view/signup/ui';
+import { SignupPage } from '@/view/signup';
 
-export default function SignupPage() {
-  return <SignupPageView />;
+export default function Signup() {
+  return <SignupPage />;
 }
