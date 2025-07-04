@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { phoneSchema, verificationCodeSchema } from '~/entity/signup/model/signupSchema';
-import { Text, View } from 'react-native';
+import { Text, View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 
 export default function PhoneStep() {
@@ -15,6 +15,8 @@ export default function PhoneStep() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  
+  const verificationRef = useRef<TextInput>(null);
 
   const requestVerification = () => {
     try {
@@ -22,6 +24,9 @@ export default function PhoneStep() {
       // TODO: /api/sms 요청
       setPhoneError(null);
       setIsVerifying(true);
+      setTimeout(() => {
+        verificationRef.current?.focus();
+      }, 100);
     } catch (err) {
       if (err instanceof ZodError) {
         setPhoneError(err.errors[0].message);
@@ -68,6 +73,18 @@ export default function PhoneStep() {
     if (verificationError) setVerificationError(null);
   };
 
+  const handlePhoneSubmit = () => {
+    if (phone.length === 11) {
+      requestVerification();
+    }
+  };
+
+  const handleVerificationSubmit = () => {
+    if (verificationCode.trim() !== '') {
+      validateAndNext();
+    }
+  };
+
   return (
     <SignupForm
       title="회원가입"
@@ -82,8 +99,10 @@ export default function PhoneStep() {
               placeholder="전화번호를 입력해주세요"
               value={phone}
               onChangeText={handlePhoneChange}
+              onSubmitEditing={handlePhoneSubmit}
               keyboardType="numeric"
               maxLength={11}
+              returnKeyType="done"
             />
           </View>
           <Button
@@ -101,11 +120,14 @@ export default function PhoneStep() {
       {isVerifying && (
         <View className="mt-4">
           <Input
+            ref={verificationRef}
             label="전화번호 인증"
             placeholder="인증번호를 입력해주세요"
             value={verificationCode}
             onChangeText={handleVerificationChange}
+            onSubmitEditing={handleVerificationSubmit}
             keyboardType="numeric"
+            returnKeyType="done"
           />
           <ErrorMessage error={verificationError} />
         </View>
