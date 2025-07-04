@@ -6,7 +6,8 @@ type SignupStep =
   | 'dong'
   | 'place'
   | 'specialties'
-  | 'recommender';
+  | 'recommender'
+  | 'complete';
 
 export interface SignupState {
   currentStep: SignupStep;

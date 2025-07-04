@@ -30,6 +30,7 @@ export const useSignupStore = create<SignupState>((set) => ({
         'place',
         'specialties',
         'recommender',
+        'complete',
       ];
       const currentIndex = steps.indexOf(state.currentStep);
       const nextIndex = Math.min(currentIndex + 1, steps.length - 1);
@@ -46,6 +47,7 @@ export const useSignupStore = create<SignupState>((set) => ({
         'place',
         'specialties',
         'recommender',
+        'complete',
       ];
       const currentIndex = steps.indexOf(state.currentStep);
       const prevIndex = Math.max(currentIndex - 1, 0);

@@ -31,6 +31,8 @@ export default function SignupPageView(): React.ReactNode {
       return <SpecialtiesStep />;
     case 'recommender':
       return <RecommenderStep />;
+    case 'complete':
+      return <Complete />;
     default:
       return <Complete />;
   }
