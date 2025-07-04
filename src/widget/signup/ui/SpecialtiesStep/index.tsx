@@ -36,6 +36,7 @@ export default function SpecialtiesStep() {
           selectedItems={selectedSpecialties}
           onSelect={setSelectedSpecialties}
           placeholder="특기를 선택해주세요"
+          allowCustomInput={true}
         />
         <View className="mt-2 h-6">{error && <Text className="text-red-500">{error}</Text>}</View>
       </View>
