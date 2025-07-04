@@ -3,7 +3,7 @@ import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
-import { phoneSchema, verificationCodeSchema } from '@/entity/signup/model/validationSchema';
+import { phoneSchema, verificationCodeSchema } from '~/entity/signup/model/signupSchema';
 import { Text, View } from 'react-native';
 import { ZodError } from 'zod';
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MultiSelectDropdown } from '~/entity/signup/ui/SpecialtiesDropdown';
+import { SpecialtiesDropdown } from '~/entity/signup/ui/SpecialtiesDropdown';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useSignupStore } from '~/entity/signup/model/useSignupStore';
 import { Text, View } from 'react-native';
@@ -31,7 +31,7 @@ export default function SpecialtiesStep() {
       onNext={handleNext}
       isNextDisabled={selectedSpecialties.length === 0}>
       <View className="w-full">
-        <MultiSelectDropdown
+        <SpecialtiesDropdown
           items={SPECIALTIES}
           selectedItems={selectedSpecialties}
           onSelect={setSelectedSpecialties}

@@ -5,7 +5,7 @@ import { Text, TouchableOpacity, View, ScrollView, TextInput } from 'react-nativ
 import { useMultiSelect } from '../../model/useMultiSelect';
 import { useCustomInput } from '../../model/useCustomInput';
 
-interface MultiSelectDropdownProps<T extends string> {
+interface SpecialtiesDropdownProps<T extends string> {
   label?: string;
   items: T[];
   placeholder?: string;
@@ -14,14 +14,14 @@ interface MultiSelectDropdownProps<T extends string> {
   allowCustomInput?: boolean;
 }
 
-export function MultiSelectDropdown<T extends string>({
+export default function SpecialtiesDropdown<T extends string>({
   label,
   items,
   placeholder,
   selectedItems: externalSelectedItems,
   onSelect,
   allowCustomInput = false
-}: MultiSelectDropdownProps<T>) {
+}: SpecialtiesDropdownProps<T>) {
   const [show, setShow] = useState(false);
 
   const multiSelect = useMultiSelect({
