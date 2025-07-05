@@ -1,20 +1,16 @@
-import { useState } from 'react';
 import { View, KeyboardAvoidingView, Platform } from 'react-native';
 import { Input } from '~/shared/ui/Input';
 import { TextField } from '~/shared/ui/TextField';
 import ImageUploader from '~/entity/product/itemForm/ui/ImageUploader';
-import { Button } from '~/shared/ui/Button';
 
 interface Props {
-  onNext: () => void;
+  title: string;
+  content: string;
+  onTitleChange: (title: string) => void;
+  onContentChange: (content: string) => void;
 }
 
-const ItemFormContainer = ({ onNext }: Props) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-
-  const isValid = title.trim().length > 0 && content.trim().length > 0;
-
+const ItemFormContainer = ({ title, content, onTitleChange, onContentChange }: Props) => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -25,21 +21,16 @@ const ItemFormContainer = ({ onNext }: Props) => {
             label="주제"
             placeholder="주제를 작성해주세요"
             value={title}
-            onChangeText={setTitle}
+            onChangeText={onTitleChange}
           />
           <TextField
             label="내용"
             placeholder="내용을 작성해주세요"
             value={content}
-            onChangeText={setContent}
+            onChangeText={onContentChange}
           />
         </View>
         <ImageUploader />
-      </View>
-      <View className="mb-8 mt-12">
-        <Button disabled={!isValid} onPress={onNext}>
-          다음
-        </Button>
       </View>
     </KeyboardAvoidingView>
   );

@@ -1,16 +1,13 @@
-import { useState } from 'react';
 import { View, KeyboardAvoidingView, Platform } from 'react-native';
 import { Input } from '~/shared/ui/Input';
-import { Button } from '~/shared/ui/Button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
-  onNext: () => void;
+  point: string;
+  onPointChange: (point: string) => void;
 }
 
-const ItemFormPointContainer = ({ onNext }: Props) => {
-  const [point, setPoint] = useState('');
-  const isValid = point.trim().length > 0;
+const ItemFormPointContainer = ({ point, onPointChange }: Props) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -24,13 +21,8 @@ const ItemFormPointContainer = ({ onNext }: Props) => {
             label="광산"
             placeholder="광산을 입력해주세요"
             value={point}
-            onChangeText={setPoint}
+            onChangeText={onPointChange}
           />
-        </View>
-        <View className="mb-4">
-          <Button disabled={!isValid} onPress={onNext}>
-            다음
-          </Button>
         </View>
       </View>
     </KeyboardAvoidingView>
