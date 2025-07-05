@@ -5,7 +5,7 @@ import ItemFormHeader from '~/entity/product/itemForm/ui/ItemFormHeader';
 import { LastStepButton, NextButton } from '~/entity/product/itemForm';
 import { ItemFormConfirm, ItemFormContents, ItemFormGwangsan } from '~/widget/product/itemForm';
 
-const ItemFormPage = () => {
+const ItemFormPage = ({ type, mode }: { type: string; mode: string }) => {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
