@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { useEffect, useRef } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface ItemFormHeaderProps {
@@ -9,6 +10,16 @@ interface ItemFormHeaderProps {
 }
 
 const ItemFormHeader = ({ title = '필요해요', onBack, onClose, step }: ItemFormHeaderProps) => {
+  const animatedValue = useRef(new Animated.Value(step)).current;
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: step,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [step, animatedValue]);
+
   return (
     <View>
       <View className="h-14 flex-row items-center justify-between px-3">
@@ -21,8 +32,21 @@ const ItemFormHeader = ({ title = '필요해요', onBack, onClose, step }: ItemF
         </TouchableOpacity>
       </View>
       <View className="h-2 w-full flex-row">
-        <View style={{ flex: step, backgroundColor: '#5AA9E6' }} />
-        <View style={{ flex: 3 - step, backgroundColor: '#F2F2F2' }} />
+        <Animated.View
+          style={{
+            flex: animatedValue,
+            backgroundColor: '#5AA9E6',
+          }}
+        />
+        <Animated.View
+          style={{
+            flex: animatedValue.interpolate({
+              inputRange: [1, 2, 3],
+              outputRange: [2, 1, 0],
+            }),
+            backgroundColor: '#F2F2F2',
+          }}
+        />
       </View>
     </View>
   );
