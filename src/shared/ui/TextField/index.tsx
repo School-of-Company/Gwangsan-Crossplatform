@@ -12,7 +12,7 @@ export function TextField({ label, ...props }: TextFieldProps) {
         className="w-full rounded-xl border border-gray-400 px-4 py-5 text-body5 focus:border-sub2-500"
         multiline
         textAlignVertical="top"
-        style={{ minHeight: 160 }}
+        style={{ minHeight: 120, maxHeight: 200 }}
         {...props}
       />
     </View>

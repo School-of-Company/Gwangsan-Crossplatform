@@ -22,7 +22,7 @@ const ItemFormHeader = ({ title = '필요해요', onBack, onClose, step }: ItemF
 
   return (
     <View>
-      <View className="h-14 flex-row items-center justify-between px-3">
+      <View className="h-14 flex-row items-center justify-between bg-white px-3">
         <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
           <Icon name="chevron-back" size={24} color="#8F9094" />
         </TouchableOpacity>

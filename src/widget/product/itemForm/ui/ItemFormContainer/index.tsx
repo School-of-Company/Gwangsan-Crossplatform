@@ -1,4 +1,4 @@
-import { View, KeyboardAvoidingView, Platform } from 'react-native';
+import { View } from 'react-native';
 import { Input } from '~/shared/ui/Input';
 import { TextField } from '~/shared/ui/TextField';
 import ImageUploader from '~/entity/product/itemForm/ui/ImageUploader';
@@ -6,33 +6,44 @@ import ImageUploader from '~/entity/product/itemForm/ui/ImageUploader';
 interface Props {
   title: string;
   content: string;
-  onTitleChange: (title: string) => void;
-  onContentChange: (content: string) => void;
+  images: string[];
+  readonly?: boolean;
+  onTitleChange?: (title: string) => void;
+  onContentChange?: (content: string) => void;
+  onImagesChange?: (images: string[]) => void;
 }
 
-const ItemFormContainer = ({ title, content, onTitleChange, onContentChange }: Props) => {
+const ItemFormContainer = ({
+  title,
+  content,
+  images,
+  readonly = false,
+  onTitleChange,
+  onContentChange,
+  onImagesChange,
+}: Props) => {
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1  px-6">
-      <View className="flex-1 gap-4">
-        <View className="gap-8">
+    <View className="px-6 py-4">
+      <View className="gap-3">
+        <View className="gap-4">
           <Input
             label="주제"
             placeholder="주제를 작성해주세요"
             value={title}
             onChangeText={onTitleChange}
+            editable={!readonly}
           />
           <TextField
             label="내용"
             placeholder="내용을 작성해주세요"
             value={content}
             onChangeText={onContentChange}
+            editable={!readonly}
           />
         </View>
-        <ImageUploader />
+        <ImageUploader images={images} onImagesChange={onImagesChange} readonly={readonly} />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
