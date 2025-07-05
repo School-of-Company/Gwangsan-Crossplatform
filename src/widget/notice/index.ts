@@ -1,0 +1,1 @@
+export { default as NoticeItem } from './ui/NoticeItem';
