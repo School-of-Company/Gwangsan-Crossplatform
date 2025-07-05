@@ -8,7 +8,7 @@ export default function Complete() {
   const { resetStore } = useSignupStore();
 
   const handleNext = () => {
-    router.navigate('/onboarding');
+    router.navigate('/signin');
     resetStore();
   };
 
