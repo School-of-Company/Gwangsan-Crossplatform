@@ -2,19 +2,19 @@ import { View } from 'react-native';
 import { Input } from '~/shared/ui/Input';
 
 interface Props {
-  point: string;
+  gwangsan: string;
   readonly?: boolean;
-  onPointChange?: (point: string) => void;
+  onGwangsanChange?: (gwangsan: string) => void;
 }
 
-const ItemFormPointContainer = ({ point, readonly = false, onPointChange }: Props) => {
+const ItemFormGwangsan = ({ gwangsan, readonly = false, onGwangsanChange }: Props) => {
   return (
-    <View className="px-6 py-4">
+    <View className="px-6">
       <Input
         label="광산"
         placeholder="광산을 입력해주세요"
-        value={point}
-        onChangeText={onPointChange}
+        value={gwangsan}
+        onChangeText={onGwangsanChange}
         editable={!readonly}
         keyboardType="numeric"
       />
@@ -22,4 +22,4 @@ const ItemFormPointContainer = ({ point, readonly = false, onPointChange }: Prop
   );
 };
 
-export default ItemFormPointContainer;
+export default ItemFormGwangsan;

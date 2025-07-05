@@ -26,25 +26,25 @@ const ItemFormHeader = ({ title = '필요해요', onBack, onClose, step }: ItemF
         <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
           <Icon name="chevron-back" size={24} color="#8F9094" />
         </TouchableOpacity>
-        <Text className="flex-1 text-center text-titleSmall text-black">{title}</Text>
+        <Text className="flex-1 text-center text-body2 text-black">{title}</Text>
         <TouchableOpacity onPress={onClose} className="w-10 items-center justify-center">
           <Icon name="close" size={24} color="#8F9094" />
         </TouchableOpacity>
       </View>
       <View className="h-2 w-full flex-row">
         <Animated.View
+          className="bg-blue-300"
           style={{
             flex: animatedValue,
-            backgroundColor: '#5AA9E6',
           }}
         />
         <Animated.View
+          className="bg-gray-100"
           style={{
             flex: animatedValue.interpolate({
               inputRange: [1, 2, 3],
               outputRange: [2, 1, 0],
             }),
-            backgroundColor: '#F2F2F2',
           }}
         />
       </View>

@@ -1,20 +1,22 @@
 import { View, Text } from 'react-native';
-import ItemFormContainer from '../ItemFormContainer';
-import ItemFormPointContainer from '../ItemFormPointContainer';
+import ItemFormContents from '../ItemFormContents';
+import ItemFormGwangsan from '../ItemFormGwangsan';
 
 interface Props {
   title: string;
   content: string;
-  point: string;
+  gwangsan: string;
   images: string[];
 }
 
-const ItemFormConfirm = ({ title, content, point, images }: Props) => {
+const ItemFormConfirm = ({ title, content, gwangsan, images }: Props) => {
   return (
-    <View className="flex flex-1 flex-col gap-2">
+    <View className="flex flex-1 flex-col  gap-7">
       <Text className="px-6 text-titleSmall text-black">다시 한번 확인해주세요.</Text>
-      <ItemFormContainer title={title} content={content} images={images} readonly={true} />
-      <ItemFormPointContainer point={point} readonly={true} />
+      <View className="flex flex-1 flex-col gap-10">
+        <ItemFormContents title={title} content={content} images={images} readonly={true} />
+        <ItemFormGwangsan gwangsan={gwangsan} readonly={true} />
+      </View>
     </View>
   );
 };

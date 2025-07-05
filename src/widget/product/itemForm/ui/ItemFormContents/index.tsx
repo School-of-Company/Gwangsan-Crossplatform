@@ -13,7 +13,7 @@ interface Props {
   onImagesChange?: (images: string[]) => void;
 }
 
-const ItemFormContainer = ({
+const ItemFormContents = ({
   title,
   content,
   images,
@@ -23,9 +23,9 @@ const ItemFormContainer = ({
   onImagesChange,
 }: Props) => {
   return (
-    <View className="px-6 py-4">
-      <View className="gap-3">
-        <View className="gap-4">
+    <View className="px-6">
+      <View className="gap-4">
+        <View className="gap-8">
           <Input
             label="주제"
             placeholder="주제를 작성해주세요"
@@ -47,4 +47,4 @@ const ItemFormContainer = ({
   );
 };
 
-export default ItemFormContainer;
+export default ItemFormContents;

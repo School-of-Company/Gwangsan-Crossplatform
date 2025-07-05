@@ -13,6 +13,7 @@
   "dependencies": {
     "expo": "^53.0.15",
     "expo-constants": "~17.1.6",
+    "expo-image-picker": "~16.1.4",
     "expo-linking": "~7.1.6",
     "expo-router": "~5.1.2",
     "expo-status-bar": "~2.2.3",
@@ -27,7 +28,7 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-vector-icons": "^10.2.0",
-    "expo-image-picker": "~16.1.4"
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
