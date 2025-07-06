@@ -28,7 +28,10 @@ const ItemFormPage = ({
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
-  const handleGwangsanChange = useCallback((v: string) => setGwangsan(v.replace(/[^0-9]/g, '')), []);
+  const handleGwangsanChange = useCallback(
+    (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
+    []
+  );
   const handleImagesChange = useCallback((v: string[]) => setImages(v), []);
 
   const handleCompletePress = async () => {
