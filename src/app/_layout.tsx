@@ -1,10 +1,13 @@
 import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import '../../global.css';
+import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
 
 export default function RootLayout() {
+  const fontsLoaded = useCustomFonts();
+  if (!fontsLoaded) return null;
   return (
-    <View className="flex-1 bg-white">
+    <View className="mb-6 mt-12 flex-1 bg-white">
       <Stack
         screenOptions={{
           headerShown: false,
