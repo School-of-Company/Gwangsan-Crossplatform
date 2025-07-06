@@ -4,6 +4,10 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import ItemFormHeader from '~/entity/product/itemForm/ui/ItemFormHeader';
 import { LastStepButton, NextButton } from '~/entity/product/itemForm';
 import { ItemFormConfirm, ItemFormContents, ItemFormGwangsan } from '~/widget/product/itemForm';
+import {
+  createItemFormRequestBody,
+  itemFormSchema,
+} from '~/entity/product/itemForm/model/itemFormSchema';
 
 const ItemFormPage = ({ type, mode }: { type: string; mode: string }) => {
   const [step, setStep] = useState(1);
@@ -62,13 +66,35 @@ const ItemFormPage = ({ type, mode }: { type: string; mode: string }) => {
               {step === 3 && (
                 <LastStepButton
                   onEditPress={() => setStep(1)}
-                  onCompletePress={() => {
-                    console.log('=== 상품 등록 완료 ===');
-                    console.log('제목:', title);
-                    console.log('내용:', content);
-                    console.log('광산:', gwangsan);
-                    console.log('이미지:', images);
-                    console.log('==================');
+                  onCompletePress={async () => {
+                    try {
+                      const formData = {
+                        type,
+                        mode,
+                        title,
+                        content,
+                        gwangsan,
+                        images,
+                      };
+
+                      const validatedData = itemFormSchema.parse({
+                        type,
+                        mode,
+                        title,
+                        content,
+                        gwangsan: parseInt(gwangsan, 10),
+                        imageIds: images.length > 0 ? [] : undefined,
+                      });
+
+                      const requestBody = createItemFormRequestBody(formData);
+
+                      console.log('=== 상품 등록 완료 ===');
+                      console.log('검증된 데이터:', validatedData);
+                      console.log('요청 body:', requestBody);
+                      console.log('==================');
+                    } catch (error) {
+                      console.error('폼 검증 오류:', error);
+                    }
                   }}
                 />
               )}
