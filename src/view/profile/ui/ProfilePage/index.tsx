@@ -1,4 +1,4 @@
-import { ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Light from '~/entity/profile/ui/\bLight/\bindex';
 import Gwangsan from '~/entity/profile/ui/Gwangsan';
@@ -9,7 +9,7 @@ import ReviewList from '~/widget/profile/ui/reviewList';
 
 export default function ProfilePageView() {
   return (
-    <View className="flex-1 justify-between bg-gray-100">
+    <SafeAreaView className="flex-1 justify-between bg-white">
       <View className="flex  w-full flex-row justify-between bg-white px-6 text-center">
         <View className="size-6"></View>
         <Text className="text-body1">프로필</Text>
@@ -25,6 +25,6 @@ export default function ProfilePageView() {
         <ReviewList />
       </ScrollView>
       <Footer />
-    </View>
+    </SafeAreaView>
   );
 }
