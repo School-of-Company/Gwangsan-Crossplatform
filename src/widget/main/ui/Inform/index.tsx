@@ -23,7 +23,7 @@ export default function Inform() {
     <View className="flex gap-2 bg-white p-7">
       <Text className="text-titleSmall">광산구도시재생센터</Text>
       <Text className=" text-body2">수완세영</Text>
-      <View className="flex w-full flex-row items-center justify-around">
+      <View className="flex w-full flex-row items-center justify-around pb-10">
         <View style={styles.commonCard} className="flex h-full justify-between gap-5">
           <Ionicons name="bag-outline" size={44} color="black" />
           <Text className="font-cafe24 text-3xl">물건</Text>
