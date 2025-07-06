@@ -7,7 +7,15 @@ import {
 } from '~/entity/product/itemForm/model/itemFormSchema';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
 
-const ItemFormPage = ({ type, mode }: { type: string; mode: string }) => {
+const ItemFormPage = ({
+  type,
+  mode,
+  headerTitle,
+}: {
+  type: string;
+  mode: string;
+  headerTitle: string;
+}) => {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -57,7 +65,7 @@ const ItemFormPage = ({ type, mode }: { type: string; mode: string }) => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white">
-      <ItemFormHeader step={step} />
+      <ItemFormHeader headerTitle={headerTitle} step={step} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}

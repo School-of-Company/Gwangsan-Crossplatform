@@ -3,13 +3,13 @@ import { useEffect, useRef } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface ItemFormHeaderProps {
-  title?: string;
+  headerTitle: string;
   onBack?: () => void;
   onClose?: () => void;
   step: number;
 }
 
-const ItemFormHeader = ({ title = '필요해요', onBack, onClose, step }: ItemFormHeaderProps) => {
+const ItemFormHeader = ({ headerTitle, onBack, onClose, step }: ItemFormHeaderProps) => {
   const animatedValue = useRef(new Animated.Value(step)).current;
 
   useEffect(() => {
@@ -26,7 +26,7 @@ const ItemFormHeader = ({ title = '필요해요', onBack, onClose, step }: ItemF
         <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
           <Icon name="chevron-back" size={24} color="#8F9094" />
         </TouchableOpacity>
-        <Text className="flex-1 text-center text-body2 text-black">{title}</Text>
+        <Text className="flex-1 text-center text-body2 text-black">{headerTitle}</Text>
         <TouchableOpacity onPress={onClose} className="w-10 items-center justify-center">
           <Icon name="close" size={24} color="#8F9094" />
         </TouchableOpacity>
