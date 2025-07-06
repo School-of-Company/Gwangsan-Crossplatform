@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
-import ItemFormHeader from '~/entity/product/itemForm/ui/ItemFormHeader';
+import { Header } from '@/shared/ui';
+import { ItemFormProgressBar } from '~/entity/product/itemForm';
 import {
   createItemFormRequestBody,
   itemFormSchema,
@@ -65,7 +66,8 @@ const ItemFormPage = ({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white">
-      <ItemFormHeader headerTitle={headerTitle} step={step} />
+      <Header headerTitle={headerTitle} />
+      <ItemFormProgressBar step={step} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}
