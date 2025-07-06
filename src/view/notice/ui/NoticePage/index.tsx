@@ -1,10 +1,12 @@
 import { View, ScrollView } from 'react-native';
 import { NoticeItem } from '@/widget/notice';
+import { Header } from '@/shared/ui';
 import { noticeListMock } from '@/widget/notice/mock/noticeDataMock';
 
 const NoticePage = () => {
   return (
     <View className="flex-1 bg-white">
+      <Header headerTitle="공지사항" />
       <ScrollView className="flex-1 px-4 py-4">
         {noticeListMock.map((notice) => (
           <NoticeItem
