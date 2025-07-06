@@ -1,3 +1,2 @@
-export { default as ItemFormContents } from './ui/ItemFormContents';
-export { default as ItemFormGwangsan } from './ui/ItemFormGwangsan';
-export { default as ItemFormConfirm } from './ui/ItemFormConfirm';
+export { default as ItemFormRenderContent } from './ui/ItemFormRenderContent';
+export { default as ItemFormRenderButton } from './ui/ItemFormRenderButton';

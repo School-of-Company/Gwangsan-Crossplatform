@@ -1,6 +1,7 @@
 import { View, TouchableOpacity, Image, Alert, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
+import { memo } from 'react';
 
 interface Props {
   images?: string[];
@@ -64,4 +65,4 @@ const ImageUploader = ({ images = [], onImagesChange, readonly = false }: Props)
   );
 };
 
-export default ImageUploader;
+export default memo(ImageUploader);

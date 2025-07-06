@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { Input } from '~/shared/ui/Input';
+import { memo } from 'react';
 
 interface Props {
   gwangsan: string;
@@ -22,4 +23,4 @@ const ItemFormGwangsan = ({ gwangsan, readonly = false, onGwangsanChange }: Prop
   );
 };
 
-export default ItemFormGwangsan;
+export default memo(ItemFormGwangsan);
