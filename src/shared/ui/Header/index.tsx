@@ -8,15 +8,8 @@ interface Props {
 }
 
 export function Header({ onBack, headerTitle }: Props) {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View
-      className="flex-row items-center justify-between bg-white px-3"
-      style={{
-        height: 56 + insets.top,
-        paddingTop: insets.top,
-      }}>
+    <View className="android:pt-10 flex-row items-center justify-between bg-white px-3" style={{}}>
       <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
