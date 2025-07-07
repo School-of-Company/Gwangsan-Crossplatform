@@ -8,8 +8,20 @@ export default function TransactionPageView() {
     <SafeAreaView className="android:pt-10 h-full bg-white">
       <Header headerTitle="서비스" />
       <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2">
-        <Text className="rounded-[32px] bg-white px-[60px] py-[6px]">해주세요</Text>
-        <Text className="rounded-[32px] px-[60px] py-[6px]">할 수 있어요</Text>
+        <Text
+          onPress={() => setCategory('해주세요')}
+          className={`rounded-[32px] px-[60px] py-[6px] ${
+            category === '해주세요' ? 'bg-white' : 'bg-transparent'
+          }`}>
+          해주세요
+        </Text>
+        <Text
+          onPress={() => setCategory('할 수 있어요')}
+          className={`rounded-[32px] px-[60px] py-[6px] ${
+            category === '할 수 있어요' ? 'bg-white' : 'bg-transparent'
+          }`}>
+          할 수 있어요
+        </Text>
       </View>
     </SafeAreaView>
   );
