@@ -9,7 +9,7 @@ import ReviewList from '~/widget/profile/ui/reviewList';
 
 export default function ProfilePageView() {
   return (
-    <SafeAreaView className="flex-1 justify-between bg-white">
+    <SafeAreaView className="android:pt-10 flex-1 justify-between bg-white">
       <View className="flex  w-full flex-row justify-between bg-white px-6 text-center">
         <View className="size-6"></View>
         <Text className="text-body1">프로필</Text>
