@@ -10,9 +10,9 @@ interface ReportModalProps {
   onClose: () => void;
   onSubmit: (type: string, reason: string) => void;
   reportType: string | null;
-  reason: string;
+  contents: string;
   onReportTypeChange: (type: string | null) => void;
-  onReasonChange: (reason: string) => void;
+  onContentsChange: (reason: string) => void;
 }
 
 const ReportModal = ({
@@ -20,17 +20,17 @@ const ReportModal = ({
   onClose,
   onSubmit,
   reportType,
-  reason,
+  contents,
   onReportTypeChange,
-  onReasonChange,
+  onContentsChange,
 }: ReportModalProps) => {
-  const isDisabled = !reportType || reason.trim().length === 0;
+  const isDisabled = !reportType || contents.trim().length === 0;
 
   const handleSubmit = () => {
-    if (reportType && reason.trim()) {
-      onSubmit(reportType, reason.trim());
+    if (reportType && contents.trim()) {
+      onSubmit(reportType, contents.trim());
       onReportTypeChange(null);
-      onReasonChange('');
+      onContentsChange('');
     }
   };
 
@@ -50,8 +50,8 @@ const ReportModal = ({
           <TextField
             label="신고사유"
             placeholder="신고사유를 입력해주세요"
-            value={reason}
-            onChangeText={onReasonChange}
+            value={contents}
+            onChangeText={onContentsChange}
             multiline
             style={{ maxHeight: maxTextFieldHeight }}
           />

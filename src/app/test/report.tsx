@@ -5,7 +5,7 @@ import ReportModal from '~/entity/posts/ui/ReportModal';
 export default function Report() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [reportType, setReportType] = useState<string | null>(null);
-  const [reason, setReason] = useState('');
+  const [contents, setContents] = useState('');
 
   const handleOpenModal = () => {
     setIsModalVisible(true);
@@ -14,7 +14,7 @@ export default function Report() {
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setReportType('');
-    setReason('');
+    setContents('');
   };
 
   const handleSubmitReport = (type: string, reason: string) => {
@@ -39,9 +39,9 @@ export default function Report() {
         onClose={handleCloseModal}
         onSubmit={handleSubmitReport}
         reportType={reportType}
-        reason={reason}
+        contents={contents}
         onReportTypeChange={setReportType}
-        onReasonChange={setReason}
+        onContentsChange={setContents}
       />
     </View>
   );

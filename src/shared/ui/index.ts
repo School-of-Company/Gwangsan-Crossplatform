@@ -5,3 +5,4 @@ export { ErrorMessage } from './ErrorMessage';
 export { Footer } from './Footer';
 export { Header } from './Header';
 export { BottomSheetModalWrapper } from './BottomSheetModalWrapper';
+export { default as ProgressBar } from './ProgressBar';
