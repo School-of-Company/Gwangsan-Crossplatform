@@ -1,11 +1,10 @@
 import { View, Text, ScrollView } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { noticeListMock } from '@/widget/notice/mock/noticeDataMock';
 import { Header } from '@/shared/ui';
 import { NoticeDetailSlideViewer } from '@/widget/notice';
 
 const NoticeDetailPage = () => {
-  const router = useRouter();
   const { id } = useLocalSearchParams();
 
   const notice = noticeListMock.find((item) => item.id === Number(id));
