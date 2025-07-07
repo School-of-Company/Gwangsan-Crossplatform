@@ -5,7 +5,7 @@ import { Inform, MainSlideViewer } from '~/widget/main';
 
 export default function MainPageView() {
   return (
-    <View className="flex h-full bg-white">
+    <View className="ios:pt-16 android:pt-4 flex h-full bg-white">
       <Header />
       <ScrollView className="flex-1">
         <MainSlideViewer />

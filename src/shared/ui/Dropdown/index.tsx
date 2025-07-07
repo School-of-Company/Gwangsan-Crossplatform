@@ -7,6 +7,7 @@ interface DropdownProps<T extends string> {
   items: T[];
   placeholder?: string;
   selectedItem?: T;
+  width?: string;
   onSelect?: (item: T) => void;
 }
 
@@ -16,15 +17,16 @@ export function Dropdown<T extends string>({
   placeholder,
   selectedItem,
   onSelect,
+  width = 'full',
 }: DropdownProps<T>) {
   const [show, setShow] = useState(false);
   const [selected, setSelected] = useState<T | null>(selectedItem || null);
 
   return (
-    <View className="relative flex w-full gap-2">
+    <View className={`${width} relative flex gap-2`}>
       {label && <Text>{label}</Text>}
       <TouchableOpacity
-        className={`w-full rounded-xl border ${show ? 'border-sub2-500' : 'border-gray-400'} px-4 py-5 text-body5`}
+        className={`rounded-xl border ${show ? 'border-sub2-500' : 'border-gray-400'} px-4 py-5 text-body5`}
         onPress={() => setShow((prev) => !prev)}>
         <View className="flex-row items-center justify-between">
           <Text>{selectedItem || selected || placeholder || '선택해주세요'}</Text>
@@ -32,7 +34,7 @@ export function Dropdown<T extends string>({
         </View>
       </TouchableOpacity>
       {show && (
-        <View className="absolute top-24 z-10 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 transition last:border-b-0">
+        <View className="absolute top-16 z-10 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 transition last:border-b-0">
           {items.map((v, i) => (
             <Text
               key={v}
