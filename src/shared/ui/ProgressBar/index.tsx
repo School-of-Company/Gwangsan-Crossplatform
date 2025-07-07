@@ -51,12 +51,6 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
 
   const thumbPosition = ((value - min) / (max - min)) * (sliderWidth - thumbSize);
 
-  if (sliderWidth === 0) {
-    return (
-      <View className="w-full px-4" onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)} />
-    );
-  }
-
   return (
     <View className="w-full" onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}>
       <Text className="text-label text-black">밝기</Text>
@@ -83,22 +77,24 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
             }}
           />
         </View>
-        <View
-          className="bg-whie absolute border-solid border-sub2-500 bg-white"
-          style={{
-            left: thumbPosition,
-            top: thumbTop,
-            width: thumbSize,
-            height: thumbSize,
-            borderRadius: thumbSize / 2,
-            borderWidth: 2,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            pointerEvents: 'none',
-          }}
-        />
+        {sliderWidth > 0 && (
+          <View
+            className="bg-whie absolute border-solid border-sub2-500 bg-white"
+            style={{
+              left: thumbPosition,
+              top: thumbTop,
+              width: thumbSize,
+              height: thumbSize,
+              borderRadius: thumbSize / 2,
+              borderWidth: 2,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
       </View>
     </View>
   );
