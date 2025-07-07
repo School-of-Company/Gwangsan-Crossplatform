@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { View, TouchableOpacity, Text, Dimensions } from 'react-native';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -16,6 +16,9 @@ export function BottomSheetModalWrapper({
   title,
   children,
 }: BottomSheetModalWrapperProps) {
+  const screenHeight = Dimensions.get('window').height;
+  const modalHeight = (screenHeight * 2) / 3;
+
   return (
     <Modal
       isVisible={isVisible}
@@ -25,7 +28,9 @@ export function BottomSheetModalWrapper({
       swipeDirection={['down']}
       onSwipeComplete={onClose}
       propagateSwipe>
-      <View className="min-h-[300px] rounded-t-[20px] bg-white px-6 pb-12 pt-8">
+      <View
+        className="rounded-t-[20px] bg-white px-6 pb-12 pt-8"
+        style={{ minHeight: modalHeight }}>
         <View className="relative mb-6 flex-row items-center justify-center">
           <Text className="flex-1 text-center text-body1">{title}</Text>
           <TouchableOpacity

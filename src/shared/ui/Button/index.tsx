@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, TouchableOpacityProps } from 'react-native';
 interface ButtonProps extends TouchableOpacityProps {
   children: React.ReactNode;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'error';
 }
 
 export const Button = ({
@@ -21,10 +21,14 @@ export const Button = ({
           disabled
             ? variant === 'primary'
               ? 'bg-[#CDCDCF]'
-              : 'border-2 border-[#CDCDCF] bg-white'
+              : variant === 'secondary'
+                ? 'border-2 border-[#CDCDCF] bg-white'
+                : 'bg-[#CDCDCF]'
             : variant === 'primary'
               ? 'bg-[#8FC31D]'
-              : 'border-2 border-[#8FC31D] bg-white active:bg-gray-50'
+              : variant === 'secondary'
+                ? 'border-2 border-[#8FC31D] bg-white active:bg-gray-50'
+                : 'bg-[#DF454A]'
         }
       `}
       disabled={disabled}
@@ -33,7 +37,15 @@ export const Button = ({
       <Text
         className={`
         text-lg font-semibold
-        ${disabled ? 'text-gray-500' : variant === 'primary' ? 'text-white' : 'text-[#8FC31D]'}
+        ${
+          disabled
+            ? 'text-gray-500'
+            : variant === 'primary'
+              ? 'text-white'
+              : variant === 'secondary'
+                ? 'text-[#8FC31D]'
+                : 'text-white'
+        }
       `}>
         {children}
       </Text>
