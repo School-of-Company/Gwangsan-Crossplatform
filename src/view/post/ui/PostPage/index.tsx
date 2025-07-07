@@ -4,7 +4,7 @@ import { Button, Header } from '~/shared/ui';
 
 export default function PostPageView() {
   return (
-    <SafeAreaView className="h-full bg-white pt-14">
+    <SafeAreaView className="h-full bg-white">
       <Header headerTitle="해주세요" />
       <ScrollView>
         <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
@@ -17,11 +17,11 @@ export default function PostPageView() {
             준비되어 있습니다. (희망 날짜)에 가능하신 분 연락 주세요! 급여는 (금액)입니다.
           </Text>
           <Text className="mb-24 mt-[25px] text-error-500 underline">이 게시글 신고하기</Text>
-          <View className="w-full flex-row gap-4">
-            <Button variant="secondary" className="w-1/2">
+          <View className="w-full flex-row justify-center gap-4">
+            <Button variant="secondary" width="w-1/2">
               채팅하기
             </Button>
-            <Button variant="primary" className="w-1/2">
+            <Button variant="primary" width="w-1/2">
               거래완료
             </Button>
           </View>
