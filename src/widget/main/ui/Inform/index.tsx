@@ -1,4 +1,5 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -18,20 +19,30 @@ const styles = StyleSheet.create({
   },
 });
 
+const handlePress = (where: string) => {
+  router.push('/transaction?type=' + where);
+};
+
 export default function Inform() {
   return (
     <View className="flex gap-2 bg-white p-7">
       <Text className="text-titleSmall">광산구도시재생센터</Text>
       <Text className=" text-body2">수완세영</Text>
       <View className="flex w-full flex-row items-center justify-around pb-10">
-        <View style={styles.commonCard} className="flex h-full justify-between gap-5">
+        <TouchableOpacity
+          onPress={() => handlePress('object')}
+          style={styles.commonCard}
+          className="flex h-full justify-between gap-5">
           <Ionicons name="bag-outline" size={44} color="black" />
           <Text className="font-cafe24 text-3xl">물건</Text>
-        </View>
-        <View style={styles.commonCard} className="flex items-center justify-between gap-5">
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handlePress('service')}
+          style={styles.commonCard}
+          className="flex items-center justify-between gap-5">
           <MaterialCommunityIcons name="headset" size={44} color="black" />
           <Text className="font-cafe24 text-3xl">서비스</Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
