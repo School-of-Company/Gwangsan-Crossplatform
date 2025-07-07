@@ -46,7 +46,7 @@ export default function SpecialtiesDropdown<T extends string>({
   const displayText = multiSelect.displayText || placeholder || '선택해주세요';
 
   return (
-    <View className="relative flex w-full">
+    <View className="gap relative flex w-full gap-2">
       {label && <Text>{label}</Text>}
       <TouchableOpacity
         className="w-full rounded-xl border border-yellow-400 bg-white px-5 py-5"
