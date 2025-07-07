@@ -16,7 +16,7 @@ export default function NicknameStep() {
 
   const handleBack = () => {
     resetStore();
-    router.replace('/main');
+    router.replace('/onboarding');
   };
 
   const validateAndNext = () => {
