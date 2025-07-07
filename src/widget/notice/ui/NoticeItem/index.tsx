@@ -8,10 +8,10 @@ interface NoticeItemProps {
   content: string;
   createdAt: string;
   role: string;
-  images: Array<{
+  images: {
     imageId: number;
     imageUrl: string;
-  }>;
+  }[];
 }
 
 const NoticeItem = ({ id, title, content, createdAt, images }: NoticeItemProps) => {
