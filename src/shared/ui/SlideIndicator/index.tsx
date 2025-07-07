@@ -26,4 +26,4 @@ const SlideIndicator = ({ total, current, onPress }: SlideIndicatorProps) => (
   </View>
 );
 
-export default SlideIndicator;
+export { SlideIndicator };
