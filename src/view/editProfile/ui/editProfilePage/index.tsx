@@ -1,0 +1,24 @@
+import { SafeAreaView, ScrollView, View } from 'react-native';
+import { SpecialtiesDropdown } from '~/entity/signup';
+import { Button, Header, Input } from '~/shared/ui';
+import { TextField } from '~/shared/ui/TextField';
+
+export default function EditProfilePageView() {
+  return (
+    <SafeAreaView className="android:pt-10 h-full bg-white">
+      <Header headerTitle="프로필 수정" />
+
+      <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingBottom: 100 }}>
+        <View className="mt-3 flex gap-5">
+          <Input label="별칭" />
+          <SpecialtiesDropdown items={[]} label="특기" />
+          <TextField label="자기소개" />
+        </View>
+      </ScrollView>
+
+      <View className="absolute bottom-6 left-6 right-6">
+        <Button>수정</Button>
+      </View>
+    </SafeAreaView>
+  );
+}
