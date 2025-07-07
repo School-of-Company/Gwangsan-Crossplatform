@@ -1,5 +1,5 @@
-import { View } from 'react-native';
+import { SigninPage } from '@/view/signin';
 
-export default function SigninPage() {
-  return <View></View>;
+export default function Signin() {
+  return <SigninPage />;
 }
