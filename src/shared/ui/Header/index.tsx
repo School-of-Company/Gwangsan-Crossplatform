@@ -12,7 +12,7 @@ export function Header({ onBack, headerTitle }: Props) {
       <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
-      <Text className="flex-1 text-center text-body2 text-black">{headerTitle}</Text>
+      <Text className="flex-1 text-center text-body1 text-black">{headerTitle}</Text>
       <View className="size-6" />
     </View>
   );
