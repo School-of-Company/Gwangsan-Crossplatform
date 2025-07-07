@@ -7,7 +7,7 @@ import { NoticeDetailSlideViewer } from '@/widget/notice';
 const NoticeDetailPage = () => {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  
+
   const notice = noticeListMock.find((item) => item.id === Number(id));
 
   if (!notice) {
@@ -24,9 +24,7 @@ const NoticeDetailPage = () => {
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1">
         <Header headerTitle="공지" />
-        {hasImages && (
-          <NoticeDetailSlideViewer notice={notice} />
-        )}
+        {hasImages && <NoticeDetailSlideViewer notice={notice} />}
 
         <View className="bg-white p-6">
           <Text className="mb-2 text-2xl font-bold text-black">{notice.title}</Text>

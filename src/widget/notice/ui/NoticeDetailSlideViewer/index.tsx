@@ -17,18 +17,17 @@ interface NoticeDetailSlideViewerProps {
 }
 
 const NoticeDetailSlideViewer = ({ notice }: NoticeDetailSlideViewerProps) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [current, setCurrent] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const handleIndicatorPress = (index: number) => {
     scrollViewRef.current?.scrollTo({ x: SCREEN_WIDTH * index, animated: true });
-    setCurrentImageIndex(index);
+    setCurrent(index);
   };
 
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
-    setCurrentImageIndex(newIndex);
+    setCurrent(Math.round(contentOffsetX / SCREEN_WIDTH));
   };
 
   return (
@@ -39,15 +38,14 @@ const NoticeDetailSlideViewer = ({ notice }: NoticeDetailSlideViewerProps) => {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScrollEnd}
-        scrollEventThrottle={16}
-      >
+        scrollEventThrottle={16}>
         {notice.images.map((image, index) => (
           <Image
             key={index}
             source={{ uri: image.imageUrl }}
             style={{
               width: SCREEN_WIDTH,
-              height: 256, // h-64 equivalent
+              height: 256,
             }}
             resizeMode="cover"
           />
@@ -58,7 +56,7 @@ const NoticeDetailSlideViewer = ({ notice }: NoticeDetailSlideViewerProps) => {
         <View className="absolute bottom-4 left-0 right-0">
           <SlideIndicator
             total={notice.images.length}
-            current={currentImageIndex}
+            current={current}
             onPress={handleIndicatorPress}
           />
         </View>
