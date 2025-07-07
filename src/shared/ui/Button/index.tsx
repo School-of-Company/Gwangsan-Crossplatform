@@ -11,7 +11,7 @@ export const Button = ({
   disabled = false,
   variant = 'primary',
   style,
-  className = "",
+  className = '',
   ...props
 }: ButtonProps) => {
   return (
