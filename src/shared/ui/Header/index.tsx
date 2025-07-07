@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   onBack?: () => void;
@@ -7,8 +8,16 @@ interface Props {
 }
 
 export function Header({ onBack, headerTitle }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View className="h-14 flex-row items-center justify-between bg-white px-3">
+    <View 
+      className="flex-row items-center justify-between bg-white px-3"
+      style={{ 
+        height: 56 + insets.top, 
+        paddingTop: insets.top 
+      }}
+    >
       <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
