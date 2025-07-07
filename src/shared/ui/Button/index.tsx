@@ -17,7 +17,7 @@ export const Button = ({
   return (
     <TouchableOpacity
       className={`
-        min-h-[56px] ${className} flex-1 items-center justify-center rounded-lg px-8 py-4
+        min-h-[56px] ${className} w-full items-center justify-center rounded-lg px-8 py-4
         ${
           disabled
             ? variant === 'primary'
