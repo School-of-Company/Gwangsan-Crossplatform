@@ -14,7 +14,7 @@ export function Footer() {
   const router = useRouter();
 
   return (
-    <View className="absolute bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 py-3">
+    <View className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 py-3">
       {FooterItem.map((v) => {
         const focused = pathname === v.pathname;
         return (
