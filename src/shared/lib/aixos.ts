@@ -14,8 +14,8 @@ export const instance = axios.create({
 });
 
 instance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getData('token');
+  async (config: InternalAxiosRequestConfig) => {
+    const token = await getData('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -37,7 +37,7 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = getData('refreshToken');
+        const refreshToken = await getData('refreshToken');
         if (!refreshToken) {
           throw new Error('No refresh token');
         }
