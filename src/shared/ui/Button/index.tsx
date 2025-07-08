@@ -4,6 +4,7 @@ interface ButtonProps extends TouchableOpacityProps {
   children: React.ReactNode;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'error';
+  width?: string;
 }
 
 export const Button = ({
@@ -11,12 +12,13 @@ export const Button = ({
   disabled = false,
   variant = 'primary',
   style,
+  width = 'w-full',
   ...props
 }: ButtonProps) => {
   return (
     <TouchableOpacity
       className={`
-        min-h-[56px] w-full items-center justify-center rounded-lg px-8 py-4
+        min-h-[56px] ${width} items-center justify-center rounded-lg px-8 py-4
         ${
           disabled
             ? variant === 'primary'
