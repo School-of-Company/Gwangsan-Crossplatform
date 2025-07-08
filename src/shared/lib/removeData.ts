@@ -3,7 +3,7 @@ import Toast from 'react-native-toast-message';
 
 export const removeData = async (name: string) => {
   try {
-    AsyncStorage.removeItem(name);
+    await AsyncStorage.removeItem(name);
   } catch (e) {
     Toast.show({
       type: 'error',

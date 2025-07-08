@@ -3,7 +3,7 @@ import Toast from 'react-native-toast-message';
 
 export const getData = async (name: string) => {
   try {
-    return AsyncStorage.getItem(name);
+    return await AsyncStorage.getItem(name);
   } catch (e) {
     Toast.show({
       type: 'error',
