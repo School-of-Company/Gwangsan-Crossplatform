@@ -10,5 +10,7 @@ export const removeData = async (name: string) => {
       text1: '오류 발생',
       text2: `데이터를 삭제하는 중 오류가 발생했습니다`,
     });
+
+    throw e;
   }
 };

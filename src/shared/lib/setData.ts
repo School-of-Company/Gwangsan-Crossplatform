@@ -10,5 +10,7 @@ export const setData = async (name: string, data: string) => {
       text1: '오류 발생',
       text2: `데이터를 저장하는 중 오류가 발생했습니다`,
     });
+
+    throw e;
   }
 };
