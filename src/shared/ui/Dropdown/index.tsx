@@ -24,7 +24,7 @@ export function Dropdown<T extends string>({
 
   return (
     <View className={`${width} relative flex gap-2`}>
-      {label && <Text>{label}</Text>}
+      {label && <Text className="text-label text-black">{label}</Text>}
       <TouchableOpacity
         className={`rounded-xl border ${show ? 'border-sub2-500' : 'border-gray-400'} px-4 py-5 text-body5`}
         onPress={() => setShow((prev) => !prev)}>
@@ -34,7 +34,7 @@ export function Dropdown<T extends string>({
         </View>
       </TouchableOpacity>
       {show && (
-        <View className="absolute top-16 z-10 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 transition last:border-b-0">
+        <View className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 transition last:border-b-0">
           {items.map((v, i) => (
             <Text
               key={v}
