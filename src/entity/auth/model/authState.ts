@@ -22,7 +22,7 @@ type SignupFormData = {
   place: string;
   specialties: string[];
   recommender: string;
-} & Readonly<Record<string, string>>;
+};
 
 type SigninFormData = {
   nickname: string;

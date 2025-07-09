@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { SigninState } from '~/entity/signup/model/authState';
-import { getNextStep, getPrevStep } from '@/entity/signin/lib/getStep';
+import { SigninState } from '~/entity/auth/model/authState';
+import { getNextSigninStep, getPrevSigninStep } from '~/entity/auth/lib/getStep';
 
 const INITIAL_FORM_DATA: SigninState['formData'] = {
   nickname: '',
@@ -16,11 +16,11 @@ export const useSigninStore = create<SigninState>((set) => ({
     })),
   nextStep: () =>
     set((state) => ({
-      currentStep: getNextStep(state.currentStep),
+      currentStep: getNextSigninStep(state.currentStep),
     })),
   prevStep: () =>
     set((state) => ({
-      currentStep: getPrevStep(state.currentStep),
+      currentStep: getPrevSigninStep(state.currentStep),
     })),
   goToStep: (step: SigninState['currentStep']) => set({ currentStep: step }),
   resetStore: () =>

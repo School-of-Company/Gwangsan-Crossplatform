@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SigninForm from '@/entity/signin/ui/SigninForm';
-import { useFormField, useStepNavigation } from '~/entity/signin/model/useSigninSelectors';
-import { nicknameSchema } from '~/entity/signup/model/authSchema';
+import SigninForm from '~/entity/auth/ui/SigninForm';
+import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useSignupSelectors';
+import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 
 export default function NicknameStep() {
-  const { value: initialNickname, updateField } = useFormField('nickname');
-  const { nextStep, resetStore } = useStepNavigation();
+  const { value: initialNickname, updateField } = useSigninFormField('nickname');
+  const { nextStep, resetStore } = useSigninStepNavigation();
   const [nickname, setNickname] = useState(initialNickname);
   const [error, setError] = useState<string | null>(null);
 

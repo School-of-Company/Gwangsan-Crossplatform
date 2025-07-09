@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
+import SignupForm from '~/entity/auth/ui/SignupForm';
+import { useFormField, useStepNavigation } from '~/entity/auth/model/useSignupSelectors';
 import { PLACE } from '@/shared/consts/place';
 import { View } from 'react-native';
 

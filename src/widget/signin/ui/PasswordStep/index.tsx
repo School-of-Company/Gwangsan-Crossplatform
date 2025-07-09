@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SigninForm from '@/entity/signin/ui/SigninForm';
-import { useFormField, useStepNavigation } from '~/entity/signin/model/useSigninSelectors';
-import { passwordSchema } from '~/entity/signup/model/authSchema';
+import SigninForm from '~/entity/auth/ui/SigninForm';
+import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useSignupSelectors';
+import { passwordSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 
 export default function PasswordStep() {
-  const { value: initialPassword, updateField } = useFormField('password');
-  const { resetStore } = useStepNavigation();
+  const { value: initialPassword, updateField } = useSigninFormField('password');
+  const { resetStore } = useSigninStepNavigation();
   const [password, setPassword] = useState(initialPassword);
   const [error, setError] = useState<string | null>(null);
 
