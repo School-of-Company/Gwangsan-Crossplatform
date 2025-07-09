@@ -16,7 +16,7 @@ export default function TransactionPageView() {
 
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white">
-      <Header headerTitle="서비스" />
+      <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
       <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center justify-between rounded-[30px] bg-sub2-300 px-2">
         {(handleCategory(type as TYPE) ?? []).map((v) => {
           return (
