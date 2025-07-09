@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ImageType } from '~/shared/types/imageType';
 
 interface NoticeItemProps {
   id: number;
@@ -8,10 +9,7 @@ interface NoticeItemProps {
   content: string;
   createdAt: string;
   role: string;
-  images: {
-    imageId: number;
-    imageUrl: string;
-  }[];
+  images: ImageType[];
 }
 
 const NoticeItem = ({ id, title, content, createdAt, images }: NoticeItemProps) => {

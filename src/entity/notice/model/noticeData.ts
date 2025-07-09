@@ -1,7 +1,4 @@
-export interface NoticeImage {
-  imageId: number;
-  imageUrl: string;
-}
+import { ImageType } from '~/shared/types/imageType';
 
 export interface NoticeData {
   id: number;
@@ -10,5 +7,5 @@ export interface NoticeData {
   place: string;
   createdAt: string;
   role: string;
-  images: NoticeImage[];
+  images: ImageType[];
 }
