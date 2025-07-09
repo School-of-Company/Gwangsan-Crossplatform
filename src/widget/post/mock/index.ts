@@ -1,0 +1,1 @@
+export { postListMock } from './postDataMock'; 
