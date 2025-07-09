@@ -4,7 +4,7 @@ import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '@/entity/signup/ui/SignupForm';
 import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
-import { phoneSchema, verificationCodeSchema } from '~/entity/signup/model/signupSchema';
+import { phoneSchema, verificationCodeSchema } from '~/entity/signup/model/authSchema';
 import { Text, View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 
