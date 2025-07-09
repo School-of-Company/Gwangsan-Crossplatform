@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useSignupStore } from '@/shared/store/useSignupStore';
-import type { SignupState } from './signupState';
+import type { SignupState } from './authState';
 
 export const useCurrentStep = () => {
   return useSignupStore((state) => state.currentStep);

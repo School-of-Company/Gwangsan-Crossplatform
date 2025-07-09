@@ -1,4 +1,4 @@
-import type { SignupState } from '~/entity/signup/model/signupState';
+import type { SignupState } from '~/entity/signup/model/authState';
 
 const SIGNUP_STEPS: readonly SignupState['currentStep'][] = [
   'name',

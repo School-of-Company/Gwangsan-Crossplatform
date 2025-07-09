@@ -1,4 +1,4 @@
-import type { SigninState } from '~/entity/signin/model/signinState';
+import type { SigninState } from '~/entity/signup/model/authState';
 
 const SIGNIN_STEPS: readonly SigninState['currentStep'][] = ['nickname', 'password'] as const;
 

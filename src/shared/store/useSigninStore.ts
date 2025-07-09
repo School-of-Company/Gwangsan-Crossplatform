@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SigninState } from '@/entity/signin/model/signinState';
+import { SigninState } from '~/entity/signup/model/authState';
 import { getNextStep, getPrevStep } from '@/entity/signin/lib/getStep';
 
 const INITIAL_FORM_DATA: SigninState['formData'] = {
