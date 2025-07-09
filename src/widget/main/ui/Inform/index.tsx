@@ -30,14 +30,14 @@ export default function Inform() {
       <Text className=" text-body2">수완세영</Text>
       <View className="flex w-full flex-row items-center justify-around pb-10">
         <TouchableOpacity
-          onPress={() => handlePress('object')}
+          onPress={() => handlePress('OBJECT')}
           style={styles.commonCard}
           className="flex h-full justify-between gap-5">
           <Ionicons name="bag-outline" size={44} color="black" />
           <Text className="font-cafe24 text-3xl">물건</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => handlePress('service')}
+          onPress={() => handlePress('SERVICE')}
           style={styles.commonCard}
           className="flex items-center justify-between gap-5">
           <MaterialCommunityIcons name="headset" size={44} color="black" />
