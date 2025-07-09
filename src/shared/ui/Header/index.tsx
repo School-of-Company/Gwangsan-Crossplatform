@@ -8,7 +8,7 @@ interface Props {
 
 export function Header({ onBack, headerTitle }: Props) {
   return (
-    <View className="android:pt-10 flex-row items-center justify-between bg-white px-3" style={{}}>
+    <View className="flex-row items-center justify-between px-3 py-6">
       <TouchableOpacity onPress={onBack} className="w-10 items-center justify-center">
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
