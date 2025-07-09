@@ -7,7 +7,7 @@ export default function Post(data: PostType) {
   const router = useRouter();
   const handlePress = useCallback(() => {
     router.push('/post/' + data.id);
-  }, [router]);
+  }, [router, data.id]);
   return (
     <TouchableOpacity onPress={handlePress} className="flex flex-row items-center gap-6 px-6 py-4">
       {data.imageUrls.length > 0 ? (
