@@ -8,14 +8,29 @@ module.exports = defineConfig([
     ignores: ['dist/*'],
   },
   {
+    settings: {
+      'import/resolver': {
+        'babel-module': {
+          root: ['./src'],
+          alias: {
+            '~': ['./src'],
+            '@/app': ['./src/app'],
+            '@/shared': ['./src/shared'],
+            '@/entity': ['./src/entity'],
+            '@/view': ['./src/view'],
+            '@/widget': ['./src/widget'],
+          },
+        },
+      },
+    },
     rules: {
       'react/display-name': 'off',
       'import/no-unresolved': [
         'error',
         {
-          ignore: ['^@env$']
-        }
-      ]
+          ignore: ['^@env$'],
+        },
+      ],
     },
   },
 ]);
