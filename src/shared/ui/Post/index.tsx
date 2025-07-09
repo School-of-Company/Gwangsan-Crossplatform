@@ -16,7 +16,7 @@ export default function Post(data: PostType) {
             <Image
               key={image.imageId}
               source={
-                image.imageUrl.startsWith('http') 
+                image.imageUrl.startsWith('http')
                   ? { uri: image.imageUrl }
                   : require('~/shared/assets/png/defaultProfile.png')
               }

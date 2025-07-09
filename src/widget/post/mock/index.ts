@@ -1,1 +1,1 @@
-export { postListMock } from './postDataMock'; 
+export { postListMock } from './postDataMock';

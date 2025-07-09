@@ -11,9 +11,9 @@ export const postListMock: PostType[] = [
     imageUrls: [
       {
         imageId: 1,
-        imageUrl: 'https://picsum.photos/200/200?random=1'
-      }
-    ]
+        imageUrl: 'https://picsum.photos/200/200?random=1',
+      },
+    ],
   },
   {
     id: 2,
@@ -22,7 +22,7 @@ export const postListMock: PostType[] = [
     title: '맥북 필요해요',
     content: '나도 IOS 개발 좀 해보자',
     gwangsan: 200,
-    imageUrls: []
+    imageUrls: [],
   },
   {
     id: 3,
@@ -34,9 +34,9 @@ export const postListMock: PostType[] = [
     imageUrls: [
       {
         imageId: 2,
-        imageUrl: 'https://picsum.photos/200/200?random=2'
-      }
-    ]
+        imageUrl: 'https://picsum.photos/200/200?random=2',
+      },
+    ],
   },
   {
     id: 4,
@@ -45,6 +45,6 @@ export const postListMock: PostType[] = [
     title: '영어 회화 도움 받고 싶어요',
     content: '토익 스피킹 시험 준비 중입니다.',
     gwangsan: 220,
-    imageUrls: []
-  }
-]; 
+    imageUrls: [],
+  },
+];
