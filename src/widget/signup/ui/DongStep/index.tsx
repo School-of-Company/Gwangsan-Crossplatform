@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useSignupSelectors';
+import SignupForm from '~/entity/auth/ui/SignupForm';
+import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { DONG } from '@/shared/consts/dong';

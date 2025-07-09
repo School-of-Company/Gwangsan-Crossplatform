@@ -2,9 +2,9 @@ import { useState, useRef } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useSignupSelectors';
-import { phoneSchema, verificationCodeSchema } from '~/entity/auth/model/authSchema';
+import SignupForm from '~/entity/auth/ui/SignupForm';
+import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { phoneSchema, verificationCodeSchema } from '~/entity/auth/model/authSchema';
 import { Text, View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 

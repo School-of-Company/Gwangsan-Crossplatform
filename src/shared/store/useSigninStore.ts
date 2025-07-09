@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { SigninState } from '~/entity/auth/model/authState';
-import { getNextSigninStep, getPrevSigninStep } from '~/entity/auth/lib/getStep';
+import { SigninState } from '~/entity/auth/model/authState';
+import { getNextSigninStep, getPrevSigninStep } from '~/entity/auth/lib/getStep';
 
 const INITIAL_FORM_DATA: SigninState['formData'] = {
   nickname: '',

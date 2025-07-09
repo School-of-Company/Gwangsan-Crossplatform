@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
-import { useStepNavigation } from '../../model/useSignupSelectors';
+import { useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 
 interface SignupFormProps {

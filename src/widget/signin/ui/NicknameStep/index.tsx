@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SigninForm from '~/entity/auth/ui/SigninForm';
-import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useSignupSelectors';
-import { nicknameSchema } from '~/entity/auth/model/authSchema';
+import SigninForm from '~/entity/auth/ui/SigninForm';
+import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
