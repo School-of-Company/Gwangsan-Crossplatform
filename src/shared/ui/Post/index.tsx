@@ -15,7 +15,11 @@ export default function Post(data: PostType) {
           return (
             <Image
               key={image.imageId}
-              source={require(image.imageUrl)}
+              source={
+                image.imageUrl.startsWith('http') 
+                  ? { uri: image.imageUrl }
+                  : require('~/shared/assets/png/defaultProfile.png')
+              }
               className="size-20 rounded-lg"
             />
           );
