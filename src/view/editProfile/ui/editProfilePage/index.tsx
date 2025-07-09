@@ -1,5 +1,5 @@
 import { SafeAreaView, ScrollView, View } from 'react-native';
-import { SpecialtiesDropdown } from '~/entity/auth';
+import { SpecialtiesDropdown } from '~/entity/auth';
 import { Button, Header, Input } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 

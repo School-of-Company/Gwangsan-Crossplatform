@@ -1,7 +1,7 @@
 import { memo } from 'react';
-import { useSigninCurrentStep } from '~/entity/auth/model/useSignupSelectors';
+import { useSigninCurrentStep } from '~/entity/auth/model/useAuthSelectors';
 import { NicknameStep, PasswordStep } from '@/widget/signin';
-import type { SigninState } from '~/entity/auth/model/authState';
+import type { SigninState } from '~/entity/auth/model/authState';
 
 const STEP_COMPONENTS: Record<SigninState['currentStep'], React.ComponentType> = {
   nickname: NicknameStep,

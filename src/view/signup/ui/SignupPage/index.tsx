@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useSignupCurrentStep } from '~/entity/auth/model/useSignupSelectors';
+import { useSignupCurrentStep } from '~/entity/auth/model/useAuthSelectors';
 import {
   NameStep,
   NicknameStep,

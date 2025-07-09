@@ -1,8 +1,8 @@
 import { useState, memo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useSignupSelectors';
+import SignupForm from '~/entity/auth/ui/SignupForm';
+import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 
