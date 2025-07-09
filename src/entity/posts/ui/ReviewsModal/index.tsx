@@ -1,3 +1,4 @@
+import React, { useMemo, useCallback } from 'react';
 import { View, Dimensions } from 'react-native';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
@@ -11,6 +12,7 @@ interface ReviewsModalProps {
   setLight: (v: number) => void;
   contents: string;
   onContentsChange: (contents: string) => void;
+  onAnimationComplete?: () => void;
 }
 
 const ReviewsModal = ({
@@ -21,21 +23,25 @@ const ReviewsModal = ({
   setLight,
   contents,
   onContentsChange,
+  onAnimationComplete,
 }: ReviewsModalProps) => {
-  const isDisabled = contents.trim().length === 0;
+  const isDisabled = useMemo(() => contents.trim().length === 0, [contents]);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (contents.trim()) {
       onSubmit(light, contents.trim());
-      setLight(60);
-      onContentsChange('');
+      onClose();
     }
-  };
+  }, [contents, light, onSubmit, onClose]);
 
-  const maxTextFieldHeight = Dimensions.get('window').height * 0.2;
+  const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.2, []);
 
   return (
-    <BottomSheetModalWrapper isVisible={isVisible} onClose={onClose} title="신고하기">
+    <BottomSheetModalWrapper
+      isVisible={isVisible}
+      onClose={onClose}
+      onAnimationComplete={onAnimationComplete}
+      title="신고하기">
       <View className="flex-1 flex-col justify-between gap-6">
         <View className="gap-8">
           <ProgressBar value={light} onChange={setLight} />
@@ -56,4 +62,4 @@ const ReviewsModal = ({
   );
 };
 
-export default ReviewsModal;
+export default React.memo(ReviewsModal);

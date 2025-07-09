@@ -1,8 +1,10 @@
+import React, { useMemo, useCallback } from 'react';
 import { View, Dimensions } from 'react-native';
 import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper } from '~/shared/ui';
+
 const REPORT_TYPES = ['부적절한 게시글', '스팸/홍보', '욕설/비방', '기타'] as const;
 
 interface ReportModalProps {
@@ -13,6 +15,7 @@ interface ReportModalProps {
   contents: string;
   onReportTypeChange: (type: string | null) => void;
   onContentsChange: (reason: string) => void;
+  onAnimationComplete?: () => void;
 }
 
 const ReportModal = ({
@@ -23,29 +26,45 @@ const ReportModal = ({
   contents,
   onReportTypeChange,
   onContentsChange,
+  onAnimationComplete,
 }: ReportModalProps) => {
-  const isDisabled = !reportType || contents.trim().length === 0;
+  const isDisabled = useMemo(
+    () => !reportType || contents.trim().length === 0,
+    [reportType, contents]
+  );
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     if (reportType && contents.trim()) {
       onSubmit(reportType, contents.trim());
-      onReportTypeChange(null);
-      onContentsChange('');
+      onClose();
     }
-  };
+  }, [reportType, contents, onSubmit, onClose]);
 
-  const maxTextFieldHeight = Dimensions.get('window').height * 0.2;
+  const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.2, []);
+
+  const reportTypeItems = useMemo(() => REPORT_TYPES as unknown as string[], []);
+
+  const handleDropdownSelect = useCallback(
+    (value: string) => {
+      onReportTypeChange(value);
+    },
+    [onReportTypeChange]
+  );
 
   return (
-    <BottomSheetModalWrapper isVisible={isVisible} onClose={onClose} title="신고하기">
+    <BottomSheetModalWrapper
+      isVisible={isVisible}
+      onClose={onClose}
+      onAnimationComplete={onAnimationComplete}
+      title="신고하기">
       <View className="flex-1 flex-col justify-between gap-6">
         <View className="gap-8">
           <Dropdown
             label="신고유형"
-            items={REPORT_TYPES as unknown as string[]}
+            items={reportTypeItems}
             placeholder="신고유형을 선택해주세요."
             selectedItem={reportType ?? undefined}
-            onSelect={(v) => onReportTypeChange(v)}
+            onSelect={handleDropdownSelect}
           />
           <TextField
             label="신고사유"
@@ -64,4 +83,4 @@ const ReportModal = ({
   );
 };
 
-export default ReportModal;
+export default React.memo(ReportModal);

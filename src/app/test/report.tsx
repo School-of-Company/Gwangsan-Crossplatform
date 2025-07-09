@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import ReportModal from '~/entity/posts/ui/ReportModal';
 
@@ -7,24 +7,38 @@ export default function Report() {
   const [reportType, setReportType] = useState<string | null>(null);
   const [contents, setContents] = useState('');
 
-  const handleOpenModal = () => {
+  const handleOpenModal = useCallback(() => {
     setIsModalVisible(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setIsModalVisible(false);
-    setReportType('');
+  }, []);
+
+  const handleAnimationComplete = useCallback(() => {
+    setReportType(null);
     setContents('');
-  };
+  }, []);
 
-  const handleSubmitReport = (type: string, reason: string) => {
-    console.log('=== 신고 제출 ===');
-    console.log('신고 유형:', type);
-    console.log('신고 사유:', reason);
-    console.log('================');
+  const handleSubmitReport = useCallback(
+    (type: string, reason: string) => {
+      console.log('=== 신고 제출 ===');
+      console.log('신고 유형:', type);
+      console.log('신고 사유:', reason);
+      console.log('================');
 
-    handleCloseModal();
-  };
+      handleCloseModal();
+    },
+    [handleCloseModal]
+  );
+
+  const handleReportTypeChange = useCallback((type: string | null) => {
+    setReportType(type);
+  }, []);
+
+  const handleContentsChange = useCallback((value: string) => {
+    setContents(value);
+  }, []);
 
   return (
     <View className="flex-1 bg-white p-4">
@@ -40,8 +54,9 @@ export default function Report() {
         onSubmit={handleSubmitReport}
         reportType={reportType}
         contents={contents}
-        onReportTypeChange={setReportType}
-        onContentsChange={setContents}
+        onReportTypeChange={handleReportTypeChange}
+        onContentsChange={handleContentsChange}
+        onAnimationComplete={handleAnimationComplete}
       />
     </View>
   );
