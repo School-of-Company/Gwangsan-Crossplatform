@@ -6,5 +6,6 @@ export const useGetPosts = (mode: MODE, type: TYPE) => {
   return useQuery<PostType>({
     queryKey: ['posts', mode, type],
     queryFn: () => getPosts(type, mode),
+    enabled: !!type && !!mode,
   });
 };
