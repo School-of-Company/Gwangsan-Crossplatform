@@ -11,7 +11,7 @@ export const handleCategory = (category: TYPE) => {
   }
 };
 
-export const returnValue = (value: Category): MODE => {
+export const returnValue = (value: Category | undefined | null): MODE | null => {
   switch (value) {
     case '팔아요':
     case '할 수 있어요':
@@ -19,5 +19,7 @@ export const returnValue = (value: Category): MODE => {
     case '필요해요':
     case '해주세요':
       return 'RECEIVER';
+    default:
+      return null;
   }
 };
