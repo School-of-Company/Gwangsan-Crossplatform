@@ -109,40 +109,23 @@ export function BottomSheetModalWrapper({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         opacity: overlayOpacity,
         zIndex: 1000,
-      }}>
-      <Pressable
-        style={{
-          flex: 1,
-          justifyContent: 'flex-end',
-        }}
-        onPress={onClose}>
+      }}
+      className="absolute inset-0 z-[1000] bg-black/50">
+      <Pressable className="flex-1 justify-end" onPress={onClose}>
         <Animated.View
           style={{
             height: modalHeight,
-            backgroundColor: 'white',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
             transform: [{ translateY }],
-          }}>
-          <Pressable
-            style={{
-              flex: 1,
-              padding: 16,
-            }}
-            onPress={(e) => e.stopPropagation()}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 16,
-              }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{title}</Text>
-              <TouchableOpacity onPress={onClose}>
+          }}
+          className="rounded-t-2xl bg-white">
+          <Pressable className="flex-1 p-4" onPress={(e) => e.stopPropagation()}>
+            <View className="relative mb-4 flex-row items-center justify-center py-6">
+              <Text className="text-body1 text-black">{title}</Text>
+              <TouchableOpacity onPress={onClose} className="absolute right-0" style={{ right: 0 }}>
                 <Icon name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-            <View style={{ flex: 1 }}>{children}</View>
+            <View className="flex-1">{children}</View>
           </Pressable>
         </Animated.View>
       </Pressable>
