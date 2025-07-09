@@ -25,6 +25,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
+    "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-image-picker": "^8.2.1",
     "react-native-pager-view": "6.7.1",
