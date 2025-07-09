@@ -13,5 +13,6 @@ export const getPosts = async (type: TYPE, mode: MODE) => {
         text2: error.message,
       });
     }
+    return [];
   }
 };
