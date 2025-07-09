@@ -1,0 +1,23 @@
+import { MODE, TYPE } from '~/shared/types/postType';
+import { Category } from './category';
+
+export const handleCategory = (category: TYPE) => {
+  console.log('category', category);
+  switch (category) {
+    case 'OBJECT':
+      return ['팔아요', '필요해요'];
+    case 'SERVICE':
+      return ['할 수 있어요', '해주세요'];
+  }
+};
+
+export const returnValue = (value: Category): MODE => {
+  switch (value) {
+    case '팔아요':
+    case '할 수 있어요':
+      return 'GIVER';
+    case '필요해요':
+    case '해주세요':
+      return 'RECEIVER';
+  }
+};

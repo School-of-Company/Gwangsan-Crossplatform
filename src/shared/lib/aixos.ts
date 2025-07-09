@@ -1,9 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import { API_URL } from '@env';
+import { router } from 'expo-router';
 import { getData } from './getData';
 import { setData } from './setData';
 import { removeData } from './removeData';
-import { authConfig } from './auth';
-export const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+export const baseURL = API_URL;
 
 export const instance = axios.create({
   baseURL,
@@ -54,7 +56,13 @@ instance.interceptors.response.use(
       } catch (error) {
         removeData('token');
         removeData('refreshToken');
-        window.location.href = authConfig.signInPage;
+
+        try {
+          router.replace('/signin');
+        } catch (routerError) {
+          console.warn('Router navigation failed:', routerError);
+        }
+
         return Promise.reject(error);
       }
     }
