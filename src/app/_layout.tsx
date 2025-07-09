@@ -2,8 +2,8 @@ import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
-import { QueryProvider } from './QueryProvider';
 import Toast from 'react-native-toast-message';
+import QueryProvider from './QueryProvider';
 
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
