@@ -62,7 +62,7 @@ instance.interceptors.response.use(
         } catch (routerError) {
           console.warn('Router navigation failed:', routerError);
         }
-        
+
         return Promise.reject(error);
       }
     }
