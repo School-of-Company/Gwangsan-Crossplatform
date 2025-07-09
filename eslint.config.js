@@ -10,6 +10,12 @@ module.exports = defineConfig([
   {
     rules: {
       'react/display-name': 'off',
+      'import/no-unresolved': [
+        'error',
+        {
+          ignore: ['^@env$']
+        }
+      ]
     },
   },
 ]);
