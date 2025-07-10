@@ -1,4 +1,4 @@
-import { instance } from '@/shared/lib/aixos';
+import { instance } from '@/shared/lib/axios';
 import { SignupFormData } from '~/entity/auth/model/authState';
 
 export const signup = async (formData: SignupFormData) => {
