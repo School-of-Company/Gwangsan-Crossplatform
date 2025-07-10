@@ -1,7 +1,7 @@
 import { memo } from 'react';
-import { useCurrentStep } from '~/entity/signin/model/useSigninSelectors';
+import { useSigninCurrentStep } from '~/entity/auth/model/useAuthSelectors';
 import { NicknameStep, PasswordStep } from '@/widget/signin';
-import type { SigninState } from '~/entity/signin/model/signinState';
+import type { SigninState } from '~/entity/auth/model/authState';
 
 const STEP_COMPONENTS: Record<SigninState['currentStep'], React.ComponentType> = {
   nickname: NicknameStep,
@@ -9,7 +9,7 @@ const STEP_COMPONENTS: Record<SigninState['currentStep'], React.ComponentType> =
 } as const;
 
 function SigninPageView(): React.ReactNode {
-  const currentStep = useCurrentStep();
+  const currentStep = useSigninCurrentStep();
   const StepComponent = STEP_COMPONENTS[currentStep];
 
   return <StepComponent />;

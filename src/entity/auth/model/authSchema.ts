@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const nicknameSchema = z
   .string()
   .min(1, '별칭을 입력해주세요')
-  .regex(/^[ㄱ-힣]+$/, '한글만 입력 가능합니다');
+  .regex(/^[가-힣]+$/, '한글만 입력 가능합니다');
 
 export const passwordSchema = z
   .string()
@@ -28,3 +28,8 @@ export const verificationCodeSchema = z
   .string()
   .min(1, '인증번호를 입력해주세요')
   .regex(/^[0-9]+$/, '숫자만 입력 가능합니다');
+
+export const descriptionSchema = z
+  .string()
+  .min(1, '자기소개는 최소 1자 이상 작성해주세요')
+  .max(255, '자기소개는 255자 이하로 작성해주세요');

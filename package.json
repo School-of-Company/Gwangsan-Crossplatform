@@ -38,7 +38,9 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-vector-icons": "^10.2.0",
     "zod": "^3.25.72",
-    "zustand": "^5.0.6"
+    "zustand": "^5.0.6",
+    "expo-device": "~7.1.4",
+    "expo-notifications": "~0.31.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

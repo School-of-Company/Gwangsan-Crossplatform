@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
+import SignupForm from '~/entity/auth/ui/SignupForm';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { DONG } from '@/shared/consts/dong';
 
 export default function DongStep() {
-  const { value: initialDong, updateField } = useFormField('dong');
-  const { nextStep } = useStepNavigation();
+  const { value: initialDongName, updateField } = useSignupFormField('dongName');
+  const { nextStep } = useSignupStepNavigation();
   const [searchText, setSearchText] = useState('');
-  const [dong, setDong] = useState(initialDong);
+  const [dongName, setDongName] = useState<string | undefined>(initialDongName as string);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -22,18 +22,18 @@ export default function DongStep() {
   }, [searchText]);
 
   const handleSelectDong = (selectedDong: string) => {
-    setDong(selectedDong);
+    setDongName(selectedDong);
     setSearchText(selectedDong);
     setShowResults(false);
     if (error) setError(null);
   };
 
   const handleNext = () => {
-    if (dong.trim() === '') {
+    if (dongName?.trim() === '') {
       setError('동네를 입력해주세요');
       return;
     }
-    updateField(dong);
+    updateField(dongName);
     nextStep();
   };
 
@@ -41,8 +41,8 @@ export default function DongStep() {
     setSearchText(text);
     if (error) setError(null);
     setShowResults(true);
-    if (text !== dong) {
-      setDong('');
+    if (text !== dongName) {
+      setDongName('');
     }
   };
 
@@ -59,7 +59,7 @@ export default function DongStep() {
       title="회원가입"
       description="동네를 선택해주세요"
       onNext={handleNext}
-      isNextDisabled={dong.trim() === ''}>
+      isNextDisabled={dongName?.trim() === ''}>
       <View>
         <Input
           label=""

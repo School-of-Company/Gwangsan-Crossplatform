@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useCurrentStep } from '~/entity/signup/model/useSignupSelectors';
+import { useSignupCurrentStep } from '~/entity/auth/model/useAuthSelectors';
 import {
   NameStep,
   NicknameStep,
@@ -9,6 +9,7 @@ import {
   DongStep,
   PlaceStep,
   SpecialtiesStep,
+  DescriptionStep,
   RecommenderStep,
 } from '@/widget/signup';
 
@@ -16,16 +17,17 @@ const STEP_COMPONENTS = {
   name: NameStep,
   nickname: NicknameStep,
   password: PasswordStep,
-  phone: PhoneStep,
-  dong: DongStep,
-  place: PlaceStep,
+  phoneNumber: PhoneStep,
+  dongName: DongStep,
+  placeName: PlaceStep,
   specialties: SpecialtiesStep,
+  description: DescriptionStep,
   recommender: RecommenderStep,
   complete: Complete,
 } as const;
 
 function SignupPageView(): React.ReactNode {
-  const currentStep = useCurrentStep();
+  const currentStep = useSignupCurrentStep();
   const StepComponent = STEP_COMPONENTS[currentStep];
 
   return <StepComponent />;
