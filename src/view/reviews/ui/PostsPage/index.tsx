@@ -7,7 +7,7 @@ import { returnValue } from '~/view/transaction/model/handleCategory';
 import { getReceiveReview, getTossReview } from '../../api/getReviews';
 import { ReviewPostType } from '../../model/reviewPostType';
 
-export default function PostsPageView() {
+export default function ReviewsPageView() {
   const { active } = useLocalSearchParams();
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();

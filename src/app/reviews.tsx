@@ -1,5 +1,5 @@
-import PostsPageView from '~/view/reviews/ui/PostsPage';
+import ReviewsPageView from '~/view/reviews/ui/PostsPage';
 
 export default function PostPage() {
-  return <PostsPageView />;
+  return <ReviewsPageView />;
 }
