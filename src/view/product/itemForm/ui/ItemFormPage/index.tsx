@@ -7,6 +7,7 @@ import {
   itemFormSchema,
 } from '~/entity/product/itemForm/model/itemFormSchema';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ItemFormPage = ({
   type,
@@ -66,41 +67,43 @@ const ItemFormPage = ({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white">
-      <Header headerTitle={headerTitle} />
-      <ItemFormProgressBar step={step} />
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <View className="flex-1 flex-col justify-between">
-          <ItemFormRenderContent
-            step={step}
-            title={title}
-            content={content}
-            gwangsan={gwangsan}
-            images={images}
-            onTitleChange={handleTitleChange}
-            onContentChange={handleContentChange}
-            onImagesChange={handleImagesChange}
-            onGwangsanChange={handleGwangsanChange}
-          />
-          <View>
-            <ItemFormRenderButton
+    <SafeAreaView className="flex-1 bg-white">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1 bg-white">
+        <Header headerTitle={headerTitle} />
+        <ItemFormProgressBar step={step} />
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <View className="flex-1 flex-col justify-between">
+            <ItemFormRenderContent
               step={step}
-              isStep1Valid={isStep1Valid}
-              isStep2Valid={isStep2Valid}
-              onNextStep={setStep}
-              onEditPress={() => setStep(1)}
-              onCompletePress={handleCompletePress}
+              title={title}
+              content={content}
+              gwangsan={gwangsan}
+              images={images}
+              onTitleChange={handleTitleChange}
+              onContentChange={handleContentChange}
+              onImagesChange={handleImagesChange}
+              onGwangsanChange={handleGwangsanChange}
             />
+            <View>
+              <ItemFormRenderButton
+                step={step}
+                isStep1Valid={isStep1Valid}
+                isStep2Valid={isStep2Valid}
+                onNextStep={setStep}
+                onEditPress={() => setStep(1)}
+                onCompletePress={handleCompletePress}
+              />
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

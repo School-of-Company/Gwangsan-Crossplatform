@@ -40,6 +40,7 @@ export default function PostsPageView() {
             width="w-[45%]"
           />
         </View>
+         
       </View>
       {posts.map((post) => {
         return <View>{post.content}</View>;

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { TYPE } from '~/shared/types/postType';
 import { Header } from '~/shared/ui';
@@ -8,6 +8,7 @@ import { handleCategory, returnValue } from '../../model/handleCategory';
 import { Category } from '../../model/category';
 import Post from '~/shared/ui/Post';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TransactionPageView() {
   const { type } = useLocalSearchParams<{ type: TYPE }>();
@@ -20,7 +21,7 @@ export default function TransactionPageView() {
     R.push('/need');
   }, [R]);
   return (
-    <SafeAreaView className="android:pt-10 h-full bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
       <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center justify-between rounded-[30px] bg-sub2-300 px-2">
         {(handleCategory(type as TYPE) ?? []).map((v) => {
