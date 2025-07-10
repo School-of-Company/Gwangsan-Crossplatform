@@ -17,9 +17,9 @@ export const instance = axios.create({
 
 instance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const token = await getData('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken = await getData('accessToken');
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -44,17 +44,17 @@ instance.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        const response = await instance.post<{ token: string }>('/auth/reissue', {
+        const response = await instance.post<{ accessToken: string }>('/auth/reissue', {
           refreshToken,
         });
 
-        const { token } = response.data;
-        setData('token', token);
+        const { accessToken } = response.data;
+        setData('accessToken', accessToken);
 
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return instance(originalRequest);
       } catch (error) {
-        removeData('token');
+        removeData('accessToken');
         removeData('refreshToken');
 
         try {

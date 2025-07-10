@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SigninForm from '@/entity/signin/ui/SigninForm';
-import { useFormField, useStepNavigation } from '~/entity/signin/model/useSigninSelectors';
-import { nicknameSchema } from '~/entity/signin/model/signinSchema';
+import SigninForm from '~/entity/auth/ui/SigninForm';
+import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 
 export default function NicknameStep() {
-  const { value: initialNickname, updateField } = useFormField('nickname');
-  const { nextStep, resetStore } = useStepNavigation();
-  const [nickname, setNickname] = useState(initialNickname);
+  const { value: initialNickname, updateField } = useSigninFormField('nickname');
+  const { nextStep, resetStore } = useSigninStepNavigation();
+  const [nickname, setNickname] = useState<string | undefined>(initialNickname as string);
   const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
@@ -42,7 +42,7 @@ export default function NicknameStep() {
   };
 
   const handleSubmit = () => {
-    if (nickname.trim() !== '') {
+    if (nickname?.trim() !== '') {
       validateAndNext();
     }
   };
@@ -53,12 +53,12 @@ export default function NicknameStep() {
       description="별칭을 입력해주세요"
       onNext={validateAndNext}
       onBack={handleBack}
-      isNextDisabled={nickname.trim() === ''}>
+      isNextDisabled={nickname?.trim() === ''}>
       <View>
         <Input
           label="별칭"
           placeholder="별칭을 입력해주세요"
-          value={nickname}
+          value={nickname as string}
           onChangeText={handleNicknameChange}
           onSubmitEditing={handleSubmit}
           returnKeyType="next"

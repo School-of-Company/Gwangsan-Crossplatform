@@ -1,20 +1,22 @@
 import { useState, useRef } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '@/entity/signup/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/signup/model/useSignupSelectors';
-import { passwordSchema, passwordConfirmSchema } from '~/entity/signup/model/signupSchema';
+import SignupForm from '~/entity/auth/ui/SignupForm';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
 import { View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 
 export default function PasswordStep() {
-  const { value: initialPassword, updateField: updatePassword } = useFormField('password');
+  const { value: initialPassword, updateField: updatePassword } = useSignupFormField('password');
   const { value: initialPasswordConfirm, updateField: updatePasswordConfirm } =
-    useFormField('passwordConfirm');
-  const { nextStep } = useStepNavigation();
+    useSignupFormField('passwordConfirm');
+  const { nextStep } = useSignupStepNavigation();
 
-  const [password, setPassword] = useState(initialPassword);
-  const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
+  const [password, setPassword] = useState<string | undefined>(initialPassword as string);
+  const [passwordConfirm, setPasswordConfirm] = useState<string | undefined>(
+    initialPasswordConfirm as string
+  );
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
@@ -34,7 +36,7 @@ export default function PasswordStep() {
     }
 
     try {
-      passwordConfirmSchema(password).parse(passwordConfirm);
+      passwordConfirmSchema(password as string).parse(passwordConfirm as string);
       setConfirmError(null);
     } catch (err) {
       if (err instanceof ZodError) {
@@ -65,7 +67,7 @@ export default function PasswordStep() {
   };
 
   const handleConfirmSubmit = () => {
-    if (password.trim() !== '' && passwordConfirm.trim() !== '') {
+    if (password?.trim() !== '' && passwordConfirm?.trim() !== '') {
       validateAndNext();
     }
   };
@@ -75,12 +77,12 @@ export default function PasswordStep() {
       title="회원가입"
       description="비밀번호를 입력해주세요"
       onNext={validateAndNext}
-      isNextDisabled={password.trim() === '' || passwordConfirm.trim() === ''}>
+      isNextDisabled={password?.trim() === '' || passwordConfirm?.trim() === ''}>
       <View>
         <Input
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요"
-          value={password}
+          value={password as string}
           onChangeText={handlePasswordChange}
           onSubmitEditing={handlePasswordSubmit}
           secureTextEntry={true}
@@ -94,7 +96,7 @@ export default function PasswordStep() {
           ref={passwordConfirmRef}
           label="비밀번호 재입력"
           placeholder="비밀번호를 다시 입력해주세요"
-          value={passwordConfirm}
+          value={passwordConfirm as string}
           onChangeText={handleConfirmChange}
           onSubmitEditing={handleConfirmSubmit}
           secureTextEntry={true}

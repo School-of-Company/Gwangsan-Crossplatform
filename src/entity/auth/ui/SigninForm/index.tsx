@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
-import { useStepNavigation } from '../../model/useSigninSelectors';
+import { useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,7 +31,7 @@ function SigninForm({
   nextButtonText = '다음',
   isNextDisabled = false,
 }: SigninFormProps) {
-  const { prevStep } = useStepNavigation();
+  const { prevStep } = useSigninStepNavigation();
 
   return (
     <SafeAreaView className="flex-1 bg-white">

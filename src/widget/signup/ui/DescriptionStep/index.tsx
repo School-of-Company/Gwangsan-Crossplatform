@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { Input } from '@/shared/ui/Input';
+import { TextField } from '@/shared/ui/TextField';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
-import { nicknameSchema } from '~/entity/auth/model/authSchema';
+import { descriptionSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 
-export default function RecommenderStep() {
-  const { value: initialRecommender, updateField } = useSignupFormField('recommender');
+export default function DescriptionStep() {
+  const { value: initialDescription, updateField } = useSignupFormField('description');
   const { nextStep } = useSignupStepNavigation();
-  const [recommender, setRecommender] = useState<string | undefined>(initialRecommender as string);
+  const [description, setDescription] = useState((initialDescription as string) || '');
   const [error, setError] = useState<string | null>(null);
 
   const validateAndNext = () => {
     try {
-      nicknameSchema.parse(recommender as string);
+      descriptionSchema.parse(description);
       setError(null);
-      updateField(recommender);
+      updateField(description);
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {
@@ -25,18 +25,18 @@ export default function RecommenderStep() {
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('유효하지 않은 별칭입니다');
+        setError('유효하지 않은 자기소개입니다');
       }
     }
   };
 
-  const handleRecommenderChange = (text: string) => {
-    setRecommender(text);
+  const handleDescriptionChange = (text: string) => {
+    setDescription(text);
     if (error) setError(null);
   };
 
   const handleSubmit = () => {
-    if (recommender?.trim() !== '') {
+    if (description.trim().length >= 1) {
       validateAndNext();
     }
   };
@@ -44,17 +44,20 @@ export default function RecommenderStep() {
   return (
     <SignupForm
       title="회원가입"
-      description="추천인을 입력해주세요"
+      description="자신을 소개하는 글을 작성해주세요"
       onNext={validateAndNext}
-      isNextDisabled={recommender?.trim() === ''}>
+      isNextDisabled={description.trim().length < 1}>
       <View>
-        <Input
-          label="추천인"
-          placeholder="추천인 별칭을 입력해주세요"
-          value={recommender}
-          onChangeText={handleRecommenderChange}
+        <TextField
+          label="자기소개"
+          placeholder="자신을 소개하는 글을 작성해주세요."
+          value={description}
+          onChangeText={handleDescriptionChange}
           onSubmitEditing={handleSubmit}
           returnKeyType="done"
+          multiline={true}
+          numberOfLines={6}
+          maxLength={500}
         />
         <ErrorMessage error={error} />
       </View>

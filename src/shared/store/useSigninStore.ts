@@ -1,10 +1,14 @@
 import { create } from 'zustand';
-import { SigninState } from '@/entity/signin/model/signinState';
-import { getNextStep, getPrevStep } from '@/entity/signin/lib/getStep';
+import { Platform } from 'react-native';
+import { SigninState } from '~/entity/auth/model/authState';
+import { getNextSigninStep, getPrevSigninStep } from '~/entity/auth/lib/getStep';
 
 const INITIAL_FORM_DATA: SigninState['formData'] = {
   nickname: '',
   password: '',
+  deviceToken: '',
+  deviceId: '',
+  osType: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
 };
 
 export const useSigninStore = create<SigninState>((set) => ({
@@ -16,11 +20,11 @@ export const useSigninStore = create<SigninState>((set) => ({
     })),
   nextStep: () =>
     set((state) => ({
-      currentStep: getNextStep(state.currentStep),
+      currentStep: getNextSigninStep(state.currentStep),
     })),
   prevStep: () =>
     set((state) => ({
-      currentStep: getPrevStep(state.currentStep),
+      currentStep: getPrevSigninStep(state.currentStep),
     })),
   goToStep: (step: SigninState['currentStep']) => set({ currentStep: step }),
   resetStore: () =>
