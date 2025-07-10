@@ -44,7 +44,7 @@ export default function RecommenderStep() {
   return (
     <SignupForm
       title="회원가입"
-      description="별칭을 입력해주세요"
+      description="추천인을 입력해주세요"
       onNext={validateAndNext}
       isNextDisabled={recommender.trim() === ''}>
       <View>

@@ -9,6 +9,7 @@ import {
   DongStep,
   PlaceStep,
   SpecialtiesStep,
+  DescriptionStep,
   RecommenderStep,
 } from '@/widget/signup';
 
@@ -16,10 +17,11 @@ const STEP_COMPONENTS = {
   name: NameStep,
   nickname: NicknameStep,
   password: PasswordStep,
-  phone: PhoneStep,
-  dong: DongStep,
-  place: PlaceStep,
+  phoneNumber: PhoneStep,
+  dongName: DongStep,
+  placeName: PlaceStep,
   specialties: SpecialtiesStep,
+  description: DescriptionStep,
   recommender: RecommenderStep,
   complete: Complete,
 } as const;
