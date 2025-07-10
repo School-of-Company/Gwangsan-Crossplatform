@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { noticeListMock } from '@/widget/notice/mock/noticeDataMock';
 import { Header } from '@/shared/ui';
 import { NoticeDetailSlideViewer } from '@/widget/notice';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const NoticeDetailPage = () => {
   const { id } = useLocalSearchParams();
@@ -20,7 +21,7 @@ const NoticeDetailPage = () => {
   const hasImages = notice.images && notice.images.length > 0;
 
   return (
-    <View className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1">
         <Header headerTitle="공지" />
         {hasImages && <NoticeDetailSlideViewer notice={notice} />}
@@ -36,7 +37,7 @@ const NoticeDetailPage = () => {
           <Text className="text-base leading-6 text-black">{notice.content}</Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
