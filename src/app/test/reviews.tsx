@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ReviewsModal } from '~/entity/reviews';
 
