@@ -12,12 +12,12 @@ import { ZodError } from 'zod';
 import Toast from 'react-native-toast-message';
 
 export default function PhoneStep() {
-  const { value: initialPhone, updateField: updatePhone } = useFormField('phone');
+  const { value: initialPhoneNumber, updateField: updatePhoneNumber } = useFormField('phoneNumber');
   const { value: initialVerificationCode, updateField: updateVerificationCode } =
     useFormField('verificationCode');
   const { nextStep } = useStepNavigation();
 
-  const [phone, setPhone] = useState(initialPhone);
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
   const [verificationCode, setVerificationCode] = useState(initialVerificationCode);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
@@ -30,11 +30,11 @@ export default function PhoneStep() {
 
   const requestVerification = async () => {
     try {
-      phoneSchema.parse(phone);
+      phoneSchema.parse(phoneNumber);
       setPhoneError(null);
       setIsSendingCode(true);
 
-      await sendSms(phone);
+      await sendSms(phoneNumber);
 
       setIsVerifying(true);
       setIsVerificationSent(true);
@@ -77,9 +77,9 @@ export default function PhoneStep() {
       setVerificationError(null);
       setIsVerifyingCode(true);
 
-      await verifySms(phone, verificationCode);
+      await verifySms(phoneNumber, verificationCode);
 
-      updatePhone(phone);
+      updatePhoneNumber(phoneNumber);
       updateVerificationCode(verificationCode);
 
       Toast.show({
@@ -108,7 +108,7 @@ export default function PhoneStep() {
   };
 
   const handlePhoneChange = (text: string) => {
-    setPhone(text);
+    setPhoneNumber(text);
     if (phoneError) setPhoneError(null);
     setIsVerifying(false);
     setIsVerificationSent(false);
@@ -120,7 +120,7 @@ export default function PhoneStep() {
   };
 
   const handlePhoneSubmit = () => {
-    if (phone.length === 11) {
+    if (phoneNumber.length === 11) {
       requestVerification();
     }
   };
@@ -143,7 +143,7 @@ export default function PhoneStep() {
             <Input
               label="전화번호"
               placeholder="전화번호를 입력해주세요"
-              value={phone}
+              value={phoneNumber}
               onChangeText={handlePhoneChange}
               onSubmitEditing={handlePhoneSubmit}
               keyboardType="numeric"
@@ -154,12 +154,12 @@ export default function PhoneStep() {
           </View>
           <Button
             className={`h-16 items-center justify-center rounded-xl px-8 ${
-              phone.length === 11 && !isSendingCode ? 'bg-[#8FC31D]' : 'bg-gray-300'
+              phoneNumber.length === 11 && !isSendingCode ? 'bg-[#8FC31D]' : 'bg-gray-300'
             }`}
             onPress={requestVerification}
-            disabled={phone.length !== 11 || isSendingCode}>
+            disabled={phoneNumber.length !== 11 || isSendingCode || isVerifyingCode}>
             <Text className="font-medium text-white">
-              {isSendingCode ? '전송중...' : isVerificationSent ? '재전송' : '인증'}
+              {isSendingCode ? '전송중...' : isVerificationSent ? '재전송' : isVerifyingCode ? '인증중...' : '인증'}
             </Text>
           </Button>
         </View>
@@ -180,7 +180,6 @@ export default function PhoneStep() {
             editable={!isVerifyingCode}
           />
           <ErrorMessage error={verificationError} />
-          {isVerifyingCode && <Text className="mt-2 text-sm text-gray-500">인증 중...</Text>}
         </View>
       )}
     </SignupForm>
