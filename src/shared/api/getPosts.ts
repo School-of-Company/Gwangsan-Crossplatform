@@ -1,5 +1,5 @@
 import Toast from 'react-native-toast-message';
-import { instance } from '../lib/aixos';
+import { instance } from '../lib/axios';
 import { MODE, TYPE } from '../types/postType';
 
 export const getPosts = async (type?: TYPE, mode?: MODE) => {
