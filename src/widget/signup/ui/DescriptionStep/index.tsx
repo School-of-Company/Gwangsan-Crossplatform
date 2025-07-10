@@ -45,7 +45,7 @@ export default function DescriptionStep() {
     <SignupForm
       title="회원가입"
       description="자신을 소개하는 글을 작성해주세요"
-      onNext={validateAndNext}  
+      onNext={validateAndNext}
       isNextDisabled={description.trim().length < 1}>
       <View>
         <TextField

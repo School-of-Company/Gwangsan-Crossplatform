@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';  
+import * as Notifications from 'expo-notifications';
 import { getData } from './getData';
 
 Notifications.setNotificationHandler({

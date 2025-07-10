@@ -17,24 +17,24 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
-  
+
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
-  
+
   if (finalStatus !== 'granted') {
     console.warn('푸시 알림 권한이 거부되었습니다.');
     return null;
   }
-  
+
   try {
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-    
+
     const pushToken = await Notifications.getExpoPushTokenAsync({
       projectId: projectId,
     });
-    
+
     return pushToken.data;
   } catch (error) {
     console.error(error);
@@ -55,12 +55,12 @@ const generateDeviceId = async (): Promise<string> => {
     const osVersion = Device.osVersion || 'unknown';
     const osInternalBuildId = Device.osInternalBuildId || 'unknown';
     const modelId = Device.modelId || 'unknown';
-    
+
     const deviceInfo = `${deviceType}-${brand}-${modelName}-${modelId}-${osVersion}-${osInternalBuildId}`;
     const deviceId = btoa(deviceInfo).replace(/[/+=]/g, '').substring(0, 20);
-    
+
     await setData('deviceId', deviceId);
-    
+
     return deviceId;
   } catch (error) {
     console.error(error);
@@ -70,14 +70,13 @@ const generateDeviceId = async (): Promise<string> => {
   }
 };
 
-
 export const getDeviceInfo = async () => {
   const osType = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
-  
+
   try {
     const deviceToken = await registerForPushNotificationsAsync();
     const deviceId = await generateDeviceId();
-    
+
     return {
       osType: osType as 'IOS' | 'ANDROID',
       deviceToken: deviceToken || '',
@@ -85,7 +84,7 @@ export const getDeviceInfo = async () => {
     };
   } catch (error) {
     console.error(error);
-    
+
     const fallbackDeviceId = await generateDeviceId();
     return {
       osType: osType as 'IOS' | 'ANDROID',

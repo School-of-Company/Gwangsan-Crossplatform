@@ -13,7 +13,8 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
       osType: formData.osType,
     });
 
-    const { accessToken, refreshToken, accessTokenExpiresIn, refreshTokenExpiresIn } = response.data;
+    const { accessToken, refreshToken, accessTokenExpiresIn, refreshTokenExpiresIn } =
+      response.data;
 
     await Promise.all([
       setData('accessToken', accessToken),
@@ -28,12 +29,13 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   }
 };
 
-export const signinWithDeviceInfo = async (
-  credentials: { nickname: string; password: string }
-): Promise<AuthResponse> => {
+export const signinWithDeviceInfo = async (credentials: {
+  nickname: string;
+  password: string;
+}): Promise<AuthResponse> => {
   try {
     const deviceInfo = await getDeviceInfo();
-    
+
     const formData: SigninFormData = {
       ...credentials,
       ...deviceInfo,

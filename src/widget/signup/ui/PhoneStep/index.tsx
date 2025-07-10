@@ -159,7 +159,13 @@ export default function PhoneStep() {
             onPress={requestVerification}
             disabled={phoneNumber.length !== 11 || isSendingCode || isVerifyingCode}>
             <Text className="font-medium text-white">
-              {isSendingCode ? '전송중...' : isVerificationSent ? '재전송' : isVerifyingCode ? '인증중...' : '인증'}
+              {isSendingCode
+                ? '전송중...'
+                : isVerificationSent
+                  ? '재전송'
+                  : isVerifyingCode
+                    ? '인증중...'
+                    : '인증'}
             </Text>
           </Button>
         </View>

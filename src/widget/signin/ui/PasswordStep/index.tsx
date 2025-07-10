@@ -25,7 +25,7 @@ export default function PasswordStep() {
       passwordSchema.parse(password);
       setError(null);
       updateField(password);
-      
+
       setIsLoading(true);
 
       await signinWithDeviceInfo({
@@ -35,15 +35,14 @@ export default function PasswordStep() {
 
       resetStore();
       router.replace('/main');
-      
     } catch (err) {
       console.error('로그인 실패:', err);
-      
+
       if (err instanceof ZodError) {
         setError(err.errors[0].message);
       } else if (err instanceof Error) {
         setError(err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
-      } 
+      }
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +64,7 @@ export default function PasswordStep() {
       title="로그인"
       description="비밀번호를 입력해주세요"
       onNext={validateAndNext}
-      nextButtonText={isLoading ? "로그인 중..." : "로그인"}
+      nextButtonText={isLoading ? '로그인 중...' : '로그인'}
       isNextDisabled={password.trim() === '' || isLoading}>
       <View>
         <Input
