@@ -3,7 +3,8 @@ import { useSignupStore } from '@/shared/store/useSignupStore';
 import { useSigninStore } from '@/shared/store/useSigninStore';
 import type { SignupState, SigninState } from './authState';
 
-const createFormFieldHook = <T>(useStore: any) => 
+const createFormFieldHook =
+  <T>(useStore: any) =>
   <K extends keyof T>(fieldName: K) => {
     const value = useStore((state: any) => state.formData[fieldName]);
     const setField = useStore((state: any) => state.setField);
@@ -27,13 +28,13 @@ const createStepNavigationHook = (useStore: any) => () => {
   return { nextStep, prevStep, goToStep, resetStore };
 };
 
-export const useSignupCurrentStep = (): SignupState['currentStep'] => 
+export const useSignupCurrentStep = (): SignupState['currentStep'] =>
   useSignupStore((state) => state.currentStep);
 
 export const useSignupFormField = createFormFieldHook<SignupState['formData']>(useSignupStore);
 export const useSignupStepNavigation = createStepNavigationHook(useSignupStore);
 
-export const useSigninCurrentStep = (): SigninState['currentStep'] => 
+export const useSigninCurrentStep = (): SigninState['currentStep'] =>
   useSigninStore((state) => state.currentStep);
 
 export const useSigninFormField = createFormFieldHook<SigninState['formData']>(useSigninStore);

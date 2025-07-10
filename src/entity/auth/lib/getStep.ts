@@ -25,26 +25,17 @@ const SIGNUP_STEPS: readonly SignupStep[] = [
 
 const SIGNIN_STEPS: readonly SigninStep[] = ['nickname', 'password'] as const;
 
-const getStepIndexInternal = <T extends string>(
-  step: T,
-  steps: readonly T[]
-): number => {
+const getStepIndexInternal = <T extends string>(step: T, steps: readonly T[]): number => {
   return steps.indexOf(step);
 };
 
-const getNextStepInternal = <T extends string>(
-  currentStep: T,
-  steps: readonly T[]
-): T => {
+const getNextStepInternal = <T extends string>(currentStep: T, steps: readonly T[]): T => {
   const currentIndex = getStepIndexInternal(currentStep, steps);
   const nextIndex = Math.min(currentIndex + 1, steps.length - 1);
   return steps[nextIndex];
 };
 
-const getPrevStepInternal = <T extends string>(
-  currentStep: T,
-  steps: readonly T[]
-): T => {
+const getPrevStepInternal = <T extends string>(currentStep: T, steps: readonly T[]): T => {
   const currentIndex = getStepIndexInternal(currentStep, steps);
   const prevIndex = Math.max(currentIndex - 1, 0);
   return steps[prevIndex];

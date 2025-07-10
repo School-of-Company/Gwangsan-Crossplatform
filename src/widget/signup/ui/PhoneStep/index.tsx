@@ -35,10 +35,10 @@ export default function PhoneStep() {
       setIsSendingCode(true);
 
       await sendSms(phone);
-      
+
       setIsVerifying(true);
       setIsVerificationSent(true);
-      
+
       Toast.show({
         type: 'success',
         text1: '인증번호 전송 완료',
@@ -81,7 +81,7 @@ export default function PhoneStep() {
 
       updatePhone(phone);
       updateVerificationCode(verificationCode);
-      
+
       Toast.show({
         type: 'success',
         text1: '인증 완료',
@@ -180,9 +180,7 @@ export default function PhoneStep() {
             editable={!isVerifyingCode}
           />
           <ErrorMessage error={verificationError} />
-          {isVerifyingCode && (
-            <Text className="mt-2 text-sm text-gray-500">인증 중...</Text>
-          )}
+          {isVerifyingCode && <Text className="mt-2 text-sm text-gray-500">인증 중...</Text>}
         </View>
       )}
     </SignupForm>

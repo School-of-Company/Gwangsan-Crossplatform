@@ -11,7 +11,7 @@ type SignupStep =
 
 type SigninStep = 'nickname' | 'password';
 
-type SignupFormData = {
+export type SignupFormData = {
   name: string;
   nickname: string;
   password: string;
@@ -24,7 +24,7 @@ type SignupFormData = {
   recommender: string;
 };
 
-type SigninFormData = {
+export type SigninFormData = {
   nickname: string;
   password: string;
 } & Readonly<Record<string, string>>;
@@ -48,4 +48,3 @@ export interface SigninState {
   goToStep: (step: SigninStep) => void;
   resetStore: () => void;
 }
-
