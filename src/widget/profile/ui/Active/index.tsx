@@ -18,7 +18,7 @@ export default function Active() {
             <TouchableOpacity
               className="rounded-md border border-main-500 px-6 py-3"
               key={button.id}
-              onPress={() => router.push(`/posts?active=${button.id}`)}>
+              onPress={() => router.push(`/reviews?active=${button.id}`)}>
               <Text className="text-main-500">{button.label}</Text>
             </TouchableOpacity>
           );
