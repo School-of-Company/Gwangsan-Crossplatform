@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { Dropdown, Header } from '~/shared/ui';
 import { Category } from '~/view/transaction/model/category';
@@ -9,10 +11,15 @@ import PostList from '~/widget/post/ui/PostList';
 export default function PostsPageView() {
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
+  const R = useRouter();
   const { data } = useGetPosts(
     returnValue(secondValue) ?? undefined,
     firstValue === '물건' ? 'OBJECT' : 'SERVICE'
   );
+
+  const handlePress = useCallback(() => {
+    R.push('/need');
+  }, [R]);
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white">
       <Header headerTitle="게시글" />
@@ -34,6 +41,14 @@ export default function PostsPageView() {
         </View>
       </View>
       <PostList posts={data} />
+      <TouchableOpacity onPress={handlePress}>
+        <Ionicons
+          name="add-circle"
+          size={60}
+          color="#8FC31D"
+          className="absolute bottom-10 right-10"
+        />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
