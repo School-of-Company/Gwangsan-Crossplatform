@@ -13,15 +13,9 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
       osType: formData.osType,
     });
 
-    const { accessToken, refreshToken, accessTokenExpiresIn, refreshTokenExpiresIn } =
-      response.data;
+    const { accessToken, refreshToken } = response.data;
 
-    await Promise.all([
-      setData('accessToken', accessToken),
-      setData('refreshToken', refreshToken),
-      setData('accessTokenExpiresIn', accessTokenExpiresIn),
-      setData('refreshTokenExpiresIn', refreshTokenExpiresIn),
-    ]);
+    await Promise.all([setData('accessToken', accessToken), setData('refreshToken', refreshToken)]);
 
     return response.data;
   } catch (error) {
