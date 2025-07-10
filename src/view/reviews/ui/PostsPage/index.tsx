@@ -1,18 +1,26 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SafeAreaView, Text, View } from 'react-native';
 import { Dropdown, Header } from '~/shared/ui';
 import { Category } from '~/view/transaction/model/category';
 import { returnValue } from '~/view/transaction/model/handleCategory';
-import PostList from '~/widget/post/ui/PostList';
+import { getReceiveReview, getTossReview } from '../../api/getReviews';
+import { ReviewPostType } from '../../model/reviewPostType';
 
 export default function PostsPageView() {
   const { active } = useLocalSearchParams();
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
-  const [posts, setPosts] = useState([]);
-
-  (returnValue(secondValue) ?? undefined, firstValue === '물건' ? 'OBJECT' : 'SERVICE');
+  const [posts, setPosts] = useState<ReviewPostType[] | []>([]);
+  useEffect(() => {
+    const fetch = async () => {
+      const res = await (active === 'receive'
+        ? getReceiveReview(returnValue(secondValue), firstValue === '물건' ? 'OBJECT' : 'SERVICE')
+        : getTossReview(returnValue(secondValue), firstValue === '물건' ? 'OBJECT' : 'SERVICE'));
+      if (res.data) setPosts(res.data);
+    };
+    fetch();
+  }, [active, firstValue, secondValue]);
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white">
       <Header headerTitle="게시글" />
@@ -33,7 +41,9 @@ export default function PostsPageView() {
           />
         </View>
       </View>
-      <PostList />
+      {posts.map((post) => {
+        return <View>{post.content}</View>;
+      })}
     </SafeAreaView>
   );
 }
