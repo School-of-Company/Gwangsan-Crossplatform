@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Dropdown, Header } from '~/shared/ui';
 import PostList from '~/widget/post/ui/PostList';
 
 export default function PostPageView() {
   const [firstValue, setFirstValue] = useState<'물건' | '서비스' | null>(null);
   return (
-    <SafeAreaView className="android:pt-10 h-full bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="게시글" />
       <View className="mb-6 mt-6 px-6">
         <Text className="mb-4 text-titleSmall">카테고리 선택 후 거래내역 확인</Text>

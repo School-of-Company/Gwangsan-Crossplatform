@@ -1,10 +1,11 @@
-import { Image, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import { Button, Header } from '~/shared/ui';
 
 export default function PostPageView() {
   return (
-    <SafeAreaView className="h-full bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="해주세요" />
       <ScrollView>
         <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
