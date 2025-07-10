@@ -41,8 +41,8 @@ export default function PostsPageView() {
           />
         </View>
       </View>
-      {posts.map((post) => {
-        return <View>{post.content}</View>;
+      {posts.map((post, index) => {
+        return <View key={post.id || index}>{post.content}</View>;
       })}
     </SafeAreaView>
   );
