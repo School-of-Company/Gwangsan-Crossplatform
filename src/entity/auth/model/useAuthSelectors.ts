@@ -3,42 +3,61 @@ import { useSignupStore } from '@/shared/store/useSignupStore';
 import { useSigninStore } from '@/shared/store/useSigninStore';
 import type { SignupState, SigninState } from './authState';
 
-const createFormFieldHook =
-  <T>(useStore: any) =>
-  <K extends keyof T>(fieldName: K) => {
-    const value = useStore((state: any) => state.formData[fieldName]);
-    const setField = useStore((state: any) => state.setField);
+export function useSignupFormField<K extends keyof SignupState['formData']>(
+  fieldName: K
+) {
+  const value = useSignupStore((state) => state.formData[fieldName]);
+  const setField = useSignupStore((state) => state.setField);
 
-    const updateField = useCallback(
-      (newValue: any) => {
-        setField(fieldName as string, newValue);
-      },
-      [fieldName, setField]
-    );
+  const updateField = useCallback(
+    (newValue: SignupState['formData'][K]) => {
+      setField(fieldName as string, newValue);
+    },
+    [fieldName, setField]
+  );
 
-    return { value, updateField };
-  };
+  return { value, updateField };
+}
 
-const createStepNavigationHook = (useStore: any) => () => {
-  const nextStep = useStore((state: any) => state.nextStep);
-  const prevStep = useStore((state: any) => state.prevStep);
-  const goToStep = useStore((state: any) => state.goToStep);
-  const resetStore = useStore((state: any) => state.resetStore);
+export function useSignupStepNavigation() {
+  const nextStep = useSignupStore((state) => state.nextStep);
+  const prevStep = useSignupStore((state) => state.prevStep);
+  const goToStep = useSignupStore((state) => state.goToStep);
+  const resetStore = useSignupStore((state) => state.resetStore);
 
   return { nextStep, prevStep, goToStep, resetStore };
-};
+}
+
+export function useSigninFormField<K extends keyof SigninState['formData']>(
+  fieldName: K
+) {
+  const value = useSigninStore((state) => state.formData[fieldName]);
+  const setField = useSigninStore((state) => state.setField);
+
+  const updateField = useCallback(
+    (newValue: SigninState['formData'][K]) => {
+      setField(fieldName as string, newValue as string);
+    },
+    [fieldName, setField]
+  );
+
+  return { value, updateField };
+}
+
+export function useSigninStepNavigation() {
+  const nextStep = useSigninStore((state) => state.nextStep);
+  const prevStep = useSigninStore((state) => state.prevStep);
+  const goToStep = useSigninStore((state) => state.goToStep);
+  const resetStore = useSigninStore((state) => state.resetStore);
+
+  return { nextStep, prevStep, goToStep, resetStore };
+}
 
 export const useSignupCurrentStep = (): SignupState['currentStep'] =>
   useSignupStore((state) => state.currentStep);
 
-export const useSignupFormField = createFormFieldHook<SignupState['formData']>(useSignupStore);
-export const useSignupStepNavigation = createStepNavigationHook(useSignupStore);
-
 export const useSigninCurrentStep = (): SigninState['currentStep'] =>
   useSigninStore((state) => state.currentStep);
-
-export const useSigninFormField = createFormFieldHook<SigninState['formData']>(useSigninStore);
-export const useSigninStepNavigation = createStepNavigationHook(useSigninStore);
 
 export const useCurrentStep = useSignupCurrentStep;
 export const useFormField = useSignupFormField;
