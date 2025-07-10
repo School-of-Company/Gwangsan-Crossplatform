@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 function NameStep() {
   const { value: initialName, updateField } = useSignupFormField('name');
   const { nextStep, resetStore } = useSignupStepNavigation();
-  const [name, setName] = useState(initialName);
+  const [name, setName] = useState<string | undefined>(initialName as string);
   const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
@@ -18,7 +18,7 @@ function NameStep() {
   };
 
   const handleNext = () => {
-    if (name.trim() === '') {
+    if (name?.trim() === '') {
       setError('이름을 입력해주세요');
       return;
     }
@@ -32,7 +32,7 @@ function NameStep() {
   };
 
   const handleSubmit = () => {
-    if (name.trim() !== '') {
+    if (name?.trim() !== '') {
       handleNext();
     }
   };
@@ -43,7 +43,7 @@ function NameStep() {
       description="이름을 입력해주세요"
       onNext={handleNext}
       onBack={handleBack}
-      isNextDisabled={name.trim() === ''}>
+      isNextDisabled={name?.trim() === ''}>
       <View>
         <Input
           label="이름"

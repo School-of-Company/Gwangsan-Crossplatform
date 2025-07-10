@@ -17,8 +17,10 @@ export default function PhoneStep() {
     useSignupFormField('verificationCode');
   const { nextStep } = useSignupStepNavigation();
 
-  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
-  const [verificationCode, setVerificationCode] = useState(initialVerificationCode);
+  const [phoneNumber, setPhoneNumber] = useState<string | undefined>(initialPhoneNumber as string);
+  const [verificationCode, setVerificationCode] = useState<string | undefined>(
+    initialVerificationCode as string
+  );
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -34,7 +36,7 @@ export default function PhoneStep() {
       setPhoneError(null);
       setIsSendingCode(true);
 
-      await sendSms(phoneNumber);
+      await sendSms(phoneNumber as string);
 
       setIsVerifying(true);
       setIsVerificationSent(true);
@@ -77,7 +79,7 @@ export default function PhoneStep() {
       setVerificationError(null);
       setIsVerifyingCode(true);
 
-      await verifySms(phoneNumber, verificationCode);
+      await verifySms(phoneNumber as string, verificationCode as string);
 
       updatePhoneNumber(phoneNumber);
       updateVerificationCode(verificationCode);
@@ -120,13 +122,13 @@ export default function PhoneStep() {
   };
 
   const handlePhoneSubmit = () => {
-    if (phoneNumber.length === 11) {
+    if (phoneNumber?.length === 11) {
       requestVerification();
     }
   };
 
   const handleVerificationSubmit = () => {
-    if (verificationCode.trim() !== '') {
+    if (verificationCode?.trim() !== '') {
       validateAndNext();
     }
   };
@@ -136,7 +138,7 @@ export default function PhoneStep() {
       title="회원가입"
       description="전화번호를 입력해주세요"
       onNext={validateAndNext}
-      isNextDisabled={!isVerifying || verificationCode.trim() === '' || isVerifyingCode}>
+      isNextDisabled={!isVerifying || verificationCode?.trim() === '' || isVerifyingCode}>
       <View>
         <View className="flex-row items-end gap-2">
           <View className="flex-1">
@@ -154,10 +156,10 @@ export default function PhoneStep() {
           </View>
           <Button
             className={`h-16 items-center justify-center rounded-xl px-8 ${
-              phoneNumber.length === 11 && !isSendingCode ? 'bg-[#8FC31D]' : 'bg-gray-300'
+              phoneNumber?.length === 11 && !isSendingCode ? 'bg-[#8FC31D]' : 'bg-gray-300'
             }`}
             onPress={requestVerification}
-            disabled={phoneNumber.length !== 11 || isSendingCode || isVerifyingCode}>
+            disabled={phoneNumber?.length !== 11 || isSendingCode || isVerifyingCode}>
             <Text className="font-medium text-white">
               {isSendingCode
                 ? '전송중...'
@@ -178,7 +180,7 @@ export default function PhoneStep() {
             ref={verificationRef}
             label="전화번호 인증"
             placeholder="인증번호를 입력해주세요"
-            value={verificationCode}
+            value={verificationCode as string}
             onChangeText={handleVerificationChange}
             onSubmitEditing={handleVerificationSubmit}
             keyboardType="numeric"

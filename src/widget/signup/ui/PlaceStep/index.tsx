@@ -9,11 +9,11 @@ import { View } from 'react-native';
 export default function PlaceStep() {
   const { value: initialPlaceName, updateField } = useSignupFormField('placeName');
   const { nextStep } = useSignupStepNavigation();
-  const [placeName, setPlaceName] = useState(initialPlaceName);
+  const [placeName, setPlaceName] = useState<string | undefined>(initialPlaceName as string);
   const [error, setError] = useState<string | null>(null);
 
   const handleNext = () => {
-    if (placeName.trim() === '') {
+    if (placeName?.trim() === '') {
       setError('지점을 선택해주세요');
       return;
     }
@@ -31,7 +31,7 @@ export default function PlaceStep() {
       title="회원가입"
       description="지점을 선택해주세요"
       onNext={handleNext}
-      isNextDisabled={placeName.trim() === ''}>
+      isNextDisabled={placeName?.trim() === ''}>
       <View>
         <Dropdown
           items={PLACE}

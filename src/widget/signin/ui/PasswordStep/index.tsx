@@ -12,7 +12,7 @@ import { router } from 'expo-router';
 export default function PasswordStep() {
   const { value: initialPassword, updateField } = useSigninFormField('password');
   const { resetStore } = useSigninStepNavigation();
-  const [password, setPassword] = useState(initialPassword);
+  const [password, setPassword] = useState<string | undefined>(initialPassword as string);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,15 +22,15 @@ export default function PasswordStep() {
     if (isLoading) return;
 
     try {
-      passwordSchema.parse(password);
+      passwordSchema.parse(password as string);
       setError(null);
-      updateField(password);
+      updateField(password as string);
 
       setIsLoading(true);
 
       await signinWithDeviceInfo({
-        nickname,
-        password,
+        nickname: nickname as string,
+        password: password as string,
       });
 
       resetStore();
@@ -54,7 +54,7 @@ export default function PasswordStep() {
   };
 
   const handleSubmit = () => {
-    if (password.trim() !== '' && !isLoading) {
+    if (password?.trim() !== '' && !isLoading) {
       validateAndNext();
     }
   };
@@ -65,12 +65,12 @@ export default function PasswordStep() {
       description="비밀번호를 입력해주세요"
       onNext={validateAndNext}
       nextButtonText={isLoading ? '로그인 중...' : '로그인'}
-      isNextDisabled={password.trim() === '' || isLoading}>
+      isNextDisabled={password?.trim() === '' || isLoading}>
       <View>
         <Input
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요"
-          value={password}
+          value={password as string}
           onChangeText={handlePasswordChange}
           onSubmitEditing={handleSubmit}
           secureTextEntry={true}

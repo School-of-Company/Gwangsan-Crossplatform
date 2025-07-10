@@ -11,7 +11,7 @@ export default function DongStep() {
   const { value: initialDongName, updateField } = useSignupFormField('dongName');
   const { nextStep } = useSignupStepNavigation();
   const [searchText, setSearchText] = useState('');
-  const [dongName, setDongName] = useState(initialDongName);
+  const [dongName, setDongName] = useState<string | undefined>(initialDongName as string);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -29,7 +29,7 @@ export default function DongStep() {
   };
 
   const handleNext = () => {
-    if (dongName.trim() === '') {
+    if (dongName?.trim() === '') {
       setError('동네를 입력해주세요');
       return;
     }
@@ -59,7 +59,7 @@ export default function DongStep() {
       title="회원가입"
       description="동네를 선택해주세요"
       onNext={handleNext}
-      isNextDisabled={dongName.trim() === ''}>
+      isNextDisabled={dongName?.trim() === ''}>
       <View>
         <Input
           label=""

@@ -11,7 +11,7 @@ import { router } from 'expo-router';
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSigninFormField('nickname');
   const { nextStep, resetStore } = useSigninStepNavigation();
-  const [nickname, setNickname] = useState(initialNickname);
+  const [nickname, setNickname] = useState<string | undefined>(initialNickname as string);
   const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
@@ -42,7 +42,7 @@ export default function NicknameStep() {
   };
 
   const handleSubmit = () => {
-    if (nickname.trim() !== '') {
+    if (nickname?.trim() !== '') {
       validateAndNext();
     }
   };
@@ -53,12 +53,12 @@ export default function NicknameStep() {
       description="별칭을 입력해주세요"
       onNext={validateAndNext}
       onBack={handleBack}
-      isNextDisabled={nickname.trim() === ''}>
+      isNextDisabled={nickname?.trim() === ''}>
       <View>
         <Input
           label="별칭"
           placeholder="별칭을 입력해주세요"
-          value={nickname}
+          value={nickname as string}
           onChangeText={handleNicknameChange}
           onSubmitEditing={handleSubmit}
           returnKeyType="next"

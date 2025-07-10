@@ -10,12 +10,12 @@ import { ZodError } from 'zod';
 export default function RecommenderStep() {
   const { value: initialRecommender, updateField } = useSignupFormField('recommender');
   const { nextStep } = useSignupStepNavigation();
-  const [recommender, setRecommender] = useState(initialRecommender);
+  const [recommender, setRecommender] = useState<string | undefined>(initialRecommender as string);
   const [error, setError] = useState<string | null>(null);
 
   const validateAndNext = () => {
     try {
-      nicknameSchema.parse(recommender);
+      nicknameSchema.parse(recommender as string);
       setError(null);
       updateField(recommender);
       nextStep();
@@ -36,7 +36,7 @@ export default function RecommenderStep() {
   };
 
   const handleSubmit = () => {
-    if (recommender.trim() !== '') {
+    if (recommender?.trim() !== '') {
       validateAndNext();
     }
   };
@@ -46,7 +46,7 @@ export default function RecommenderStep() {
       title="회원가입"
       description="추천인을 입력해주세요"
       onNext={validateAndNext}
-      isNextDisabled={recommender.trim() === ''}>
+      isNextDisabled={recommender?.trim() === ''}>
       <View>
         <Input
           label="추천인"
