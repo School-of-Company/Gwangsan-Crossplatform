@@ -29,7 +29,17 @@ export type SignupFormData = {
 export type SigninFormData = {
   nickname: string;
   password: string;
+  deviceToken: string;
+  deviceId: string;
+  osType: 'ANDROID' | 'IOS';
 } & Readonly<Record<string, string>>;
+
+export type AuthResponse = {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresIn: string;
+  refreshTokenExpiresIn: string;
+};
 
 export interface SignupState {
   currentStep: SignupStep;
