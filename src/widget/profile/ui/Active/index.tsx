@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 
 const buttonList = [
   { id: 'myPosts', label: '내 글' },
-  { id: 'transactions', label: '거래내역' },
   { id: 'reviews', label: '내가 작성한 후기' },
 ];
 
