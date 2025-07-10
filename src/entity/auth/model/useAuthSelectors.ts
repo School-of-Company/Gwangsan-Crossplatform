@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSignupStore } from '@/shared/store/useSignupStore';
 import { useSigninStore } from '@/shared/store/useSigninStore';
 import type { SignupState, SigninState } from './authState';
@@ -12,12 +12,15 @@ export function useCurrentStep<TState extends SignupState | SigninState>(
 export function useStepNavigation<TState extends SignupState | SigninState>(
   useStore: (selector: (state: TState) => unknown) => unknown
 ) {
-  return {
-    nextStep: useStore((state: TState) => state.nextStep) as () => void,
-    prevStep: useStore((state: TState) => state.prevStep) as () => void,
-    goToStep: useStore((state: TState) => state.goToStep) as (step: TState['currentStep']) => void,
-    resetStore: useStore((state: TState) => state.resetStore) as () => void,
-  };
+  const nextStep = useStore((state: TState) => state.nextStep) as () => void;
+  const prevStep = useStore((state: TState) => state.prevStep) as () => void;
+  const goToStep = useStore((state: TState) => state.goToStep) as (step: TState['currentStep']) => void;
+  const resetStore = useStore((state: TState) => state.resetStore) as () => void;
+
+  return useMemo(
+    () => ({ nextStep, prevStep, goToStep, resetStore }),
+    [nextStep, prevStep, goToStep, resetStore]
+  );
 }
 
 export function useFormField<TState extends SignupState | SigninState, K extends string>(
@@ -34,7 +37,10 @@ export function useFormField<TState extends SignupState | SigninState, K extends
     [fieldName, setField]
   );
 
-  return { value, updateField };
+  return useMemo(
+    () => ({ value, updateField }),
+    [value, updateField]
+  );
 }
 
 export const useSignupCurrentStep = () => useCurrentStep<SignupState>(useSignupStore);
