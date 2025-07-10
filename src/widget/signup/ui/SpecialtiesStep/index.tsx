@@ -2,13 +2,13 @@ import { useState } from 'react';
 import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
 import { SPECIALTIES } from '@/shared/consts/specialties';
 
 export default function SpecialtiesStep() {
-  const { value: initialSpecialties, updateField } = useFormField('specialties');
-  const { nextStep } = useStepNavigation();
+  const { value: initialSpecialties, updateField } = useSignupFormField('specialties');
+  const { nextStep } = useSignupStepNavigation();
 
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(
     Array.isArray(initialSpecialties) ? initialSpecialties : []

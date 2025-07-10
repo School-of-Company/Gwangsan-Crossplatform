@@ -58,7 +58,3 @@ export const useSignupCurrentStep = (): SignupState['currentStep'] =>
 
 export const useSigninCurrentStep = (): SigninState['currentStep'] =>
   useSigninStore((state) => state.currentStep);
-
-export const useCurrentStep = useSignupCurrentStep;
-export const useFormField = useSignupFormField;
-export const useStepNavigation = useSignupStepNavigation;

@@ -3,7 +3,7 @@ import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { phoneSchema, verificationCodeSchema } from '~/entity/auth/model/authSchema';
 import { sendSms } from '~/entity/auth/api/sendSms';
 import { verifySms } from '~/entity/auth/api/verifySms';
@@ -12,10 +12,10 @@ import { ZodError } from 'zod';
 import Toast from 'react-native-toast-message';
 
 export default function PhoneStep() {
-  const { value: initialPhoneNumber, updateField: updatePhoneNumber } = useFormField('phoneNumber');
+  const { value: initialPhoneNumber, updateField: updatePhoneNumber } = useSignupFormField('phoneNumber');
   const { value: initialVerificationCode, updateField: updateVerificationCode } =
-    useFormField('verificationCode');
-  const { nextStep } = useStepNavigation();
+    useSignupFormField('verificationCode');
+  const { nextStep } = useSignupStepNavigation();
 
   const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
   const [verificationCode, setVerificationCode] = useState(initialVerificationCode);

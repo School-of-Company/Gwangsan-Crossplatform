@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { PLACE } from '@/shared/consts/place';
 import { View } from 'react-native';
 
 export default function PlaceStep() {
-  const { value: initialPlaceName, updateField } = useFormField('placeName');
-  const { nextStep } = useStepNavigation();
+  const { value: initialPlaceName, updateField } = useSignupFormField('placeName');
+  const { nextStep } = useSignupStepNavigation();
   const [placeName, setPlaceName] = useState(initialPlaceName);
   const [error, setError] = useState<string | null>(null);
 

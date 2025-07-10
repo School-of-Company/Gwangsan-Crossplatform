@@ -2,13 +2,13 @@ import { useState, memo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 
 function NameStep() {
-  const { value: initialName, updateField } = useFormField('name');
-  const { nextStep, resetStore } = useStepNavigation();
+  const { value: initialName, updateField } = useSignupFormField('name');
+  const { nextStep, resetStore } = useSignupStepNavigation();
   const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
 

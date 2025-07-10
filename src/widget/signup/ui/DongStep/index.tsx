@@ -2,14 +2,14 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useFormField, useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { DONG } from '@/shared/consts/dong';
 
 export default function DongStep() {
-  const { value: initialDongName, updateField } = useFormField('dongName');
-  const { nextStep } = useStepNavigation();
+  const { value: initialDongName, updateField } = useSignupFormField('dongName');
+  const { nextStep } = useSignupStepNavigation();
   const [searchText, setSearchText] = useState('');
   const [dongName, setDongName] = useState(initialDongName);
   const [error, setError] = useState<string | null>(null);
