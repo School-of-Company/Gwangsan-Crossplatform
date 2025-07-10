@@ -3,7 +3,7 @@ import { instance } from '@/shared/lib/aixos';
 export const verifySms = async (phoneNumber: string, code: string) => {
   try {
     return (
-      await instance.post('/api/sms/verify', {
+      await instance.post('/sms/verify', {
         phoneNumber,
         code,
       })

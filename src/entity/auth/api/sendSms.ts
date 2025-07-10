@@ -3,7 +3,7 @@ import { instance } from '@/shared/lib/aixos';
 export const sendSms = async (phoneNumber: string) => {
   try {
     return (
-      await instance.post('/api/sms', {
+      await instance.post('/sms', {
         phoneNumber,
       })
     ).data;

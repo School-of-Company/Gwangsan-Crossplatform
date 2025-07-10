@@ -58,7 +58,7 @@ export default function Complete() {
   };
 
   const handleRetry = () => {
-    resetStore(); // 회원가입 정보 초기화
+    resetStore();
     router.navigate('/onboarding');
   };
 

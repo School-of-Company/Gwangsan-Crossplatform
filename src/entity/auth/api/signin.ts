@@ -5,7 +5,7 @@ import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 
 const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   try {
-    const response = await instance.post<AuthResponse>('/api/auth/signin', {
+    const response = await instance.post<AuthResponse>('/auth/signin', {
       nickname: formData.nickname,
       password: formData.password,
       deviceToken: formData.deviceToken,

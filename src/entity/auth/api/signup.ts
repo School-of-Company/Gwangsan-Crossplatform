@@ -5,7 +5,7 @@ export const signup = async (formData: SignupFormData) => {
   try {
     const { verificationCode, passwordConfirm, ...signupData } = formData;
 
-    return (await instance.post('/api/auth/signup', signupData)).data;
+    return (await instance.post('/auth/signup', signupData)).data;
   } catch (error) {
     throw error;
   }
