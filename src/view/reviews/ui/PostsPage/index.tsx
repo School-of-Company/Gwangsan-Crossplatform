@@ -1,18 +1,18 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView, Text, View } from 'react-native';
-import { useGetPosts } from '~/shared/model/useGetPosts';
 import { Dropdown, Header } from '~/shared/ui';
 import { Category } from '~/view/transaction/model/category';
 import { returnValue } from '~/view/transaction/model/handleCategory';
 import PostList from '~/widget/post/ui/PostList';
 
 export default function PostsPageView() {
+  const { active } = useLocalSearchParams();
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
-  const { data } = useGetPosts(
-    returnValue(secondValue) ?? undefined,
-    firstValue === '물건' ? 'OBJECT' : 'SERVICE'
-  );
+  const [posts, setPosts] = useState([]);
+
+  (returnValue(secondValue) ?? undefined, firstValue === '물건' ? 'OBJECT' : 'SERVICE');
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white">
       <Header headerTitle="게시글" />
@@ -33,7 +33,7 @@ export default function PostsPageView() {
           />
         </View>
       </View>
-      <PostList posts={data} />
+      <PostList />
     </SafeAreaView>
   );
 }
