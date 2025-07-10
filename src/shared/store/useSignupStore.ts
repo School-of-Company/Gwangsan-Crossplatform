@@ -7,11 +7,12 @@ const INITIAL_FORM_DATA: SignupState['formData'] = {
   nickname: '',
   password: '',
   passwordConfirm: '',
-  phone: '',
+  phoneNumber: '',
   verificationCode: '',
-  dong: '',
-  place: '',
+  dongName: '',
+  placeName: '',
   specialties: [],
+  description: '',
   recommender: '',
 };
 

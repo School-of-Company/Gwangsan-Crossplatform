@@ -2,10 +2,11 @@ type SignupStep =
   | 'name'
   | 'nickname'
   | 'password'
-  | 'phone'
-  | 'dong'
-  | 'place'
+  | 'phoneNumber'
+  | 'dongName'
+  | 'placeName'
   | 'specialties'
+  | 'description'
   | 'recommender'
   | 'complete';
 
@@ -16,11 +17,12 @@ export type SignupFormData = {
   nickname: string;
   password: string;
   passwordConfirm: string;
-  phone: string;
+  phoneNumber: string;
   verificationCode: string;
-  dong: string;
-  place: string;
+  dongName: string;
+  placeName: string;
   specialties: string[];
+  description: string;
   recommender: string;
 };
 

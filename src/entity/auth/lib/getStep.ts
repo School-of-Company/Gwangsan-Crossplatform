@@ -2,10 +2,11 @@ type SignupStep =
   | 'name'
   | 'nickname'
   | 'password'
-  | 'phone'
-  | 'dong'
-  | 'place'
+  | 'phoneNumber'
+  | 'dongName'
+  | 'placeName'
   | 'specialties'
+  | 'description'
   | 'recommender'
   | 'complete';
 
@@ -15,10 +16,11 @@ const SIGNUP_STEPS: readonly SignupStep[] = [
   'name',
   'nickname',
   'password',
-  'phone',
-  'dong',
-  'place',
+  'phoneNumber',
+  'dongName',
+  'placeName',
   'specialties',
+  'description',
   'recommender',
   'complete',
 ] as const;
