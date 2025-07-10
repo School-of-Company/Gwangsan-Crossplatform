@@ -10,7 +10,7 @@ import { ZodError } from 'zod';
 export default function DescriptionStep() {
   const { value: initialDescription, updateField } = useSignupFormField('description');
   const { nextStep } = useSignupStepNavigation();
-  const [description, setDescription] = useState(initialDescription);
+  const [description, setDescription] = useState((initialDescription as string) || '');
   const [error, setError] = useState<string | null>(null);
 
   const validateAndNext = () => {

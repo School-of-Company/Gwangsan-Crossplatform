@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
-import { useStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,7 +31,7 @@ function SignupForm({
   nextButtonText = '다음',
   isNextDisabled = false,
 }: SignupFormProps) {
-  const { prevStep } = useStepNavigation();
+  const { prevStep } = useSignupStepNavigation();
 
   return (
     <SafeAreaView className="flex-1 bg-white">

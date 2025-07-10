@@ -14,7 +14,9 @@ export function useStepNavigation<TState extends SignupState | SigninState>(
 ) {
   const nextStep = useStore((state: TState) => state.nextStep) as () => void;
   const prevStep = useStore((state: TState) => state.prevStep) as () => void;
-  const goToStep = useStore((state: TState) => state.goToStep) as (step: TState['currentStep']) => void;
+  const goToStep = useStore((state: TState) => state.goToStep) as (
+    step: TState['currentStep']
+  ) => void;
   const resetStore = useStore((state: TState) => state.resetStore) as () => void;
 
   return useMemo(
@@ -28,7 +30,10 @@ export function useFormField<TState extends SignupState | SigninState, K extends
   useStore: (selector: (state: TState) => unknown) => unknown
 ) {
   const value = useStore((state: TState) => (state.formData as any)[fieldName]);
-  const setField = useStore((state: TState) => state.setField) as (field: string, value: unknown) => void;
+  const setField = useStore((state: TState) => state.setField) as (
+    field: string,
+    value: unknown
+  ) => void;
 
   const updateField = useCallback(
     (newValue: unknown) => {
@@ -37,10 +42,7 @@ export function useFormField<TState extends SignupState | SigninState, K extends
     [fieldName, setField]
   );
 
-  return useMemo(
-    () => ({ value, updateField }),
-    [value, updateField]
-  );
+  return useMemo(() => ({ value, updateField }), [value, updateField]);
 }
 
 export const useSignupCurrentStep = () => useCurrentStep<SignupState>(useSignupStore);
