@@ -38,7 +38,7 @@ export default function Information({ name, id }: InformationProps) {
       </View>
       <TouchableOpacity
         onPress={handleEditProfile}
-        className="flex justify-center rounded-3xl border border-main-500 px-4">
+        className="flex justify-center rounded-[30px] border border-main-500 px-4 py-[10px]">
         <Text className="text-main-500">내 정보 수정</Text>
       </TouchableOpacity>
     </View>
