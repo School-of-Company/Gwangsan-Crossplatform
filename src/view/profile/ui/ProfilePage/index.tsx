@@ -1,14 +1,13 @@
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Light from '~/entity/profile/ui/\bLight/\bindex';
-import Gwangsan from '~/entity/profile/ui/Gwangsan';
-import Information from '~/entity/profile/ui/Information';
 import { Footer } from '~/shared/ui/Footer';
-import Active from '~/widget/profile/ui/Active';
-import ReviewList from '~/widget/profile/ui/reviewList';
+import { useGetMyProfile } from '../../model/useGetMyProfile';
+import { Gwangsan, Information, Light } from '~/entity/profile/ui';
+import { Active, ReviewList } from '~/widget/profile/ui';
 
 export default function ProfilePageView() {
+  const { data, error } = useGetMyProfile();
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex w-full flex-row justify-between bg-white px-6 py-6 text-center">
