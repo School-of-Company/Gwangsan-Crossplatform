@@ -10,4 +10,6 @@ export const PLACE = [
   '평동',
   '월곡2',
   '하남',
-];
+] as const;
+
+export type Place = (typeof PLACE)[number];

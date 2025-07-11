@@ -19,4 +19,6 @@ export const DONG = [
   '비아동',
   '어룡동',
   '삼도동',
-];
+] as const;
+
+export type Dong = (typeof DONG)[number];
