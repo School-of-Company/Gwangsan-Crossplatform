@@ -43,7 +43,7 @@ export default function ReviewsPageView() {
          
       </View>
       {posts.map((post, index) => {
-        return <View key={post.id || index}>{post.content}</View>;
+        return <View key={post.productId || index}>{post.content}</View>;
       })}
     </SafeAreaView>
   );
