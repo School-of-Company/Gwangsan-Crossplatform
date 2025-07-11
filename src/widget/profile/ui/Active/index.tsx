@@ -2,9 +2,8 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const buttonList = [
-  { id: 'myPosts', label: '내 글' },
-  { id: 'transactions', label: '거래내역' },
-  { id: 'reviews', label: '내가 작성한 후기' },
+  { id: 'receive', label: '내가 받은 후기' },
+  { id: 'toss', label: '내가 작성한 후기' },
 ];
 
 export default function Active() {
@@ -19,7 +18,7 @@ export default function Active() {
             <TouchableOpacity
               className="rounded-md border border-main-500 px-6 py-3"
               key={button.id}
-              onPress={() => router.push(`/${button.id}`)}>
+              onPress={() => router.push(`/reviews?active=${button.id}`)}>
               <Text className="text-main-500">{button.label}</Text>
             </TouchableOpacity>
           );

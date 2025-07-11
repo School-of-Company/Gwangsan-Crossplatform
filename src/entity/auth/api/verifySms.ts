@@ -1,4 +1,4 @@
-import { instance } from '@/shared/lib/aixos';
+import { instance } from '@/shared/lib/axios';
 
 export const verifySms = async (phoneNumber: string, code: string) => {
   try {
