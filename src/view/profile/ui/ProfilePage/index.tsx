@@ -6,6 +6,7 @@ import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
 import { Active, ReviewList } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
+import Introduce from '~/widget/profile/ui/Introduce';
 
 export default function ProfilePageView() {
   const { data, error, isError } = useGetMyProfile();
@@ -26,6 +27,7 @@ export default function ProfilePageView() {
       <Information id={data?.memberId} name={data?.nickname} />
       <ScrollView className=" flex-0.8 flex gap-3">
         <View className="bg-white pb-14">
+          <Introduce introduce={data?.description} specialty={data?.specialties} />
           <Light lightLevel={data?.light} />
           <Gwangsan gwangsan={data?.gwangsan} />
         </View>
