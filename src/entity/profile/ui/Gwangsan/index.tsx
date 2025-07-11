@@ -1,6 +1,10 @@
 import { Image, Text, View } from 'react-native';
 
-export default function Gwangsan() {
+interface GwangsanProps {
+  gwangsan?: number;
+}
+
+export default function Gwangsan({ gwangsan }: GwangsanProps) {
   return (
     <View className="flex gap-6 px-6">
       <Text className="text-titleSmall">광산</Text>
@@ -11,7 +15,7 @@ export default function Gwangsan() {
           height={52}
           resizeMode="contain"
         />
-        <Text className="font-cafe24 text-titleMedium text-sub2-700">5000 광산</Text>
+        <Text className="font-cafe24 text-titleMedium text-sub2-700">{gwangsan} 광산</Text>
       </View>
     </View>
   );
