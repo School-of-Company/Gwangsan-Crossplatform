@@ -10,7 +10,7 @@ export default function Post(data: PostType) {
   }, [router, data.id]);
   return (
     <TouchableOpacity onPress={handlePress} className="flex flex-row items-center gap-6 px-6 py-4">
-      {data.imageUrls.length > 0 ? (
+      {data.imageUrls && data.imageUrls.length > 0 ? (
         data.imageUrls.map((image) => {
           return (
             <Image
