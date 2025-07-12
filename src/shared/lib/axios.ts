@@ -55,7 +55,7 @@ instance.interceptors.response.use(
           setData('accessToken', accessToken);
 
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return instance(originalRequest); 
+          return instance(originalRequest);
         } catch (error) {
           removeData('accessToken');
           removeData('refreshToken');
