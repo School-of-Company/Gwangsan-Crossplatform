@@ -11,15 +11,17 @@ import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/it
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
+interface ItemFormPageProps {
+  type: string;
+  mode: string;
+  headerTitle: string;
+}
+
 const ItemFormPage = ({
   type,
   mode,
   headerTitle,
-}: {
-  type: string;
-  mode: string;
-  headerTitle: string;
-}) => {
+}: ItemFormPageProps) => {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
