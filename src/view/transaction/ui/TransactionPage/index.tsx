@@ -61,12 +61,17 @@ export default function TransactionPageView() {
         })}
       </ScrollView>
       {type && mode && (
-        <TouchableOpacity
-          className="absolute bottom-10 right-10 z-50 h-[60px] w-[60px]"
+        <TouchableOpacity 
+          className="absolute bottom-10 right-10 w-[60px] h-[60px] z-50"
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           activeOpacity={0.7}
-          onPress={handlePress}>
-          <Ionicons name="add-circle" size={60} color="#8FC31D" />
+          onPress={handlePress}
+        >
+          <Ionicons
+            name="add-circle"
+            size={60}
+            color="#8FC31D"
+          />
         </TouchableOpacity>
       )}
     </SafeAreaView>
