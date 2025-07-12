@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import ReportModal from '~/entity/posts/ui/ReportModal';
+import ReportModal from '~/entity/reviews/ui/ReportModal';
 
 export default function Report() {
   const [isModalVisible, setIsModalVisible] = useState(false);
