@@ -13,7 +13,7 @@ export default function Information({ name, id }: InformationProps) {
   const R = useRouter();
   const handleEditProfile = useCallback(() => {
     R.push('/profile/edit' + `?id=${id}`);
-  }, [R]);
+  }, [R, id]);
 
   const handleLogout = useCallback(() => {
     removeData('accessToken');

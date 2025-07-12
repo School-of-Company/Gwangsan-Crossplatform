@@ -2,7 +2,6 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'ax
 import { API_URL } from '@env';
 import { router } from 'expo-router';
 import { getData } from './getData';
-import { setData } from './setData';
 import { removeData } from './removeData';
 
 export const baseURL = API_URL;
