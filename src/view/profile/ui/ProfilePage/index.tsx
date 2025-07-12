@@ -6,10 +6,12 @@ import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
 import { Active, Introduce } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
-import { ReviewList } from '~/widget/reviews/ui';
+import { useGetMyPosts } from '../../model/useGetMyPosts';
+import Post from '~/shared/ui/Post';
 
 export default function ProfilePageView() {
-  const { data, error, isError } = useGetMyProfile();
+  const { data: MyProfileData, error, isError } = useGetMyProfile();
+  const { data: MyPostsData } = useGetMyPosts();
   if (isError) {
     Toast.show({
       type: 'error',
@@ -24,15 +26,23 @@ export default function ProfilePageView() {
         <Text className="text-body1">프로필</Text>
         <Ionicons name="close" color="#8F9094" size={24} />
       </View>
-      <Information id={data?.memberId} name={data?.nickname} />
+      <Information id={MyProfileData?.memberId} name={MyProfileData?.nickname} />
       <ScrollView className=" flex-0.8 flex gap-3">
         <View className="bg-white pb-14">
-          <Introduce introduce={data?.description} specialty={data?.specialties} />
-          <Light lightLevel={data?.light} />
-          <Gwangsan gwangsan={data?.gwangsan} />
+          <Introduce
+            introduce={MyProfileData?.description}
+            specialty={MyProfileData?.specialties}
+          />
+          <Light lightLevel={MyProfileData?.light} />
+          <Gwangsan gwangsan={MyProfileData?.gwangsan} />
         </View>
         <Active />
-        <ReviewList />
+        <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
+          <Text className=" text-titleSmall">내 글</Text>
+          {MyPostsData?.map((post) => {
+            return <Post {...post} key={post.id} />;
+          })}
+        </View>
       </ScrollView>
       <Footer />
     </SafeAreaView>
