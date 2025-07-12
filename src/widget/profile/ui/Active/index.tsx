@@ -12,11 +12,11 @@ export default function Active() {
   return (
     <View className="mt-3 bg-white px-6 pb-14 pt-8">
       <Text className="text-titleSmall">내 활동</Text>
-      <View className="mt-6 flex flex-row justify-between">
+      <View className="mt-6 flex flex-row items-center justify-center gap-3">
         {buttonList.map((button) => {
           return (
             <TouchableOpacity
-              className="rounded-md border border-main-500 px-6 py-3"
+              className="w-1/2 items-center rounded-md border border-main-500 px-6 py-3 text-center"
               key={button.id}
               onPress={() => router.push(`/reviews?active=${button.id}`)}>
               <Text className="text-main-500">{button.label}</Text>
