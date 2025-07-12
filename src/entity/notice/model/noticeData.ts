@@ -9,3 +9,10 @@ export interface NoticeData {
   role: string;
   images: ImageType[];
 }
+
+export interface NoticeListData {
+  id: number;
+  title: string;
+  content: string;
+  images: ImageType[];
+}
