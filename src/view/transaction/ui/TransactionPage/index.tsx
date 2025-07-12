@@ -60,14 +60,20 @@ export default function TransactionPageView() {
           return <Post key={v.id} {...v} />;
         })}
       </ScrollView>
-      <TouchableOpacity onPress={handlePress} disabled={!mode}>
-        <Ionicons
-          name="add-circle"
-          size={60}
-          color="#8FC31D"
-          className="absolute bottom-10 right-10"
-        />
-      </TouchableOpacity>
+      {type && mode && (
+        <TouchableOpacity 
+          className="absolute bottom-10 right-10 w-[60px] h-[60px] z-50"
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          activeOpacity={0.7}
+          onPress={handlePress}
+        >
+          <Ionicons
+            name="add-circle"
+            size={60}
+            color="#8FC31D"
+          />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }

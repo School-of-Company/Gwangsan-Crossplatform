@@ -14,6 +14,7 @@ interface ItemFormRenderContentProps {
   onContentChange: (content: string) => void;
   onImagesChange: (images: string[]) => void;
   onGwangsanChange: (gwangsan: string) => void;
+  onImageIdsChange?: (imageIds: number[]) => void;
 }
 
 const ItemFormRenderContent = ({
@@ -26,6 +27,7 @@ const ItemFormRenderContent = ({
   onContentChange,
   onImagesChange,
   onGwangsanChange,
+  onImageIdsChange,
 }: ItemFormRenderContentProps) => {
   switch (step) {
     case 1:
@@ -38,6 +40,7 @@ const ItemFormRenderContent = ({
             onTitleChange={onTitleChange}
             onContentChange={onContentChange}
             onImagesChange={onImagesChange}
+            onImageIdsChange={onImageIdsChange}
           />
         </View>
       );

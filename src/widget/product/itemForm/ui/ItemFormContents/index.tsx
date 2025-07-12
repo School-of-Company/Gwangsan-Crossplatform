@@ -12,6 +12,7 @@ interface Props {
   onTitleChange?: (title: string) => void;
   onContentChange?: (content: string) => void;
   onImagesChange?: (images: string[]) => void;
+  onImageIdsChange?: (imageIds: number[]) => void;
 }
 
 const ItemFormContents = ({
@@ -22,6 +23,7 @@ const ItemFormContents = ({
   onTitleChange,
   onContentChange,
   onImagesChange,
+  onImageIdsChange,
 }: Props) => {
   return (
     <View className="px-6">
@@ -42,7 +44,12 @@ const ItemFormContents = ({
             editable={!readonly}
           />
         </View>
-        <ImageUploader images={images} onImagesChange={onImagesChange} readonly={readonly} />
+        <ImageUploader
+          images={images}
+          onImagesChange={onImagesChange}
+          onImageIdsChange={onImageIdsChange}
+          readonly={readonly}
+        />
       </View>
     </View>
   );
