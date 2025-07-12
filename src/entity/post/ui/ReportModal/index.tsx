@@ -1,11 +1,12 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, memo } from 'react';
 import { View, Dimensions } from 'react-native';
 import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper } from '~/shared/ui';
+import { REPORT_TYPE_MAP, ReportType } from '~/entity/post/model/reportType';
 
-const REPORT_TYPES = ['부적절한 게시글', '스팸/홍보', '욕설/비방', '기타'] as const;
+const REPORT_TYPES = Object.keys(REPORT_TYPE_MAP) as ReportType[];
 
 interface ReportModalProps {
   isVisible: boolean;
@@ -83,4 +84,4 @@ const ReportModal = ({
   );
 };
 
-export default React.memo(ReportModal);
+export default memo(ReportModal);
