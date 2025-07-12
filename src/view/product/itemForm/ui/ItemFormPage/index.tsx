@@ -69,11 +69,10 @@ const ItemFormPage = ({
 
       await createItemMutation.mutateAsync(requestBody);
 
-      if (type === 'SERVICE') {
-        router.replace(mode === 'GIVER' ? '/offer' : '/need');
-      } else {
-        router.replace('/sell');
-      }
+      router.replace({
+        pathname: '/transaction',
+        params: { type }
+      });
     } catch (error) {
       console.error(error);
     } finally {
