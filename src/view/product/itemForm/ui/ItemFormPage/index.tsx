@@ -23,6 +23,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
   const [content, setContent] = useState('');
   const [gwangsan, setGwangsan] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [imageIds, setImageIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createItemMutation = useCreateItem();
@@ -37,6 +38,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
     []
   );
   const handleImagesChange = useCallback((v: string[]) => setImages(v), []);
+  const handleImageIdsChange = useCallback((ids: number[]) => setImageIds(ids), []);
 
   const handleCompletePress = async () => {
     try {
@@ -58,10 +60,13 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
         title,
         content,
         gwangsan: parseInt(gwangsan, 10),
-        imageIds: images.length > 0 ? [] : undefined,
+        imageIds: imageIds.length > 0 ? imageIds : undefined,
       });
 
-      const requestBody = createItemFormRequestBody(formData);
+      const requestBody = createItemFormRequestBody({
+        ...formData,
+        imageIds,
+      });
 
       await createItemMutation.mutateAsync(requestBody);
 
@@ -99,6 +104,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
               onContentChange={handleContentChange}
               onImagesChange={handleImagesChange}
               onGwangsanChange={handleGwangsanChange}
+              onImageIdsChange={handleImageIdsChange}
             />
             <View>
               <ItemFormRenderButton
