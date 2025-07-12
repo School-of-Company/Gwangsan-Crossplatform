@@ -10,30 +10,36 @@ import Post from '~/shared/ui/Post';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const ROUTE_MAP: Record<TYPE, Record<MODE, string>> = {
+  SERVICE: {
+    RECEIVER: '/request',
+    GIVER: '/offer',
+  },
+  OBJECT: {
+    RECEIVER: '/need',
+    GIVER: '/sell',
+  },
+};
+
 export default function TransactionPageView() {
   const { type } = useLocalSearchParams<{ type: TYPE }>();
   const [category, setCategory] = useState<Category>();
   const mode = category ? returnValue(category) : undefined;
-  const R = useRouter();
-  const { data } = useGetPosts(mode!, type);
+  const router = useRouter();
+  
+  const { data = [] } = useGetPosts(
+    mode as MODE | undefined, 
+    type as TYPE | undefined
+  );
 
   const handlePress = useCallback(() => {
     if (!type || !mode) return;
 
-    if (type === 'SERVICE') {
-      if (mode === 'RECEIVER') {
-        R.push('/request');
-      } else {
-        R.push('/offer');
-      }
-    } else {
-      if (mode === 'RECEIVER') {
-        R.push('/need');
-      } else {
-        R.push('/sell');
-      }
+    const targetRoute = ROUTE_MAP[type as TYPE]?.[mode as MODE];
+    if (targetRoute) {
+      router.push(targetRoute);
     }
-  }, [R, type, mode]);
+  }, [router, type, mode]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -53,11 +59,14 @@ export default function TransactionPageView() {
         })}
       </View>
       <ScrollView>
-        {data?.map((v) => {
+        {data.map((v) => {
           return <Post key={v.id} {...v} />;
         })}
       </ScrollView>
-      <TouchableOpacity onPress={handlePress} disabled={!mode}>
+      <TouchableOpacity 
+        onPress={handlePress} 
+        disabled={!mode}
+      >
         <Ionicons
           name="add-circle"
           size={60}
