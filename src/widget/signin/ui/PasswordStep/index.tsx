@@ -36,7 +36,7 @@ export default function PasswordStep() {
       resetStore();
       router.replace('/main');
     } catch (err) {
-      console.error('로그인 실패:', err);
+      console.error(err);
 
       if (err instanceof ZodError) {
         setError(err.errors[0].message);

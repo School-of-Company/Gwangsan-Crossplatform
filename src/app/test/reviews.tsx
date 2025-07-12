@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { ReviewsModal } from '~/entity/reviews';
+import { ReviewsModal } from '~/entity/post/ui';
 
 export default function Reviews() {
   const [isModalVisible, setIsModalVisible] = useState(false);

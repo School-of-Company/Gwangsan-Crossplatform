@@ -6,6 +6,7 @@ import { Category } from '~/view/transaction/model/category';
 import { returnValue } from '~/view/transaction/model/handleCategory';
 import { getReceiveReview, getTossReview } from '../../api/getReviews';
 import { ReviewPostType } from '../../model/reviewPostType';
+import { ReviewPost } from '~/entity/reviews/ui';
 
 export default function ReviewsPageView() {
   const { active } = useLocalSearchParams();
@@ -42,8 +43,8 @@ export default function ReviewsPageView() {
         </View>
          
       </View>
-      {posts.map((post, index) => {
-        return <View key={post.productId || index}>{post.content}</View>;
+      {posts.map((v) => {
+        return <ReviewPost key={v.productId} review={v} />;
       })}
     </SafeAreaView>
   );
