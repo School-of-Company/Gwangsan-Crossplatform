@@ -5,20 +5,19 @@ import { PostType } from '~/shared/types/postType';
 
 export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) {
   const router = useRouter();
-  
+
   const handlePress = useCallback(() => {
     router.push(`/post/${id}`);
   }, [router, id]);
 
   const firstImage = imageUrls?.[0]?.imageUrl;
   const additionalImagesCount = (imageUrls?.length ?? 0) - 1;
-  
+
   return (
-    <TouchableOpacity 
-      onPress={handlePress} 
+    <TouchableOpacity
+      onPress={handlePress}
       className="flex flex-row items-center gap-6 px-6 py-4"
-      activeOpacity={0.7}
-    >
+      activeOpacity={0.7}>
       <View className="relative">
         <Image
           source={
@@ -29,12 +28,12 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
           className="size-20 rounded-lg"
         />
         {additionalImagesCount > 0 && (
-          <View className="absolute bottom-1 right-1 bg-black/50 px-2 py-1 rounded-md">
-            <Text className="text-white text-xs">+{additionalImagesCount}</Text>
+          <View className="absolute bottom-1 right-1 rounded-md bg-black/50 px-2 py-1">
+            <Text className="text-xs text-white">+{additionalImagesCount}</Text>
           </View>
         )}
       </View>
-      <View className="flex gap-3 flex-1">
+      <View className="flex flex-1 gap-3">
         <Text className="text-body3" numberOfLines={1} ellipsizeMode="tail">
           {title}
         </Text>

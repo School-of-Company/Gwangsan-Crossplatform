@@ -17,11 +17,7 @@ interface ItemFormPageProps {
   headerTitle: string;
 }
 
-const ItemFormPage = ({
-  type,
-  mode,
-  headerTitle,
-}: ItemFormPageProps) => {
+const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -71,7 +67,7 @@ const ItemFormPage = ({
 
       router.replace({
         pathname: '/transaction',
-        params: { type }
+        params: { type },
       });
     } catch (error) {
       console.error(error);

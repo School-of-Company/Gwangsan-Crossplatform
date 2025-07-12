@@ -26,11 +26,8 @@ export default function TransactionPageView() {
   const [category, setCategory] = useState<Category>();
   const mode = category ? returnValue(category) : undefined;
   const router = useRouter();
-  
-  const { data = [] } = useGetPosts(
-    mode as MODE | undefined, 
-    type as TYPE | undefined
-  );
+
+  const { data = [] } = useGetPosts(mode as MODE | undefined, type as TYPE | undefined);
 
   const handlePress = useCallback(() => {
     if (!type || !mode) return;
@@ -63,10 +60,7 @@ export default function TransactionPageView() {
           return <Post key={v.id} {...v} />;
         })}
       </ScrollView>
-      <TouchableOpacity 
-        onPress={handlePress} 
-        disabled={!mode}
-      >
+      <TouchableOpacity onPress={handlePress} disabled={!mode}>
         <Ionicons
           name="add-circle"
           size={60}
