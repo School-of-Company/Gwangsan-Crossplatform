@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useGetPosts } from '~/shared/model/useGetPosts';
-import { TYPE } from '~/shared/types/postType';
+import { MODE, TYPE } from '~/shared/types/postType';
 import { Header } from '~/shared/ui';
 import { handleCategory, returnValue } from '../../model/handleCategory';
 import { Category } from '../../model/category';
@@ -18,8 +18,23 @@ export default function TransactionPageView() {
   const { data } = useGetPosts(mode!, type);
 
   const handlePress = useCallback(() => {
-    R.push('/need');
-  }, [R]);
+    if (!type || !mode) return;
+
+    if (type === 'SERVICE') {
+      if (mode === 'RECEIVER') {
+        R.push('/request');
+      } else {
+        R.push('/offer');
+      }
+    } else { // OBJECT
+      if (mode === 'RECEIVER') {
+        R.push('/need');
+      } else {
+        R.push('/sell');
+      }
+    }
+  }, [R, type, mode]);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
@@ -42,7 +57,10 @@ export default function TransactionPageView() {
           return <Post key={v.id} {...v} />;
         })}
       </ScrollView>
-      <TouchableOpacity onPress={handlePress}>
+      <TouchableOpacity 
+        onPress={handlePress}
+        disabled={!mode} 
+      >
         <Ionicons
           name="add-circle"
           size={60}
