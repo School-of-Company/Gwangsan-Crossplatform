@@ -29,9 +29,9 @@ export default function PostPageView() {
 
   const handleReportSubmit = async (type: string, reason: string) => {
     if (!id || !data) return;
-    
+
     const mappedReportType = REPORT_TYPE_MAP[type] || 'ETC';
-    
+
     try {
       await report({
         productId: data.id,
@@ -50,7 +50,7 @@ export default function PostPageView() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#8FC31D" />
       </SafeAreaView>
     );
@@ -58,7 +58,7 @@ export default function PostPageView() {
 
   if (error || !data) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
         <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
       </SafeAreaView>
     );
@@ -71,18 +71,15 @@ export default function PostPageView() {
       <Header headerTitle={headerTitle} />
       <ScrollView>
         {data.images && data.images.length > 0 ? (
-          <Image 
-            source={{ uri: data.images[0].imageUrl }} 
-            className="h-[280px] w-full" 
+          <Image
+            source={{ uri: data.images[0].imageUrl }}
+            className="h-[280px] w-full"
             resizeMode="cover"
           />
         ) : (
-          <Image 
-            source={require('~/shared/assets/png/logo.png')} 
-            className="h-[280px] w-full" 
-          />
+          <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
         )}
-        <MiniProfile 
+        <MiniProfile
           nickname={data.member.nickname}
           placeName={data.member.placeName}
           light={data.member.light}

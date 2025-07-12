@@ -12,4 +12,4 @@ export const useGetItem = (postId: string | undefined) => {
     },
     enabled: !!postId,
   });
-}; 
+};
