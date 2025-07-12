@@ -3,6 +3,7 @@ import { API_URL } from '@env';
 import { router } from 'expo-router';
 import { getData } from './getData';
 import { removeData } from './removeData';
+import { setData } from './setData';
 
 export const baseURL = API_URL;
 
@@ -37,32 +38,36 @@ instance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        /*  const refreshToken = await getData('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
+      const isSigninRequest = originalRequest.url?.includes('/auth/signin');
 
-        const response = await instance.post<{ accessToken: string }>('/auth/reissue', {
-          refreshToken,
-        });
-
-        const { accessToken } = response.data;
-        setData('accessToken', accessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return instance(originalRequest); */
-      } catch (error) {
-        removeData('accessToken');
-        removeData('refreshToken');
-
+      if (!isSigninRequest) {
         try {
-          router.replace('/signin');
-        } catch (routerError) {
-          console.warn('Router navigation failed:', routerError);
-        }
+          const refreshToken = await getData('refreshToken');
+          if (!refreshToken) {
+            throw new Error('No refresh token');
+          }
 
-        return Promise.reject(error);
+          const response = await instance.post<{ accessToken: string }>('/auth/reissue', {
+            refreshToken,
+          });
+
+          const { accessToken } = response.data;
+          setData('accessToken', accessToken);
+
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return instance(originalRequest); 
+        } catch (error) {
+          removeData('accessToken');
+          removeData('refreshToken');
+
+          try {
+            router.replace('/signin');
+          } catch (routerError) {
+            console.warn('Router navigation failed:', routerError);
+          }
+
+          return Promise.reject(error);
+        }
       }
     }
 
