@@ -39,7 +39,7 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await getData('refreshToken');
+        /*  const refreshToken = await getData('refreshToken');
         if (!refreshToken) {
           throw new Error('No refresh token');
         }
@@ -52,7 +52,7 @@ instance.interceptors.response.use(
         setData('accessToken', accessToken);
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return instance(originalRequest);
+        return instance(originalRequest); */
       } catch (error) {
         removeData('accessToken');
         removeData('refreshToken');
