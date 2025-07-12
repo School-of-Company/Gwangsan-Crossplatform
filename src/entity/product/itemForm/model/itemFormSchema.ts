@@ -28,6 +28,7 @@ export const createItemFormRequestBody = (data: {
   content: string;
   gwangsan: string;
   images: string[];
+  imageIds?: number[];
 }): ItemFormRequestBody => {
   return {
     type: data.type as TYPE,
@@ -35,6 +36,6 @@ export const createItemFormRequestBody = (data: {
     title: data.title,
     content: data.content,
     gwangsan: parseInt(data.gwangsan, 10),
-    imageIds: data.images.length > 0 ? [] : undefined,
+    imageIds: data.imageIds && data.imageIds.length > 0 ? data.imageIds : undefined,
   };
 };
