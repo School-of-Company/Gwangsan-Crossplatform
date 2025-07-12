@@ -4,7 +4,7 @@ import { NoticeData } from './noticeData';
 
 export const useGetNoticeDetail = (noticeId: number | string | undefined) => {
   const id = noticeId ? Number(noticeId) : undefined;
-  
+
   return useQuery<NoticeData>({
     queryKey: ['noticeDetail', id],
     queryFn: () => {
@@ -15,4 +15,4 @@ export const useGetNoticeDetail = (noticeId: number | string | undefined) => {
     },
     enabled: !!id,
   });
-}; 
+};
