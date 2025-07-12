@@ -26,7 +26,7 @@ export default function TransactionPageView() {
       } else {
         R.push('/offer');
       }
-    } else { // OBJECT
+    } else {
       if (mode === 'RECEIVER') {
         R.push('/need');
       } else {
@@ -57,10 +57,7 @@ export default function TransactionPageView() {
           return <Post key={v.id} {...v} />;
         })}
       </ScrollView>
-      <TouchableOpacity 
-        onPress={handlePress}
-        disabled={!mode} 
-      >
+      <TouchableOpacity onPress={handlePress} disabled={!mode}>
         <Ionicons
           name="add-circle"
           size={60}

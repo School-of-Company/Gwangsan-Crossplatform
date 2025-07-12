@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Header } from '@/shared/ui';
-import { ItemFormProgressBar } from '~/entity/product/itemForm';
 import {
+  ItemFormProgressBar,
   createItemFormRequestBody,
   itemFormSchema,
   useCreateItem,
