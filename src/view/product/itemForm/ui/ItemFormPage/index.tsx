@@ -5,9 +5,11 @@ import { ItemFormProgressBar } from '~/entity/product/itemForm';
 import {
   createItemFormRequestBody,
   itemFormSchema,
-} from '~/entity/product/itemForm/model/itemFormSchema';
+  useCreateItem,
+} from '~/entity/product/itemForm';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 const ItemFormPage = ({
   type,
@@ -23,6 +25,9 @@ const ItemFormPage = ({
   const [content, setContent] = useState('');
   const [gwangsan, setGwangsan] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const createItemMutation = useCreateItem();
 
   const isStep1Valid = title.trim().length > 0 && content.trim().length > 0;
   const isStep2Valid = gwangsan.trim().length > 0;
@@ -37,6 +42,9 @@ const ItemFormPage = ({
 
   const handleCompletePress = async () => {
     try {
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+
       const formData = {
         type,
         mode,
@@ -57,12 +65,17 @@ const ItemFormPage = ({
 
       const requestBody = createItemFormRequestBody(formData);
 
-      console.log('=== 상품 등록 완료 ===');
-      console.log('검증된 데이터:', validatedData);
-      console.log('요청 body:', requestBody);
-      console.log('==================');
+      await createItemMutation.mutateAsync(requestBody);
+
+      if (type === 'SERVICE') {
+        router.replace(mode === 'GIVER' ? '/offer' : '/need');
+      } else {
+        router.replace('/sell');
+      }
     } catch (error) {
-      console.error('폼 검증 오류:', error);
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -98,6 +111,7 @@ const ItemFormPage = ({
                 onNextStep={setStep}
                 onEditPress={() => setStep(1)}
                 onCompletePress={handleCompletePress}
+                isSubmitting={isSubmitting}
               />
             </View>
           </View>

@@ -7,6 +7,7 @@ interface ItemFormRenderButtonProps {
   onNextStep: (step: number) => void;
   onEditPress: () => void;
   onCompletePress: () => void;
+  isSubmitting?: boolean;
 }
 
 const ItemFormRenderButton = ({
@@ -16,6 +17,7 @@ const ItemFormRenderButton = ({
   onNextStep,
   onEditPress,
   onCompletePress,
+  isSubmitting = false,
 }: ItemFormRenderButtonProps) => {
   switch (step) {
     case 1:
@@ -23,7 +25,14 @@ const ItemFormRenderButton = ({
     case 2:
       return <NextButton disabled={!isStep2Valid} onPress={() => onNextStep(3)} />;
     case 3:
-      return <LastStepButton onEditPress={onEditPress} onCompletePress={onCompletePress} />;
+      return (
+        <LastStepButton
+          onEditPress={onEditPress}
+          onCompletePress={onCompletePress}
+          disabled={isSubmitting}
+          buttonText={isSubmitting ? '등록 중...' : '등록하기'}
+        />
+      );
     default:
       return null;
   }
