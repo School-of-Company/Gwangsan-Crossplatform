@@ -4,9 +4,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Footer } from '~/shared/ui/Footer';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
-import { Active, ReviewList } from '~/widget/profile/ui';
+import { Active, Introduce } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
-import Introduce from '~/widget/profile/ui/Introduce';
+import { ReviewList } from '~/widget/reviews/ui';
 
 export default function ProfilePageView() {
   const { data, error, isError } = useGetMyProfile();

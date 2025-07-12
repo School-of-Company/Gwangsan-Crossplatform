@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import ReviewPost from '~/entity/profile/ui/ReviewPost';
+import ReviewPost from '~/entity/reviews/ui/ReviewPost';
 
 export default function ReviewList() {
   return (
