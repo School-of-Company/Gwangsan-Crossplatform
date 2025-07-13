@@ -4,7 +4,7 @@ import { getPost } from '../api/getPosts';
 
 export const useGetPosts = (id: string) => {
   return useQuery<PostType[]>({
-    queryKey: ['myPosts'],
+    queryKey: ['myPosts', id],
     queryFn: () => getPost(id),
   });
 };
