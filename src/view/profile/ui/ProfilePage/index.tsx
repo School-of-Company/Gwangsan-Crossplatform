@@ -1,45 +1,61 @@
 import { ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Footer } from '~/shared/ui/Footer';
-import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
 import { Active, Introduce } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
-import { useGetMyPosts } from '../../model/useGetMyPosts';
+import { useGetPosts } from '../../model/useGetPosts';
 import Post from '~/shared/ui/Post';
+import { useGetProfile } from '../../model/useGetProfile';
+import { useLocalSearchParams } from 'expo-router';
+import { getData } from '~/shared/lib/getData';
+import { Header } from '~/shared/ui';
 
 export default function ProfilePageView() {
-  const { data: MyProfileData, error, isError } = useGetMyProfile();
-  const { data: MyPostsData } = useGetMyPosts();
-  if (isError) {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: profileData, error: profileError, isError: profileIsError } = useGetProfile(id);
+  const { data: postsData, error, isError } = useGetPosts(id);
+  if (profileIsError) {
     Toast.show({
       type: 'error',
       text1: '프로필을 불러오는데 실패했습니다.',
-      text2: error.message || '잠시 후 다시 시도해주세요.',
+      text2: profileError.message || '잠시 후 다시 시도해주세요.',
     });
+    if (isError) {
+      Toast.show({
+        type: 'error',
+        text1: '글을 불러오는데 실패했습니다.',
+        text2: error.message || '잠시 후 다시 시도해주세요.',
+      });
+    }
   }
+
+  const [isMe, setIsMe] = useState(false);
+
+  useEffect(() => {
+    const checkIsMe = async () => {
+      const memberId = await getData('memberId');
+      setIsMe(id === memberId);
+    };
+    checkIsMe();
+  }, [id]);
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="flex w-full flex-row justify-between bg-white px-6 py-6 text-center">
-        <View className="size-6"></View>
-        <Text className="text-body1">프로필</Text>
-        <Ionicons name="close" color="#8F9094" size={24} />
-      </View>
-      <Information id={MyProfileData?.memberId} name={MyProfileData?.nickname} />
-      <ScrollView className=" flex-0.8 flex gap-3">
+      <Header headerTitle="프로필" />
+      <Information isMe={isMe} id={profileData?.memberId} name={profileData?.nickname} />
+      <ScrollView className="flex-0.8 flex gap-3">
         <View className="bg-white pb-14">
-          <Introduce
-            introduce={MyProfileData?.description}
-            specialty={MyProfileData?.specialties}
-          />
-          <Light lightLevel={MyProfileData?.light} />
-          <Gwangsan gwangsan={MyProfileData?.gwangsan} />
+          <Introduce introduce={profileData?.description} specialty={profileData?.specialties} />
+          <Light lightLevel={profileData?.light} />
+          {!isMe && <Gwangsan gwangsan={profileData?.gwangsan} />}
         </View>
-        <Active />
+        <Active isMe={isMe} />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
-          <Text className=" text-titleSmall">내 글</Text>
-          {MyPostsData?.map((post) => {
+          <Text className=" text-titleSmall">
+            {isMe ? '내 글' : profileData?.nickname + '님의 글'}
+          </Text>
+          {postsData?.map((post) => {
             return <Post {...post} key={post.id} />;
           })}
         </View>

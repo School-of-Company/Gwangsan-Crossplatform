@@ -7,6 +7,7 @@ import { removeData } from '~/shared/lib/removeData';
 interface InformationProps {
   name?: string;
   id?: number;
+  isMe: boolean;
 }
 
 export default function Information({ name, id }: InformationProps) {
