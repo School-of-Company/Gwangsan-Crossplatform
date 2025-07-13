@@ -23,11 +23,16 @@ const handlePress = (where: string) => {
   router.push('/post?type=' + where);
 };
 
-export default function Inform() {
+interface InformProps {
+  dong?: string;
+  place?: string;
+}
+
+export default function Inform({ dong, place }: InformProps) {
   return (
     <View className="flex gap-2 bg-white p-7">
-      <Text className="text-titleSmall">광산구도시재생센터</Text>
-      <Text className=" text-body2">수완세영</Text>
+      <Text className="text-titleSmall">{place}</Text>
+      <Text className=" text-body2">{dong}</Text>
       <View className="flex w-full flex-row items-center justify-around pb-10">
         <TouchableOpacity
           onPress={() => handlePress('OBJECT')}
