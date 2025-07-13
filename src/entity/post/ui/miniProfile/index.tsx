@@ -19,10 +19,9 @@ export default function MiniProfile({ nickname, placeName, light, memberId }: Mi
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       onPress={handleProfilePress}
-      className=" flex-row items-center justify-between border-b border-b-gray-100 px-6 py-3"
-    >
+      className=" flex-row items-center justify-between border-b border-b-gray-100 px-6 py-3">
       <View className="flex-row gap-3">
         <Image
           className="h-[50px] w-[50px]"
