@@ -4,6 +4,7 @@ import { Image, ScrollView, Text, View, TouchableOpacity, ActivityIndicator } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { report } from '~/entity/post/api/report';
 import { createReview } from '~/entity/post/api/createReview';
+import { completeTrade } from '~/entity/post/api/completeTrade';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { REPORT_TYPE_MAP } from '~/entity/post/model/reportType';
 import MiniProfile from '~/entity/post/ui/miniProfile';
@@ -54,9 +55,27 @@ export default function PostPageView() {
     }
   };
 
-  const handleCompletePress = useCallback(() => {
-    setIsReviewModalVisible(true);
-  }, []);
+  const handleCompletePress = useCallback(async () => {
+    if (!id || !data) return;
+
+    try {
+      await completeTrade({
+        productId: data.id,
+        otherMemberId: data.member.memberId,
+      });
+      Toast.show({
+        type: 'success',
+        text1: '거래가 완료되었습니다.',
+      });
+      setIsReviewModalVisible(true);
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '거래 완료 실패',
+        text2: error as string,
+      });
+    }
+  }, [id, data]);
 
   const handleReviewModalClose = useCallback(() => {
     setIsReviewModalVisible(false);
