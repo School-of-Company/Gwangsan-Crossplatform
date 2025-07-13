@@ -5,14 +5,14 @@ import { ImageType } from '~/shared/types/imageType';
 interface NoticeItemProps {
   id: number;
   title: string;
-  place: string;
   content: string;
-  createdAt: string;
-  role: string;
   images: ImageType[];
+  place?: string;
+  createdAt?: string;
+  role?: string;
 }
 
-const NoticeItem = ({ id, title, content, createdAt, images }: NoticeItemProps) => {
+const NoticeItem = ({ id, title, content, createdAt = '', images }: NoticeItemProps) => {
   const router = useRouter();
 
   const handlePress = () => {

@@ -1,20 +1,33 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { noticeListMock } from '@/widget/notice/mock/noticeDataMock';
-import { Header } from '@/shared/ui';
-import { NoticeDetailSlideViewer } from '@/widget/notice';
+import { Header } from '~/shared/ui';
+import { NoticeDetailSlideViewer } from '~/widget/notice';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useGetNoticeDetail } from '~/entity/notice/model/useGetNoticeDetail';
 
 const NoticeDetailPage = () => {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: notice, isLoading, error } = useGetNoticeDetail(id);
 
-  const notice = noticeListMock.find((item) => item.id === Number(id));
-
-  if (!notice) {
+  if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
-        <Text className="text-lg text-gray-500">공지사항을 찾을 수 없습니다.</Text>
-      </View>
+      <SafeAreaView className="flex-1 bg-white">
+        <Header headerTitle="공지" />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#8FC31D" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !notice) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <Header headerTitle="공지" />
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-error-500">공지사항을 불러오는데 실패했습니다.</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -30,8 +43,8 @@ const NoticeDetailPage = () => {
           <Text className="mb-2 text-2xl font-bold text-black">{notice.title}</Text>
 
           <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-base text-black">{notice.place}</Text>
-            <Text className="text-sm text-black">{notice.createdAt}</Text>
+            <Text className="text-base text-black">{notice.place || ''}</Text>
+            <Text className="text-sm text-black">{notice.createdAt || ''}</Text>
           </View>
 
           <Text className="text-base leading-6 text-black">{notice.content}</Text>
