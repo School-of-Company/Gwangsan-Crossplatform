@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Image, ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { report } from '~/entity/post/api/report';
@@ -12,6 +12,7 @@ import ReportModal from '~/entity/post/ui/ReportModal';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { Button, Header } from '~/shared/ui';
 import Toast from 'react-native-toast-message';
+import { getData } from '~/shared/lib/getData';
 
 export default function PostPageView() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function PostPageView() {
   const [reportContents, setReportContents] = useState('');
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
+  const [isMyPost, setIsMyPost] = useState(false);
 
   const handleReportPress = () => {
     setIsReportModalVisible(true);
@@ -117,6 +119,25 @@ export default function PostPageView() {
     setReviewContents(value);
   }, []);
 
+  const handleEditPress = useCallback(() => {
+    
+  }, []);
+
+  useEffect(() => {
+    const checkIsMyPost = async () => {
+      if (data) {
+        const memberId = await getData('memberId');
+        
+        const currentUserId = Number(memberId);
+        const postAuthorId = Number(data.member.memberId);
+        const isMyPostResult = currentUserId === postAuthorId && currentUserId !== 0;
+        
+        setIsMyPost(isMyPostResult);
+      }
+    };
+    checkIsMyPost();
+  }, [data]);
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -164,9 +185,15 @@ export default function PostPageView() {
             <Button variant="secondary" width="w-1/2">
               채팅하기
             </Button>
-            <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
-              거래완료
-            </Button>
+            {isMyPost ? (
+              <Button variant="primary" width="w-1/2" onPress={handleEditPress}>
+                수정하기
+              </Button>
+            ) : (
+              <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
+                거래완료
+              </Button>
+            )}
           </View>
         </View>
       </ScrollView>
