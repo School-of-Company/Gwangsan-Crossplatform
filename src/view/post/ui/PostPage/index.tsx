@@ -178,6 +178,7 @@ export default function PostPageView() {
           nickname={data.member.nickname}
           placeName={data.member.placeName}
           light={data.member.light}
+          memberId={data.member.memberId}
         />
         <View className="gap-6 p-6">
           <Text className="text-titleSmall">{data.title}</Text>
