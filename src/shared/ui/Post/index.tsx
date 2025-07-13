@@ -23,7 +23,7 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
           source={
             firstImage && firstImage.startsWith('http')
               ? { uri: firstImage }
-              : require('~/shared/assets/png/defaultProfile.png')
+              : require(imageUrls[0].imageUrl ?? '~/shared/assets/png/logo.png')
           }
           className="size-20 rounded-lg"
         />
