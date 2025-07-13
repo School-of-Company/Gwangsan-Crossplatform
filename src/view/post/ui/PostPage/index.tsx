@@ -88,28 +88,31 @@ export default function PostPageView() {
     setReviewContents('');
   }, []);
 
-  const handleReviewSubmit = useCallback(async (light: number, contents: string) => {
-    if (!id || !data) return;
+  const handleReviewSubmit = useCallback(
+    async (light: number, contents: string) => {
+      if (!id || !data) return;
 
-    try {
-      await createReview({
-        productId: data.id,
-        content: contents,
-        light: light,
-      });
-      Toast.show({
-        type: 'success',
-        text1: '후기가 성공적으로 작성되었습니다.',
-      });
-      router.push('/reviews');
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: '후기 작성 실패',
-        text2: error as string,
-      });
-    }
-  }, [id, data, router]);
+      try {
+        await createReview({
+          productId: data.id,
+          content: contents,
+          light: light,
+        });
+        Toast.show({
+          type: 'success',
+          text1: '후기가 성공적으로 작성되었습니다.',
+        });
+        router.push('/reviews');
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: '후기 작성 실패',
+          text2: error as string,
+        });
+      }
+    },
+    [id, data, router]
+  );
 
   const handleReviewLightChange = useCallback((value: number) => {
     setReviewLight(value);
@@ -120,18 +123,20 @@ export default function PostPageView() {
   }, []);
 
   const handleEditPress = useCallback(() => {
-    
-  }, []);
+    if (id) {
+      router.push(`/post/${id}/edit`);
+    }
+  }, [id, router]);
 
   useEffect(() => {
     const checkIsMyPost = async () => {
       if (data) {
         const memberId = await getData('memberId');
-        
+
         const currentUserId = Number(memberId);
-        const postAuthorId = Number(data.member.memberId);
-        const isMyPostResult = currentUserId === postAuthorId && currentUserId !== 0;
-        
+        const isMyPostResult =
+          currentUserId === Number(data.member.memberId) && currentUserId !== 0;
+
         setIsMyPost(isMyPostResult);
       }
     };

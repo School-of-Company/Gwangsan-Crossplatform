@@ -12,4 +12,4 @@ export const completeTrade = async (data: CompleteTradeRequest) => {
   } catch (error) {
     throw error;
   }
-}; 
+};
