@@ -54,15 +54,6 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
         images,
       };
 
-      const validatedData = itemFormSchema.parse({
-        type,
-        mode,
-        title,
-        content,
-        gwangsan: parseInt(gwangsan, 10),
-        imageIds: imageIds.length > 0 ? imageIds : undefined,
-      });
-
       const requestBody = createItemFormRequestBody({
         ...formData,
         imageIds,
