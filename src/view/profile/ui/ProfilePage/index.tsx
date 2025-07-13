@@ -22,15 +22,18 @@ export default function ProfilePageView() {
       const memberId = await getData('memberId');
       const isMyProfile = id === memberId;
       setIsMe(isMyProfile);
-      
-      // 내 프로필인 경우 로컬 스토리지의 memberId 사용, 아니면 URL 파라미터 사용
+
       const profileId = isMyProfile ? memberId : id;
       setActualId(profileId || '');
     };
     initializeProfile();
   }, [id]);
 
-  const { data: profileData, error: profileError, isError: profileIsError } = useGetProfile(actualId);
+  const {
+    data: profileData,
+    error: profileError,
+    isError: profileIsError,
+  } = useGetProfile(actualId);
   const { data: postsData, error, isError } = useGetPosts(actualId);
   if (profileIsError) {
     Toast.show({
