@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { PostType } from '~/shared/types/postType';
-import { getMyPost } from '../api/getMyPosts';
+import { getPost } from '../api/getPosts';
 
-export const useGetMyPosts = () => {
+export const useGetPosts = (id: string) => {
   return useQuery<PostType[]>({
     queryKey: ['myPosts'],
-    queryFn: getMyPost,
+    queryFn: () => getPost(id),
   });
 };
