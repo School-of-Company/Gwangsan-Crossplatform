@@ -6,5 +6,6 @@ export const useGetProfile = (id: string) => {
   return useQuery<ProfileType>({
     queryKey: ['profile', id],
     queryFn: () => getProfile(id),
+    enabled: !!id,
   });
 };

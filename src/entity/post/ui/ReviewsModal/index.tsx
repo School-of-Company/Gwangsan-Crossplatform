@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, memo } from 'react';
 import { View, Dimensions } from 'react-native';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
@@ -41,7 +41,7 @@ const ReviewsModal = ({
       isVisible={isVisible}
       onClose={onClose}
       onAnimationComplete={onAnimationComplete}
-      title="신고하기">
+      title="후기 작성">
       <View className="flex-1 flex-col justify-between gap-6">
         <View className="gap-8">
           <ProgressBar value={light} onChange={setLight} />
@@ -62,4 +62,4 @@ const ReviewsModal = ({
   );
 };
 
-export default React.memo(ReviewsModal);
+export default memo(ReviewsModal);

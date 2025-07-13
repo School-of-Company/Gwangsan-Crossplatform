@@ -2,18 +2,26 @@ import { Text, View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { usePathname, useRouter } from 'expo-router';
 import { getData } from '~/shared/lib/getData';
+import { useEffect, useState } from 'react';
 
 export function Footer() {
   const pathname = usePathname();
   const router = useRouter();
+  const [memberId, setMemberId] = useState<string | null>(null);
 
-  const id = getData('memberId');
+  useEffect(() => {
+    const getMemberId = async () => {
+      const id = await getData('memberId');
+      setMemberId(id);
+    };
+    getMemberId();
+  }, []);
 
   const FooterItem = [
     { label: '홈', icon: 'home-outline', pathname: '/main' },
     { label: '채팅', icon: 'chatbubble-outline', pathname: '/chating' },
     { label: '공지', icon: 'megaphone-outline', pathname: '/notice' },
-    { label: '프로필', icon: 'person-outline', pathname: '/profile/' + id },
+    { label: '프로필', icon: 'person-outline', pathname: '/profile/' + memberId },
   ];
 
   return (
