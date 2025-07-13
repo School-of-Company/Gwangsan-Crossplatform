@@ -24,8 +24,8 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
             firstImage && firstImage.startsWith('http')
               ? { uri: firstImage }
               : imageUrls?.[0]?.imageUrl
-              ? { uri: imageUrls[0].imageUrl }
-              : require('~/shared/assets/png/logo.png')
+                ? { uri: imageUrls[0].imageUrl }
+                : require('~/shared/assets/png/logo.png')
           }
           className="size-20 rounded-lg"
         />

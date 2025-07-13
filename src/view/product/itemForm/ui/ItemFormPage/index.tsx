@@ -4,7 +4,6 @@ import { Header } from '@/shared/ui';
 import {
   ItemFormProgressBar,
   createItemFormRequestBody,
-  itemFormSchema,
   useCreateItem,
 } from '~/entity/product/itemForm';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
