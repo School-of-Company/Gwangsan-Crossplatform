@@ -20,4 +20,4 @@ export const useEditPost = () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
-}; 
+};

@@ -14,8 +14,24 @@ import { Header } from '~/shared/ui';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: profileData, error: profileError, isError: profileIsError } = useGetProfile(id);
-  const { data: postsData, error, isError } = useGetPosts(id);
+  const [actualId, setActualId] = useState<string>('');
+  const [isMe, setIsMe] = useState(false);
+
+  useEffect(() => {
+    const initializeProfile = async () => {
+      const memberId = await getData('memberId');
+      const isMyProfile = id === memberId;
+      setIsMe(isMyProfile);
+      
+      // 내 프로필인 경우 로컬 스토리지의 memberId 사용, 아니면 URL 파라미터 사용
+      const profileId = isMyProfile ? memberId : id;
+      setActualId(profileId || '');
+    };
+    initializeProfile();
+  }, [id]);
+
+  const { data: profileData, error: profileError, isError: profileIsError } = useGetProfile(actualId);
+  const { data: postsData, error, isError } = useGetPosts(actualId);
   if (profileIsError) {
     Toast.show({
       type: 'error',
@@ -30,16 +46,6 @@ export default function ProfilePageView() {
       });
     }
   }
-
-  const [isMe, setIsMe] = useState(false);
-
-  useEffect(() => {
-    const checkIsMe = async () => {
-      const memberId = await getData('memberId');
-      setIsMe(id === memberId);
-    };
-    checkIsMe();
-  }, [id]);
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="프로필" />
@@ -50,7 +56,7 @@ export default function ProfilePageView() {
           <Light lightLevel={profileData?.light} />
           {!isMe && <Gwangsan gwangsan={profileData?.gwangsan} />}
         </View>
-        <Active id={id} isMe={isMe} />
+        <Active id={actualId} isMe={isMe} />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
           <Text className=" text-titleSmall">
             {isMe ? '내 글' : profileData?.nickname + '님의 글'}
