@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
 });
 
 const handlePress = (where: string) => {
-  router.push('/transaction?type=' + where);
+  router.push('/post?type=' + where);
 };
 
 export default function Inform() {

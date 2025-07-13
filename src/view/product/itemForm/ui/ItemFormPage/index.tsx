@@ -1,28 +1,32 @@
 import { useState, useCallback } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Header } from '@/shared/ui';
-import { ItemFormProgressBar } from '~/entity/product/itemForm';
 import {
+  ItemFormProgressBar,
   createItemFormRequestBody,
   itemFormSchema,
-} from '~/entity/product/itemForm/model/itemFormSchema';
+  useCreateItem,
+} from '~/entity/product/itemForm';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
-const ItemFormPage = ({
-  type,
-  mode,
-  headerTitle,
-}: {
+interface ItemFormPageProps {
   type: string;
   mode: string;
   headerTitle: string;
-}) => {
+}
+
+const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [gwangsan, setGwangsan] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [imageIds, setImageIds] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const createItemMutation = useCreateItem();
 
   const isStep1Valid = title.trim().length > 0 && content.trim().length > 0;
   const isStep2Valid = gwangsan.trim().length > 0;
@@ -34,9 +38,13 @@ const ItemFormPage = ({
     []
   );
   const handleImagesChange = useCallback((v: string[]) => setImages(v), []);
+  const handleImageIdsChange = useCallback((ids: number[]) => setImageIds(ids), []);
 
   const handleCompletePress = async () => {
     try {
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+
       const formData = {
         type,
         mode,
@@ -46,23 +54,21 @@ const ItemFormPage = ({
         images,
       };
 
-      const validatedData = itemFormSchema.parse({
-        type,
-        mode,
-        title,
-        content,
-        gwangsan: parseInt(gwangsan, 10),
-        imageIds: images.length > 0 ? [] : undefined,
+      const requestBody = createItemFormRequestBody({
+        ...formData,
+        imageIds,
       });
 
-      const requestBody = createItemFormRequestBody(formData);
+      await createItemMutation.mutateAsync(requestBody);
 
-      console.log('=== 상품 등록 완료 ===');
-      console.log('검증된 데이터:', validatedData);
-      console.log('요청 body:', requestBody);
-      console.log('==================');
+      router.replace({
+        pathname: '/transaction',
+        params: { type },
+      });
     } catch (error) {
-      console.error('폼 검증 오류:', error);
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,6 +95,7 @@ const ItemFormPage = ({
               onContentChange={handleContentChange}
               onImagesChange={handleImagesChange}
               onGwangsanChange={handleGwangsanChange}
+              onImageIdsChange={handleImageIdsChange}
             />
             <View>
               <ItemFormRenderButton
@@ -98,6 +105,7 @@ const ItemFormPage = ({
                 onNextStep={setStep}
                 onEditPress={() => setStep(1)}
                 onCompletePress={handleCompletePress}
+                isSubmitting={isSubmitting}
               />
             </View>
           </View>

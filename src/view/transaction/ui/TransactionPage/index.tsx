@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useGetPosts } from '~/shared/model/useGetPosts';
-import { TYPE } from '~/shared/types/postType';
+import { MODE, TYPE } from '~/shared/types/postType';
 import { Header } from '~/shared/ui';
 import { handleCategory, returnValue } from '../../model/handleCategory';
 import { Category } from '../../model/category';
@@ -10,16 +10,34 @@ import Post from '~/shared/ui/Post';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const ROUTE_MAP: Record<TYPE, Record<MODE, string>> = {
+  SERVICE: {
+    RECEIVER: '/request',
+    GIVER: '/offer',
+  },
+  OBJECT: {
+    RECEIVER: '/need',
+    GIVER: '/sell',
+  },
+};
+
 export default function TransactionPageView() {
   const { type } = useLocalSearchParams<{ type: TYPE }>();
   const [category, setCategory] = useState<Category>();
   const mode = category ? returnValue(category) : undefined;
-  const R = useRouter();
-  const { data } = useGetPosts(mode!, type);
+  const router = useRouter();
+
+  const { data = [] } = useGetPosts(mode as MODE | undefined, type as TYPE | undefined);
 
   const handlePress = useCallback(() => {
-    R.push('/need');
-  }, [R]);
+    if (!type || !mode) return;
+
+    const targetRoute = ROUTE_MAP[type as TYPE]?.[mode as MODE];
+    if (targetRoute) {
+      router.push(targetRoute);
+    }
+  }, [router, type, mode]);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
@@ -38,18 +56,19 @@ export default function TransactionPageView() {
         })}
       </View>
       <ScrollView>
-        {data?.map((v) => {
+        {data.map((v) => {
           return <Post key={v.id} {...v} />;
         })}
       </ScrollView>
-      <TouchableOpacity onPress={handlePress}>
-        <Ionicons
-          name="add-circle"
-          size={60}
-          color="#8FC31D"
-          className="absolute bottom-10 right-10"
-        />
-      </TouchableOpacity>
+      {type && mode && (
+        <TouchableOpacity
+          className="absolute bottom-10 right-10 z-50 h-[60px] w-[60px]"
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          activeOpacity={0.7}
+          onPress={handlePress}>
+          <Ionicons name="add-circle" size={60} color="#8FC31D" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MODE, TYPE } from '@/shared/types/postType';
 
 export const itemFormSchema = z.object({
   type: z.string(),
@@ -12,8 +13,8 @@ export const itemFormSchema = z.object({
 export type ItemFormData = z.infer<typeof itemFormSchema>;
 
 export type ItemFormRequestBody = {
-  type: string;
-  mode: string;
+  type: TYPE;
+  mode: MODE;
   title: string;
   content: string;
   gwangsan: number;
@@ -27,13 +28,14 @@ export const createItemFormRequestBody = (data: {
   content: string;
   gwangsan: string;
   images: string[];
+  imageIds?: number[];
 }): ItemFormRequestBody => {
   return {
-    type: data.type,
-    mode: data.mode,
+    type: data.type as TYPE,
+    mode: data.mode as MODE,
     title: data.title,
     content: data.content,
     gwangsan: parseInt(data.gwangsan, 10),
-    imageIds: data.images.length > 0 ? [] : undefined,
+    imageIds: data.imageIds && data.imageIds.length > 0 ? data.imageIds : undefined,
   };
 };
