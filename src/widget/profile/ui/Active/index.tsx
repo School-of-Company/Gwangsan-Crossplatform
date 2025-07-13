@@ -3,8 +3,9 @@ import { useRouter } from 'expo-router';
 
 interface ActiveProps {
   isMe: boolean;
+  id: string;
 }
-export default function Active({ isMe }: ActiveProps) {
+export default function Active({ isMe, id }: ActiveProps) {
   const router = useRouter();
   return (
     <View className="mt-3 bg-white px-6 pb-14 pt-8">
@@ -12,7 +13,7 @@ export default function Active({ isMe }: ActiveProps) {
       <View className="mt-6 flex flex-row items-center justify-center gap-3">
         <TouchableOpacity
           className={`items-center rounded-md border border-main-500 px-6 py-3 text-center ${isMe ? 'w-1/2' : 'w-full'}`}
-          onPress={() => router.push('/reviews?active=receive')}>
+          onPress={() => router.push(`/reviews/${id}?active=receive`)}>
           <Text className="text-main-500">내가 받은 후기</Text>
         </TouchableOpacity>
         {isMe && (

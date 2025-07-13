@@ -50,7 +50,7 @@ export default function ProfilePageView() {
           <Light lightLevel={profileData?.light} />
           {!isMe && <Gwangsan gwangsan={profileData?.gwangsan} />}
         </View>
-        <Active isMe={isMe} />
+        <Active id={id} isMe={isMe} />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
           <Text className=" text-titleSmall">
             {isMe ? '내 글' : profileData?.nickname + '님의 글'}
