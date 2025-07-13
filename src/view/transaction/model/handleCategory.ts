@@ -2,7 +2,6 @@ import { MODE, TYPE } from '~/shared/types/postType';
 import { Category } from './category';
 
 export const handleCategory = (category: TYPE) => {
-  console.log('category', category);
   switch (category) {
     case 'OBJECT':
       return ['팔아요', '필요해요'];

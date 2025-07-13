@@ -16,17 +16,19 @@ export default function ReviewsPageView() {
   const [posts, setPosts] = useState<ReviewPostType[] | []>([]);
   useEffect(() => {
     const fetch = async () => {
+      if (!firstValue || !secondValue) return;
+
+      const mode = returnValue(secondValue);
+      const type = firstValue === '물건' ? 'OBJECT' : 'SERVICE';
+
       const res = await (active === 'receive'
-        ? getReceiveReview(
-            id,
-            returnValue(secondValue),
-            firstValue === '물건' ? 'OBJECT' : 'SERVICE'
-          )
-        : getTossReview(returnValue(secondValue), firstValue === '물건' ? 'OBJECT' : 'SERVICE'));
+        ? getReceiveReview(id || '', mode, type)
+        : getTossReview(mode, type));
       if (res.data) setPosts(res.data);
     };
     fetch();
-  }, [active, firstValue, secondValue]);
+  }, [active, firstValue, secondValue, id]);
+
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white">
       <Header headerTitle="게시글" />
