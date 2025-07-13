@@ -40,9 +40,6 @@ const NoticePage = () => {
             title={notice.title}
             content={notice.content}
             images={notice.images}
-            place=""
-            createdAt=""
-            role=""
           />
         ))}
       </ScrollView>
