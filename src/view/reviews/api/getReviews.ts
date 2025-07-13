@@ -2,9 +2,9 @@ import Toast from 'react-native-toast-message';
 import { instance } from '~/shared/lib/axios';
 import { MODE, TYPE } from '~/shared/types/postType';
 
-export const getReceiveReview = async (mode?: MODE, type?: TYPE) => {
+export const getReceiveReview = async (id: string, mode?: MODE, type?: TYPE) => {
   try {
-    return await instance.get('/review/current', {
+    return await instance.get(`/review/${id}`, {
       params: {
         mode,
         type,

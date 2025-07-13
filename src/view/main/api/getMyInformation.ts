@@ -1,9 +1,9 @@
 import { instance } from '~/shared/lib/axios';
 
-export const getMyProfile = async () => {
+export const getMyInformation = async () => {
   try {
     return (await instance.get('/member')).data;
-  } catch (e) {
-    throw e;
+  } catch (error) {
+    throw error;
   }
 };

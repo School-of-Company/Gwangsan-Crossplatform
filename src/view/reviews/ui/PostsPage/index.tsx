@@ -10,13 +10,18 @@ import { ReviewPost } from '~/entity/reviews/ui';
 
 export default function ReviewsPageView() {
   const { active } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
   const [posts, setPosts] = useState<ReviewPostType[] | []>([]);
   useEffect(() => {
     const fetch = async () => {
       const res = await (active === 'receive'
-        ? getReceiveReview(returnValue(secondValue), firstValue === '물건' ? 'OBJECT' : 'SERVICE')
+        ? getReceiveReview(
+            id,
+            returnValue(secondValue),
+            firstValue === '물건' ? 'OBJECT' : 'SERVICE'
+          )
         : getTossReview(returnValue(secondValue), firstValue === '물건' ? 'OBJECT' : 'SERVICE'));
       if (res.data) setPosts(res.data);
     };
