@@ -20,11 +20,7 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
       activeOpacity={0.7}>
       <View className="relative">
         <Image
-          source={
-            firstImage
-              ? { uri: firstImage }
-              : require('~/shared/assets/png/logo.png')
-          }
+          source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/logo.png')}
           className="size-20 rounded-lg"
         />
         {additionalImagesCount > 0 && (

@@ -8,7 +8,7 @@ export const getPosts = async (type?: TYPE, mode?: MODE): Promise<PostType[]> =>
     if (type) params.append('type', type);
     if (mode) params.append('mode', mode);
     const response = await instance.get('/post?' + params.toString());
-    
+
     const transformedData: PostType[] = response.data.map((post: any) => ({
       id: post.id,
       title: post.title,
@@ -16,9 +16,9 @@ export const getPosts = async (type?: TYPE, mode?: MODE): Promise<PostType[]> =>
       gwangsan: post.gwangsan,
       type: post.type,
       mode: post.mode,
-      imageUrls: post.images || [] 
+      imageUrls: post.images || [],
     }));
-    
+
     return transformedData;
   } catch (error) {
     if (error instanceof Error) {
