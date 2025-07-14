@@ -21,11 +21,9 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
       <View className="relative">
         <Image
           source={
-            firstImage && firstImage.startsWith('http')
+            firstImage
               ? { uri: firstImage }
-              : imageUrls?.[0]?.imageUrl
-                ? { uri: imageUrls[0].imageUrl }
-                : require('~/shared/assets/png/logo.png')
+              : require('~/shared/assets/png/logo.png')
           }
           className="size-20 rounded-lg"
         />
