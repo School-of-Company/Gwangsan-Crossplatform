@@ -61,7 +61,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
       await createItemMutation.mutateAsync(requestBody);
 
       router.replace({
-        pathname: '/transaction',
+        pathname: '/post',
         params: { type },
       });
     } catch (error) {
