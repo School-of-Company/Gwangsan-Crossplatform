@@ -5,7 +5,7 @@ import { signout } from '../api/signout';
 
 export const useSignout = () => {
   const router = useRouter();
-  
+
   const signoutMutation = useMutation({
     mutationFn: signout,
     onSuccess: () => {
@@ -26,4 +26,4 @@ export const useSignout = () => {
     isLoading: signoutMutation.isPending,
     error: signoutMutation.error,
   };
-}; 
+};

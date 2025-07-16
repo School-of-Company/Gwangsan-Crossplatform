@@ -8,19 +8,13 @@ export interface SignoutResponse {
 export const signout = async (): Promise<SignoutResponse> => {
   try {
     const response = await instance.delete<SignoutResponse>('/auth/signout');
-    
-    await Promise.all([
-      removeData('accessToken'),
-      removeData('refreshToken')
-    ]);
-    
+
+    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+
     return response.data;
   } catch (error) {
-    await Promise.all([
-      removeData('accessToken'),
-      removeData('refreshToken')
-    ]);
-    
+    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+
     throw error;
   }
-}; 
+};
