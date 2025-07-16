@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { MODE, TYPE } from '~/shared/types/postType';
 import { Header } from '~/shared/ui';
@@ -24,14 +24,23 @@ const ROUTE_MAP: Record<TYPE, Record<MODE, string>> = {
 export default function TransactionPageView() {
   const { type } = useLocalSearchParams<{ type: TYPE }>();
   const [category, setCategory] = useState<Category>();
+  const [refreshing, setRefreshing] = useState(false);
   const mode = category ? returnValue(category) : undefined;
   const router = useRouter();
 
-  const { data = [] } = useGetPosts(mode as MODE | undefined, type as TYPE | undefined);
+  const { data = [], refetch } = useGetPosts(mode as MODE | undefined, type as TYPE | undefined);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   const handlePress = useCallback(() => {
     if (!type || !mode) return;
-
     const targetRoute = ROUTE_MAP[type as TYPE]?.[mode as MODE];
     if (targetRoute) {
       router.push(targetRoute);
@@ -42,23 +51,21 @@ export default function TransactionPageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
       <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center justify-between rounded-[30px] bg-sub2-300 px-2">
-        {(handleCategory(type as TYPE) ?? []).map((v) => {
-          return (
-            <Text
-              key={v}
-              onPress={() => setCategory(v as Category)}
-              className={`rounded-[32px] px-[15%] py-[6px] ${
-                category === v ? 'bg-white' : 'bg-transparent'
-              }`}>
-              {v}
-            </Text>
-          );
-        })}
+        {(handleCategory(type as TYPE) ?? []).map((v) => (
+          <Text
+            key={v}
+            onPress={() => setCategory(v as Category)}
+            className={`rounded-[32px] px-[15%] py-[6px] ${
+              category === v ? 'bg-white' : 'bg-transparent'
+            }`}>
+            {v}
+          </Text>
+        ))}
       </View>
-      <ScrollView>
-        {data.map((v) => {
-          return <Post key={v.id} {...v} />;
-        })}
+      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        {data.map((v) => (
+          <Post key={v.id} {...v} />
+        ))}
       </ScrollView>
       {type && mode && (
         <TouchableOpacity
