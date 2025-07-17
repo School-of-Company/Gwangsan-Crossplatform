@@ -17,7 +17,7 @@ export default function ReviewPost({ review }: ReviewPostProps) {
         <View className="relative flex h-5 w-full justify-center rounded-xl bg-gray-200">
           <View
             className={clsx(
-              `absolute mx-1 h-3 rounded-xl width-${review.light}`,
+              `absolute mx-1 h-3 rounded-xl width-${String(review.light)}`,
               getLightColor(review.light)
             )}
           />

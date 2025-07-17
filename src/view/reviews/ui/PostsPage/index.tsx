@@ -9,7 +9,8 @@ import { ReviewPostType } from '../../model/reviewPostType';
 import { ReviewPost } from '~/entity/reviews/ui';
 
 export default function ReviewsPageView() {
-  const { active } = useLocalSearchParams();
+  // const { active } = useLocalSearchParams<{ active: string }>();
+  const active = 'receive';
   const { id } = useLocalSearchParams<{ id: string }>();
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
@@ -50,9 +51,10 @@ export default function ReviewsPageView() {
         </View>
          
       </View>
-      {posts.map((v) => {
-        return <ReviewPost key={v.productId} review={v} />;
-      })}
+      {posts.length !== 0 &&
+        posts.map((v) => {
+          return <ReviewPost key={v.productId} review={v} />;
+        })}
     </SafeAreaView>
   );
 }
