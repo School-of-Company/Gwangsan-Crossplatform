@@ -2,15 +2,15 @@ import { instance } from '~/shared/lib/axios';
 import { ReportType } from '../model/reportType';
 
 interface ReportRequest {
-  productId: number;
+  sourceId: number;
   reportType: ReportType;
   content: string;
+  imageIds: number[];
 }
 
-export const report = async (data: ReportRequest) => {
+export const report = async (data: ReportRequest): Promise<void> => {
   try {
     await instance.post('/report', data);
-    return true;
   } catch (error) {
     throw error;
   }
