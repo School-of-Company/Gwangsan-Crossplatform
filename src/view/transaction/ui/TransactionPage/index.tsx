@@ -91,12 +91,16 @@ export default function TransactionPageView() {
           }}
         />
         
-        {categories.map((v) => (
+        {categories.map((v, index) => (
           <TouchableOpacity
             key={v}
             onPress={() => setCategory(v as Category)}
-            className="rounded-[32px] items-center justify-center flex-1"
-            style={{ height: 32 }}>
+            className="absolute rounded-[32px] items-center justify-center"
+            style={{ 
+              height: 32,
+              width: '47%',
+              left: index === 0 ? '2%' : '55%'
+            }}>
             <Text className="text-center font-medium">
               {v}
             </Text>
