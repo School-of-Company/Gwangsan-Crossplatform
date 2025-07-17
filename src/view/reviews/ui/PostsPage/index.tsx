@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { SafeAreaView, Text, View, ScrollView } from 'react-native';
 import { Dropdown, Header } from '~/shared/ui';
 import { Category } from '~/view/transaction/model/category';
 import { returnValue } from '~/view/transaction/model/handleCategory';
@@ -9,8 +9,12 @@ import { ReviewPostType } from '../../model/reviewPostType';
 import { ReviewPost } from '~/entity/reviews/ui';
 
 export default function ReviewsPageView() {
-  const params = useLocalSearchParams<{ id: string; active: string }>();
-  const { active, id } = params;
+
+  const rawParams = useLocalSearchParams();
+
+  const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
+  const active = Array.isArray(rawParams.active) ? rawParams.active[0] : rawParams.active;
+
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
   const [posts, setPosts] = useState<ReviewPostType[]>([]);
@@ -59,19 +63,21 @@ export default function ReviewsPageView() {
         </View>
       </View>
 
-      <View className="flex-1">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {posts.length > 0 ? (
-          <View>
-            {posts.map((v) => (
-              <ReviewPost key={v.productId} review={v} />
+          <View className="pb-6">
+            {posts.map((post) => (
+              <ReviewPost key={post.productId} review={post} />
             ))}
           </View>
         ) : (
-          <View className="flex-1 items-center justify-center">
-            <Text className="text-gray-500">표시할 리뷰가 없습니다.</Text>
+          <View className="flex-1 items-center justify-center py-20">
+            <Text className="text-center text-gray-500">
+              {!firstValue || !secondValue ? '카테고리를 선택해주세요.' : '표시할 리뷰가 없습니다.'}
+            </Text>
           </View>
         )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
