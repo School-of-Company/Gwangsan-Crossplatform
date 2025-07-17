@@ -1,26 +1,26 @@
 export function getLightColor(level: number): string {
   switch (true) {
     case level <= 1:
-      return 'black';
+      return 'bg-black';
     case level <= 10:
-      return 'sub2-900';
+      return 'bg-sub2-900';
     case level <= 20:
-      return 'sub2-800';
+      return 'bg-sub2-800';
     case level <= 30:
-      return 'sub2-700';
+      return 'bg-sub2-700';
     case level <= 40:
-      return 'sub2-600';
+      return 'bg-sub2-600';
     case level <= 50:
-      return 'sub2-500';
+      return 'bg-sub2-500';
     case level <= 60:
-      return 'sub2-400';
+      return 'bg-sub2-400';
     case level <= 70:
-      return 'sub2-300';
+      return 'bg-sub2-300';
     case level <= 80:
-      return 'sub2-200';
+      return 'bg-sub2-200';
     case level <= 90:
-      return 'sub2-100';
+      return 'bg-sub2-100';
     default:
-      return 'white';
+      return 'bg-white';
   }
 }
