@@ -32,7 +32,7 @@ export default function TransactionPageView() {
         return mode === 'GIVER' ? '할 수 있어요' : '해주세요';
       }
     }
-    return type === 'OBJECT' ? '팔아요' : '필요해요';
+    return type === 'OBJECT' ? '팔아요' : '할 수 있어요';
   };
 
   const [category, setCategory] = useState<Category>(getInitialCategory());
