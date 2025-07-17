@@ -11,7 +11,7 @@ import { ReviewPost } from '~/entity/reviews/ui';
 export default function ReviewsPageView() {
   const params = useLocalSearchParams<{ id: string; active: string }>();
   const { active, id } = params;
-  
+
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
   const [posts, setPosts] = useState<ReviewPostType[]>([]);
@@ -35,7 +35,7 @@ export default function ReviewsPageView() {
         setPosts([]);
       }
     };
-    
+
     fetch();
   }, [active, firstValue, secondValue, id]);
 
@@ -59,7 +59,7 @@ export default function ReviewsPageView() {
           />
         </View>
       </View>
-      
+
       <View className="flex-1">
         {posts.length > 0 ? (
           <View>

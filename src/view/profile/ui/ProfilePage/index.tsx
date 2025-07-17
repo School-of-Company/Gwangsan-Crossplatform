@@ -23,16 +23,16 @@ export default function ProfilePageView() {
       try {
         const memberId = await getData('memberId');
         const isMyProfile = id === memberId;
-        
+
         setIsMe(isMyProfile);
-        setActualId(isMyProfile ? (memberId || '') : (id || ''));
+        setActualId(isMyProfile ? memberId || '' : id || '');
         setIsInitialized(true);
       } catch (error) {
         console.error(error);
         setIsInitialized(true);
       }
     };
-    
+
     if (id !== undefined) {
       initializeProfile();
     }
