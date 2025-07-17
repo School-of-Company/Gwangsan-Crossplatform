@@ -10,10 +10,10 @@ import { ReviewPost } from '~/entity/reviews/ui';
 
 export default function ReviewsPageView() {
   const rawParams = useLocalSearchParams();
-  
+
   const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
   const active = Array.isArray(rawParams.active) ? rawParams.active[0] : rawParams.active;
-  
+
   const [firstValue, setFirstValue] = useState<'물건' | '서비스'>();
   const [secondValue, setSecondValue] = useState<Category>();
   const [posts, setPosts] = useState<ReviewPostType[]>([]);
@@ -71,11 +71,8 @@ export default function ReviewsPageView() {
           </View>
         ) : (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-gray-500 text-center">
-              {!firstValue || !secondValue 
-                ? '카테고리를 선택해주세요.' 
-                : '표시할 리뷰가 없습니다.'
-              }
+            <Text className="text-center text-gray-500">
+              {!firstValue || !secondValue ? '카테고리를 선택해주세요.' : '표시할 리뷰가 없습니다.'}
             </Text>
           </View>
         )}
