@@ -23,7 +23,7 @@ const ROUTE_MAP: Record<TYPE, Record<MODE, string>> = {
 
 export default function TransactionPageView() {
   const { type } = useLocalSearchParams<{ type: TYPE }>();
-  const [category, setCategory] = useState<Category>(type === 'OBJECT' ? '팔아요' : '필요해요');
+  const [category, setCategory] = useState<Category>(type === 'OBJECT' ? '팔아요' : '할 수 있어요');
   const [refreshing, setRefreshing] = useState(false);
   const mode = category ? returnValue(category) : undefined;
   const router = useRouter();
