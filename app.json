@@ -12,17 +12,20 @@
     },
     "plugins": [],
     "orientation": "portrait",
-    "icon": "./src/app/favicon.ico",
+    "icon": "./src/shared/assets/png/gwangsanLogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/app/favicon.ico",
+      "image": "./src/shared/assets/png/gwangsanLogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.schoolofcompany.gwangsan"
+      "bundleIdentifier": "com.schoolofcompany.gwangsan",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
