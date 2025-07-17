@@ -9,7 +9,7 @@ export default function Active({ isMe, id }: ActiveProps) {
   const router = useRouter();
   return (
     <View className="mt-3 bg-white px-6 pb-14 pt-8">
-      <Text className="text-titleSmall">내 활동</Text>
+      <Text className="text-titleSmall">리뷰</Text>
       <View className="mt-6 flex flex-row items-center justify-center gap-3">
         <TouchableOpacity
           className={`items-center rounded-md border border-main-500 px-6 py-3 text-center ${isMe ? 'w-1/2' : 'w-full'}`}
