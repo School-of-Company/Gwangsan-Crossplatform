@@ -15,7 +15,7 @@ export default function Information({ name, id, isMe }: InformationProps) {
   const { signout: handleSignout, isLoading } = useSignout();
 
   const handleEditProfile = useCallback(() => {
-    R.push('/profile/edit' + `?id=${id}`);
+    R.push(`/profile/${id}/edit`);
   }, [R, id]);
 
   return (
