@@ -26,11 +26,13 @@ export const useCreateItem = () => {
       ]);
 
       if (previousPosts) {
+        const tempId = -Date.now();
+
         queryClient.setQueryData<PostType[]>(
           ['posts', newItem.mode, newItem.type],
           [
             {
-              id: Date.now(),
+              id: tempId,
               type: newItem.type as TYPE,
               mode: newItem.mode as MODE,
               title: newItem.title,
@@ -46,10 +48,10 @@ export const useCreateItem = () => {
       return { previousPosts } as MutationContext;
     },
 
-    onError: (err, newItem: ItemFormRequestBody, context?: MutationContext) => {
-      if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', newItem.mode, newItem.type], context.previousPosts);
-      }
+    onError: (err, variables, context?: MutationContext) => {
+      if (!variables || !context?.previousPosts) return;
+
+      queryClient.setQueryData(['posts', variables.mode, variables.type], context.previousPosts);
 
       Toast.show({
         type: 'error',
@@ -58,7 +60,9 @@ export const useCreateItem = () => {
       });
     },
 
-    onSuccess: (variables: ItemFormRequestBody) => {
+    onSuccess: (response, variables) => {
+      if (!variables) return;
+
       queryClient.invalidateQueries({
         queryKey: ['posts', variables.mode, variables.type],
       });
@@ -70,8 +74,9 @@ export const useCreateItem = () => {
       });
     },
 
-    onSettled: (variables: ItemFormRequestBody | undefined) => {
+    onSettled: (response, error, variables) => {
       if (!variables) return;
+
       queryClient.invalidateQueries({
         queryKey: ['posts', variables.mode, variables.type],
       });

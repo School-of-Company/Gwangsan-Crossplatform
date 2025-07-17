@@ -22,13 +22,28 @@ const ROUTE_MAP: Record<TYPE, Record<MODE, string>> = {
 };
 
 export default function TransactionPageView() {
-  const { type } = useLocalSearchParams<{ type: TYPE }>();
-  const [category, setCategory] = useState<Category>(type === 'OBJECT' ? '팔아요' : '할 수 있어요');
+  const { type, mode } = useLocalSearchParams<{ type: TYPE; mode?: MODE }>();
+
+  const getInitialCategory = (): Category => {
+    if (mode) {
+      if (type === 'OBJECT') {
+        return mode === 'GIVER' ? '팔아요' : '필요해요';
+      } else {
+        return mode === 'GIVER' ? '할 수 있어요' : '해주세요';
+      }
+    }
+    return type === 'OBJECT' ? '팔아요' : '필요해요';
+  };
+
+  const [category, setCategory] = useState<Category>(getInitialCategory());
   const [refreshing, setRefreshing] = useState(false);
-  const mode = category ? returnValue(category) : undefined;
+  const currentMode = category ? returnValue(category) : undefined;
   const router = useRouter();
 
-  const { data = [], refetch } = useGetPosts(mode as MODE | undefined, type as TYPE | undefined);
+  const { data = [], refetch } = useGetPosts(
+    currentMode as MODE | undefined,
+    type as TYPE | undefined
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -40,12 +55,12 @@ export default function TransactionPageView() {
   }, [refetch]);
 
   const handlePress = useCallback(() => {
-    if (!type || !mode) return;
-    const targetRoute = ROUTE_MAP[type as TYPE]?.[mode as MODE];
+    if (!type || !currentMode) return;
+    const targetRoute = ROUTE_MAP[type as TYPE]?.[currentMode as MODE];
     if (targetRoute) {
       router.push(targetRoute);
     }
-  }, [router, type, mode]);
+  }, [router, type, currentMode]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -67,7 +82,7 @@ export default function TransactionPageView() {
           <Post key={v.id} {...v} />
         ))}
       </ScrollView>
-      {type && mode && (
+      {type && currentMode && (
         <TouchableOpacity
           className="absolute bottom-10 right-10 z-50 h-[60px] w-[60px]"
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}

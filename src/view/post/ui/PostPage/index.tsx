@@ -1,10 +1,19 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useCallback, useEffect } from 'react';
-import { Image, ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  Image,
+  ScrollView,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createReview } from '~/entity/post/api/createReview';
 import { completeTrade } from '~/entity/post/api/completeTrade';
 import { useGetItem } from '~/entity/post/model/useGetItem';
+import { useDeletePost } from '~/entity/post';
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import ReportModal from '~/entity/post/ui/ReportModal';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
@@ -16,19 +25,39 @@ export default function PostPageView() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error } = useGetItem(id);
+  const { deletePost, isLoading: isDeleting } = useDeletePost();
+
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
   const [isMyPost, setIsMyPost] = useState(false);
 
-  const handleReportPress = () => {
+  const handleReportPress = useCallback(() => {
     setIsReportModalVisible(true);
-  };
+  }, []);
 
-  const handleReportModalClose = () => {
+  const handleReportModalClose = useCallback(() => {
     setIsReportModalVisible(false);
-  };
+  }, []);
+
+  const handleDeletePress = useCallback(() => {
+    if (!data) return;
+
+    Alert.alert('게시글 삭제', '이 게시글을 삭제하시겠습니까?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          deletePost(data.id, data.type, data.mode);
+        },
+      },
+    ]);
+  }, [data, deletePost]);
 
   const handleCompletePress = useCallback(async () => {
     if (!id || !data) return;
@@ -73,26 +102,26 @@ export default function PostPageView() {
         });
         Toast.show({
           type: 'success',
-          text1: '후기가 성공적으로 작성되었습니다.',
+          text1: '리뷰가 성공적으로 작성되었습니다.',
         });
-        router.push('/reviews');
+        handleReviewModalClose();
       } catch (error) {
         Toast.show({
           type: 'error',
-          text1: '후기 작성 실패',
+          text1: '리뷰 작성 실패',
           text2: error as string,
         });
       }
     },
-    [id, data, router]
+    [id, data, handleReviewModalClose]
   );
 
-  const handleReviewLightChange = useCallback((value: number) => {
-    setReviewLight(value);
+  const handleReviewLightChange = useCallback((light: number) => {
+    setReviewLight(light);
   }, []);
 
-  const handleReviewContentsChange = useCallback((value: string) => {
-    setReviewContents(value);
+  const handleReviewContentsChange = useCallback((contents: string) => {
+    setReviewContents(contents);
   }, []);
 
   const handleEditPress = useCallback(() => {
@@ -105,11 +134,9 @@ export default function PostPageView() {
     const checkIsMyPost = async () => {
       if (data) {
         const memberId = await getData('memberId');
-
         const currentUserId = Number(memberId);
         const isMyPostResult =
           currentUserId === Number(data.member.memberId) && currentUserId !== 0;
-
         setIsMyPost(isMyPostResult);
       }
     };
@@ -157,9 +184,19 @@ export default function PostPageView() {
           <Text className="text-titleSmall">{data.title}</Text>
           <Text className="text-body3">{data.gwangsan} 광산</Text>
           <Text>{data.content}</Text>
-          <TouchableOpacity onPress={handleReportPress}>
-            <Text className="mb-24 mt-[25px] text-error-500 underline">이 게시글 신고하기</Text>
+
+          <TouchableOpacity
+            onPress={isMyPost ? handleDeletePress : handleReportPress}
+            disabled={isDeleting}>
+            <Text className="mb-24 mt-[25px] text-error-500 underline">
+              {isMyPost
+                ? isDeleting
+                  ? '삭제 처리 중...'
+                  : '이 게시글 삭제하기'
+                : '이 게시글 신고하기'}
+            </Text>
           </TouchableOpacity>
+
           <View className="w-full flex-row justify-center gap-4">
             <Button variant="secondary" width="w-1/2">
               채팅하기
