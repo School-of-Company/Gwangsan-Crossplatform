@@ -10,12 +10,14 @@ interface Props {
   onImagesChange?: (images: string[]) => void;
   onImageIdsChange?: (imageIds: number[]) => void;
   readonly?: boolean;
+  title?: string;
 }
 
 const ImageUploader = ({
   images = [],
   onImagesChange,
   onImageIdsChange,
+  title = '사진첨부',
   readonly = false,
 }: Props) => {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -96,7 +98,7 @@ const ImageUploader = ({
 
   return (
     <View>
-      <Text className="mb-2 text-lg text-black">사진첨부</Text>
+      <Text className="mb-2 text-lg text-black">{title}</Text>
       <View className="flex-row flex-wrap items-center gap-3">
         {images.map((uri, idx) => (
           <TouchableOpacity
