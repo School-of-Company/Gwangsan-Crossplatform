@@ -2,11 +2,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useCallback, useEffect } from 'react';
 import { Image, ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { report } from '~/entity/post/api/report';
 import { createReview } from '~/entity/post/api/createReview';
 import { completeTrade } from '~/entity/post/api/completeTrade';
 import { useGetItem } from '~/entity/post/model/useGetItem';
-import { REPORT_TYPE_MAP } from '~/entity/post/model/reportType';
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import ReportModal from '~/entity/post/ui/ReportModal';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
@@ -20,8 +18,6 @@ export default function PostPageView() {
   const { data, isLoading, error } = useGetItem(id);
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
-  const [reportType, setReportType] = useState<string | null>(null);
-  const [reportContents, setReportContents] = useState('');
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
   const [isMyPost, setIsMyPost] = useState(false);
@@ -32,29 +28,6 @@ export default function PostPageView() {
 
   const handleReportModalClose = () => {
     setIsReportModalVisible(false);
-    setReportType(null);
-    setReportContents('');
-  };
-
-  const handleReportSubmit = async (type: string, reason: string) => {
-    if (!id || !data) return;
-
-    const mappedReportType = REPORT_TYPE_MAP[type] || 'ETC';
-
-    try {
-      await report({
-        productId: data.id,
-        reportType: mappedReportType,
-        content: reason,
-      });
-      handleReportModalClose();
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: '신고 제출 실패',
-        text2: error as string,
-      });
-    }
   };
 
   const handleCompletePress = useCallback(async () => {
@@ -205,13 +178,9 @@ export default function PostPageView() {
       </ScrollView>
 
       <ReportModal
+        sourceId={data?.id || 0}
         isVisible={isReportModalVisible}
         onClose={handleReportModalClose}
-        onSubmit={handleReportSubmit}
-        reportType={reportType}
-        contents={reportContents}
-        onReportTypeChange={setReportType}
-        onContentsChange={setReportContents}
       />
 
       <ReviewsModal

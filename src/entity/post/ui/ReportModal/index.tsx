@@ -1,83 +1,109 @@
-import { useMemo, useCallback, memo } from 'react';
+import { useMemo, useCallback, memo, useState } from 'react';
 import { View, Dimensions } from 'react-native';
 import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper } from '~/shared/ui';
-import { REPORT_TYPE_MAP, ReportType } from '~/entity/post/model/reportType';
+import { REPORT_TYPE_MAP } from '~/entity/post/model/reportType';
+import { useReport } from '../../model/useReport';
+import ImageUploader from '~/shared/ui/ImageUploader';
 
-const REPORT_TYPES = Object.keys(REPORT_TYPE_MAP) as ReportType[];
+const REPORT_TYPES = Object.keys(REPORT_TYPE_MAP);
 
 interface ReportModalProps {
+  sourceId: number;
   isVisible: boolean;
   onClose: () => void;
-  onSubmit: (type: string, reason: string) => void;
-  reportType: string | null;
-  contents: string;
-  onReportTypeChange: (type: string | null) => void;
-  onContentsChange: (reason: string) => void;
   onAnimationComplete?: () => void;
 }
 
-const ReportModal = ({
-  isVisible,
-  onClose,
-  onSubmit,
-  reportType,
-  contents,
-  onReportTypeChange,
-  onContentsChange,
-  onAnimationComplete,
-}: ReportModalProps) => {
+const ReportModal = ({ sourceId, isVisible, onClose, onAnimationComplete }: ReportModalProps) => {
+  const [images, setImages] = useState<string[]>([]);
+
+  const {
+    reportType,
+    contents,
+    setReportType,
+    setContents,
+    setImageIds,
+    handleSubmit,
+    resetForm,
+    isLoading,
+  } = useReport({
+    sourceId,
+    onSuccess: onClose,
+  });
+
   const isDisabled = useMemo(
-    () => !reportType || contents.trim().length === 0,
-    [reportType, contents]
+    () => !reportType || contents.trim().length === 0 || isLoading,
+    [reportType, contents, isLoading]
   );
 
-  const handleSubmit = useCallback(() => {
+  const handleFormSubmit = useCallback(() => {
     if (reportType && contents.trim()) {
-      onSubmit(reportType, contents.trim());
-      onClose();
+      handleSubmit(reportType, contents.trim());
     }
-  }, [reportType, contents, onSubmit, onClose]);
+  }, [reportType, contents, handleSubmit]);
 
-  const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.2, []);
+  const handleClose = useCallback(() => {
+    resetForm();
+    setImages([]);
+    onClose();
+  }, [resetForm, onClose]);
 
-  const reportTypeItems = useMemo(() => REPORT_TYPES as unknown as string[], []);
+  const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.15, []);
 
   const handleDropdownSelect = useCallback(
     (value: string) => {
-      onReportTypeChange(value);
+      setReportType(value);
     },
-    [onReportTypeChange]
+    [setReportType]
+  );
+
+  const handleImageIdsChange = useCallback(
+    (imageIds: number[]) => {
+      setImageIds(imageIds);
+    },
+    [setImageIds]
   );
 
   return (
     <BottomSheetModalWrapper
       isVisible={isVisible}
-      onClose={onClose}
+      onClose={handleClose}
       onAnimationComplete={onAnimationComplete}
       title="신고하기">
-      <View className="flex-1 flex-col justify-between gap-6">
-        <View className="gap-8">
+      <View className="flex-1 flex-col justify-between gap-4">
+        <View className="gap-6">
           <Dropdown
             label="신고유형"
-            items={reportTypeItems}
+            items={REPORT_TYPES}
             placeholder="신고유형을 선택해주세요."
             selectedItem={reportType ?? undefined}
             onSelect={handleDropdownSelect}
           />
+
           <TextField
             label="신고사유"
             placeholder="신고사유를 입력해주세요"
             value={contents}
-            onChangeText={onContentsChange}
+            onChangeText={setContents}
             multiline
             style={{ maxHeight: maxTextFieldHeight }}
           />
+
+          <View>
+            <ImageUploader
+              images={images}
+              title="증빙 이미지"
+              onImagesChange={setImages}
+              onImageIdsChange={handleImageIdsChange}
+            />
+          </View>
         </View>
-        <Button variant="error" disabled={isDisabled} onPress={handleSubmit}>
-          신고하기
+
+        <Button variant="error" disabled={isDisabled} onPress={handleFormSubmit}>
+          {isLoading ? '신고 처리 중...' : '신고하기'}
         </Button>
       </View>
     </BottomSheetModalWrapper>
