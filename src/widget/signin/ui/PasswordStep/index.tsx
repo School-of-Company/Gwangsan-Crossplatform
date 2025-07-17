@@ -23,15 +23,16 @@ export default function PasswordStep() {
     if (isLoading) return;
 
     try {
-      passwordSchema.parse(password as string);
+      const trimmedPassword = passwordSchema.parse(password as string);
+      const trimmedNickname = nickname as string; 
+      
       setError(null);
-      updateField(password as string);
-
+      updateField(trimmedPassword);
       setIsLoading(true);
 
       await signinWithDeviceInfo({
-        nickname: nickname as string,
-        password: password as string,
+        nickname: trimmedNickname,
+        password: trimmedPassword,
       });
 
       resetStore();
