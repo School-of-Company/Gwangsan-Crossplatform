@@ -57,7 +57,7 @@ export default function ProfilePageView() {
         <View className="bg-white pb-14">
           <Introduce introduce={profileData?.description} specialty={profileData?.specialties} />
           <Light lightLevel={profileData?.light} />
-          {!isMe && <Gwangsan gwangsan={profileData?.gwangsan} />}
+          {isMe && <Gwangsan gwangsan={profileData?.gwangsan} />}
         </View>
         <Active id={actualId} isMe={isMe} />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
