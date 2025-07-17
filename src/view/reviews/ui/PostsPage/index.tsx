@@ -9,7 +9,6 @@ import { ReviewPostType } from '../../model/reviewPostType';
 import { ReviewPost } from '~/entity/reviews/ui';
 
 export default function ReviewsPageView() {
-
   const rawParams = useLocalSearchParams();
 
   const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
