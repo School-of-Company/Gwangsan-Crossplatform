@@ -16,19 +16,43 @@ export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [actualId, setActualId] = useState<string>('');
   const [isMe, setIsMe] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const initializeProfile = async () => {
-      const memberId = await getData('memberId');
-      const isMyProfile = id === memberId;
-      setIsMe(isMyProfile);
-
-      const profileId = isMyProfile ? memberId : id;
-      setActualId(profileId || '');
+      try {
+        const memberId = await getData('memberId');
+        const isMyProfile = id === memberId;
+        
+        setIsMe(isMyProfile);
+        setActualId(isMyProfile ? (memberId || '') : (id || ''));
+        setIsInitialized(true);
+      } catch (error) {
+        console.error(error);
+        setIsInitialized(true);
+      }
     };
-    initializeProfile();
+    
+    if (id !== undefined) {
+      initializeProfile();
+    }
   }, [id]);
 
+  if (!isInitialized) {
+    return (
+      <SafeAreaView className="android:pt-10 h-full bg-white">
+        <Header headerTitle="프로필" />
+        <View className="flex-1 items-center justify-center">
+          <Text>프로필을 불러오는 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return <ProfileContent actualId={actualId} isMe={isMe} />;
+}
+
+function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean }) {
   const {
     data: profileData,
     error: profileError,
