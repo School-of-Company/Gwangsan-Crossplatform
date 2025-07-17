@@ -22,9 +22,12 @@ export const passwordSchema = z
   );
 
 export const passwordConfirmSchema = (password: string) =>
-  z.string().trim().refine((value) => value === password, {
-    message: '비밀번호가 일치하지 않습니다',
-  });
+  z
+    .string()
+    .trim()
+    .refine((value) => value === password, {
+      message: '비밀번호가 일치하지 않습니다',
+    });
 
 export const phoneSchema = z
   .string()
