@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Input } from '~/shared/ui/Input';
 import { TextField } from '~/shared/ui/TextField';
-import ImageUploader from '~/entity/product/itemForm/ui/ImageUploader';
+import ImageUploader from '~/shared/ui/ImageUploader';
 import { memo } from 'react';
 
 interface Props {
