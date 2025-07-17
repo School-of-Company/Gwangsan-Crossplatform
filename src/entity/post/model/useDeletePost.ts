@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
@@ -11,10 +11,15 @@ interface UseDeletePostParams {
 
 export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['posts'],
+      });
+
       Toast.show({
         type: 'success',
         text1: '게시글 삭제 완료',
