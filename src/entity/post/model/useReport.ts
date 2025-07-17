@@ -82,4 +82,4 @@ export const useReport = ({ sourceId, onSuccess }: UseReportParams) => {
     isLoading: reportMutation.isPending,
     error: reportMutation.error,
   };
-}; 
+};
