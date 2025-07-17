@@ -24,8 +24,8 @@ export default function PasswordStep() {
 
     try {
       const trimmedPassword = passwordSchema.parse(password as string);
-      const trimmedNickname = nickname as string; 
-      
+      const trimmedNickname = nickname as string;
+
       setError(null);
       updateField(trimmedPassword);
       setIsLoading(true);
