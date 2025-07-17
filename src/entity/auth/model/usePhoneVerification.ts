@@ -5,6 +5,7 @@ import { sendSms } from '~/entity/auth/api/sendSms';
 import { verifySms } from '~/entity/auth/api/verifySms';
 import { ZodError } from 'zod';
 import Toast from 'react-native-toast-message';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 interface VerificationState {
   isVerifying: boolean;
@@ -92,15 +93,14 @@ export const usePhoneVerification = ({
       safeSetState(() => {
         if (err instanceof ZodError) {
           setPhoneError(err.errors[0].message);
-        } else if (err instanceof Error) {
-          setPhoneError(err.message);
+        } else {
+          const errorMessage = getErrorMessage(err);
+          setPhoneError(errorMessage);
           Toast.show({
             type: 'error',
             text1: '인증번호 전송 실패',
-            text2: err.message,
+            text2: errorMessage,
           });
-        } else {
-          setPhoneError('유효하지 않은 전화번호입니다');
         }
         setVerificationState((prev) => ({ ...prev, isSendingCode: false }));
       });
@@ -136,11 +136,12 @@ export const usePhoneVerification = ({
         if (err instanceof ZodError) {
           setVerificationError(err.errors[0].message);
         } else {
-          setVerificationError('인증번호가 일치하지 않습니다');
+          const errorMessage = getErrorMessage(err);
+          setVerificationError(errorMessage);
           Toast.show({
             type: 'error',
             text1: '인증 실패',
-            text2: '인증번호가 일치하지 않습니다. 다시 확인해주세요.',
+            text2: errorMessage,
           });
         }
         setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));

@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useSignupStore } from '@/shared/store/useSignupStore';
 import { signup } from '~/entity/auth/api/signup';
 import Toast from 'react-native-toast-message';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export default function Complete() {
   const { formData, resetStore } = useSignupStore();
@@ -28,21 +29,13 @@ export default function Complete() {
       });
     } catch (err) {
       setIsSuccess(false);
-      if (err instanceof Error) {
-        setError(err.message);
-        Toast.show({
-          type: 'error',
-          text1: '회원가입 실패',
-          text2: err.message,
-        });
-      } else {
-        setError('회원가입 중 오류가 발생했습니다.');
-        Toast.show({
-          type: 'error',
-          text1: '회원가입 실패',
-          text2: '회원가입 중 오류가 발생했습니다.',
-        });
-      }
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+      Toast.show({
+        type: 'error',
+        text1: '회원가입 실패',
+        text2: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
