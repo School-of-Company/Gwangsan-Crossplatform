@@ -21,9 +21,9 @@ export default function NicknameStep() {
 
   const validateAndNext = () => {
     try {
-      nicknameSchema.parse(nickname);
+      const trimmedNickname = nicknameSchema.parse(nickname);
       setError(null);
-      updateField(nickname);
+      updateField(trimmedNickname);
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {

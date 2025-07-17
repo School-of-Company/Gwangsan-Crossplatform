@@ -10,7 +10,7 @@ interface InformationProps {
   isMe: boolean;
 }
 
-export default function Information({ name, id }: InformationProps) {
+export default function Information({ name, id, isMe }: InformationProps) {
   const R = useRouter();
   const { signout: handleSignout, isLoading } = useSignout();
 
@@ -40,11 +40,15 @@ export default function Information({ name, id }: InformationProps) {
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity
-        onPress={handleEditProfile}
-        className="flex justify-center rounded-[30px] border border-main-500 px-4 py-[10px]">
-        <Text className="text-main-500">내 정보 수정</Text>
-      </TouchableOpacity>
+      {isMe ? (
+        <TouchableOpacity
+          onPress={handleEditProfile}
+          className="flex justify-center rounded-[30px] border border-main-500 px-4 py-[10px]">
+          <Text className="text-main-500">내 정보 수정</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity className="flex justify-center rounded-[30px] px-4 py-[10px]"></TouchableOpacity>
+      )}
     </View>
   );
 }

@@ -17,6 +17,7 @@
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-query-devtools": "^5.81.5",
     "axios": "^1.10.0",
+    "clsx": "^2.1.1",
     "expo": "^53.0.15",
     "expo-constants": "~17.1.6",
     "expo-device": "~7.1.4",

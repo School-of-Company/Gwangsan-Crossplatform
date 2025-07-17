@@ -8,6 +8,7 @@ import { signinWithDeviceInfo } from '~/entity/auth/api/signin';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export default function PasswordStep() {
   const { value: initialPassword, updateField } = useSigninFormField('password');
@@ -22,15 +23,16 @@ export default function PasswordStep() {
     if (isLoading) return;
 
     try {
-      passwordSchema.parse(password as string);
-      setError(null);
-      updateField(password as string);
+      const trimmedPassword = passwordSchema.parse(password as string);
+      const trimmedNickname = nickname as string;
 
+      setError(null);
+      updateField(trimmedPassword);
       setIsLoading(true);
 
       await signinWithDeviceInfo({
-        nickname: nickname as string,
-        password: password as string,
+        nickname: trimmedNickname,
+        password: trimmedPassword,
       });
 
       resetStore();
@@ -40,8 +42,8 @@ export default function PasswordStep() {
 
       if (err instanceof ZodError) {
         setError(err.errors[0].message);
-      } else if (err instanceof Error) {
-        setError(err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
+      } else {
+        setError(getErrorMessage(err));
       }
     } finally {
       setIsLoading(false);
