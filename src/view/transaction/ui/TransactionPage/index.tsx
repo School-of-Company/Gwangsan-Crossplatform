@@ -39,7 +39,7 @@ export default function TransactionPageView() {
   const [refreshing, setRefreshing] = useState(false);
   const currentMode = category ? returnValue(category) : undefined;
   const router = useRouter();
-  
+
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const categories = handleCategory(type as TYPE) ?? [];
   const selectedIndex = categories.indexOf(category);
@@ -77,7 +77,7 @@ export default function TransactionPageView() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
-      <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2 relative">
+      <View className="bg relative mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2">
         <Animated.View
           className="absolute rounded-[32px] bg-white"
           style={{
@@ -86,24 +86,22 @@ export default function TransactionPageView() {
             width: '47%',
             left: slideAnimation.interpolate({
               inputRange: categories.map((_, index) => index),
-              outputRange: categories.map((_, index) => index === 0 ? '2%' : '55%'),
+              outputRange: categories.map((_, index) => (index === 0 ? '2%' : '55%')),
             }),
           }}
         />
-        
+
         {categories.map((v, index) => (
           <TouchableOpacity
             key={v}
             onPress={() => setCategory(v as Category)}
-            className="absolute rounded-[32px] items-center justify-center"
-            style={{ 
+            className="absolute items-center justify-center rounded-[32px]"
+            style={{
               height: 32,
               width: '47%',
-              left: index === 0 ? '2%' : '55%'
+              left: index === 0 ? '2%' : '55%',
             }}>
-            <Text className="text-center font-medium">
-              {v}
-            </Text>
+            <Text className="text-center font-medium">{v}</Text>
           </TouchableOpacity>
         ))}
       </View>
