@@ -1,6 +1,7 @@
 import { Image, Text, View } from 'react-native';
 import { getLightColor } from '~/shared/lib/handleLightColor';
 import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+import { clsx } from 'clsx';
 
 interface ReviewPostProps {
   review: ReviewPostType;
@@ -15,8 +16,10 @@ export default function ReviewPost({ review }: ReviewPostProps) {
       <View>
         <View className="relative flex h-5 w-full justify-center rounded-xl bg-gray-200">
           <View
-            style={{ width: `${review.light}%` }}
-            className={`absolute mx-1 h-3 rounded-xl bg-${getLightColor(review.light)}`}
+            className={clsx(
+              `absolute mx-1 h-3 rounded-xl width-${review.light}`,
+              getLightColor(review.light)
+            )}
           />
         </View>
         <Text className="mb-1 max-w-[200px] flex-wrap text-label text-[#555555]">
