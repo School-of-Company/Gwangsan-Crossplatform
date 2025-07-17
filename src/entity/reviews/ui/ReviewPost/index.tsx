@@ -10,9 +10,10 @@ interface ReviewPostProps {
 export default function ReviewPost({ review }: ReviewPostProps) {
   return (
     <View className="flex flex-row gap-9 border-b border-b-gray-200 px-6 py-3">
-      {review.images.map((image, index) => (
-        <Image key={index} source={{ uri: image.imageUrl }} className="size-24 rounded-lg" />
-      ))}
+      {review.images &&
+        review.images.map((image, index) => (
+          <Image key={index} source={{ uri: image.imageUrl }} className="size-24 rounded-lg" />
+        ))}
       <View>
         <View className="relative flex h-5 w-full justify-center rounded-xl bg-gray-200">
           <View
