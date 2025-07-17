@@ -13,4 +13,4 @@ export const updateProfile = async (data: UpdateProfileRequest) => {
   } catch (error) {
     throw error;
   }
-}; 
+};

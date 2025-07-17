@@ -63,7 +63,7 @@ export default function ProfileEditPageView() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="내 정보 수정" />
-      
+
       <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
         <View className="gap-6">
           <Input
@@ -94,11 +94,8 @@ export default function ProfileEditPageView() {
       </ScrollView>
 
       <View className="px-6 pb-6">
-        <Button
-          onPress={handleSubmit}
-          disabled={!isFormValid || isSubmitting}
-        >
-          {isSubmitting ? '저장 중...' : '저장'}
+        <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
+          {isSubmitting ? '수정 중...' : '수정'}
         </Button>
       </View>
     </SafeAreaView>
