@@ -70,7 +70,7 @@ export default function TransactionPageView() {
           <Text
             key={v}
             onPress={() => setCategory(v as Category)}
-            className={`rounded-[32px] px-[15%] py-[6px] ${
+            className={`rounded-[32px] px-[16%] py-[10px] ${
               category === v ? 'bg-white' : 'bg-transparent'
             }`}>
             {v}
