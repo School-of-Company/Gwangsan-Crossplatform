@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View, Animated } from 'react-native';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { MODE, TYPE } from '~/shared/types/postType';
 import { Header } from '~/shared/ui';
@@ -39,11 +39,23 @@ export default function TransactionPageView() {
   const [refreshing, setRefreshing] = useState(false);
   const currentMode = category ? returnValue(category) : undefined;
   const router = useRouter();
+  
+  const slideAnimation = useRef(new Animated.Value(0)).current;
+  const categories = handleCategory(type as TYPE) ?? [];
+  const selectedIndex = categories.indexOf(category);
 
   const { data = [], refetch } = useGetPosts(
     currentMode as MODE | undefined,
     type as TYPE | undefined
   );
+
+  useEffect(() => {
+    Animated.timing(slideAnimation, {
+      toValue: selectedIndex,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [selectedIndex, slideAnimation]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -65,16 +77,30 @@ export default function TransactionPageView() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
-      <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center justify-between rounded-[30px] bg-sub2-300 px-2">
-        {(handleCategory(type as TYPE) ?? []).map((v) => (
-          <Text
+      <View className="bg mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2 relative">
+        <Animated.View
+          className="absolute rounded-[32px] bg-white"
+          style={{
+            top: 6,
+            height: 32,
+            width: '47%',
+            left: slideAnimation.interpolate({
+              inputRange: categories.map((_, index) => index),
+              outputRange: categories.map((_, index) => index === 0 ? '2%' : '55%'),
+            }),
+          }}
+        />
+        
+        {categories.map((v) => (
+          <TouchableOpacity
             key={v}
             onPress={() => setCategory(v as Category)}
-            className={`rounded-[32px] px-[16%] py-[10px] ${
-              category === v ? 'bg-white' : 'bg-transparent'
-            }`}>
-            {v}
-          </Text>
+            className="rounded-[32px] items-center justify-center flex-1"
+            style={{ height: 32 }}>
+            <Text className="text-center font-medium">
+              {v}
+            </Text>
+          </TouchableOpacity>
         ))}
       </View>
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
