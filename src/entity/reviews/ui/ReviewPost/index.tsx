@@ -18,7 +18,7 @@ export default function ReviewPost({ review }: ReviewPostProps) {
         <Image className="size-[100px]" source={require('~/shared/assets/png/gwangsanLogo.png')} />
       )}
       <View className="gap-[10px] px-6 py-[10px]">
-        <View className="relative flex h-4 w-[30%] justify-center rounded-xl bg-gray-200">
+        <View className="relative flex h-4 w-[120px] justify-center rounded-xl bg-gray-200">
           <View
             style={{ width: `${review.light}%` }}
             className={clsx('absolute mx-1 h-2 rounded-xl', getLightColor(review.light))}
