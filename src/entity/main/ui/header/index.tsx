@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 
 export default function Header() {
   const r = useRouter();
-  
+
   const handlePressNotification = useCallback(() => {
     r.push('/notification');
   }, [r]);
@@ -26,4 +26,3 @@ export default function Header() {
     </View>
   );
 }
-
