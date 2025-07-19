@@ -57,7 +57,7 @@ export default function SpecialtiesDropdown<T extends string>({
         </View>
       </TouchableOpacity>
       {show && (
-        <View className="absolute top-20 z-10 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md">
+        <View className="fixed z-10 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md">
           <ScrollView className="w-full">
             {multiSelect.allItems.map((item) => {
               const isSelected = multiSelect.isSelected(item);

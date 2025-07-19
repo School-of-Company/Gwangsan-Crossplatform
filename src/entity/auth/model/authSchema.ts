@@ -47,3 +47,14 @@ export const descriptionSchema = z
   .trim()
   .min(1, '자기소개는 최소 1자 이상 작성해주세요')
   .max(255, '자기소개는 255자 이하로 작성해주세요');
+
+export const specialtiesSchema = z
+  .array(z.string())
+  .min(1, '특기를 최소 1개 이상 선택해주세요')
+  .max(10, '특기는 최대 10개까지 선택 가능합니다');
+
+export const profileEditSchema = z.object({
+  nickname: nicknameSchema,
+  specialties: specialtiesSchema,
+  description: descriptionSchema,
+});
