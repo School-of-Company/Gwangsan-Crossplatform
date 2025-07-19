@@ -29,15 +29,17 @@ export default function Information({ name, id, isMe }: InformationProps) {
         />
         <View>
           <Text className="mb-2 text-body1">{name ?? '사용자'}</Text>
-          <TouchableOpacity
-            onPress={handleSignout}
-            className="flex flex-row items-center gap-3"
-            disabled={isLoading}>
-            <Text className="text-label text-gray-500">
-              {isLoading ? '로그아웃 중...' : '로그아웃하기'}
-            </Text>
-            <Ionicons name="chevron-forward" size={24} color="#8F9094" />
-          </TouchableOpacity>
+          {isMe && (
+            <TouchableOpacity
+              onPress={handleSignout}
+              className="flex flex-row items-center gap-3"
+              disabled={isLoading}>
+              <Text className="text-label text-gray-500">
+                {isLoading ? '로그아웃 중...' : '로그아웃하기'}
+              </Text>
+              <Ionicons name="chevron-forward" size={24} color="#8F9094" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
       {isMe ? (

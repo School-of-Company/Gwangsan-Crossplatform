@@ -10,7 +10,7 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": [],
+    "plugins": ["expo-router"],
     "orientation": "portrait",
     "icon": "./src/shared/assets/png/gwangsanLogo.png",
     "userInterfaceStyle": "light",
