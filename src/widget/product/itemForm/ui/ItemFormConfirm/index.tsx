@@ -12,9 +12,9 @@ interface Props {
 
 const ItemFormConfirm = ({ title, content, gwangsan, images }: Props) => {
   return (
-    <View className="flex flex-1 flex-col gap-7">
+    <View className="flex flex-col gap-7">
       <Text className="px-6 text-titleSmall text-black">다시 한번 확인해주세요.</Text>
-      <View className="flex flex-1 flex-col gap-10">
+      <View className="flex flex-col gap-10">
         <ItemFormContents title={title} content={content} images={images} readonly={true} />
         <ItemFormGwangsan gwangsan={gwangsan} readonly={true} />
       </View>
