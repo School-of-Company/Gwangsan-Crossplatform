@@ -11,7 +11,7 @@ export function ChatRoomList() {
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
-      router.push(`/chat/${roomId}`);
+      router.push(`/chatting/${roomId}`);
     },
     [router]
   );
