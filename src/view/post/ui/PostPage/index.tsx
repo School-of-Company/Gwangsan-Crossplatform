@@ -219,9 +219,21 @@ export default function PostPageView() {
                 수정하기
               </Button>
             ) : (
-              <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
-                거래완료
-              </Button>
+              <>
+                {data.isCompleted ? (
+                  <Button variant="primary" width="w-1/2" disabled>
+                    거래완료됨
+                  </Button>
+                ) : data.isCompletable ? (
+                  <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
+                    거래완료
+                  </Button>
+                ) : (
+                  <Button variant="primary" width="w-1/2" disabled>
+                    채팅 후 거래완료
+                  </Button>
+                )}
+              </>
             )}
           </View>
         </View>
