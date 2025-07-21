@@ -1,8 +1,7 @@
 import { FlatList, View, Text, RefreshControl } from 'react-native';
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { useChatRooms } from '@/entity/chat';
-import { ChatRoomItem } from '@/entity/chat';
+import { useChatRooms, ChatRoomItem } from '@/entity/chat';
 import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
 

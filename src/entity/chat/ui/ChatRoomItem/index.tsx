@@ -19,9 +19,7 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
 
     return (
       <View className="min-w-[20px] items-center justify-center rounded-full bg-yellow-400 px-1.5 py-0.5">
-        <Text className="text-xs font-semibold text-white">
-          {room.unreadMessageCount}
-        </Text>
+        <Text className="text-xs font-semibold text-white">{room.unreadMessageCount}</Text>
       </View>
     );
   };
