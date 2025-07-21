@@ -29,15 +29,13 @@ export function ChatRoomList() {
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
-      <Text className="text-base text-gray-500">아직 채팅방이 없습니다</Text>
-      <Text className="mt-2 text-sm text-gray-400">새로운 채팅을 시작해보세요</Text>
+      <Text className="text-base text-gray-500">아직 채팅방 없습니다</Text>
     </View>
   );
 
   const renderErrorState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <Text className="text-base text-red-500">채팅방 목록을 불러올 수 없습니다</Text>
-      <Text className="mt-2 text-sm text-gray-400">새로고침을 시도해주세요</Text>
     </View>
   );
 

@@ -19,7 +19,7 @@ export function Footer() {
 
   const FooterItem = [
     { label: '홈', icon: 'home-outline', pathname: '/main' },
-    { label: '채팅', icon: 'chatbubble-outline', pathname: '/chating' },
+    { label: '채팅', icon: 'chatbubble-outline', pathname: '/chatting' },
     { label: '공지', icon: 'megaphone-outline', pathname: '/notice' },
     { label: '프로필', icon: 'person-outline', pathname: '/profile/' + memberId },
   ];
