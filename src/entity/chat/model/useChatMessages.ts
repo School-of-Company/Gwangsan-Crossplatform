@@ -13,7 +13,7 @@ interface UseChatMessagesOptions {
   enabled?: boolean;
   refetchInterval?: number;
   onError?: (error: ChatApiError) => void;
-} 
+}
 
 export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions = {}) => {
   const { enabled = true, refetchInterval, onError } = options;

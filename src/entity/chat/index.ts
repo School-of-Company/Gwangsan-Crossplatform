@@ -20,3 +20,5 @@ export type {
 } from './model/chatTypes';
 
 export { isChatRoomListItem, isChatMessageResponse } from './model/chatTypes';
+
+export { ChatRoomItem } from './ui';
