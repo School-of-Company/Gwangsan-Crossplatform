@@ -22,7 +22,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.schoolofcompany.gwangsan",
+      "bundleIdentifier": "gwangsan.io.kr",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -32,7 +32,7 @@
         "foregroundImage": "./src/app/favicon.ico",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.schoolofcompany.gwangsan"
+      "package": "gwangsan.io.kr"
     },
     "extra": {
       "eas": {
