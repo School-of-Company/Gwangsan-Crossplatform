@@ -1,14 +1,11 @@
 import Toast from 'react-native-toast-message';
-import { instance } from '../../../shared/lib/axios';
-import {
-  transformChatRoomsResponse,
-} from '../lib/chatApiTransformer';
+import { instance } from '@/shared/lib/axios';
 import type { ChatRoomListItem, ChatApiError } from '../model/chatTypes';
 
 export const getChatRooms = async (): Promise<ChatRoomListItem[]> => {
   try {
     const response = await instance.get('/chat/rooms');
-    return transformChatRoomsResponse(response.data);
+    return response.data;
   } catch (e) {
     const error = e as ChatApiError;
 
