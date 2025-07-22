@@ -6,7 +6,7 @@ import { useUploadImage } from '@/shared/model/useUploadImage';
 interface UseImageUploadProps {
   onImageUpload: (
     imageIds: number[],
-    imageInfos?: Array<{ imageId: number; imageUrl: string }>
+    imageInfos?: { imageId: number; imageUrl: string }[]
   ) => void;
   disabled?: boolean;
 }

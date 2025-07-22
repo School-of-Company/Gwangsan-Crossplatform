@@ -8,7 +8,7 @@ interface ChatInputProps {
   onSendTextMessage: (message: string) => void;
   onSendImageMessage: (
     imageIds: number[],
-    imageInfos?: Array<{ imageId: number; imageUrl: string }>
+    imageInfos?: { imageId: number; imageUrl: string }[]
   ) => void;
   disabled?: boolean;
 }
