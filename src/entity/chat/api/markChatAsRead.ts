@@ -28,4 +28,4 @@ export const markChatAsRead = async (roomId: RoomId, lastMessageId: MessageId): 
 
     throw error;
   }
-}; 
+};

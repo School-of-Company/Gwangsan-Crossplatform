@@ -79,8 +79,13 @@ export const renderMessageContent = (
   imageLoader: UseImageLoaderReturn,
   config: MessageRenderConfig
 ) => {
-  const imageContent = renderMessageImages(message, imageLoader, config);
-  if (imageContent) return imageContent;
+  if (message.messageType === 'IMAGE' && message.images && message.images.length > 0) {
+    return renderMessageImages(message, imageLoader, config);
+  }
 
-  return renderMessageText(message, config);
+  if (message.messageType === 'TEXT' && message.content) {
+    return renderMessageText(message, config);
+  }
+
+  return null;
 };

@@ -43,19 +43,14 @@ export default function ChatRoomPage() {
     }
   }, [messages]);
 
-  const handleSendTextMessage = useCallback(
-    (textMessage: string) => {
-      if (connectionState === 'connected') {
-        sendMessage(roomId, textMessage, 'TEXT');
-      }
-    },
-    [roomId, sendMessage, connectionState]
-  );
+  const handleSendMessage = useCallback(
+    (content: string | null, imageIds: number[]) => {
+      if (connectionState !== 'connected') return;
 
-  const handleSendImageMessage = useCallback(
-    (imageIds: number[]) => {
-      if (connectionState === 'connected') {
-        sendMessage(roomId, null, 'IMAGE', imageIds);
+      if (imageIds.length > 0) {
+        sendMessage(roomId, content, 'IMAGE', imageIds);
+      } else if (content) {
+        sendMessage(roomId, content, 'TEXT', []);
       }
     },
     [roomId, sendMessage, connectionState]
@@ -135,11 +130,7 @@ export default function ChatRoomPage() {
           </View>
         )}
 
-        <ChatInput
-          onSendTextMessage={handleSendTextMessage}
-          onSendImageMessage={handleSendImageMessage}
-          disabled={connectionState !== 'connected'}
-        />
+        <ChatInput onSendMessage={handleSendMessage} disabled={connectionState !== 'connected'} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

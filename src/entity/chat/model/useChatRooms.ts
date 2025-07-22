@@ -60,9 +60,11 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
 
   const markRoomAsRead = useCallback(
     async (roomId: RoomId) => {
-      const messages = queryClient.getQueryData(['chatMessages', roomId]) as ChatMessageResponse[] | undefined;
+      const messages = queryClient.getQueryData(['chatMessages', roomId]) as
+        | ChatMessageResponse[]
+        | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
-      
+
       if (!lastMessage) {
         updateChatRoom(roomId, (room) => ({
           ...room,
@@ -73,13 +75,13 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
 
       try {
         await markChatAsRead(roomId, lastMessage.messageId);
-        
+
         updateChatRoom(roomId, (room) => ({
           ...room,
           unreadMessageCount: 0,
         }));
       } catch (error) {
-        console.error( error);
+        console.error(error);
         updateChatRoom(roomId, (room) => ({
           ...room,
           unreadMessageCount: 0,

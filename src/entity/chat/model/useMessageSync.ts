@@ -116,9 +116,11 @@ export const useMessageSync = ({
     async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
 
-      const messages = queryClient.getQueryData(chatMessageQueryKey || ['chatMessages', roomId]) as ChatMessageResponse[] | undefined;
+      const messages = queryClient.getQueryData(chatMessageQueryKey || ['chatMessages', roomId]) as
+        | ChatMessageResponse[]
+        | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
-      
+
       if (!lastMessage) {
         queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
           if (!oldData) return oldData;
@@ -135,7 +137,7 @@ export const useMessageSync = ({
 
       try {
         await markChatAsRead(roomId, lastMessage.messageId);
-        
+
         queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
           if (!oldData) return oldData;
 
