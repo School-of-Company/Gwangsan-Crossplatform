@@ -28,6 +28,10 @@ export {
   type ImageLoadingState,
 } from './model/useImageLoader';
 
+export { useSocketConnection } from './model/useSocketConnection';
+export { useMessageSync } from './model/useMessageSync';
+export { useSocketEventHandlers } from './model/useSocketEventHandlers';
+
 export type {
   CreateChatRoomResponse,
   FindChatRoomResponse,

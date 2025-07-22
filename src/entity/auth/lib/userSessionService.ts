@@ -42,7 +42,7 @@ export const createUserSessionService = (): IUserSessionService => {
 
       throw new Error('No valid session found');
     } catch (error) {
-      console.error('Failed to load user session:', error);
+      console.error(error);
       throw new Error('Authentication required');
     }
   };
