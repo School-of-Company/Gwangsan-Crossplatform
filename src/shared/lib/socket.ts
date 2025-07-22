@@ -97,8 +97,12 @@ class SocketManager implements ISocketManager {
       this.emit('connect_error', error);
     });
 
-    this.socket.onAny((eventName, ...args) => {
-      this.emit(eventName, ...args);
+    this.socket.on('receiveMessage', (...args) => {
+      this.emit('receiveMessage', ...args);
+    });
+
+    this.socket.on('updateRoomList', (...args) => {
+      this.emit('updateRoomList', ...args);
     });
   }
 
@@ -179,7 +183,7 @@ export const createChatSocketManager = (): ISocketManager => {
     url: 'https://api.gwangsan.io.kr/api/chat',
     transports: ['websocket'],
     timeout: 15000,
-    reconnection: false,
+    reconnection: true,
     autoConnect: true,
   };
 

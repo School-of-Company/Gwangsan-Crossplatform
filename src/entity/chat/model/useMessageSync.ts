@@ -30,7 +30,11 @@ export const useMessageSync = ({
   const handleReceiveMessage = useCallback(
     async (message: ChatMessageResponse) => {
       try {
+        if (!message || typeof message !== 'object') return;
+
         const userId = await getCurrentUserId();
+        if (!userId) return;
+
         const correctedMessage = {
           ...message,
           isMine: message.senderId === userId,

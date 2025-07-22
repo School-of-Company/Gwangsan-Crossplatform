@@ -47,13 +47,25 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
   };
 
   const setupSocketEventForwarding = (): void => {
-    socketManager.on('connect', () => emit('connect'));
-    socketManager.on('disconnect', (reason: string) => emit('disconnect', reason));
-    socketManager.on('connect_error', (error: Error) => emit('connect_error', error));
-    socketManager.on('receiveMessage', (message: ChatMessageResponse) =>
-      emit('receiveMessage', message)
-    );
-    socketManager.on('updateRoomList', (data: any) => emit('updateRoomList', data));
+    socketManager.on('connect', () => {
+      emit('connect');
+    });
+
+    socketManager.on('disconnect', (reason: string) => {
+      emit('disconnect', reason);
+    });
+
+    socketManager.on('connect_error', (error: Error) => {
+      emit('connect_error', error);
+    });
+
+    socketManager.on('receiveMessage', (message: ChatMessageResponse) => {
+      emit('receiveMessage', message);
+    });
+
+    socketManager.on('updateRoomList', (data: any) => {
+      emit('updateRoomList', data);
+    });
   };
 
   setupSocketEventForwarding();
