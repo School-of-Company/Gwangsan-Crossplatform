@@ -33,9 +33,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
     <View className="mb-4 items-end">
       <View className="flex-row items-end">
         <Text className="mr-2 text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
-        <View className="max-w-[280px] rounded-2xl rounded-br-md bg-orange-400 px-4 py-3">
-          {content}
-        </View>
+        <View className="max-w-[280px] rounded-xl bg-orange-400 px-4 py-3">{content}</View>
       </View>
     </View>
   );
