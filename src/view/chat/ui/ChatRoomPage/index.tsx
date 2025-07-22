@@ -65,13 +65,16 @@ export default function ChatRoomPage() {
     router.push(`/profile/${userId}`);
   }, []);
 
-  const renderMessage = useCallback(({ item }: { item: ChatMessageResponse }) => {
-    if (item.isMine) {
-      return <MyMessage message={item} />;
-    } else {
-      return <OtherMessage message={item} onProfilePress={handleProfilePress} />;
-    }
-  }, [handleProfilePress]);
+  const renderMessage = useCallback(
+    ({ item }: { item: ChatMessageResponse }) => {
+      if (item.isMine) {
+        return <MyMessage message={item} />;
+      } else {
+        return <OtherMessage message={item} onProfilePress={handleProfilePress} />;
+      }
+    },
+    [handleProfilePress]
+  );
 
   const renderHeader = useCallback(() => {
     const handleHeaderProfilePress = () => {
