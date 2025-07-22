@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -7,6 +7,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useEffect, useCallback, useRef } from 'react';
 import { Header } from '@/shared/ui/Header';
@@ -56,20 +57,34 @@ export default function ChatRoomPage() {
     [roomId, sendMessage, connectionState]
   );
 
-  const otherUserNickname = messages?.find((msg) => !msg.isMine)?.senderNickname || '상대방';
+  const otherUser = messages?.find((msg) => !msg.isMine);
+  const otherUserNickname = otherUser?.senderNickname || '상대방';
+  const otherUserId = otherUser?.senderId;
+
+  const handleProfilePress = useCallback((userId: number) => {
+    router.push(`/profile/${userId}`);
+  }, []);
 
   const renderMessage = useCallback(({ item }: { item: ChatMessageResponse }) => {
     if (item.isMine) {
       return <MyMessage message={item} />;
     } else {
-      return <OtherMessage message={item} />;
+      return <OtherMessage message={item} onProfilePress={handleProfilePress} />;
     }
-  }, []);
+  }, [handleProfilePress]);
 
   const renderHeader = useCallback(() => {
+    const handleHeaderProfilePress = () => {
+      if (otherUserId) {
+        router.push(`/profile/${otherUserId}`);
+      }
+    };
+
     return (
       <View className="items-center bg-white py-8">
-        <Text className="mb-2 text-xl font-bold text-gray-900">{otherUserNickname}</Text>
+        <TouchableOpacity onPress={handleHeaderProfilePress} disabled={!otherUserId}>
+          <Text className="mb-2 text-xl font-bold text-gray-900">{otherUserNickname}</Text>
+        </TouchableOpacity>
         <Text className="text-sm text-gray-500">
           {messages && messages.length > 0
             ? new Date(messages[messages.length - 1].createdAt).toLocaleString('ko-KR', {
@@ -83,7 +98,7 @@ export default function ChatRoomPage() {
         </Text>
       </View>
     );
-  }, [otherUserNickname, messages]);
+  }, [otherUserNickname, otherUserId, messages]);
 
   if (isLoading) {
     return (

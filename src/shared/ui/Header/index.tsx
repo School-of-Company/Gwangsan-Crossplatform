@@ -5,9 +5,10 @@ import { router } from 'expo-router';
 interface Props {
   onBack?: () => void;
   headerTitle: string;
+  onTitlePress?: () => void;
 }
 
-export function Header({ onBack, headerTitle }: Props) {
+export function Header({ onBack, headerTitle, onTitlePress }: Props) {
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -21,7 +22,13 @@ export function Header({ onBack, headerTitle }: Props) {
       <TouchableOpacity onPress={handleBack} className="w-10 items-center justify-center">
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
-      <Text className="flex-1 text-center text-body1 text-black">{headerTitle}</Text>
+      {onTitlePress ? (
+        <TouchableOpacity onPress={onTitlePress} className="flex-1">
+          <Text className="text-center text-body1 text-black">{headerTitle}</Text>
+        </TouchableOpacity>
+      ) : (
+        <Text className="flex-1 text-center text-body1 text-black">{headerTitle}</Text>
+      )}
       <View className="size-6" />
     </View>
   );
