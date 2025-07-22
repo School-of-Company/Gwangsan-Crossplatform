@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-// import { useRouter } from 'expo-router';
 import { AlertType } from '~/entity/notification/model/alertTypes';
 import { formatDate } from '~/shared/lib/formatDate';
+import { completeTrade } from '~/entity/post/api/completeTrade';
+import { useState } from 'react';
 
 interface NotificationItemProps {
   id: number;
@@ -10,23 +11,40 @@ interface NotificationItemProps {
   alertType: AlertType;
   imageIds: number[];
   createdAt: string;
+  sendMemberId?: number | null;
+  images?: Array<{ imageId: number; imageUrl: string }>;
+  raw?: any;
 }
 
 const NotificationItem = ({
-  // id,
   title,
   content,
-  // alertType,
-  // imageIds,
   createdAt,
+  sendMemberId,
+  alertType,
+  raw,
 }: NotificationItemProps) => {
-  // const router = useRouter();
-
-  // const handlePress = () => {
-  //   router.push(`/notification/${id}`);
-  // };
-
   const displayImage = require('~/shared/assets/png/gwangsanLogo.png');
+
+  const [loading, setLoading] = useState(false);
+  const handleAcceptTrade = async () => {
+    if (!sendMemberId) return;
+    setLoading(true);
+    try {
+      const productId = raw?.productId;
+      if (!productId) {
+        alert('productId 정보가 없습니다.');
+        setLoading(false);
+        return;
+      }
+      await completeTrade({ productId, otherMemberId: sendMemberId });
+      alert('거래 완료를 수락했습니다.');
+    } catch (e) {
+      alert(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <TouchableOpacity className="mb-3 bg-white p-4" activeOpacity={0.7}>
@@ -44,6 +62,18 @@ const NotificationItem = ({
           <Text className="text-sm leading-5 text-gray-500" numberOfLines={1} ellipsizeMode="tail">
             {content}
           </Text>
+
+          {alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sendMemberId && (
+            <TouchableOpacity
+              className="mt-2 bg-green-500 px-4 py-2 rounded"
+              onPress={handleAcceptTrade}
+              disabled={loading}
+            >
+              <Text className="text-white font-semibold">
+                {loading ? '처리 중...' : '거래 완료 수락'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </TouchableOpacity>

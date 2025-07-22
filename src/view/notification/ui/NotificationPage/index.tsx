@@ -16,6 +16,9 @@ const NotificationPage = () => {
     alert_type: alert.alertType ?? alert.alert_type,
     imageIds: alert.images?.map((img: any) => img.imageId) ?? alert.imageIds ?? [],
     createdAt: alert.createdAt,
+    sendMemberId: alert.sendMemberId,
+    images: alert.images ?? [],
+    raw: alert,
   }));
 
   if (isLoading) {
@@ -53,6 +56,9 @@ const NotificationPage = () => {
             alertType={alert.alert_type}
             imageIds={alert.imageIds}
             createdAt={alert.createdAt}
+            sendMemberId={alert.sendMemberId}
+            images={alert.images}
+            raw={alert}
           />
         ))}
       </ScrollView>
