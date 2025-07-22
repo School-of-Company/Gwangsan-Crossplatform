@@ -23,4 +23,4 @@ export const getCurrentUserId = async (): Promise<number> => {
 
 export const clearCurrentUserId = (): void => {
   currentUserId = null;
-}; 
+};

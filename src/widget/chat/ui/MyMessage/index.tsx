@@ -1,4 +1,5 @@
-import { View, Text } from 'react-native';
+import { View, Text, Image, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
 import type { ChatMessageResponse } from '@/entity/chat';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -7,6 +8,9 @@ interface MyMessageProps {
 }
 
 export const MyMessage: React.FC<MyMessageProps> = ({ message }) => {
+  const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: number]: boolean }>({});
+  const [imageErrorStates, setImageErrorStates] = useState<{ [key: number]: boolean }>({});
+
   const formatTime = (createdAt: string) => {
     const date = new Date(createdAt);
     return date.toLocaleTimeString('ko-KR', {
@@ -16,22 +20,65 @@ export const MyMessage: React.FC<MyMessageProps> = ({ message }) => {
     });
   };
 
+  const handleImageLoadStart = (imageId: number) => {
+    setImageLoadingStates((prev) => ({ ...prev, [imageId]: true }));
+  };
+
+  const handleImageLoadEnd = (imageId: number) => {
+    setImageLoadingStates((prev) => ({ ...prev, [imageId]: false }));
+  };
+
+  const handleImageError = (imageId: number) => {
+    setImageLoadingStates((prev) => ({ ...prev, [imageId]: false }));
+    setImageErrorStates((prev) => ({ ...prev, [imageId]: true }));
+  };
+
+  const renderContent = () => {
+    if (message.messageType === 'IMAGE' && message.images && message.images.length > 0) {
+      return (
+        <View className="max-w-[250px]">
+          {message.images.map((image, index) => (
+            <View key={image.imageId} className="relative mb-1">
+              {imageErrorStates[image.imageId] ? (
+                <View className="h-48 w-48 items-center justify-center rounded-lg bg-orange-100">
+                  <Icon name="image-outline" size={32} color="#FB923C" />
+                  <Text className="mt-1 text-xs text-orange-600">이미지 로드 실패</Text>
+                </View>
+              ) : (
+                <Image
+                  source={{ uri: image.imageUrl }}
+                  className="h-48 w-48 rounded-lg"
+                  resizeMode="cover"
+                  onLoadStart={() => handleImageLoadStart(image.imageId)}
+                  onLoadEnd={() => handleImageLoadEnd(image.imageId)}
+                  onError={() => handleImageError(image.imageId)}
+                />
+              )}
+              {imageLoadingStates[image.imageId] && (
+                <View className="absolute inset-0 items-center justify-center rounded-lg bg-orange-400 bg-opacity-50">
+                  <ActivityIndicator size="small" color="white" />
+                </View>
+              )}
+            </View>
+          ))}
+          {message.content && <Text className="mt-1 text-sm text-white">{message.content}</Text>}
+        </View>
+      );
+    }
+
+    if (message.messageType === 'TEXT' && message.content) {
+      return <Text className="text-base text-white">{message.content}</Text>;
+    }
+
+    return null;
+  };
+
   return (
     <View className="mb-4 items-end">
       <View className="flex-row items-end">
         <Text className="mr-2 text-xs text-gray-500">{formatTime(message.createdAt)}</Text>
         <View className="max-w-[280px] rounded-2xl rounded-br-md bg-orange-400 px-4 py-3">
-          {message.messageType === 'TEXT' && message.content && (
-            <Text className="text-base text-white">{message.content}</Text>
-          )}
-          {message.messageType === 'IMAGE' && message.images && (
-            <View className="h-48 w-64 overflow-hidden rounded-2xl bg-gray-200">
-              <View className="flex-1 items-center justify-center bg-orange-100">
-                <Icon name="image" size={40} color="#FB923C" />
-                <Text className="mt-2 text-xs text-orange-600">이미지</Text>
-              </View>
-            </View>
-          )}
+          {renderContent()}
         </View>
       </View>
     </View>

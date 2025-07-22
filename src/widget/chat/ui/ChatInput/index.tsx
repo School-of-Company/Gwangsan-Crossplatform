@@ -6,26 +6,35 @@ import { useUploadImage } from '@/shared/model/useUploadImage';
 
 interface ChatInputProps {
   onSendTextMessage: (message: string) => void;
-  onSendImageMessage: (imageIds: number[]) => void;
+  onSendImageMessage: (
+    imageIds: number[],
+    imageInfos?: Array<{ imageId: number; imageUrl: string }>
+  ) => void;
   disabled?: boolean;
 }
 
 export function ChatInput({ onSendTextMessage, onSendImageMessage, disabled }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const uploadImageMutation = useUploadImage();
 
-  const handleSendText = useCallback(() => {
+  const handleSendText = useCallback(async () => {
     const trimmedMessage = message.trim();
-    if (trimmedMessage && !disabled) {
-      onSendTextMessage(trimmedMessage);
-      setMessage('');
+    if (trimmedMessage && !disabled && !isSendingMessage) {
+      setIsSendingMessage(true);
+      try {
+        onSendTextMessage(trimmedMessage);
+        setMessage('');
+      } finally {
+        setTimeout(() => setIsSendingMessage(false), 1000);
+      }
     }
-  }, [message, onSendTextMessage, disabled]);
+  }, [message, onSendTextMessage, disabled, isSendingMessage]);
 
   const handleImagePicker = useCallback(async () => {
-    if (disabled || isUploadingImage) return;
+    if (disabled || isUploadingImage || isSendingMessage) return;
 
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -46,21 +55,26 @@ export function ChatInput({ onSendTextMessage, onSendImageMessage, disabled }: C
         setIsUploadingImage(true);
         const imageUri = result.assets[0].uri;
 
-        const uploadedImage = await uploadImageMutation.mutateAsync(imageUri);
-
-        onSendImageMessage([uploadedImage.imageId]);
-
-        setIsUploadingImage(false);
+        try {
+          const uploadedImage = await uploadImageMutation.mutateAsync(imageUri);
+          onSendImageMessage([uploadedImage.imageId], [uploadedImage]);
+        } catch (error) {
+          console.error('이미지 업로드 중 오류:', error);
+          Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
+        } finally {
+          setIsUploadingImage(false);
+        }
       }
     } catch (error) {
-      console.error('이미지 업로드 중 오류:', error);
+      console.error('이미지 선택 중 오류:', error);
       setIsUploadingImage(false);
-      Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
+      Alert.alert('오류', '이미지 선택 중 오류가 발생했습니다.');
     }
-  }, [disabled, isUploadingImage, uploadImageMutation, onSendImageMessage]);
+  }, [disabled, isUploadingImage, isSendingMessage, uploadImageMutation, onSendImageMessage]);
 
-  const canSendText = message.trim().length > 0 && !disabled && !isUploadingImage;
-  const canSelectImage = !disabled && !isUploadingImage;
+  const canSendText =
+    message.trim().length > 0 && !disabled && !isUploadingImage && !isSendingMessage;
+  const canSelectImage = !disabled && !isUploadingImage && !isSendingMessage;
 
   return (
     <View className="flex-row items-center border-t border-gray-200 bg-white px-4 py-3">
@@ -73,7 +87,7 @@ export function ChatInput({ onSendTextMessage, onSendImageMessage, disabled }: C
           className="flex-1 px-4 py-3 text-base text-gray-900"
           multiline={false}
           onSubmitEditing={handleSendText}
-          editable={!disabled && !isUploadingImage}
+          editable={!disabled && !isUploadingImage && !isSendingMessage}
         />
         <TouchableOpacity className="mr-3" onPress={handleImagePicker} disabled={!canSelectImage}>
           {isUploadingImage ? (
@@ -89,7 +103,11 @@ export function ChatInput({ onSendTextMessage, onSendImageMessage, disabled }: C
         className={`h-10 w-10 items-center justify-center rounded-full ${
           canSendText ? 'bg-orange-400' : 'bg-gray-300'
         }`}>
-        <Icon name="chevron-forward" size={20} color="white" />
+        {isSendingMessage ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <Icon name="chevron-forward" size={20} color="white" />
+        )}
       </TouchableOpacity>
     </View>
   );

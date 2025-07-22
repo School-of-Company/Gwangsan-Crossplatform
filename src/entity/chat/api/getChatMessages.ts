@@ -8,34 +8,13 @@ export const getChatMessages = async (roomId: RoomId): Promise<ChatMessageRespon
   try {
     const [response, userId] = await Promise.all([
       instance.get(`/chat/${roomId}`),
-      getCurrentUserId()
+      getCurrentUserId(),
     ]);
-
-    console.log('Chat messages API response:', {
-      roomId,
-      currentUserId: userId,
-      messagesCount: response.data.length,
-      messages: response.data.map((msg: any) => ({
-        messageId: msg.messageId,
-        isMine: msg.isMine,
-        senderNickname: msg.senderNickname,
-        senderId: msg.senderId,
-        content: msg.content
-      }))
-    });
 
     const correctedMessages = response.data.map((msg: any) => ({
       ...msg,
-      isMine: msg.senderId === userId
+      isMine: msg.senderId === userId,
     }));
-
-    console.log('Corrected messages:', correctedMessages.map((msg: any) => ({
-      messageId: msg.messageId,
-      isMine: msg.isMine,
-      senderNickname: msg.senderNickname,
-      senderId: msg.senderId,
-      content: msg.content
-    })));
 
     return correctedMessages;
   } catch (e) {
@@ -43,9 +22,7 @@ export const getChatMessages = async (roomId: RoomId): Promise<ChatMessageRespon
 
     Toast.show({
       type: 'error',
-      text1: '채팅 메시지 조회 실패',
-      text2: error.message,
-      visibilityTime: 3000,
+      text1: error.message,
     });
 
     throw error;

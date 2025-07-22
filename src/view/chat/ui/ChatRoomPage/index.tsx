@@ -51,7 +51,7 @@ export default function ChatRoomPage() {
   );
 
   const handleSendImageMessage = useCallback(
-    (imageIds: number[], imageInfos?: Array<{ imageId: number; imageUrl: string }>) => {
+    (imageIds: number[]) => {
       if (connectionState === 'connected') {
         sendMessage(roomId, null, 'IMAGE', imageIds);
       }
@@ -62,14 +62,6 @@ export default function ChatRoomPage() {
   const otherUserNickname = messages?.find((msg) => !msg.isMine)?.senderNickname || '상대방';
 
   const renderMessage = useCallback(({ item }: { item: ChatMessageResponse }) => {
-    console.log('Rendering message:', {
-      messageId: item.messageId,
-      isMine: item.isMine,
-      senderNickname: item.senderNickname,
-      senderId: item.senderId,
-      content: item.content,
-    });
-
     if (item.isMine) {
       return <MyMessage message={item} />;
     } else {

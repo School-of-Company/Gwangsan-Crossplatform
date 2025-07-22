@@ -39,17 +39,8 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
         const userId = await getCurrentUserId();
         const correctedMessage = {
           ...message,
-          isMine: message.senderId === userId
+          isMine: message.senderId === userId,
         };
-
-        console.log('Received message:', {
-          messageId: correctedMessage.messageId,
-          isMine: correctedMessage.isMine,
-          senderNickname: correctedMessage.senderNickname,
-          senderId: correctedMessage.senderId,
-          content: correctedMessage.content,
-          messageType: correctedMessage.messageType
-        });
 
         if (currentRoomId && correctedMessage.roomId === currentRoomId) {
           queryClient.setQueryData(
@@ -74,7 +65,7 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
             if (room.roomId === correctedMessage.roomId) {
               return {
                 ...room,
-                lastMessage: correctedMessage.content || '📷 사진',
+                lastMessage: correctedMessage.content || '(사진)',
                 lastMessageType: correctedMessage.messageType,
                 lastMessageTime: correctedMessage.createdAt,
                 unreadMessageCount: correctedMessage.isMine
@@ -170,7 +161,7 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
       roomId: RoomId,
       content: string | null,
       messageType: 'TEXT' | 'IMAGE' = 'TEXT',
-      imageIds: number[] = [],
+      imageIds: number[] = []
     ) => {
       chatSocket.sendMessage({
         roomId,
