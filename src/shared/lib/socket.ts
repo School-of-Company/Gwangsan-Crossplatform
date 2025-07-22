@@ -1,10 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
 import Toast from 'react-native-toast-message';
-import type { 
-  ISocketManager, 
-  SocketConnectionConfig,
-} from '@/shared/types/chatType';
+import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
 
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
@@ -129,7 +126,7 @@ class SocketManager implements ISocketManager {
     if (this.socket?.connected) {
       this.socket.emit(event, ...args);
     }
-    
+
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach((handler) => {

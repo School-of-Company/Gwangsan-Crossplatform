@@ -15,15 +15,15 @@ interface useChatSocketProps {
   chatMessageQueryKey?: readonly unknown[];
 }
 
-export const useChatSocket = ({ 
-  autoConnect = true, 
+export const useChatSocket = ({
+  autoConnect = true,
   currentRoomId,
   chatRoomQueryKey,
-  chatMessageQueryKey
+  chatMessageQueryKey,
 }: useChatSocketProps = {}) => {
   const queryClient = useQueryClient();
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  
+
   const chatSocketService = useMemo(() => {
     const socketManager = createChatSocketManager();
     return createChatSocketService(socketManager);

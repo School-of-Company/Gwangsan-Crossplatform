@@ -44,7 +44,7 @@ export interface SocketConnectionConfig {
 export interface ISocketManager {
   readonly isConnected: boolean;
   readonly connectionState: 'disconnected' | 'connecting' | 'connected';
-  
+
   connect(): Promise<void>;
   disconnect(): void;
   emit(event: string, ...args: any[]): void;

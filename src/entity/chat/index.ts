@@ -3,11 +3,11 @@ export { findChatRoom } from './api/findChatRoom';
 export { getChatRooms } from './api/getChatRooms';
 export { getChatMessages } from './api/getChatMessages';
 
-export { 
-  createChatSocketService, 
-  type IChatSocketService, 
+export {
+  createChatSocketService,
+  type IChatSocketService,
   type ChatSocketEvents,
-  type ChatSendMessagePayload 
+  type ChatSendMessagePayload,
 } from './lib/socketService';
 
 export { useChatRooms, chatRoomKeys } from './model/useChatRooms';

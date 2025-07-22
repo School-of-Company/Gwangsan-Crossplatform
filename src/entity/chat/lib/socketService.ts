@@ -1,7 +1,4 @@
-import type { 
-  ISocketManager, 
-  BaseSocketMessage,
-} from '@/shared/types/chatType';
+import type { ISocketManager, BaseSocketMessage } from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 
 export interface ChatSocketEvents {
@@ -24,11 +21,11 @@ export interface ChatSendMessagePayload extends BaseSocketMessage {
 export interface IChatSocketService {
   readonly isConnected: boolean;
   readonly connectionState: 'disconnected' | 'connecting' | 'connected';
-  
+
   connect(): Promise<void>;
   disconnect(): void;
   sendMessage(payload: ChatSendMessagePayload): void;
-  
+
   on<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
   off<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
 }
@@ -53,12 +50,10 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     socketManager.on('connect', () => emit('connect'));
     socketManager.on('disconnect', (reason: string) => emit('disconnect', reason));
     socketManager.on('connect_error', (error: Error) => emit('connect_error', error));
-    socketManager.on('receiveMessage', (message: ChatMessageResponse) => 
+    socketManager.on('receiveMessage', (message: ChatMessageResponse) =>
       emit('receiveMessage', message)
     );
-    socketManager.on('updateRoomList', (data: any) => 
-      emit('updateRoomList', data)
-    );
+    socketManager.on('updateRoomList', (data: any) => emit('updateRoomList', data));
   };
 
   setupSocketEventForwarding();
@@ -83,7 +78,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
       messageType: payload.messageType,
       imageIds: payload.imageIds || [],
     };
-    
+
     socketManager.emit('sendMessage', message);
   };
 

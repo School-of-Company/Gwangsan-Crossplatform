@@ -14,7 +14,7 @@ export interface IUserSessionService {
   isSessionValid(): Promise<boolean>;
 }
 
-const createUserSessionService = (): IUserSessionService => {
+export const createUserSessionService = (): IUserSessionService => {
   let cachedSession: UserSession | null = null;
   let sessionPromise: Promise<UserSession> | null = null;
 
@@ -22,12 +22,12 @@ const createUserSessionService = (): IUserSessionService => {
     try {
       const memberIdString = await getData('memberId');
       const accessToken = await getData('accessToken');
-      
+
       if (memberIdString && accessToken) {
         return {
           memberId: parseInt(memberIdString, 10),
           accessToken,
-          refreshToken: await getData('refreshToken') || undefined,
+          refreshToken: (await getData('refreshToken')) || undefined,
         };
       }
 
@@ -36,7 +36,7 @@ const createUserSessionService = (): IUserSessionService => {
         return {
           memberId: response.data.memberId,
           accessToken,
-          refreshToken: await getData('refreshToken') || undefined,
+          refreshToken: (await getData('refreshToken')) || undefined,
         };
       }
 
@@ -62,7 +62,7 @@ const createUserSessionService = (): IUserSessionService => {
     }
 
     sessionPromise = loadSession();
-    
+
     try {
       const session = await sessionPromise;
       cachedSession = session;
@@ -93,5 +93,3 @@ const createUserSessionService = (): IUserSessionService => {
     isSessionValid,
   };
 };
-
-export const userSessionService = createUserSessionService(); 

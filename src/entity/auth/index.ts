@@ -4,8 +4,8 @@ export { default as SigninForm } from './ui/SigninForm';
 export { signout } from './api/signout';
 export { useSignout } from './model/useSignout';
 
-export { 
-  userSessionService,
-  type IUserSessionService, 
-  type UserSession 
+export {
+  createUserSessionService,
+  type IUserSessionService,
+  type UserSession,
 } from './lib/userSessionService';
