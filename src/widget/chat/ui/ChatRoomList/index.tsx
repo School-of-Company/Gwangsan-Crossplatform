@@ -1,13 +1,18 @@
 import { FlatList, View, Text, RefreshControl } from 'react-native';
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { useChatRooms, ChatRoomItem } from '@/entity/chat';
+import { useChatRooms, ChatRoomItem, useChatSocket, chatRoomKeys } from '@/entity/chat';
 import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
 
 export function ChatRoomList() {
   const router = useRouter();
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
+
+  useChatSocket({
+    autoConnect: true,
+    chatRoomQueryKey: chatRoomKeys.list(),
+  });
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {

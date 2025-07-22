@@ -91,12 +91,16 @@ export const useMessageSync = ({
       lastMessageType: string;
       lastMessageTime: string;
     }) => {
-      if (!chatRoomQueryKey) return;
+      if (!chatRoomQueryKey) {
+        return;
+      }
 
       queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-        if (!oldData) return oldData;
+        if (!oldData) {
+          return oldData;
+        }
 
-        return oldData.map((room) => {
+        const updatedData = oldData.map((room) => {
           if (room.roomId === data.roomId) {
             return {
               ...room,
@@ -107,6 +111,8 @@ export const useMessageSync = ({
           }
           return room;
         });
+
+        return updatedData;
       });
     },
     [queryClient, chatRoomQueryKey]

@@ -1,7 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 import { findChatRoom } from '../api/findChatRoom';
+import { chatRoomKeys } from './useChatRooms';
 import type { FindChatRoomResponse, ChatApiError } from './chatTypes';
 import type { ProductId } from '@/shared/types/chatType';
 
@@ -11,9 +12,15 @@ interface UseFindChatRoomParams {
 }
 
 export const useFindChatRoom = ({ onSuccess, onError }: UseFindChatRoomParams = {}) => {
+  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: (productId: ProductId) => findChatRoom(productId),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: chatRoomKeys.list(),
+      });
+
       onSuccess?.(data);
     },
     onError: (error: ChatApiError) => {

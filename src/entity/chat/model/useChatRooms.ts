@@ -28,11 +28,12 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
     refetchInterval,
     staleTime: 10000,
     select: useCallback((data: ChatRoomListItem[]) => {
-      return [...data].sort((a, b) => {
+      const sortedData = [...data].sort((a, b) => {
         if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
         if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       });
+      return sortedData;
     }, []),
   });
 
