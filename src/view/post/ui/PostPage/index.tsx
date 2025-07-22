@@ -20,6 +20,7 @@ import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { Button, Header } from '~/shared/ui';
 import Toast from 'react-native-toast-message';
 import { getData } from '~/shared/lib/getData';
+import { useChatNavigation } from '~/shared/lib/useChatNavigation';
 
 export default function PostPageView() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function PostPageView() {
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
   const [isMyPost, setIsMyPost] = useState(false);
+
+  const { navigateToChat, isLoading: isChatLoading } = useChatNavigation();
 
   const handleReportPress = useCallback(() => {
     setIsReportModalVisible(true);
@@ -130,6 +133,12 @@ export default function PostPageView() {
     }
   }, [id, router]);
 
+  const handleChatPress = useCallback(async () => {
+    if (data?.id) {
+      await navigateToChat(data.id as any);
+    }
+  }, [data?.id, navigateToChat]);
+
   useEffect(() => {
     const checkIsMyPost = async () => {
       if (data) {
@@ -198,17 +207,33 @@ export default function PostPageView() {
           </TouchableOpacity>
 
           <View className="w-full flex-row justify-center gap-4">
-            <Button variant="secondary" width="w-1/2">
-              채팅하기
+            <Button
+              variant="secondary"
+              width="w-1/2"
+              onPress={handleChatPress}
+              disabled={isChatLoading}>
+              {isChatLoading ? '채팅방 생성 중...' : '채팅하기'}
             </Button>
             {isMyPost ? (
               <Button variant="primary" width="w-1/2" onPress={handleEditPress}>
                 수정하기
               </Button>
             ) : (
-              <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
-                거래완료
-              </Button>
+              <>
+                {data.isCompleted ? (
+                  <Button variant="primary" width="w-1/2" disabled>
+                    거래완료됨
+                  </Button>
+                ) : data.isCompletable ? (
+                  <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
+                    거래완료
+                  </Button>
+                ) : (
+                  <Button variant="primary" width="w-1/2" disabled>
+                    채팅 후 거래완료
+                  </Button>
+                )}
+              </>
             )}
           </View>
         </View>

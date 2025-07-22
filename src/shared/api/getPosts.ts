@@ -17,6 +17,8 @@ export const getPosts = async (type?: TYPE, mode?: MODE): Promise<PostType[]> =>
       type: post.type,
       mode: post.mode,
       imageUrls: post.images || [],
+      isCompletable: post.isCompletable ?? false,
+      isCompleted: post.isCompleted ?? false,
     }));
 
     return transformedData;
