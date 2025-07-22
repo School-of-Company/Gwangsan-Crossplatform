@@ -10,10 +10,23 @@ export {
   type ChatSendMessagePayload,
 } from './lib/socketService';
 
+export {
+  formatMessageTime,
+  renderMessageContent,
+  renderMessageImages,
+  renderMessageText,
+  type MessageRenderConfig,
+} from './lib/messageRenderer';
+
 export { useChatRooms, chatRoomKeys } from './model/useChatRooms';
 export { useChatMessages, chatMessageKeys } from './model/useChatMessages';
 export { useCreateChatRoom } from './model/useCreateChatRoom';
 export { useFindChatRoom } from './model/useFindChatRoom';
+export {
+  useImageLoader,
+  type UseImageLoaderReturn,
+  type ImageLoadingState,
+} from './model/useImageLoader';
 
 export type {
   CreateChatRoomResponse,

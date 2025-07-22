@@ -1,9 +1,11 @@
-import { createUserSessionService } from '@/entity/auth/lib/userSessionService';
+import { createUserSessionService } from '@/entity/auth';
+
+const userSessionService = createUserSessionService();
 
 export const getCurrentUserId = async (): Promise<number> => {
-  return createUserSessionService().getCurrentUserId();
+  return userSessionService.getCurrentUserId();
 };
 
 export const clearCurrentUserId = (): void => {
-  createUserSessionService().clearSession();
+  userSessionService.clearSession();
 };

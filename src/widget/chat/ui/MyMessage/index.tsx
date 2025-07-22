@@ -1,86 +1,44 @@
-import { View, Text, Image, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
-import type { ChatMessageResponse } from '@/entity/chat';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text } from 'react-native';
+import { memo } from 'react';
+import {
+  useImageLoader,
+  formatMessageTime,
+  renderMessageContent,
+  type MessageRenderConfig,
+  type ChatMessageResponse,
+} from '@/entity/chat';
 
 interface MyMessageProps {
   message: ChatMessageResponse;
 }
 
-export const MyMessage: React.FC<MyMessageProps> = ({ message }) => {
-  const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: number]: boolean }>({});
-  const [imageErrorStates, setImageErrorStates] = useState<{ [key: number]: boolean }>({});
+const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
+  const imageLoader = useImageLoader();
 
-  const formatTime = (createdAt: string) => {
-    const date = new Date(createdAt);
-    return date.toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+  const messageConfig: MessageRenderConfig = {
+    variant: 'sent',
+    bgColor: 'bg-orange-400',
+    textColor: 'text-white',
+    errorIconColor: '#FB923C',
+    errorBgColor: 'bg-orange-100',
+    errorTextColor: 'text-orange-600',
+    loadingBgColor: 'bg-orange-400',
   };
 
-  const handleImageLoadStart = (imageId: number) => {
-    setImageLoadingStates((prev) => ({ ...prev, [imageId]: true }));
-  };
+  const content = renderMessageContent(message, imageLoader, messageConfig);
 
-  const handleImageLoadEnd = (imageId: number) => {
-    setImageLoadingStates((prev) => ({ ...prev, [imageId]: false }));
-  };
-
-  const handleImageError = (imageId: number) => {
-    setImageLoadingStates((prev) => ({ ...prev, [imageId]: false }));
-    setImageErrorStates((prev) => ({ ...prev, [imageId]: true }));
-  };
-
-  const renderContent = () => {
-    if (message.messageType === 'IMAGE' && message.images && message.images.length > 0) {
-      return (
-        <View className="max-w-[250px]">
-          {message.images.map((image, index) => (
-            <View key={image.imageId} className="relative mb-1">
-              {imageErrorStates[image.imageId] ? (
-                <View className="h-48 w-48 items-center justify-center rounded-lg bg-orange-100">
-                  <Icon name="image-outline" size={32} color="#FB923C" />
-                  <Text className="mt-1 text-xs text-orange-600">이미지 로드 실패</Text>
-                </View>
-              ) : (
-                <Image
-                  source={{ uri: image.imageUrl }}
-                  className="h-48 w-48 rounded-lg"
-                  resizeMode="cover"
-                  onLoadStart={() => handleImageLoadStart(image.imageId)}
-                  onLoadEnd={() => handleImageLoadEnd(image.imageId)}
-                  onError={() => handleImageError(image.imageId)}
-                />
-              )}
-              {imageLoadingStates[image.imageId] && (
-                <View className="absolute inset-0 items-center justify-center rounded-lg bg-orange-400 bg-opacity-50">
-                  <ActivityIndicator size="small" color="white" />
-                </View>
-              )}
-            </View>
-          ))}
-          {message.content && <Text className="mt-1 text-sm text-white">{message.content}</Text>}
-        </View>
-      );
-    }
-
-    if (message.messageType === 'TEXT' && message.content) {
-      return <Text className="text-base text-white">{message.content}</Text>;
-    }
-
-    return null;
-  };
+  if (!content) return null;
 
   return (
     <View className="mb-4 items-end">
       <View className="flex-row items-end">
-        <Text className="mr-2 text-xs text-gray-500">{formatTime(message.createdAt)}</Text>
+        <Text className="mr-2 text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
         <View className="max-w-[280px] rounded-2xl rounded-br-md bg-orange-400 px-4 py-3">
-          {renderContent()}
+          {content}
         </View>
       </View>
     </View>
   );
 };
+
+export const MyMessage = memo(MyMessageComponent);
