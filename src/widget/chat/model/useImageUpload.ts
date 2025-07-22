@@ -4,10 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 
 interface UseImageUploadProps {
-  onImageUpload: (
-    imageIds: number[],
-    imageInfos?: { imageId: number; imageUrl: string }[]
-  ) => void;
+  onImageUpload: (imageIds: number[], imageInfos?: { imageId: number; imageUrl: string }[]) => void;
   disabled?: boolean;
 }
 
