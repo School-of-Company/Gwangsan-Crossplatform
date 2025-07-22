@@ -12,6 +12,7 @@ interface NotificationItemProps {
   imageIds: number[];
   createdAt: string;
   sendMemberId?: number | null;
+  sourceId?: number | null;
   images?: Array<{ imageId: number; imageUrl: string }>;
   raw?: any;
 }
@@ -21,6 +22,7 @@ const NotificationItem = ({
   content,
   createdAt,
   sendMemberId,
+  sourceId,
   alertType,
   raw,
 }: NotificationItemProps) => {
@@ -31,7 +33,7 @@ const NotificationItem = ({
     if (!sendMemberId) return;
     setLoading(true);
     try {
-      const productId = raw?.productId;
+      const productId = sourceId;
       if (!productId) {
         alert('productId 정보가 없습니다.');
         setLoading(false);

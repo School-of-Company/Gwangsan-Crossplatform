@@ -1,11 +1,22 @@
-import { ScrollView, ActivityIndicator, Text, View } from 'react-native';
+import { ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { useGetAlertList } from '~/entity/notification';
 import NotificationItem from '~/widget/notification/ui/NotificationItem';
 import { Header } from '~/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useCallback } from 'react';
 
 const NotificationPage = () => {
-  const { data: apiResponse, isLoading, error } = useGetAlertList();
+  const { data: apiResponse, isLoading, error, refetch } = useGetAlertList();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   const alerts = Array.isArray(apiResponse) ? apiResponse : (apiResponse?.alert ?? []);
 
@@ -17,6 +28,7 @@ const NotificationPage = () => {
     imageIds: alert.images?.map((img: any) => img.imageId) ?? alert.imageIds ?? [],
     createdAt: alert.createdAt,
     sendMemberId: alert.sendMemberId,
+    sourceId: alert.sourceId,
     images: alert.images ?? [],
     raw: alert,
   }));
@@ -46,7 +58,12 @@ const NotificationPage = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="알림" />
-      <ScrollView className="flex-1 px-4 py-4">
+      <ScrollView
+        className="flex-1 px-4 py-4"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {convertedAlerts.map((alert) => (
           <NotificationItem
             key={alert.id}
@@ -57,6 +74,7 @@ const NotificationPage = () => {
             imageIds={alert.imageIds}
             createdAt={alert.createdAt}
             sendMemberId={alert.sendMemberId}
+            sourceId={alert.sourceId}
             images={alert.images}
             raw={alert}
           />
