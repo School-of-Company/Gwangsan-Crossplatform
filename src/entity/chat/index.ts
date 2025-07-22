@@ -2,6 +2,7 @@ export { createChatRoom } from './api/createChatRoom';
 export { findChatRoom } from './api/findChatRoom';
 export { getChatRooms } from './api/getChatRooms';
 export { getChatMessages } from './api/getChatMessages';
+export { markChatAsRead } from './api/markChatAsRead';
 
 export {
   createChatSocketService,

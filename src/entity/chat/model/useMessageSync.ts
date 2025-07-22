@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentUserId } from '@/shared/lib/getCurrentUserId';
+import { markChatAsRead } from '../api/markChatAsRead';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 
@@ -112,21 +113,54 @@ export const useMessageSync = ({
   );
 
   const markRoomAsRead = useCallback(
-    (roomId: RoomId) => {
+    async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
 
-      queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-        if (!oldData) return oldData;
+      const messages = queryClient.getQueryData(chatMessageQueryKey || ['chatMessages', roomId]) as ChatMessageResponse[] | undefined;
+      const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+      
+      if (!lastMessage) {
+        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
 
-        return oldData.map((room) => {
-          if (room.roomId === roomId) {
-            return { ...room, unreadMessageCount: 0 };
-          }
-          return room;
+          return oldData.map((room) => {
+            if (room.roomId === roomId) {
+              return { ...room, unreadMessageCount: 0 };
+            }
+            return room;
+          });
         });
-      });
+        return;
+      }
+
+      try {
+        await markChatAsRead(roomId, lastMessage.messageId);
+        
+        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
+
+          return oldData.map((room) => {
+            if (room.roomId === roomId) {
+              return { ...room, unreadMessageCount: 0 };
+            }
+            return room;
+          });
+        });
+      } catch (error) {
+        console.error(error);
+        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
+
+          return oldData.map((room) => {
+            if (room.roomId === roomId) {
+              return { ...room, unreadMessageCount: 0 };
+            }
+            return room;
+          });
+        });
+      }
     },
-    [queryClient, chatRoomQueryKey]
+    [queryClient, chatRoomQueryKey, chatMessageQueryKey]
   );
 
   return {

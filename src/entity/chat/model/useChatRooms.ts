@@ -1,7 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { getChatRooms } from '../api/getChatRooms';
-import type { ChatRoomListItem, ChatApiError } from './chatTypes';
+import { markChatAsRead } from '../api/markChatAsRead';
+import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chatTypes';
+import type { RoomId } from '@/shared/types/chatType';
 
 export const chatRoomKeys = {
   all: ['chatRooms'] as const,
@@ -57,13 +59,34 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
   );
 
   const markRoomAsRead = useCallback(
-    (roomId: number) => {
-      updateChatRoom(roomId, (room) => ({
-        ...room,
-        unreadMessageCount: 0,
-      }));
+    async (roomId: RoomId) => {
+      const messages = queryClient.getQueryData(['chatMessages', roomId]) as ChatMessageResponse[] | undefined;
+      const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+      
+      if (!lastMessage) {
+        updateChatRoom(roomId, (room) => ({
+          ...room,
+          unreadMessageCount: 0,
+        }));
+        return;
+      }
+
+      try {
+        await markChatAsRead(roomId, lastMessage.messageId);
+        
+        updateChatRoom(roomId, (room) => ({
+          ...room,
+          unreadMessageCount: 0,
+        }));
+      } catch (error) {
+        console.error( error);
+        updateChatRoom(roomId, (room) => ({
+          ...room,
+          unreadMessageCount: 0,
+        }));
+      }
     },
-    [updateChatRoom]
+    [updateChatRoom, queryClient]
   );
 
   return {

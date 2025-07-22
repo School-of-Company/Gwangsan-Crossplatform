@@ -31,7 +31,7 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     if (roomId) {
-      markRoomAsRead(roomId);
+      markRoomAsRead(roomId).catch(console.error);
     }
   }, [roomId, markRoomAsRead]);
 
