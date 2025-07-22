@@ -67,11 +67,10 @@ const NotificationItem = ({
 
           {alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sendMemberId && (
             <TouchableOpacity
-              className="mt-2 bg-green-500 px-4 py-2 rounded"
+              className="mt-2 rounded bg-green-500 px-4 py-2"
               onPress={handleAcceptTrade}
-              disabled={loading}
-            >
-              <Text className="text-white font-semibold">
+              disabled={loading}>
+              <Text className="font-semibold text-white">
                 {loading ? '처리 중...' : '거래 완료 수락'}
               </Text>
             </TouchableOpacity>

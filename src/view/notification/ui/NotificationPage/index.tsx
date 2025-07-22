@@ -60,10 +60,7 @@ const NotificationPage = () => {
       <Header headerTitle="알림" />
       <ScrollView
         className="flex-1 px-4 py-4"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {convertedAlerts.map((alert) => (
           <NotificationItem
             key={alert.id}
