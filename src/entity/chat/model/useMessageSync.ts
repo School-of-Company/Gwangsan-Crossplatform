@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentUserId } from '@/shared/lib/getCurrentUserId';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
