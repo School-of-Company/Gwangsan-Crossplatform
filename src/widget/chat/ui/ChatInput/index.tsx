@@ -24,26 +24,28 @@ const ChatInputComponent = ({ onSendMessage, disabled }: ChatInputProps) => {
 
   return (
     <View className="bg-white">
-      {/* 이미지 미리보기 */}
       <ImagePreview images={chatInput.selectedImages} onRemoveImage={chatInput.removeImage} />
 
-      {/* 입력 영역 */}
-      <View className="flex-row items-center border-t border-gray-200 px-4 py-3">
-        <View className="mr-3 flex-1 flex-row items-center rounded-full bg-gray-100">
+      <View className="flex-row items-center border-t border-gray-200 px-4 py-4">
+        <View className="mr-3 min-h-[48px] flex-1 flex-row items-center rounded-full bg-gray-100">
           <TextInput
             value={chatInput.textMessage}
             onChangeText={chatInput.updateMessage}
             placeholder="채팅을 입력해주세요"
             placeholderTextColor="#9CA3AF"
-            className="flex-1 px-4 py-3 text-base text-gray-900"
+            className="min-h-[48px] flex-1 px-4 py-3 text-base text-gray-900"
             multiline={false}
             onSubmitEditing={chatInput.handleSendMessage}
             editable={!isInputDisabled}
+            returnKeyType="send"
+            blurOnSubmit={false}
+            style={{ textAlignVertical: 'center' }}
           />
           <TouchableOpacity
-            className="mr-3"
+            className="mr-3 p-2"
             onPress={chatInput.handleImagePicker}
-            disabled={!canSelectImage}>
+            disabled={!canSelectImage}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             {chatInput.isUploading ? (
               <ActivityIndicator size="small" color="#8F9094" />
             ) : (
@@ -58,9 +60,10 @@ const ChatInputComponent = ({ onSendMessage, disabled }: ChatInputProps) => {
         <TouchableOpacity
           onPress={chatInput.handleSendMessage}
           disabled={!chatInput.canSend}
-          className={`h-10 w-10 items-center justify-center rounded-full ${
+          className={`h-12 w-12 items-center justify-center rounded-full ${
             chatInput.canSend ? 'bg-orange-400' : 'bg-gray-300'
-          }`}>
+          }`}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
           {chatInput.isSending ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
