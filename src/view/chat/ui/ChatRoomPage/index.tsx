@@ -25,6 +25,8 @@ export default function ChatRoomPage() {
   const { data: messages, isLoading, isError } = useChatMessages(roomId);
   const { sendMessage, markRoomAsRead, connectionState } = useChatSocket({
     currentRoomId: roomId,
+    chatRoomQueryKey: ['chatRooms', 'list'],
+    chatMessageQueryKey: ['chatMessages', roomId],
   });
 
   useEffect(() => {

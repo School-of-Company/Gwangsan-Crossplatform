@@ -20,3 +20,34 @@ export type ProductId = number & { readonly __brand: 'ProductId' };
 
 export type ChatTimestamp = string;
 export type OptionalContent = string | null;
+
+export interface BaseSocketMessage {
+  readonly roomId: RoomId;
+  readonly content: OptionalContent;
+  readonly messageType: MessageType;
+}
+
+export interface BaseSocketEvents {
+  connect: () => void;
+  disconnect: (reason: string) => void;
+  connect_error: (error: Error) => void;
+}
+
+export interface SocketConnectionConfig {
+  readonly url: string;
+  readonly transports: readonly string[];
+  readonly timeout: number;
+  readonly reconnection: boolean;
+  readonly autoConnect: boolean;
+}
+
+export interface ISocketManager {
+  readonly isConnected: boolean;
+  readonly connectionState: 'disconnected' | 'connecting' | 'connected';
+  
+  connect(): Promise<void>;
+  disconnect(): void;
+  emit(event: string, ...args: any[]): void;
+  on<T = any>(event: string, handler: (data: T) => void): void;
+  off<T = any>(event: string, handler: (data: T) => void): void;
+}

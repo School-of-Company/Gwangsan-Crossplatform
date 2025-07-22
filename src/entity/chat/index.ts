@@ -3,6 +3,13 @@ export { findChatRoom } from './api/findChatRoom';
 export { getChatRooms } from './api/getChatRooms';
 export { getChatMessages } from './api/getChatMessages';
 
+export { 
+  createChatSocketService, 
+  type IChatSocketService, 
+  type ChatSocketEvents,
+  type ChatSendMessagePayload 
+} from './lib/socketService';
+
 export { useChatRooms, chatRoomKeys } from './model/useChatRooms';
 export { useChatMessages, chatMessageKeys } from './model/useChatMessages';
 export { useCreateChatRoom } from './model/useCreateChatRoom';

@@ -1,34 +1,30 @@
 import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
 import Toast from 'react-native-toast-message';
-import type { ChatMessageResponse, SendMessagePayload } from '@/entity/chat';
+import type { 
+  ISocketManager, 
+  SocketConnectionConfig,
+} from '@/shared/types/chatType';
 
-export interface SocketEvents {
-  connect: () => void;
-  disconnect: (reason: string) => void;
-  connect_error: (error: Error) => void;
-  receiveMessage: (message: ChatMessageResponse) => void;
-  updateRoomList: (data: {
-    roomId: number;
-    lastMessage: string;
-    lastMessageType: string;
-    lastMessageTime: string;
-  }) => void;
-}
-
-class ChatSocketManager {
-  private static instance: ChatSocketManager;
+class SocketManager implements ISocketManager {
+  private static instance: SocketManager;
   private socket: Socket | null = null;
   private isConnecting = false;
   private eventHandlers: Map<string, Set<Function>> = new Map();
+  private config: SocketConnectionConfig;
 
-  private constructor() {}
+  private constructor(config: SocketConnectionConfig) {
+    this.config = config;
+  }
 
-  static getInstance(): ChatSocketManager {
-    if (!ChatSocketManager.instance) {
-      ChatSocketManager.instance = new ChatSocketManager();
+  static getInstance(config?: SocketConnectionConfig): SocketManager {
+    if (!SocketManager.instance) {
+      if (!config) {
+        throw new Error('SocketManager config required for first initialization');
+      }
+      SocketManager.instance = new SocketManager(config);
     }
-    return ChatSocketManager.instance;
+    return SocketManager.instance;
   }
 
   async connect(): Promise<void> {
@@ -46,19 +42,19 @@ class ChatSocketManager {
         this.socket = null;
       }
 
-      this.socket = io('https://api.gwangsan.io.kr/api/chat', {
+      this.socket = io(this.config.url, {
         auth: {
           token: `Bearer ${accessToken}`,
         },
-        transports: ['websocket'],
-        timeout: 15000,
+        transports: this.config.transports as any,
+        timeout: this.config.timeout,
         forceNew: true,
-        reconnection: false,
-        autoConnect: true,
+        reconnection: this.config.reconnection,
+        autoConnect: this.config.autoConnect,
         closeOnBeforeunload: false,
       });
 
-      this.setupEventListeners();
+      this.setupBasicEventListeners();
 
       return new Promise((resolve, reject) => {
         if (!this.socket) {
@@ -88,87 +84,75 @@ class ChatSocketManager {
       });
     } catch (error) {
       this.isConnecting = false;
-      console.error(error);
+      console.error('Socket connection error:', error);
       throw error;
     }
   }
 
-  private setupEventListeners(): void {
+  private setupBasicEventListeners(): void {
     if (!this.socket) return;
 
-    this.socket.on('receiveMessage', (data: ChatMessageResponse) => {
-      this.emit('receiveMessage', data);
+    this.socket.on('disconnect', (reason) => {
+      this.emit('disconnect', reason);
     });
 
-    this.socket.on('updateRoomList', (data: any) => {
-      this.emit('updateRoomList', data);
+    this.socket.on('connect_error', (error) => {
+      this.emit('connect_error', error);
+    });
+
+    this.socket.onAny((eventName, ...args) => {
+      this.emit(eventName, ...args);
     });
   }
 
   private handleConnectionError(error: Error): void {
-    console.error(error);
+    console.error('Socket connection error:', error);
     this.emit('connect_error', error);
 
     let errorMessage = error.message;
 
     if (error.message.includes('timeout')) {
-      errorMessage = 'Connection timeout - server may be down';
+      errorMessage = 'Connection timeout';
     } else if (error.message.includes('unauthorized') || error.message.includes('401')) {
-      errorMessage = 'Authentication failed - please login again';
+      errorMessage = 'Authentication failed';
     }
 
     Toast.show({
       type: 'error',
-      text1: 'Chat connection failed',
+      text1: 'Connection failed',
       text2: errorMessage,
       visibilityTime: 4000,
     });
   }
 
-  sendMessage(payload: SendMessagePayload): void {
-    if (!this.socket?.connected) {
-      Toast.show({
-        type: 'error',
-        text1: 'Message send failed',
-        text2: 'Not connected to chat server',
-        visibilityTime: 3000,
-      });
-      return;
+  emit(event: string, ...args: any[]): void {
+    if (this.socket?.connected) {
+      this.socket.emit(event, ...args);
     }
-
-    const message = {
-      roomId: payload.roomId,
-      content: payload.content,
-      messageType: payload.messageType,
-      imageIds: payload.imageIds || [],
-    };
-    this.socket.emit('sendMessage', message);
-  }
-
-  on<K extends keyof SocketEvents>(event: K, handler: SocketEvents[K]): void {
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, new Set());
-    }
-    this.eventHandlers.get(event)!.add(handler);
-  }
-
-  off<K extends keyof SocketEvents>(event: K, handler: SocketEvents[K]): void {
-    const handlers = this.eventHandlers.get(event);
-    if (handlers) {
-      handlers.delete(handler);
-    }
-  }
-
-  private emit(event: string, ...args: any[]): void {
+    
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach((handler) => {
         try {
           handler(...args);
         } catch (error) {
-          console.error(`${event}:`, error);
+          console.error(`Error in ${event} handler:`, error);
         }
       });
+    }
+  }
+
+  on<T = any>(event: string, handler: (data: T) => void): void {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, new Set());
+    }
+    this.eventHandlers.get(event)!.add(handler);
+  }
+
+  off<T = any>(event: string, handler: (data: T) => void): void {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      handlers.delete(handler);
     }
   }
 
@@ -193,4 +177,16 @@ class ChatSocketManager {
   }
 }
 
-export const chatSocket = ChatSocketManager.getInstance();
+export const createChatSocketManager = (): ISocketManager => {
+  const config: SocketConnectionConfig = {
+    url: 'https://api.gwangsan.io.kr/api/chat',
+    transports: ['websocket'],
+    timeout: 15000,
+    reconnection: false,
+    autoConnect: true,
+  };
+
+  return SocketManager.getInstance(config);
+};
+
+export const chatSocket = createChatSocketManager();
