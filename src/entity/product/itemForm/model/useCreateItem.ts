@@ -39,6 +39,8 @@ export const useCreateItem = () => {
               content: newItem.content,
               gwangsan: newItem.gwangsan,
               imageUrls: [],
+              isCompletable: false,
+              isCompleted: false,
             },
             ...previousPosts,
           ]
