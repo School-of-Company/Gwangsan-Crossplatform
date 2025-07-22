@@ -3,6 +3,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { chatSocket } from '@/shared/lib/socket';
+import { getCurrentUserId } from '@/shared/lib/getCurrentUserId';
 import { chatRoomKeys } from './useChatRooms';
 import { chatMessageKeys } from './useChatMessages';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
@@ -24,10 +25,8 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
     handleUpdateRoomList: (_data: any) => {},
   });
 
-  // 핸들러들을 ref에 저장하여 의존성 배열 최적화
   useEffect(() => {
     handlersRef.current.handleConnect = () => {
-      console.log('Chat server connected');
       queryClient.invalidateQueries({ queryKey: chatRoomKeys.list() });
 
       if (currentRoomId) {
@@ -35,52 +34,60 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
       }
     };
 
-    handlersRef.current.handleDisconnect = (reason: string) => {
-      console.log('Chat server disconnected:', reason);
-    };
+    handlersRef.current.handleReceiveMessage = async (message: ChatMessageResponse) => {
+      try {
+        const userId = await getCurrentUserId();
+        const correctedMessage = {
+          ...message,
+          isMine: message.senderId === userId
+        };
 
-    handlersRef.current.handleConnectionError = (error: Error) => {
-      console.error('Chat server connection error:', error);
-    };
-
-    handlersRef.current.handleReceiveMessage = (message: ChatMessageResponse) => {
-      // 현재 채팅방의 메시지라면 즉시 업데이트
-      if (currentRoomId && message.roomId === currentRoomId) {
-        queryClient.setQueryData(
-          chatMessageKeys.room(currentRoomId),
-          (oldData: ChatMessageResponse[] | undefined) => {
-            if (!oldData) return [message];
-
-            // 중복 메시지 방지
-            const exists = oldData.some((msg) => msg.messageId === message.messageId);
-            if (exists) return oldData;
-
-            return [...oldData, message].sort(
-              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            );
-          }
-        );
-      }
-
-      // 채팅방 목록 업데이트
-      queryClient.setQueryData(chatRoomKeys.list(), (oldData: ChatRoomListItem[] | undefined) => {
-        if (!oldData) return oldData;
-
-        return oldData.map((room) => {
-          if (room.roomId === message.roomId) {
-            return {
-              ...room,
-              lastMessage: message.content || '📷 사진',
-              lastMessageType: message.messageType,
-              lastMessageTime: message.createdAt,
-              unreadMessageCount: message.isMine
-                ? room.unreadMessageCount
-                : room.unreadMessageCount + 1,
-            };
-          }
-          return room;
+        console.log('Received message:', {
+          messageId: correctedMessage.messageId,
+          isMine: correctedMessage.isMine,
+          senderNickname: correctedMessage.senderNickname,
+          senderId: correctedMessage.senderId,
+          content: correctedMessage.content,
+          messageType: correctedMessage.messageType
         });
-      });
+
+        if (currentRoomId && correctedMessage.roomId === currentRoomId) {
+          queryClient.setQueryData(
+            chatMessageKeys.room(currentRoomId),
+            (oldData: ChatMessageResponse[] | undefined) => {
+              if (!oldData) return [correctedMessage];
+
+              const exists = oldData.some((msg) => msg.messageId === correctedMessage.messageId);
+              if (exists) return oldData;
+
+              return [...oldData, correctedMessage].sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              );
+            }
+          );
+        }
+
+        queryClient.setQueryData(chatRoomKeys.list(), (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
+
+          return oldData.map((room) => {
+            if (room.roomId === correctedMessage.roomId) {
+              return {
+                ...room,
+                lastMessage: correctedMessage.content || '📷 사진',
+                lastMessageType: correctedMessage.messageType,
+                lastMessageTime: correctedMessage.createdAt,
+                unreadMessageCount: correctedMessage.isMine
+                  ? room.unreadMessageCount
+                  : room.unreadMessageCount + 1,
+              };
+            }
+            return room;
+          });
+        });
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     handlersRef.current.handleUpdateRoomList = (data: {
@@ -107,7 +114,6 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
     };
   }, [queryClient, currentRoomId]);
 
-  // 이벤트 리스너 설정 - 의존성 없이 ref 사용
   useEffect(() => {
     const connectHandler = () => handlersRef.current.handleConnect();
     const disconnectHandler = (reason: string) => handlersRef.current.handleDisconnect(reason);
@@ -129,9 +135,8 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
       chatSocket.off('receiveMessage', messageHandler);
       chatSocket.off('updateRoomList', updateHandler);
     };
-  }, []); // 의존성 배열 비움
+  }, []);
 
-  // 앱 상태 변경에 따른 소켓 연결 관리
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
@@ -146,7 +151,6 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
     return () => subscription?.remove();
   }, [autoConnect]);
 
-  // 화면 포커스 시 연결 확인
   useFocusEffect(
     useCallback(() => {
       if (autoConnect && !chatSocket.isConnected) {
@@ -155,20 +159,18 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
     }, [autoConnect])
   );
 
-  // 초기 연결
   useEffect(() => {
     if (autoConnect && !chatSocket.isConnected) {
       chatSocket.connect().catch(console.error);
     }
   }, [autoConnect]);
 
-  // 메시지 전송 함수
   const sendMessage = useCallback(
-    (
+    async (
       roomId: RoomId,
       content: string | null,
       messageType: 'TEXT' | 'IMAGE' = 'TEXT',
-      imageIds: number[] = []
+      imageIds: number[] = [],
     ) => {
       chatSocket.sendMessage({
         roomId,
@@ -180,7 +182,6 @@ export const useChatSocket = ({ autoConnect = true, currentRoomId }: UseChatSock
     []
   );
 
-  // 읽음 처리 함수
   const markRoomAsRead = useCallback(
     (roomId: RoomId) => {
       queryClient.setQueryData(chatRoomKeys.list(), (oldData: ChatRoomListItem[] | undefined) => {
