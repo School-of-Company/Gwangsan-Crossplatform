@@ -22,19 +22,16 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
 
   const uploadImageMutation = useUploadImage();
 
-  // 전송 가능 여부 체크
   const canSend =
     (textMessage.trim().length > 0 || selectedImages.length > 0) &&
     !disabled &&
     !isUploading &&
     !isSending;
 
-  // 텍스트 업데이트
   const updateMessage = useCallback((text: string) => {
     setTextMessage(text);
   }, []);
 
-  // 이미지 권한 요청
   const requestPermission = useCallback(async (): Promise<boolean> => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -44,7 +41,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     return true;
   }, []);
 
-  // 이미지 선택
   const selectImage = useCallback(async (): Promise<ImagePicker.ImagePickerAsset | null> => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -66,7 +62,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     }
   }, []);
 
-  // 이미지 업로드
   const uploadImage = useCallback(
     async (imageUri: string) => {
       try {
@@ -80,7 +75,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     [uploadImageMutation]
   );
 
-  // 이미지 추가
   const handleImagePicker = useCallback(async () => {
     if (disabled || isUploading || selectedImages.length >= 5) return;
 
@@ -129,7 +123,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     }
   }, [canSend, textMessage, selectedImages, onSendMessage]);
 
-  // 모든 상태 초기화
   const resetInput = useCallback(() => {
     setTextMessage('');
     setSelectedImages([]);
@@ -138,14 +131,12 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
   }, []);
 
   return {
-    // 상태
     textMessage,
     selectedImages,
     isUploading,
     isSending,
     canSend,
 
-    // 액션
     updateMessage,
     handleImagePicker,
     removeImage,
