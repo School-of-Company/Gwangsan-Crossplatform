@@ -47,4 +47,4 @@ export const useSocketEventHandlers = ({
       }
     };
   }, [socketService, onConnect, onReceiveMessage, onUpdateRoomList]);
-}; 
+};

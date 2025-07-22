@@ -4,7 +4,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 
 interface UseImageUploadProps {
-  onImageUpload: (imageIds: number[], imageInfos?: Array<{ imageId: number; imageUrl: string }>) => void;
+  onImageUpload: (
+    imageIds: number[],
+    imageInfos?: Array<{ imageId: number; imageUrl: string }>
+  ) => void;
   disabled?: boolean;
 }
 
@@ -78,4 +81,4 @@ export const useImageUpload = ({ onImageUpload, disabled = false }: UseImageUplo
     isUploading,
     handleImagePicker,
   };
-}; 
+};

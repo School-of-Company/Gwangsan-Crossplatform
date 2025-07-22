@@ -13,7 +13,11 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-const ChatInputComponent = ({ onSendTextMessage, onSendImageMessage, disabled }: ChatInputProps) => {
+const ChatInputComponent = ({
+  onSendTextMessage,
+  onSendImageMessage,
+  disabled,
+}: ChatInputProps) => {
   const textInput = useTextInput({
     onSendText: onSendTextMessage,
     disabled,
@@ -40,19 +44,14 @@ const ChatInputComponent = ({ onSendTextMessage, onSendImageMessage, disabled }:
           onSubmitEditing={textInput.handleSendText}
           editable={!isInputDisabled}
         />
-        <TouchableOpacity 
-          className="mr-3" 
-          onPress={imageUpload.handleImagePicker} 
-          disabled={!canSelectImage}
-        >
+        <TouchableOpacity
+          className="mr-3"
+          onPress={imageUpload.handleImagePicker}
+          disabled={!canSelectImage}>
           {imageUpload.isUploading ? (
             <ActivityIndicator size="small" color="#8F9094" />
           ) : (
-            <Icon 
-              name="camera-outline" 
-              size={24} 
-              color={canSelectImage ? '#8F9094' : '#D1D5DB'} 
-            />
+            <Icon name="camera-outline" size={24} color={canSelectImage ? '#8F9094' : '#D1D5DB'} />
           )}
         </TouchableOpacity>
       </View>
@@ -61,8 +60,7 @@ const ChatInputComponent = ({ onSendTextMessage, onSendImageMessage, disabled }:
         disabled={!textInput.canSendText}
         className={`h-10 w-10 items-center justify-center rounded-full ${
           textInput.canSendText ? 'bg-orange-400' : 'bg-gray-300'
-        }`}
-      >
+        }`}>
         {textInput.isSending ? (
           <ActivityIndicator size="small" color="white" />
         ) : (

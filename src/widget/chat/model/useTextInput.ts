@@ -35,4 +35,4 @@ export const useTextInput = ({ onSendText, disabled = false }: UseTextInputProps
     updateMessage,
     handleSendText,
   };
-}; 
+};

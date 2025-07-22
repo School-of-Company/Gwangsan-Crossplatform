@@ -8,9 +8,9 @@ interface UseSocketConnectionProps {
   autoConnect?: boolean;
 }
 
-export const useSocketConnection = ({ 
-  socketService, 
-  autoConnect = true 
+export const useSocketConnection = ({
+  socketService,
+  autoConnect = true,
 }: UseSocketConnectionProps) => {
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
@@ -51,4 +51,4 @@ export const useSocketConnection = ({
     connect,
     disconnect,
   };
-  }; 
+};
