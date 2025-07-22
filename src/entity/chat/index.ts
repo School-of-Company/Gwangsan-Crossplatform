@@ -21,4 +21,6 @@ export type {
 
 export { isChatRoomListItem, isChatMessageResponse } from './model/chatTypes';
 
-export { ChatRoomItem } from './ui';
+export { ChatRoomItem, ChatMessage } from './ui';
+
+export { useChatSocket } from './model/useChatSocket';
