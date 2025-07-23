@@ -1,6 +1,5 @@
 import type {
   ChatImage,
-  ChatMember,
   MessageType,
   RoomId,
   MessageId,
@@ -14,6 +13,22 @@ export interface CreateChatRoomResponse {
 
 export interface FindChatRoomResponse {
   readonly roomId: RoomId;
+}
+
+export interface ProductImage {
+  imageId: string | number;
+  imageUrl: string;
+}
+
+export interface ProductInfo {
+  productId: string | number;
+  title: string;
+  images: ProductImage[];
+}
+
+export interface ChatMember {
+  memberId: string | number;
+  nickname: string;
 }
 
 export interface ChatRoomListItem {
