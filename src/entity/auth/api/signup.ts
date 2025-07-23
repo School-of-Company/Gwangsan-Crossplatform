@@ -4,10 +4,7 @@ import { removeData } from '@/shared/lib/removeData';
 
 export const signup = async (formData: SignupFormData) => {
   try {
-    await Promise.all([
-      removeData('accessToken'),
-      removeData('refreshToken'),
-    ]);
+    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
     const { verificationCode, passwordConfirm, ...signupData } = formData;
 
     return (await instance.post('/auth/signup', signupData)).data;
