@@ -7,9 +7,9 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import onboardingSlide1 from '~/shared/assets/png/onboardingSlide1.png';
-import onboardingSlide2 from '~/shared/assets/png/onboardingSlide2.png';
-import onboardingSlide3 from '~/shared/assets/png/onboardingSlide3.png';
+import onboardingSlide1 from '~/shared/assets/png/startSlide/onboardingSlide1.png';
+import onboardingSlide2 from '~/shared/assets/png/startSlide/onboardingSlide2.png';
+import onboardingSlide3 from '~/shared/assets/png/startSlide/onboardingSlide3.png';
 import { SlideIndicator } from '@/shared/ui';
 
 const images = [onboardingSlide1, onboardingSlide2, onboardingSlide3];
