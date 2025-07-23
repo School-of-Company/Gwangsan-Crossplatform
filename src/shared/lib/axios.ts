@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { getData } from './getData';
 import { removeData } from './removeData';
 import { setData } from './setData';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const baseURL = API_URL;
 
@@ -59,7 +60,7 @@ instance.interceptors.response.use(
         } catch (error) {
           removeData('accessToken');
           removeData('refreshToken');
-
+          useQueryClient().clear();
           try {
             router.replace('/signin');
           } catch (routerError) {

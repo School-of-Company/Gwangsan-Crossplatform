@@ -1,20 +1,23 @@
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signout } from '../api/signout';
 import { removeData } from '~/shared/lib/removeData';
 
 export const useSignout = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const signoutMutation = useMutation({
     mutationFn: signout,
     onSuccess: () => {
+      queryClient.clear();
       router.replace('/onboarding');
     },
     onError: (error) => {
-      console.error('로그아웃 에러:', error);
+      queryClient.clear();
       router.replace('/onboarding');
+      throw error;
     },
   });
 
