@@ -17,7 +17,7 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
   const renderUnreadBadge = () => {
     if (!room.unreadMessageCount || room.unreadMessageCount === 0) return null;
     return (
-      <View className="min-w-[20px] items-center justify-center rounded-full bg-yellow-400 px-1.5 py-0.5 ml-2">
+      <View className="ml-2 min-w-[20px] items-center justify-center rounded-full bg-yellow-400 px-1.5 py-0.5">
         <Text className="text-xs font-semibold text-white">{room.unreadMessageCount}</Text>
       </View>
     );
@@ -31,8 +31,10 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
       className="flex-row items-center border-b border-gray-100 px-4 py-3 active:bg-gray-50"
       activeOpacity={0.7}>
       <Image
-        source={productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')}
-        className="w-14 h-14 rounded-lg mr-3"
+        source={
+          productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')
+        }
+        className="mr-3 h-14 w-14 rounded-lg"
         resizeMode="cover"
       />
       <View className="flex-1">
@@ -46,8 +48,8 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
           {room.lastMessageType === 'IMAGE' ? '📷 사진을 보냈습니다.' : room.lastMessage}
         </Text>
       </View>
-      <View className="flex-col items-end ml-2">
-        <Text className="text-xs text-gray-400 mb-1">{formatDate(room.lastMessageTime)}</Text>
+      <View className="ml-2 flex-col items-end">
+        <Text className="mb-1 text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
         {renderUnreadBadge()}
       </View>
     </TouchableOpacity>
