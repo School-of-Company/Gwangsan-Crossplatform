@@ -14,7 +14,7 @@ interface NotificationItemProps {
   createdAt: string;
   sendMemberId?: number | null;
   sourceId?: number | null;
-  images?: Array<{ imageId: number; imageUrl: string }>;
+  images?: { imageId: number; imageUrl: string }[];
   raw?: any;
 }
 
