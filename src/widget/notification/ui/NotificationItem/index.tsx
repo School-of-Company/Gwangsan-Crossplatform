@@ -3,6 +3,7 @@ import { AlertType } from '~/entity/notification/model/alertTypes';
 import { formatDate } from '~/shared/lib/formatDate';
 import { completeTrade } from '~/entity/post/api/completeTrade';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 
 interface NotificationItemProps {
   id: number;
@@ -27,6 +28,7 @@ const NotificationItem = ({
   raw,
 }: NotificationItemProps) => {
   const displayImage = require('~/shared/assets/png/gwangsanLogo.png');
+  const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const handleAcceptTrade = async () => {
@@ -48,8 +50,15 @@ const NotificationItem = ({
     }
   };
 
+  const handlePress = () => {
+    if (alertType === AlertType.TRADE_COMPLETE && sourceId) {
+      router.push(`/post/${sourceId}?review=1`);
+      return;
+    }
+  };
+
   return (
-    <TouchableOpacity className="mb-3 bg-white p-4" activeOpacity={0.7}>
+    <TouchableOpacity className="mb-3 bg-white p-4" activeOpacity={0.7} onPress={handlePress}>
       <View className="flex-row">
         <View className="mr-3">
           <Image source={displayImage} className="h-16 w-16 rounded-lg" resizeMode="cover" />

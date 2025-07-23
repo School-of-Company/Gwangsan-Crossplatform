@@ -24,12 +24,12 @@ import { useChatNavigation } from '~/shared/lib/useChatNavigation';
 
 export default function PostPageView() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, review } = useLocalSearchParams<{ id: string; review?: string }>();
   const { data, isLoading, error } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
-  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
   const [isMyPost, setIsMyPost] = useState(false);
@@ -139,6 +139,10 @@ export default function PostPageView() {
     }
   }, [data?.id, navigateToChat]);
 
+  const handleReviewButtonPress = useCallback(() => {
+    setIsReviewModalVisible(true);
+  }, []);
+
   useEffect(() => {
     const checkIsMyPost = async () => {
       if (data) {
@@ -207,31 +211,39 @@ export default function PostPageView() {
           </TouchableOpacity>
 
           <View className="w-full flex-row justify-center gap-4">
-            <Button
-              variant="secondary"
-              width="w-1/2"
-              onPress={handleChatPress}
-              disabled={isChatLoading}>
-              {isChatLoading ? '채팅방 생성 중...' : '채팅하기'}
-            </Button>
-            {isMyPost ? (
-              <Button variant="primary" width="w-1/2" onPress={handleEditPress}>
-                수정하기
+            {review === '1' ? (
+              <Button variant="primary" width="w-full" onPress={handleReviewButtonPress}>
+                리뷰 작성
               </Button>
             ) : (
               <>
-                {data.isCompleted ? (
-                  <Button variant="primary" width="w-1/2" disabled>
-                    거래완료됨
-                  </Button>
-                ) : data.isCompletable ? (
-                  <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
-                    거래완료
+                <Button
+                  variant="secondary"
+                  width="w-1/2"
+                  onPress={handleChatPress}
+                  disabled={isChatLoading}>
+                  {isChatLoading ? '채팅방 생성 중...' : '채팅하기'}
+                </Button>
+                {isMyPost ? (
+                  <Button variant="primary" width="w-1/2" onPress={handleEditPress}>
+                    수정하기
                   </Button>
                 ) : (
-                  <Button variant="primary" width="w-1/2" disabled>
-                    채팅 후 거래완료
-                  </Button>
+                  <>
+                    {data.isCompleted ? (
+                      <Button variant="primary" width="w-1/2" disabled>
+                        거래완료됨
+                      </Button>
+                    ) : data.isCompletable ? (
+                      <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
+                        거래완료
+                      </Button>
+                    ) : (
+                      <Button variant="primary" width="w-1/2" disabled>
+                        채팅 후 거래완료
+                      </Button>
+                    )}
+                  </>
                 )}
               </>
             )}
