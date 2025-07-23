@@ -1,16 +1,37 @@
-import { ScrollView, ActivityIndicator, Text, View } from 'react-native';
-// import { useGetAlertList } from '~/entity/notification';
+import { ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
+import { useGetAlertList } from '~/entity/notification';
 import NotificationItem from '~/widget/notification/ui/NotificationItem';
 import { Header } from '~/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { notificationDataMock } from '~/widget/notification/mock/notificationDataMock';
+import { useState, useCallback } from 'react';
 
 const NotificationPage = () => {
-  // const { data: alertResponse, isLoading, error } = useGetAlertList();
+  const { data: apiResponse, isLoading, error, refetch } = useGetAlertList();
 
-  const alertResponse = notificationDataMock;
-  const isLoading = false;
-  const error = null;
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
+  const alerts = Array.isArray(apiResponse) ? apiResponse : (apiResponse?.alert ?? []);
+
+  const convertedAlerts = alerts.map((alert: any) => ({
+    id: alert.id,
+    title: alert.title,
+    content: alert.content,
+    alert_type: alert.alertType ?? alert.alert_type,
+    imageIds: alert.images?.map((img: any) => img.imageId) ?? alert.imageIds ?? [],
+    createdAt: alert.createdAt,
+    sendMemberId: alert.sendMemberId,
+    sourceId: alert.sourceId,
+    images: alert.images ?? [],
+    raw: alert,
+  }));
 
   if (isLoading) {
     return (
@@ -23,7 +44,7 @@ const NotificationPage = () => {
     );
   }
 
-  if (error || !alertResponse) {
+  if (error || !apiResponse) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <Header headerTitle="알림" />
@@ -34,13 +55,13 @@ const NotificationPage = () => {
     );
   }
 
-  const alerts = alertResponse.alert || [];
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="알림" />
-      <ScrollView className="flex-1 px-4 py-4">
-        {alerts.map((alert) => (
+      <ScrollView
+        className="flex-1 px-4 py-4"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        {convertedAlerts.map((alert) => (
           <NotificationItem
             key={alert.id}
             id={alert.id}
@@ -49,6 +70,10 @@ const NotificationPage = () => {
             alertType={alert.alert_type}
             imageIds={alert.imageIds}
             createdAt={alert.createdAt}
+            sendMemberId={alert.sendMemberId}
+            sourceId={alert.sourceId}
+            images={alert.images}
+            raw={alert}
           />
         ))}
       </ScrollView>

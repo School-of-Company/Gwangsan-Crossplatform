@@ -1,6 +1,5 @@
 import type {
   ChatImage,
-  ChatMember,
   MessageType,
   RoomId,
   MessageId,
@@ -16,6 +15,22 @@ export interface FindChatRoomResponse {
   readonly roomId: RoomId;
 }
 
+export interface ProductImage {
+  imageId: string | number;
+  imageUrl: string;
+}
+
+export interface ProductInfo {
+  productId: string | number;
+  title: string;
+  images: ProductImage[];
+}
+
+export interface ChatMember {
+  memberId: string | number;
+  nickname: string;
+}
+
 export interface ChatRoomListItem {
   readonly roomId: RoomId;
   readonly member: ChatMember;
@@ -24,6 +39,7 @@ export interface ChatRoomListItem {
   readonly lastMessageType: MessageType;
   readonly lastMessageTime: ChatTimestamp;
   readonly unreadMessageCount: number;
+  readonly product: ProductInfo;
 }
 
 export interface ChatMessageResponse {

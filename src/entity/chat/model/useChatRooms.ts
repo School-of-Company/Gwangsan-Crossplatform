@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 import { getChatRooms } from '../api/getChatRooms';
 import { markChatAsRead } from '../api/markChatAsRead';
 import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
 
 export const chatRoomKeys = {
   all: ['chatRooms'] as const,
@@ -28,11 +27,12 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
     refetchInterval,
     staleTime: 10000,
     select: useCallback((data: ChatRoomListItem[]) => {
-      return [...data].sort((a, b) => {
+      const sortedData = [...data].sort((a, b) => {
         if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
         if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       });
+      return sortedData;
     }, []),
   });
 
@@ -49,7 +49,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
   }, [queryClient]);
 
   const updateChatRoom = useCallback(
-    (roomId: number, updater: (room: ChatRoomListItem) => ChatRoomListItem) => {
+    (roomId: string | number, updater: (room: ChatRoomListItem) => ChatRoomListItem) => {
       queryClient.setQueryData(chatRoomKeys.list(), (oldData: ChatRoomListItem[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.map((room) => (room.roomId === roomId ? updater(room) : room));
@@ -59,7 +59,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
   );
 
   const markRoomAsRead = useCallback(
-    async (roomId: RoomId) => {
+    async (roomId: string | number) => {
       const messages = queryClient.getQueryData(['chatMessages', roomId]) as
         | ChatMessageResponse[]
         | undefined;
