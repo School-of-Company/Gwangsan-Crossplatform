@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { signout } from '../api/signout';
+import { removeData } from '~/shared/lib/removeData';
 
 export const useSignout = () => {
   const router = useRouter();
@@ -18,6 +19,8 @@ export const useSignout = () => {
   });
 
   const handleSignout = useCallback(() => {
+    removeData('accessToken');
+    removeData('refreshToken');
     signoutMutation.mutate();
   }, [signoutMutation]);
 
