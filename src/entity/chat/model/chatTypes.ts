@@ -39,6 +39,7 @@ export interface ChatRoomListItem {
   readonly lastMessageType: MessageType;
   readonly lastMessageTime: ChatTimestamp;
   readonly unreadMessageCount: number;
+  readonly product: ProductInfo;
 }
 
 export interface ChatMessageResponse {
