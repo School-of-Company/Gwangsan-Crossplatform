@@ -26,7 +26,7 @@ export default function ProfilePageView() {
         const currentUserId = await getCurrentUserId();
         const isMyProfile = id === currentUserId.toString();
 
-        setIsMe(isMyProfile); 
+        setIsMe(isMyProfile);
         setActualId(isMyProfile ? currentUserId.toString() : id || '');
         setIsInitialized(true);
       } catch (error) {

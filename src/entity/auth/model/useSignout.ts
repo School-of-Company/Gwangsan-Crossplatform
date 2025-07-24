@@ -26,9 +26,9 @@ export const useSignout = () => {
     removeData('accessToken');
     removeData('refreshToken');
     removeData('memberId');
-    
+
     clearCurrentUserId();
-    
+
     signoutMutation.mutate();
   }, [signoutMutation]);
 
