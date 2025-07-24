@@ -252,7 +252,8 @@ export default function PostPageView() {
       </ScrollView>
 
       <ReportModal
-        sourceId={data?.id || 0}
+        productId={data?.id || 0}
+        memberId={data?.member.memberId}
         isVisible={isReportModalVisible}
         onClose={handleReportModalClose}
       />
