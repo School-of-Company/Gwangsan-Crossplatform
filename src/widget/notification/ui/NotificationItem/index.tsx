@@ -4,6 +4,7 @@ import { formatDate } from '~/shared/lib/formatDate';
 import { completeTrade } from '~/entity/post/api/completeTrade';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useGetItem } from '~/entity/post/model/useGetItem';
 
 interface NotificationItemProps {
   id: number;
@@ -29,6 +30,15 @@ const NotificationItem = ({
 }: NotificationItemProps) => {
   const displayImage = require('~/shared/assets/png/gwangsanLogo.png');
   const router = useRouter();
+
+  const shouldFetchPost = alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sourceId;
+  const { data: postData } = useGetItem(shouldFetchPost ? sourceId.toString() : undefined);
+
+  const shouldShowAcceptButton = 
+    alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && 
+    sendMemberId && 
+    postData?.isCompletable === true && 
+    postData?.isCompleted === false;
 
   const [loading, setLoading] = useState(false);
   const handleAcceptTrade = async () => {
@@ -74,7 +84,7 @@ const NotificationItem = ({
             {content}
           </Text>
 
-          {alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sendMemberId && (
+          {shouldShowAcceptButton && (
             <TouchableOpacity
               className="mt-2 rounded bg-green-500 px-4 py-2"
               onPress={handleAcceptTrade}
