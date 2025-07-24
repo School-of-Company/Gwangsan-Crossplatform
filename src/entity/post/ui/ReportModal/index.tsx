@@ -11,13 +11,20 @@ import ImageUploader from '~/shared/ui/ImageUploader';
 const REPORT_TYPES = Object.keys(REPORT_TYPE_MAP);
 
 interface ReportModalProps {
-  sourceId: number;
+  productId?: number;
+  memberId?: number;
   isVisible: boolean;
   onClose: () => void;
   onAnimationComplete?: () => void;
 }
 
-const ReportModal = ({ sourceId, isVisible, onClose, onAnimationComplete }: ReportModalProps) => {
+const ReportModal = ({
+  productId,
+  memberId,
+  isVisible,
+  onClose,
+  onAnimationComplete,
+}: ReportModalProps) => {
   const [images, setImages] = useState<string[]>([]);
 
   const {
@@ -28,16 +35,13 @@ const ReportModal = ({ sourceId, isVisible, onClose, onAnimationComplete }: Repo
     setImageIds,
     handleSubmit,
     resetForm,
+    canSubmit,
     isLoading,
   } = useReport({
-    sourceId,
+    productId,
+    memberId,
     onSuccess: onClose,
   });
-
-  const isDisabled = useMemo(
-    () => !reportType || contents.trim().length === 0 || isLoading,
-    [reportType, contents, isLoading]
-  );
 
   const handleFormSubmit = useCallback(() => {
     if (reportType && contents.trim()) {
@@ -66,6 +70,8 @@ const ReportModal = ({ sourceId, isVisible, onClose, onAnimationComplete }: Repo
     },
     [setImageIds]
   );
+
+  const isFormDisabled = useMemo(() => !canSubmit || isLoading, [canSubmit, isLoading]);
 
   return (
     <BottomSheetModalWrapper
@@ -102,7 +108,7 @@ const ReportModal = ({ sourceId, isVisible, onClose, onAnimationComplete }: Repo
           </View>
         </View>
 
-        <Button variant="error" disabled={isDisabled} onPress={handleFormSubmit}>
+        <Button variant="error" disabled={isFormDisabled} onPress={handleFormSubmit}>
           {isLoading ? '신고 처리 중...' : '신고하기'}
         </Button>
       </View>

@@ -1,27 +1,30 @@
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import Toast from 'react-native-toast-message';
-import { report } from '../api/report';
+import { report, type ReportRequest } from '../api/report';
 import { ReportType, REPORT_TYPE_MAP } from './reportType';
 
 interface UseReportParams {
-  sourceId: number;
+  productId?: number;
+  memberId?: number;
   onSuccess?: () => void;
 }
 
-export const useReport = ({ sourceId, onSuccess }: UseReportParams) => {
-  const [reportType, setReportType] = useState<string | null>(null);
-  const [contents, setContents] = useState('');
-  const [imageIds, setImageIds] = useState<number[]>([]);
+interface ReportFormState {
+  reportType: string | null;
+  contents: string;
+  imageIds: number[];
+}
+
+export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) => {
+  const [formState, setFormState] = useState<ReportFormState>({
+    reportType: null,
+    contents: '',
+    imageIds: [],
+  });
 
   const reportMutation = useMutation({
-    mutationFn: (data: { reportType: ReportType; content: string; imageIds: number[] }) =>
-      report({
-        sourceId,
-        reportType: data.reportType,
-        content: data.content,
-        imageIds: data.imageIds,
-      }),
+    mutationFn: (data: ReportRequest) => report(data),
     onSuccess: () => {
       Toast.show({
         type: 'success',
@@ -43,10 +46,37 @@ export const useReport = ({ sourceId, onSuccess }: UseReportParams) => {
   });
 
   const resetForm = useCallback(() => {
-    setReportType(null);
-    setContents('');
-    setImageIds([]);
+    setFormState({
+      reportType: null,
+      contents: '',
+      imageIds: [],
+    });
   }, []);
+
+  const setReportType = useCallback((reportType: string | null) => {
+    setFormState((prev) => ({ ...prev, reportType }));
+  }, []);
+
+  const setContents = useCallback((contents: string) => {
+    setFormState((prev) => ({ ...prev, contents }));
+  }, []);
+
+  const setImageIds = useCallback((imageIds: number[]) => {
+    setFormState((prev) => ({ ...prev, imageIds }));
+  }, []);
+
+  const canSubmit = useMemo(() => {
+    const { reportType, contents } = formState;
+    if (!reportType || !contents.trim()) return false;
+
+    const reportTypeValue = REPORT_TYPE_MAP[reportType];
+    if (!reportTypeValue) return false;
+
+    if (reportTypeValue === 'FRAUD' && !productId) return false;
+    if (reportTypeValue !== 'FRAUD' && !memberId) return false;
+
+    return true;
+  }, [formState, productId, memberId]);
 
   const handleSubmit = useCallback(
     (type: string, reason: string) => {
@@ -61,24 +91,41 @@ export const useReport = ({ sourceId, onSuccess }: UseReportParams) => {
         return;
       }
 
-      reportMutation.mutate({
-        reportType: reportTypeValue,
-        content: reason,
-        imageIds,
-      });
+      if (reportTypeValue === 'FRAUD' && productId) {
+        reportMutation.mutate({
+          reportType: 'FRAUD',
+          productId,
+          content: reason,
+          imageIds: formState.imageIds,
+        });
+      } else if (reportTypeValue !== 'FRAUD' && memberId) {
+        reportMutation.mutate({
+          reportType: reportTypeValue as 'BAD_LANGUAGE' | 'MEMBER' | 'ETC',
+          memberId,
+          content: reason,
+          imageIds: formState.imageIds,
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: '신고 실패',
+          visibilityTime: 3000,
+        });
+      }
     },
-    [reportMutation, imageIds]
+    [reportMutation, formState.imageIds, productId, memberId]
   );
 
   return {
-    reportType,
-    contents,
-    imageIds,
+    reportType: formState.reportType,
+    contents: formState.contents,
+    imageIds: formState.imageIds,
     setReportType,
     setContents,
     setImageIds,
     handleSubmit,
     resetForm,
+    canSubmit,
     isLoading: reportMutation.isPending,
     error: reportMutation.error,
   };
