@@ -2,7 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState, useMemo } from 'react';
 import Toast from 'react-native-toast-message';
 import { report, type ReportRequest } from '../api/report';
-import { ReportType, REPORT_TYPE_MAP } from './reportType';
+import { REPORT_TYPE_MAP } from './reportType';
+import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 
 interface UseReportParams {
   productId?: number;
@@ -14,6 +15,7 @@ interface ReportFormState {
   reportType: string | null;
   contents: string;
   imageIds: number[];
+  imageUploadState?: ImageUploadState;
 }
 
 export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) => {
@@ -65,8 +67,13 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
     setFormState((prev) => ({ ...prev, imageIds }));
   }, []);
 
+  const setImageUploadState = useCallback((imageUploadState: ImageUploadState) => {
+    setFormState((prev) => ({ ...prev, imageUploadState }));
+  }, []);
+
   const canSubmit = useMemo(() => {
-    const { reportType, contents } = formState;
+    const { reportType, contents, imageUploadState } = formState;
+
     if (!reportType || !contents.trim()) return false;
 
     const reportTypeValue = REPORT_TYPE_MAP[reportType];
@@ -74,6 +81,12 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
 
     if (reportTypeValue === 'FRAUD' && !productId) return false;
     if (reportTypeValue !== 'FRAUD' && !memberId) return false;
+
+    if (imageUploadState) {
+      if (imageUploadState.hasUploadingImages || imageUploadState.hasFailedImages) {
+        return false;
+      }
+    }
 
     return true;
   }, [formState, productId, memberId]);
@@ -86,6 +99,24 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
           type: 'error',
           text1: '잘못된 신고 유형',
           text2: '올바른 신고 유형을 선택해주세요.',
+          visibilityTime: 3000,
+        });
+        return;
+      }
+
+      if (formState.imageUploadState?.hasUploadingImages) {
+        Toast.show({
+          type: 'error',
+          text1: '이미지 업로드가 완료될 때까지 기다려주세요.',
+          visibilityTime: 3000,
+        });
+        return;
+      }
+
+      if (formState.imageUploadState?.hasFailedImages) {
+        Toast.show({
+          type: 'error',
+          text1: '이미지 업로드 실패',
           visibilityTime: 3000,
         });
         return;
@@ -113,7 +144,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
         });
       }
     },
-    [reportMutation, formState.imageIds, productId, memberId]
+    [reportMutation, formState, productId, memberId]
   );
 
   return {
@@ -123,10 +154,12 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
     setReportType,
     setContents,
     setImageIds,
+    setImageUploadState,
     handleSubmit,
     resetForm,
     canSubmit,
     isLoading: reportMutation.isPending,
     error: reportMutation.error,
+    imageUploadState: formState.imageUploadState,
   };
 };
