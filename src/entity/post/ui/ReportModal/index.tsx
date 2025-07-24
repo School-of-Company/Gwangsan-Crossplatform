@@ -6,7 +6,7 @@ import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper } from '~/shared/ui';
 import { REPORT_TYPE_MAP } from '~/entity/post/model/reportType';
 import { useReport } from '../../model/useReport';
-import ImageUploader from '~/shared/ui/ImageUploader';
+import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
 
 const REPORT_TYPES = Object.keys(REPORT_TYPE_MAP);
 
@@ -33,10 +33,12 @@ const ReportModal = ({
     setReportType,
     setContents,
     setImageIds,
+    setImageUploadState,
     handleSubmit,
     resetForm,
     canSubmit,
     isLoading,
+    imageUploadState,
   } = useReport({
     productId,
     memberId,
@@ -71,7 +73,21 @@ const ReportModal = ({
     [setImageIds]
   );
 
+  const handleUploadStateChange = useCallback(
+    (uploadState: ImageUploadState) => {
+      setImageUploadState(uploadState);
+    },
+    [setImageUploadState]
+  );
+
   const isFormDisabled = useMemo(() => !canSubmit || isLoading, [canSubmit, isLoading]);
+
+  const getSubmitButtonText = useMemo(() => {
+    if (isLoading) return '신고 처리 중...';
+    if (imageUploadState?.hasUploadingImages) return '이미지 업로드 중...';
+    if (imageUploadState?.hasFailedImages) return '이미지 업로드 실패';
+    return '신고하기';
+  }, [isLoading, imageUploadState]);
 
   return (
     <BottomSheetModalWrapper
@@ -104,12 +120,13 @@ const ReportModal = ({
               title="증빙 이미지"
               onImagesChange={setImages}
               onImageIdsChange={handleImageIdsChange}
+              onUploadStateChange={handleUploadStateChange}
             />
           </View>
         </View>
 
         <Button variant="error" disabled={isFormDisabled} onPress={handleFormSubmit}>
-          {isLoading ? '신고 처리 중...' : '신고하기'}
+          {getSubmitButtonText}
         </Button>
       </View>
     </BottomSheetModalWrapper>

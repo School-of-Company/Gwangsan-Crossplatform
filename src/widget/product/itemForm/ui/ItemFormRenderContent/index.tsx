@@ -3,6 +3,7 @@ import ItemFormContents from '../ItemFormContents';
 import ItemFormGwangsan from '../ItemFormGwangsan';
 import ItemFormConfirm from '../ItemFormConfirm';
 import { memo } from 'react';
+import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 
 interface ItemFormRenderContentProps {
   step: number;
@@ -15,6 +16,7 @@ interface ItemFormRenderContentProps {
   onImagesChange: (images: string[]) => void;
   onGwangsanChange: (gwangsan: string) => void;
   onImageIdsChange?: (imageIds: number[]) => void;
+  onImageUploadStateChange?: (state: ImageUploadState) => void;
 }
 
 const ItemFormRenderContent = ({
@@ -28,6 +30,7 @@ const ItemFormRenderContent = ({
   onImagesChange,
   onGwangsanChange,
   onImageIdsChange,
+  onImageUploadStateChange,
 }: ItemFormRenderContentProps) => {
   switch (step) {
     case 1:
@@ -41,6 +44,7 @@ const ItemFormRenderContent = ({
             onContentChange={onContentChange}
             onImagesChange={onImagesChange}
             onImageIdsChange={onImageIdsChange}
+            onImageUploadStateChange={onImageUploadStateChange}
           />
         </View>
       );
