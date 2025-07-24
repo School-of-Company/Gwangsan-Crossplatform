@@ -43,13 +43,19 @@ export const createUserSessionService = (): IUserSessionService => {
       throw new Error('No valid session found');
     } catch (error) {
       console.error(error);
+      clearSession();
       throw new Error('Authentication required');
     }
   };
 
   const getCurrentUserId = async (): Promise<number> => {
-    const session = await getCurrentSession();
-    return session.memberId;
+    try {
+      const session = await getCurrentSession();
+      return session.memberId;
+    } catch (error) {
+      clearSession();
+      throw new Error(error instanceof Error ? error.message : '인증 실패');
+    }
   };
 
   const getCurrentSession = async (): Promise<UserSession> => {
@@ -67,6 +73,9 @@ export const createUserSessionService = (): IUserSessionService => {
       const session = await sessionPromise;
       cachedSession = session;
       return session;
+    } catch (error) {
+      clearSession();
+      throw error;
     } finally {
       sessionPromise = null;
     }
