@@ -1,4 +1,4 @@
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, RefreshControl } from 'react-native';
 import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Footer } from '~/shared/ui/Footer';
@@ -60,17 +60,35 @@ function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean })
     isError: profileIsError,
   } = useGetProfile(actualId);
 
-  const { data: myPostsData, error: myPostsError, isError: myPostsIsError } = useGetMyProfile(isMe);
+  const {
+    data: myPostsData,
+    error: myPostsError,
+    isError: myPostsIsError,
+    refetch: refetchMyPosts,
+  } = useGetMyProfile(isMe);
 
   const {
     data: otherPostsData,
     error: otherPostsError,
     isError: otherPostsIsError,
+    refetch: refetchOtherPosts,
   } = useGetPosts(actualId);
 
   const postsData = isMe ? myPostsData : otherPostsData;
   const error = isMe ? myPostsError : otherPostsError;
   const isError = isMe ? myPostsIsError : otherPostsIsError;
+  const refetchPosts = isMe ? refetchMyPosts : refetchOtherPosts;
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetchPosts();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (profileIsError) {
     Toast.show({
@@ -92,7 +110,9 @@ function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean })
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="프로필" />
       <Information isMe={isMe} id={profileData?.memberId} name={profileData?.nickname} />
-      <ScrollView className="flex-0.8 flex gap-3">
+      <ScrollView
+        className="flex-0.8 flex gap-3"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <View className="bg-white pb-14">
           <Introduce introduce={profileData?.description} specialty={profileData?.specialties} />
           <Light lightLevel={profileData?.light} />
