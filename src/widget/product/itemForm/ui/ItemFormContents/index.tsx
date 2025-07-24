@@ -1,8 +1,8 @@
 import { View } from 'react-native';
-import { Input } from '~/shared/ui/Input';
-import { TextField } from '~/shared/ui/TextField';
-import ImageUploader from '~/shared/ui/ImageUploader';
 import { memo } from 'react';
+import { Input } from '~/shared/ui';
+import { TextField } from '~/shared/ui/TextField';
+import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
 
 interface Props {
   title: string;
@@ -13,6 +13,7 @@ interface Props {
   onContentChange?: (content: string) => void;
   onImagesChange?: (images: string[]) => void;
   onImageIdsChange?: (imageIds: number[]) => void;
+  onImageUploadStateChange?: (state: ImageUploadState) => void;
 }
 
 const ItemFormContents = ({
@@ -24,6 +25,7 @@ const ItemFormContents = ({
   onContentChange,
   onImagesChange,
   onImageIdsChange,
+  onImageUploadStateChange,
 }: Props) => {
   return (
     <View className="px-6">
@@ -48,6 +50,7 @@ const ItemFormContents = ({
           images={images}
           onImagesChange={onImagesChange}
           onImageIdsChange={onImageIdsChange}
+          onUploadStateChange={onImageUploadStateChange}
           readonly={readonly}
         />
       </View>

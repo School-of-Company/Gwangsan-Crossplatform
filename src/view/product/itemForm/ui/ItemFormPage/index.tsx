@@ -9,6 +9,8 @@ import {
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import type { ImageUploadState } from '@/shared/ui/ImageUploader';
+import Toast from 'react-native-toast-message';
 
 interface ItemFormPageProps {
   type: string;
@@ -23,11 +25,16 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
   const [gwangsan, setGwangsan] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [imageIds, setImageIds] = useState<number[]>([]);
+  const [imageUploadState, setImageUploadState] = useState<ImageUploadState | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createItemMutation = useCreateItem();
 
-  const isStep1Valid = title.trim().length > 0 && content.trim().length > 0;
+  const isStep1Valid =
+    title.trim().length > 0 &&
+    content.trim().length > 0 &&
+    !imageUploadState?.hasUploadingImages &&
+    !imageUploadState?.hasFailedImages;
   const isStep2Valid = gwangsan.trim().length > 0;
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
@@ -38,10 +45,32 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
   );
   const handleImagesChange = useCallback((v: string[]) => setImages(v), []);
   const handleImageIdsChange = useCallback((ids: number[]) => setImageIds(ids), []);
+  const handleImageUploadStateChange = useCallback((state: ImageUploadState) => {
+    setImageUploadState(state);
+  }, []);
 
   const handleCompletePress = async () => {
     try {
       if (isSubmitting) return;
+
+      if (imageUploadState?.hasUploadingImages) {
+        Toast.show({
+          type: 'error',
+          text1: '이미지 업로드가 완료될 때까지 기다려주세요.',
+          visibilityTime: 3000,
+        });
+        return;
+      }
+
+      if (imageUploadState?.hasFailedImages) {
+        Toast.show({
+          type: 'error',
+          text1: '이미지 업로드 실패',
+          visibilityTime: 3000,
+        });
+        return;
+      }
+
       setIsSubmitting(true);
 
       const formData = {
@@ -95,6 +124,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
               onImagesChange={handleImagesChange}
               onGwangsanChange={handleGwangsanChange}
               onImageIdsChange={handleImageIdsChange}
+              onImageUploadStateChange={handleImageUploadStateChange}
             />
             <View>
               <ItemFormRenderButton
@@ -105,6 +135,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
                 onEditPress={() => setStep(1)}
                 onCompletePress={handleCompletePress}
                 isSubmitting={isSubmitting}
+                imageUploadState={imageUploadState}
               />
             </View>
           </View>
