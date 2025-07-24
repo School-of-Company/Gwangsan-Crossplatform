@@ -8,13 +8,14 @@ import Toast from 'react-native-toast-message';
 import { useGetPosts } from '../../model/useGetPosts';
 import Post from '~/shared/ui/Post';
 import { useGetProfile } from '../../model/useGetProfile';
-import { useLocalSearchParams } from 'expo-router';
-import { getData } from '~/shared/lib/getData';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
+import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const [actualId, setActualId] = useState<string>('');
   const [isMe, setIsMe] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -22,22 +23,28 @@ export default function ProfilePageView() {
   useEffect(() => {
     const initializeProfile = async () => {
       try {
-        const memberId = await getData('memberId');
-        const isMyProfile = id === memberId;
+        const currentUserId = await getCurrentUserId();
+        const isMyProfile = id === currentUserId.toString();
 
-        setIsMe(isMyProfile);
-        setActualId(isMyProfile ? memberId || '' : id || '');
+        setIsMe(isMyProfile); 
+        setActualId(isMyProfile ? currentUserId.toString() : id || '');
         setIsInitialized(true);
       } catch (error) {
         console.error(error);
-        setIsInitialized(true);
+        Toast.show({
+          type: 'error',
+          text1: '다시 로그인해 주세요.',
+          text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+          visibilityTime: 2000,
+        });
+        router.replace('/onboarding');
       }
     };
 
     if (id !== undefined) {
       initializeProfile();
     }
-  }, [id]);
+  }, [id, router]);
 
   if (!isInitialized) {
     return (
