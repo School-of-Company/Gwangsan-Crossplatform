@@ -34,7 +34,7 @@ export const report = async (data: ReportRequest): Promise<void> => {
       content: data.content,
       imageIds: data.imageIds,
     };
-    
+
     await instance.post('/report', payload);
   } catch (error) {
     throw error;

@@ -54,21 +54,21 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
   }, []);
 
   const setReportType = useCallback((reportType: string | null) => {
-    setFormState(prev => ({ ...prev, reportType }));
+    setFormState((prev) => ({ ...prev, reportType }));
   }, []);
 
   const setContents = useCallback((contents: string) => {
-    setFormState(prev => ({ ...prev, contents }));
+    setFormState((prev) => ({ ...prev, contents }));
   }, []);
 
   const setImageIds = useCallback((imageIds: number[]) => {
-    setFormState(prev => ({ ...prev, imageIds }));
+    setFormState((prev) => ({ ...prev, imageIds }));
   }, []);
 
   const canSubmit = useMemo(() => {
     const { reportType, contents } = formState;
     if (!reportType || !contents.trim()) return false;
-    
+
     const reportTypeValue = REPORT_TYPE_MAP[reportType];
     if (!reportTypeValue) return false;
 

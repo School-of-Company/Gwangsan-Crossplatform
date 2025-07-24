@@ -18,12 +18,12 @@ interface ReportModalProps {
   onAnimationComplete?: () => void;
 }
 
-const ReportModal = ({ 
-  productId, 
-  memberId, 
-  isVisible, 
-  onClose, 
-  onAnimationComplete 
+const ReportModal = ({
+  productId,
+  memberId,
+  isVisible,
+  onClose,
+  onAnimationComplete,
 }: ReportModalProps) => {
   const [images, setImages] = useState<string[]>([]);
 
@@ -71,10 +71,7 @@ const ReportModal = ({
     [setImageIds]
   );
 
-  const isFormDisabled = useMemo(
-    () => !canSubmit || isLoading,
-    [canSubmit, isLoading]
-  );
+  const isFormDisabled = useMemo(() => !canSubmit || isLoading, [canSubmit, isLoading]);
 
   return (
     <BottomSheetModalWrapper
