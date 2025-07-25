@@ -4,6 +4,8 @@ import { formatDate } from '~/shared/lib/formatDate';
 import { completeTrade } from '~/entity/post/api/completeTrade';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useGetItem } from '~/entity/post/model/useGetItem';
+import Toast from 'react-native-toast-message';
 
 interface NotificationItemProps {
   id: number;
@@ -30,21 +32,44 @@ const NotificationItem = ({
   const displayImage = require('~/shared/assets/png/gwangsanLogo.png');
   const router = useRouter();
 
+  const shouldFetchPost = alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sourceId;
+  const { data: postData } = useGetItem(shouldFetchPost ? sourceId.toString() : undefined);
+
+  const shouldShowAcceptButton =
+    alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE &&
+    sendMemberId &&
+    postData?.isCompletable === true &&
+    postData?.isCompleted === false;
+
   const [loading, setLoading] = useState(false);
+  const [isAccepted, setIsAccepted] = useState(false);
+
   const handleAcceptTrade = async () => {
     if (!sendMemberId) return;
+
+    setIsAccepted(true);
     setLoading(true);
+
+    Toast.show({
+      type: 'success',
+      text1: '거래 완료 수락 완료',
+      visibilityTime: 2000,
+    });
+
     try {
       const productId = sourceId;
       if (!productId) {
-        alert('productId 정보가 없습니다.');
-        setLoading(false);
-        return;
+        throw new Error('productId 정보가 없습니다.');
       }
       await completeTrade({ productId, otherMemberId: sendMemberId });
-      alert('거래 완료를 수락했습니다.');
     } catch (e) {
-      alert(e);
+      setIsAccepted(false);
+      Toast.show({
+        type: 'error',
+        text1: '거래 완료 수락 실패',
+        text2: e instanceof Error ? e.message : '알 수 없는 오류가 발생했습니다.',
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -55,6 +80,17 @@ const NotificationItem = ({
       router.push(`/post/${sourceId}?review=1`);
       return;
     }
+  };
+
+  const getButtonText = () => {
+    if (isAccepted) return '수락 완료';
+    if (loading) return '처리 중...';
+    return '거래 완료 수락';
+  };
+
+  const getButtonStyle = () => {
+    if (isAccepted) return 'bg-gray-400';
+    return 'bg-green-500';
   };
 
   return (
@@ -74,15 +110,19 @@ const NotificationItem = ({
             {content}
           </Text>
 
-          {alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sendMemberId && (
+          {shouldShowAcceptButton && !isAccepted && (
             <TouchableOpacity
-              className="mt-2 rounded bg-green-500 px-4 py-2"
+              className={`mt-2 rounded px-4 py-2 ${getButtonStyle()}`}
               onPress={handleAcceptTrade}
-              disabled={loading}>
-              <Text className="font-semibold text-white">
-                {loading ? '처리 중...' : '거래 완료 수락'}
-              </Text>
+              disabled={loading || isAccepted}>
+              <Text className="font-semibold text-white">{getButtonText()}</Text>
             </TouchableOpacity>
+          )}
+
+          {isAccepted && (
+            <View className="mt-2 rounded bg-gray-400 px-4 py-2">
+              <Text className="font-semibold text-white">수락 완료</Text>
+            </View>
           )}
         </View>
       </View>
