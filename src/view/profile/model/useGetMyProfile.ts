@@ -4,8 +4,9 @@ import { ProfileType } from '~/shared/types/profileType';
 
 export const useGetMyProfile = (isMe: boolean) => {
   return useQuery<ProfileType>({
-    queryKey: ['myProfile'],
+    queryKey: ['myProfile', 'current'],
     queryFn: getMyProfile,
     enabled: isMe,
+    staleTime: 1000 * 60 * 5,
   });
 };
