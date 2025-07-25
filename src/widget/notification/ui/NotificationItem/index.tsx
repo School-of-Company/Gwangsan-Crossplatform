@@ -53,7 +53,6 @@ const NotificationItem = ({
     Toast.show({
       type: 'success',
       text1: '거래 완료 수락 완료',
-      text2: '거래가 성공적으로 완료되었습니다.',
       visibilityTime: 2000,
     });
 
