@@ -6,4 +6,4 @@ export const getMyPosts = async () => {
   } catch (error) {
     throw error;
   }
-}; 
+};

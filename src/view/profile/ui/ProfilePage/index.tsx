@@ -68,9 +68,7 @@ function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean })
     isError: profileIsError,
   } = useGetProfile(actualId);
 
-  const {
-    data: myProfileData,
-  } = useGetMyProfile(isMe);
+  const { data: myProfileData } = useGetMyProfile(isMe);
 
   const {
     data: myPostsData,
