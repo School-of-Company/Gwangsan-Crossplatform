@@ -11,6 +11,7 @@ import { useGetProfile } from '../../model/useGetProfile';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
+import { useGetMyPosts } from '../../model/useGetMyPosts';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 
 export default function ProfilePageView() {
@@ -68,11 +69,15 @@ function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean })
   } = useGetProfile(actualId);
 
   const {
+    data: myProfileData,
+  } = useGetMyProfile(isMe);
+
+  const {
     data: myPostsData,
     error: myPostsError,
     isError: myPostsIsError,
     refetch: refetchMyPosts,
-  } = useGetMyProfile(isMe);
+  } = useGetMyPosts(isMe);
 
   const {
     data: otherPostsData,
@@ -123,7 +128,7 @@ function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean })
         <View className="bg-white pb-14">
           <Introduce introduce={profileData?.description} specialty={profileData?.specialties} />
           <Light lightLevel={profileData?.light} />
-          {isMe && <Gwangsan gwangsan={myPostsData?.gwangsan} />}
+          {isMe && <Gwangsan gwangsan={myProfileData?.gwangsan} />}
         </View>
         <Active name={profileData?.nickname} id={actualId} isMe={isMe} />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
