@@ -17,6 +17,8 @@ interface BottomSheetModalWrapperProps {
   onAnimationComplete?: () => void;
   title: string;
   children: React.ReactNode;
+  height?: number;
+  hasHeader?: boolean;
 }
 
 export function BottomSheetModalWrapper({
@@ -25,9 +27,11 @@ export function BottomSheetModalWrapper({
   onAnimationComplete,
   title,
   children,
+  height,
+  hasHeader = true,
 }: BottomSheetModalWrapperProps) {
   const screenHeight = Dimensions.get('window').height;
-  const modalHeight = (screenHeight * 2) / 3;
+  const modalHeight = height ?? (screenHeight * 2) / 3;
 
   const [show, setShow] = useState(isVisible);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -119,12 +123,14 @@ export function BottomSheetModalWrapper({
           }}
           className="rounded-t-2xl bg-white">
           <Pressable className="flex-1 p-4" onPress={(e) => e.stopPropagation()}>
-            <View className="relative mb-4 flex-row items-center justify-center py-6">
-              <Text className="text-body1 text-black">{title}</Text>
-              <TouchableOpacity onPress={onClose} className="absolute right-0" style={{ right: 0 }}>
-                <Icon name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
+            {hasHeader && (
+              <View className="relative mb-4 flex-row items-center justify-center py-6">
+                <Text className="text-body1 text-black">{title}</Text>
+                <TouchableOpacity onPress={onClose} className="absolute right-0" style={{ right: 0 }}>
+                  <Icon name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+            )}
             <View className="flex-1">{children}</View>
           </Pressable>
         </Animated.View>
