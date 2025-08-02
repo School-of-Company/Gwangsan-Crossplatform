@@ -13,8 +13,6 @@ export const withdrawal = async (): Promise<WithdrawalResponse> => {
 
     return response.data;
   } catch (error) {
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
-
     throw error;
   }
-}; 
+};
