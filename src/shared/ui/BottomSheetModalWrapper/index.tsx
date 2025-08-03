@@ -126,7 +126,10 @@ export function BottomSheetModalWrapper({
             {hasHeader && (
               <View className="relative mb-4 flex-row items-center justify-center py-6">
                 <Text className="text-body1 text-black">{title}</Text>
-                <TouchableOpacity onPress={onClose} className="absolute right-0" style={{ right: 0 }}>
+                <TouchableOpacity
+                  onPress={onClose}
+                  className="absolute right-0"
+                  style={{ right: 0 }}>
                   <Icon name="close" size={24} color="#666" />
                 </TouchableOpacity>
               </View>
