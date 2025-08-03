@@ -1,6 +1,4 @@
 import { instance } from '~/shared/lib/axios';
-import { removeData } from '~/shared/lib/removeData';
-import { getData } from '~/shared/lib/getData';
 
 export interface WithdrawalResponse {
   message: string;
@@ -8,15 +6,7 @@ export interface WithdrawalResponse {
 
 export const withdrawal = async (): Promise<WithdrawalResponse> => {
   try {
-    const accessToken = await getData('accessToken');
-
-    const response = await instance.delete<WithdrawalResponse>('/member', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+    const response = await instance.delete<WithdrawalResponse>('/member');
 
     return response.data;
   } catch (error) {
