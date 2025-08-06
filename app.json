@@ -13,10 +13,10 @@
     },
     "plugins": ["expo-router"],
     "orientation": "portrait",
-    "icon": "./src/shared/assets/png/gwangsanLogo.png",
+    "icon": "./src/app/favicon.ico",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/shared/assets/png/gwangsanLogo.png",
+      "image": "./src/app/favicon.ico",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
