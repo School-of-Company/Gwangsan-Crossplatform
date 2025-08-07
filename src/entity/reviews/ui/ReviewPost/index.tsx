@@ -1,15 +1,25 @@
-import { Image, Text, View } from 'react-native';
+'use client';
+
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { getLightColor } from '~/shared/lib/handleLightColor';
 import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
 import { clsx } from 'clsx';
+import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
 
 interface ReviewPostProps {
   review: ReviewPostType;
 }
 
 export default function ReviewPost({ review }: ReviewPostProps) {
+  const R = useRouter();
+  const handleClick = useCallback(() => {
+    R.push('/post/' + review.productId);
+  }, [R, review]);
   return (
-    <View className="flex flex-row gap-9 border-b border-b-gray-200 px-6 py-3">
+    <TouchableOpacity
+      onPress={handleClick}
+      className="flex flex-row gap-9 border-b border-b-gray-200 px-6 py-3">
       {Array.isArray(review.images) && review.images.length > 0 ? (
         review.images.map((image, index) => (
           <Image key={index} source={{ uri: image.imageUrl }} className="size-24 rounded-lg" />
@@ -29,6 +39,6 @@ export default function ReviewPost({ review }: ReviewPostProps) {
         </Text>
         <Text className="text-label">{review.reviewerName}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
