@@ -1,5 +1,3 @@
-'use client';
-
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { getLightColor } from '~/shared/lib/handleLightColor';
 import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
