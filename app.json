@@ -13,10 +13,10 @@
     },
     "plugins": ["expo-router"],
     "orientation": "portrait",
-    "icon": "./src/app/favicon.ico",
+    "icon": "./src/shared/assets/png/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/app/favicon.ico",
+      "image": "./src/shared/assets/png/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -30,7 +30,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/app/favicon.ico",
+        "foregroundImage": "./src/shared/assets/png/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "gwangsan.io.kr"
