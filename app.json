@@ -25,7 +25,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "gwangsan.io.kr",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "거래 게시글 업로드 및 채팅에 사용할 이미지 업로드를 위해 저장공간에 접근합니다."
       }
     },
     "android": {
