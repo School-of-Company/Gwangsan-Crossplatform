@@ -38,7 +38,7 @@ const ImageUploader = ({
   onUploadStateChange,
   title = '사진첨부',
   readonly = false,
-  maxImages = 10,
+  maxImages = 5,
 }: Props) => {
   const [imageStatuses, setImageStatuses] = useState<ImageStatus[]>([]);
   const uploadImageMutation = useUploadImage();
