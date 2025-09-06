@@ -12,10 +12,14 @@ export const useSignout = () => {
   const signoutMutation = useMutation({
     mutationFn: signout,
     onSuccess: () => {
+      removeData('memberId');
+      clearCurrentUserId();
       queryClient.clear();
       router.replace('/onboarding');
     },
     onError: (error) => {
+      removeData('memberId');
+      clearCurrentUserId();
       queryClient.clear();
       router.replace('/onboarding');
       throw error;
@@ -23,12 +27,6 @@ export const useSignout = () => {
   });
 
   const handleSignout = useCallback(() => {
-    removeData('accessToken');
-    removeData('refreshToken');
-    removeData('memberId');
-
-    clearCurrentUserId();
-
     signoutMutation.mutate();
   }, [signoutMutation]);
 
