@@ -3,7 +3,7 @@ import { Dropdown } from '@/shared/ui/Dropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
-import { PLACE } from '@/shared/consts/place';
+import { PLACES } from '@/shared/consts/place';
 import { View } from 'react-native';
 
 export default function PlaceStep() {
@@ -34,7 +34,7 @@ export default function PlaceStep() {
       isNextDisabled={placeName?.trim() === ''}>
       <View>
         <Dropdown
-          items={[...PLACE]}
+          items={[...PLACES]}
           selectedItem={placeName}
           onSelect={handlePlaceSelect}
           placeholder="지점을 선택해주세요"
