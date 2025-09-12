@@ -18,7 +18,7 @@ export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [actualId, setActualId] = useState<string>('');
-  const [isMe, setIsMe] = useState(false);
+  const [isMe, setIsMe] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
