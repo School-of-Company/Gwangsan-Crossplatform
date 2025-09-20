@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createReview } from '~/entity/post/api/createReview';
-import { completeTrade } from '~/entity/post/api/completeTrade';
+import { requestTrade } from '~/entity/post/api/requestTrade';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
+import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import ReportModal from '~/entity/post/ui/ReportModal';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
@@ -35,6 +36,11 @@ export default function PostPageView() {
   const [isMyPost, setIsMyPost] = useState(false);
 
   const { navigateToChat, isLoading: isChatLoading } = useChatNavigation();
+  
+  const { handleTradeRequest, isLoading: isTradeRequestLoading } = useTradeRequest({
+    productId: data?.id ?? 0,
+    sellerId: data?.member.memberId ?? 0,
+  });
 
   const handleReportPress = useCallback(() => {
     setIsReportModalVisible(true);
@@ -66,7 +72,7 @@ export default function PostPageView() {
     if (!id || !data) return;
 
     try {
-      await completeTrade({
+      await requestTrade({
         productId: data.id,
         otherMemberId: data.member.memberId,
       });
@@ -229,21 +235,14 @@ export default function PostPageView() {
                     수정하기
                   </Button>
                 ) : (
-                  <>
-                    {data.isCompleted ? (
-                      <Button variant="primary" width="w-1/2" disabled>
-                        거래완료됨
-                      </Button>
-                    ) : data.isCompletable ? (
-                      <Button variant="primary" width="w-1/2" onPress={handleCompletePress}>
-                        거래완료
-                      </Button>
-                    ) : (
-                      <Button variant="primary" width="w-1/2" disabled>
-                        채팅 후 거래완료
-                      </Button>
-                    )}
-                  </>
+                  <Button 
+                    variant="primary" 
+                    width="w-1/2" 
+                    onPress={handleTradeRequest}
+                    disabled={isTradeRequestLoading || data.isCompleted}>
+                    {isTradeRequestLoading ? '신청 중...' : 
+                     data.isCompleted ? '거래완료됨' : '거래신청'}
+                  </Button>
                 )}
               </>
             )}

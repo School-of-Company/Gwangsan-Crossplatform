@@ -9,7 +9,6 @@ export interface CardProps extends ViewProps {
 
 export const Card = React.forwardRef<View, CardProps>(
   ({ className = '', variant = 'default', padding = 'md', shadow = 'sm', ...props }, ref) => {
-    // 기본 스타일
     let cardClasses = 'rounded-xl border bg-white';
 
     switch (variant) {
@@ -55,7 +54,6 @@ export const Card = React.forwardRef<View, CardProps>(
         break;
     }
 
-    // 커스텀 className 추가
     if (className) {
       cardClasses += ` ${className}`;
     }

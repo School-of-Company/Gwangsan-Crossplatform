@@ -32,6 +32,8 @@ export interface TradeProduct {
   readonly images: readonly ProductImage[];
   readonly isSeller: boolean;
   readonly isCompletable: boolean;
+  readonly isCompleted: boolean;
+  readonly isMine: boolean;
 }
 
 export interface ChatRoomWithProduct {
@@ -47,7 +49,9 @@ export const isTradeProduct = (value: unknown): value is TradeProduct => {
     'title' in value &&
     'images' in value &&
     'isSeller' in value &&
-    'isCompletable' in value
+    'isCompletable' in value &&
+    'isCompleted' in value &&
+    'isMine' in value
   );
 };
 
