@@ -66,3 +66,4 @@ const ChatMessageComponent = ({ message }: ChatMessageProps) => {
 };
 
 export const ChatMessage = memo(ChatMessageComponent);
+ChatMessage.displayName = 'ChatMessage';

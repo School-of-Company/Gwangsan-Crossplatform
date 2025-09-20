@@ -57,3 +57,4 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
 };
 
 export const ChatRoomItem = memo(ChatRoomItemComponent);
+ChatRoomItem.displayName = 'ChatRoomItem';
