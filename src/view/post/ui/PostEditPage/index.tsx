@@ -10,8 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '~/shared/ui';
-import { ItemFormProgressBar } from '~/entity/product/itemForm';
-import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
+import { ItemFormProgressBar } from '~/entity/write/itemForm';
+import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/write/itemForm';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useEditPost } from '~/entity/post/model/useEditPost';
 import Toast from 'react-native-toast-message';

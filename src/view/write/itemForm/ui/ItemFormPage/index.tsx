@@ -5,22 +5,20 @@ import {
   ItemFormProgressBar,
   createItemFormRequestBody,
   useCreateItem,
-} from '~/entity/product/itemForm';
-import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
+} from '~/entity/write/itemForm';
+import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/write/itemForm';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 import Toast from 'react-native-toast-message';
+import { ProductType } from '~/widget/write/model/type';
+import { ModeType } from '~/widget/write/model/mode';
 
-interface ItemFormPageProps {
-  type: string;
-  mode: string;
-  headerTitle: string;
-}
-
-const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
+const ItemFormPage = () => {
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
+  const [type, setType] = useState('');
+  const [mode, setMode] = useState('');
   const [content, setContent] = useState('');
   const [gwangsan, setGwangsan] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -39,6 +37,8 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
+  const handleModeChange = useCallback((v: ModeType) => setMode(v), []);
+  const handleTypeChange = useCallback((v: ProductType) => setType(v), []);
   const handleGwangsanChange = useCallback(
     (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
     []
@@ -91,7 +91,6 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
 
       router.replace({
         pathname: '/post',
-        params: { type },
       });
     } catch (error) {
       console.error(error);
@@ -105,7 +104,7 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-white">
-        <Header headerTitle={headerTitle} />
+        <Header headerTitle="게시글" />
         <ItemFormProgressBar step={step} />
         <ScrollView
           className="flex-1"
@@ -119,8 +118,12 @@ const ItemFormPage = ({ type, mode, headerTitle }: ItemFormPageProps) => {
               content={content}
               gwangsan={gwangsan}
               images={images}
+              mode={mode as ModeType}
+              type={type as ProductType}
               onTitleChange={handleTitleChange}
               onContentChange={handleContentChange}
+              onModeChange={handleModeChange}
+              onTypeChange={handleTypeChange}
               onImagesChange={handleImagesChange}
               onGwangsanChange={handleGwangsanChange}
               onImageIdsChange={handleImageIdsChange}
