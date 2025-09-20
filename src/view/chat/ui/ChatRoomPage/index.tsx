@@ -1,141 +1,40 @@
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
-import { useEffect, useCallback, useRef } from 'react';
+import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { useChatRoomAction } from '~/widget/chat/model/useChatRoomAction';
+import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
+import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { Header } from '@/shared/ui/Header';
-import { useChatMessages } from '@/entity/chat';
-import { useChatSocket } from '@/entity/chat/model/useChatSocket';
-import { useChatRoomData } from '@/entity/chat/model/useChatRoomData';
-import { useTradeRequest } from '@/entity/post/hooks/useTradeRequest';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
-import type { ChatMessageResponse } from '@/entity/chat';
-import { MyMessage, OtherMessage, ChatInput, TradeEmbed } from '@/widget/chat';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
-  const flatListRef = useRef<FlatList>(null);
-
-  const { data: messages, isLoading, isError } = useChatMessages(roomId);
   
-  const { data: roomData } = useChatRoomData({ roomId });
-  
-  const safeMessages = Array.isArray(messages) ? messages : [];
-  const otherUser = safeMessages.find((msg) => !msg.isMine);
-  const otherUserNickname = otherUser?.senderNickname || '상대방';
-  const otherUserId = otherUser?.senderId;
-  
-  const { sendMessage, markRoomAsRead, connectionState } = useChatSocket({
-    currentRoomId: roomId,
-    chatRoomQueryKey: ['chatRooms', 'list'],
-    chatMessageQueryKey: ['chatMessages', roomId],
-  });
+  const {
+    flatListRef,
+    messages,
+    otherUserInfo,
+    isLoading,
+    isError,
+    messageHandlers,
+    navigationHandlers,
+    tradeEmbedConfig,
+    formatLastMessageDate,
+    scrollToEnd,
+    componentState,
+  } = useChatRoomAction({ roomId });
 
-  const tradeRequest = useTradeRequest({
-    productId: roomData?.product?.id || 0,
-    sellerId: otherUserId || 0,
-  });
-
-  useEffect(() => {
-    if (roomId) {
-      markRoomAsRead(roomId).catch(console.error);
-    }
-  }, [roomId, markRoomAsRead]);
-
-  useEffect(() => {
-    if (Array.isArray(messages) && messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages]);
-
-  const handleSendMessage = useCallback(
-    (content: string | null, imageIds: number[]) => {
-      if (connectionState !== 'connected') return;
-
-      if (imageIds.length > 0) {
-        sendMessage(roomId, content, 'IMAGE', imageIds);
-      } else if (content) {
-        sendMessage(roomId, content, 'TEXT', []);
-      }
-    },
-    [roomId, sendMessage, connectionState]
+  const renderHeader = () => (
+    <ChatRoomHeader
+      otherUserNickname={otherUserInfo.nickname}
+      otherUserId={otherUserInfo.id}
+      lastMessageDate={formatLastMessageDate()}
+      tradeEmbedConfig={tradeEmbedConfig}
+      onProfilePress={navigationHandlers.goToOtherUserProfile}
+    />
   );
-
-  const handleProfilePress = useCallback((userId: number) => {
-    router.push(`/profile/${userId}`);
-  }, []);
-
-  const renderMessage = useCallback(
-    ({ item }: { item: ChatMessageResponse }) => {
-      if (item.isMine) {
-        return <MyMessage message={item} />;
-      } else {
-        return <OtherMessage message={item} onProfilePress={handleProfilePress} />;
-      }
-    },
-    [handleProfilePress]
-  );
-
-  const renderHeader = useCallback(() => {
-    const handleHeaderProfilePress = () => {
-      if (otherUserId) {
-        router.push(`/profile/${otherUserId}`);
-      }
-    };
-
-    const safeMessages = Array.isArray(messages) ? messages : [];
-
-    return (
-      <View className="bg-white">
-        <View className="items-center py-8">
-          <TouchableOpacity onPress={handleHeaderProfilePress} disabled={!otherUserId}>
-            <Text className="mb-2 text-xl font-bold text-gray-900">{otherUserNickname}</Text>
-          </TouchableOpacity>
-          <Text className="text-sm text-gray-500">
-            {safeMessages.length > 0
-              ? new Date(safeMessages[safeMessages.length - 1].createdAt).toLocaleString('ko-KR', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true,
-                })
-              : '대화를 시작해보세요'}
-          </Text>
-        </View>
-        
-         {roomData?.product && (
-           <View className="px-4 pb-4">
-             <TradeEmbed
-               product={roomData.product}
-               onTradeRequest={roomData?.product && otherUserId ? tradeRequest.handleTradeRequest : undefined}
-               showButtons={!roomData.product.isMine && roomData.product.isCompletable}
-               isLoading={tradeRequest.isLoading}
-               requestorNickname={otherUserNickname}
-               alignment="left"
-             />
-           </View>
-         )}
-      </View>
-    );
-  }, [
-    otherUserNickname, 
-    otherUserId, 
-    messages, 
-    roomData?.product, 
-    tradeRequest
-  ]);
 
   if (isLoading) {
     return (
@@ -155,34 +54,26 @@ export default function ChatRoomPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <Header headerTitle={otherUserNickname} />
+      <Header headerTitle={componentState.headerTitle} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
         keyboardVerticalOffset={0}>
-        {Array.isArray(messages) && messages.length > 0 ? (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.messageId.toString()}
-            renderItem={renderMessage}
-            ListHeaderComponent={renderHeader}
-            className="flex-1 px-4"
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            contentContainerStyle={{ paddingBottom: 10 }}
-          />
-        ) : (
-          <View className="flex-1 items-center justify-center px-4">
-            <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
-            <Text className="mt-4 text-center text-gray-500">
-              아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
-            </Text>
-          </View>
-        )}
+        
+        <ChatRoomContent
+          messages={messages}
+          hasMessages={componentState.hasMessages}
+          flatListRef={flatListRef}
+          renderHeader={renderHeader}
+          onProfilePress={navigationHandlers.goToProfile}
+          onScrollToEnd={() => scrollToEnd(true)}
+        />
 
-        <ChatInput onSendMessage={handleSendMessage} disabled={connectionState !== 'connected'} />
+        <ChatInput 
+          onSendMessage={messageHandlers.sendMessage} 
+          disabled={!componentState.canSendMessage} 
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
