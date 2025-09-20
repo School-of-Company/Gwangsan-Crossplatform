@@ -16,15 +16,40 @@ export interface FindChatRoomResponse {
 }
 
 export interface ProductImage {
-  imageId: string | number;
-  imageUrl: string;
+  readonly imageId: number;
+  readonly imageUrl: string;
 }
 
 export interface ProductInfo {
-  productId: string | number;
-  title: string;
-  images: ProductImage[];
+  readonly productId: string | number;
+  readonly title: string;
+  readonly images: readonly ProductImage[];
 }
+
+export interface TradeProduct {
+  readonly id: number;
+  readonly title: string;
+  readonly images: readonly ProductImage[];
+  readonly isSeller: boolean;
+  readonly isCompletable: boolean;
+}
+
+export interface ChatRoomWithProduct {
+  readonly product: TradeProduct | null;
+  readonly messages: readonly ChatMessageResponse[];
+}
+
+export const isTradeProduct = (value: unknown): value is TradeProduct => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    'title' in value &&
+    'images' in value &&
+    'isSeller' in value &&
+    'isCompletable' in value
+  );
+};
 
 export interface ChatMember {
   memberId: string | number;
