@@ -13,10 +13,12 @@ import { useEffect, useCallback, useRef } from 'react';
 import { Header } from '@/shared/ui/Header';
 import { useChatMessages } from '@/entity/chat';
 import { useChatSocket } from '@/entity/chat/model/useChatSocket';
+import { useChatRoomData } from '@/entity/chat/model/useChatRoomData';
+import { useTradeRequest } from '@/entity/post/hooks/useTradeRequest';
 import Icon from 'react-native-vector-icons/Ionicons';
 import type { RoomId } from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '@/entity/chat';
-import { MyMessage, OtherMessage, ChatInput } from '@/widget/chat';
+import { MyMessage, OtherMessage, ChatInput, TradeEmbed } from '@/widget/chat';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,10 +26,23 @@ export default function ChatRoomPage() {
   const flatListRef = useRef<FlatList>(null);
 
   const { data: messages, isLoading, isError } = useChatMessages(roomId);
+  
+  const { data: roomData } = useChatRoomData({ roomId });
+  
+  const safeMessages = Array.isArray(messages) ? messages : [];
+  const otherUser = safeMessages.find((msg) => !msg.isMine);
+  const otherUserNickname = otherUser?.senderNickname || '상대방';
+  const otherUserId = otherUser?.senderId;
+  
   const { sendMessage, markRoomAsRead, connectionState } = useChatSocket({
     currentRoomId: roomId,
     chatRoomQueryKey: ['chatRooms', 'list'],
     chatMessageQueryKey: ['chatMessages', roomId],
+  });
+
+  const tradeRequest = useTradeRequest({
+    productId: roomData?.product?.id || 0,
+    sellerId: otherUserId || 0,
   });
 
   useEffect(() => {
@@ -37,7 +52,7 @@ export default function ChatRoomPage() {
   }, [roomId, markRoomAsRead]);
 
   useEffect(() => {
-    if (messages && messages.length > 0) {
+    if (Array.isArray(messages) && messages.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -56,10 +71,6 @@ export default function ChatRoomPage() {
     },
     [roomId, sendMessage, connectionState]
   );
-
-  const otherUser = messages?.find((msg) => !msg.isMine);
-  const otherUserNickname = otherUser?.senderNickname || '상대방';
-  const otherUserId = otherUser?.senderId;
 
   const handleProfilePress = useCallback((userId: number) => {
     router.push(`/profile/${userId}`);
@@ -83,25 +94,48 @@ export default function ChatRoomPage() {
       }
     };
 
+    const safeMessages = Array.isArray(messages) ? messages : [];
+
     return (
-      <View className="items-center bg-white py-8">
-        <TouchableOpacity onPress={handleHeaderProfilePress} disabled={!otherUserId}>
-          <Text className="mb-2 text-xl font-bold text-gray-900">{otherUserNickname}</Text>
-        </TouchableOpacity>
-        <Text className="text-sm text-gray-500">
-          {messages && messages.length > 0
-            ? new Date(messages[messages.length - 1].createdAt).toLocaleString('ko-KR', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-              })
-            : '대화를 시작해보세요'}
-        </Text>
+      <View className="bg-white">
+        <View className="items-center py-8">
+          <TouchableOpacity onPress={handleHeaderProfilePress} disabled={!otherUserId}>
+            <Text className="mb-2 text-xl font-bold text-gray-900">{otherUserNickname}</Text>
+          </TouchableOpacity>
+          <Text className="text-sm text-gray-500">
+            {safeMessages.length > 0
+              ? new Date(safeMessages[safeMessages.length - 1].createdAt).toLocaleString('ko-KR', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                })
+              : '대화를 시작해보세요'}
+          </Text>
+        </View>
+        
+         {roomData?.product && (
+           <View className="px-4 pb-4">
+             <TradeEmbed
+               product={roomData.product}
+               onTradeRequest={roomData?.product && otherUserId ? tradeRequest.handleTradeRequest : undefined}
+               showButtons={!roomData.product.isMine && roomData.product.isCompletable}
+               isLoading={tradeRequest.isLoading}
+               requestorNickname={otherUserNickname}
+               alignment="left"
+             />
+           </View>
+         )}
       </View>
     );
-  }, [otherUserNickname, otherUserId, messages]);
+  }, [
+    otherUserNickname, 
+    otherUserId, 
+    messages, 
+    roomData?.product, 
+    tradeRequest
+  ]);
 
   if (isLoading) {
     return (
@@ -127,7 +161,7 @@ export default function ChatRoomPage() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
         keyboardVerticalOffset={0}>
-        {messages && messages.length > 0 ? (
+        {Array.isArray(messages) && messages.length > 0 ? (
           <FlatList
             ref={flatListRef}
             data={messages}

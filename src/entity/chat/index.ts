@@ -1,7 +1,7 @@
 export { createChatRoom } from './api/createChatRoom';
 export { findChatRoom } from './api/findChatRoom';
 export { getChatRooms } from './api/getChatRooms';
-export { getChatMessages } from './api/getChatMessages';
+export { getChatMessages, getChatRoomData } from './api/getChatMessages';
 export { markChatAsRead } from './api/markChatAsRead';
 
 export {
@@ -23,6 +23,7 @@ export { useChatRooms, chatRoomKeys } from './model/useChatRooms';
 export { useChatMessages, chatMessageKeys } from './model/useChatMessages';
 export { useCreateChatRoom } from './model/useCreateChatRoom';
 export { useFindChatRoom } from './model/useFindChatRoom';
+export { useChatRoomData } from './model/useChatRoomData';
 export {
   useImageLoader,
   type UseImageLoaderReturn,
@@ -42,6 +43,8 @@ export type {
   ChatApiError,
   ChatRoomListData,
   ChatMessagesData,
+  TradeProduct,
+  ChatRoomWithProduct,
 } from './model/chatTypes';
 
 export { isChatRoomListItem, isChatMessageResponse } from './model/chatTypes';

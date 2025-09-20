@@ -1,7 +1,9 @@
-export { default as miniProfile } from './ui/miniProfile';
-export { default as ReportModal } from './ui/ReportModal';
-export { default as ReviewsModal } from './ui/ReviewsModal';
-export { report } from './api/report';
-export { deletePost } from './api/deletePost';
-export { useReport } from './model/useReport';
+
 export { useDeletePost } from './model/useDeletePost';
+export { useGetItem } from './model/useGetItem';
+export { useTradeRequest } from './hooks/useTradeRequest';
+
+export { requestTrade } from './api/requestTrade';
+export { createReview } from './api/createReview';
+
+export type { RequestTradeRequest, RequestTradeResponse } from './api/requestTrade';
