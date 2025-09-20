@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createReview } from '~/entity/post/api/createReview';
-import { requestTrade } from '~/entity/post/api/requestTrade';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
@@ -26,7 +26,7 @@ import { useChatNavigation } from '~/shared/lib/useChatNavigation';
 export default function PostPageView() {
   const router = useRouter();
   const { id, review } = useLocalSearchParams<{ id: string; review?: string }>();
-  const { data, isLoading, error } = useGetItem(id);
+  const { data, isLoading, error, refetch } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
@@ -34,6 +34,7 @@ export default function PostPageView() {
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
   const [isMyPost, setIsMyPost] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { navigateToChat, isLoading: isChatLoading } = useChatNavigation();
   
@@ -68,27 +69,27 @@ export default function PostPageView() {
     ]);
   }, [data, deletePost]);
 
-  const handleCompletePress = useCallback(async () => {
-    if (!id || !data) return;
+  // const handleCompletePress = useCallback(async () => {
+  //   if (!id || !data) return;
 
-    try {
-      await requestTrade({
-        productId: data.id,
-        otherMemberId: data.member.memberId,
-      });
-      Toast.show({
-        type: 'success',
-        text1: '거래가 완료되었습니다.',
-      });
-      setIsReviewModalVisible(true);
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: '거래 완료 실패',
-        text2: error as string,
-      });
-    }
-  }, [id, data]);
+  //   try {
+  //     await requestTrade({
+  //       productId: data.id,
+  //       otherMemberId: data.member.memberId,
+  //     });
+  //     Toast.show({
+  //       type: 'success',
+  //       text1: '거래가 완료되었습니다.',
+  //     });
+  //     setIsReviewModalVisible(true);
+  //   } catch (error) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: '거래 완료 실패',
+  //       text2: error as string,
+  //     });
+  //   }
+  // }, [id, data]);
 
   const handleReviewModalClose = useCallback(() => {
     setIsReviewModalVisible(false);
@@ -149,6 +150,15 @@ export default function PostPageView() {
     setIsReviewModalVisible(true);
   }, []);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
   useEffect(() => {
     const checkIsMyPost = async () => {
       if (data) {
@@ -177,13 +187,14 @@ export default function PostPageView() {
       </SafeAreaView>
     );
   }
-
+  
   const headerTitle = data.mode === 'RECEIVER' ? '해주세요' : '해드립니다';
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={headerTitle} />
-      <ScrollView>
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {data.images && data.images.length > 0 ? (
           <Image
             source={{ uri: data.images[0].imageUrl }}
@@ -223,6 +234,12 @@ export default function PostPageView() {
               </Button>
             ) : (
               <>
+                {isMyPost ? (
+                  <Button variant="secondary" width="w-1/2" onPress={handleEditPress}>
+                  수정하기
+                  </Button>
+                )
+                : (
                 <Button
                   variant="secondary"
                   width="w-1/2"
@@ -230,6 +247,7 @@ export default function PostPageView() {
                   disabled={isChatLoading}>
                   {isChatLoading ? '채팅방 생성 중...' : '채팅하기'}
                 </Button>
+                )}
                 {isMyPost ? (
                   <Button variant="primary" width="w-1/2" onPress={handleEditPress}>
                     수정하기
@@ -239,7 +257,7 @@ export default function PostPageView() {
                     variant="primary" 
                     width="w-1/2" 
                     onPress={handleTradeRequest}
-                    disabled={isTradeRequestLoading || data.isCompleted}>
+                    disabled={isTradeRequestLoading || data.isCompleted || !(data.mode === 'RECEIVER' && data.isCompletable)}>
                     {isTradeRequestLoading ? '신청 중...' : 
                      data.isCompleted ? '거래완료됨' : '거래신청'}
                   </Button>
