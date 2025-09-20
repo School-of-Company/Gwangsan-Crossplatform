@@ -23,7 +23,7 @@ const ItemFormGwangsan = ({
   onImagesChange,
 }: Props) => {
   return (
-    <View className="px-6">
+    <View className="flex gap-4 px-6">
       <Input
         label="광산"
         placeholder="광산을 입력해주세요"
