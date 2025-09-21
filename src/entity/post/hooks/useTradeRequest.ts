@@ -14,9 +14,9 @@ interface UseTradeRequestReturn {
   readonly isLoading: boolean;
 }
 
-export const useTradeRequest = ({ 
-  productId, 
-  sellerId 
+export const useTradeRequest = ({
+  productId,
+  sellerId,
 }: UseTradeRequestOptions): UseTradeRequestReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const { navigateToChat } = useChatNavigation();

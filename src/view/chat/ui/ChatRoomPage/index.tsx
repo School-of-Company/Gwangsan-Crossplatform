@@ -11,7 +11,7 @@ import type { RoomId } from '@/shared/types/chatType';
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
-  
+
   const {
     flatListRef,
     messages,
@@ -60,7 +60,6 @@ export default function ChatRoomPage() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
         keyboardVerticalOffset={0}>
-        
         <ChatRoomContent
           messages={messages}
           hasMessages={componentState.hasMessages}
@@ -70,9 +69,9 @@ export default function ChatRoomPage() {
           onScrollToEnd={() => scrollToEnd(true)}
         />
 
-        <ChatInput 
-          onSendMessage={messageHandlers.sendMessage} 
-          disabled={!componentState.canSendMessage} 
+        <ChatInput
+          onSendMessage={messageHandlers.sendMessage}
+          disabled={!componentState.canSendMessage}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

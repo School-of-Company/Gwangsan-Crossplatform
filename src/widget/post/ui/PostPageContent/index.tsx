@@ -53,22 +53,20 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
       ) : (
         <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
       )}
-      
+
       <MiniProfile
         nickname={data.member.nickname}
         placeName={data.member.placeName}
         light={data.member.light}
         memberId={data.member.memberId}
       />
-      
+
       <View className="gap-6 p-6">
         <Text className="text-titleSmall">{data.title}</Text>
         <Text className="text-body3">{data.gwangsan} 광산</Text>
         <Text>{data.content}</Text>
 
-        <TouchableOpacity
-          onPress={isMyPost ? onDeletePress : onReportPress}
-          disabled={isDeleting}>
+        <TouchableOpacity onPress={isMyPost ? onDeletePress : onReportPress} disabled={isDeleting}>
           <Text className="mb-24 mt-[25px] text-error-500 underline">
             {isMyPost
               ? isDeleting
@@ -103,9 +101,9 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
                   수정하기
                 </Button>
               ) : (
-                <Button 
-                  variant="primary" 
-                  width="w-1/2" 
+                <Button
+                  variant="primary"
+                  width="w-1/2"
                   onPress={onTradeRequest}
                   disabled={computedValues.isTradeButtonDisabled}>
                   {computedValues.tradeButtonText}

@@ -85,7 +85,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
                   onPress={handleTradeRequest}
                   disabled={localLoading || isLoading}
                   className="h-8 w-full">
-                  {(localLoading || isLoading) ? (
+                  {localLoading || isLoading ? (
                     <ActivityIndicator size="small" color="white" />
                   ) : (
                     <Text className="text-xs text-white">거래하기</Text>

@@ -33,7 +33,7 @@ export const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
         </TouchableOpacity>
         <Text className="text-sm text-gray-500">{lastMessageDate}</Text>
       </View>
-      
+
       {tradeEmbedConfig.shouldShow && tradeEmbedConfig.product && (
         <View className="px-4 pb-4">
           <TradeEmbed

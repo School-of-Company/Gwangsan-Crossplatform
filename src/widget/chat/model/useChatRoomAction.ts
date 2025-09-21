@@ -16,7 +16,7 @@ interface UseChatRoomActionParams {
 export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   const router = useRouter();
   const flatListRef = useRef<FlatList | null>(null);
-  
+
   const { data: messages, isLoading, isError } = useChatMessages(roomId);
   const { data: roomData } = useChatRoomData({ roomId });
 
@@ -39,15 +39,18 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   }, []);
 
   const messageHandlers = {
-    sendMessage: useCallback((content: string | null, imageIds: number[]) => {
-      if (connectionState !== 'connected') return;
+    sendMessage: useCallback(
+      (content: string | null, imageIds: number[]) => {
+        if (connectionState !== 'connected') return;
 
-      if (imageIds.length > 0) {
-        sendMessage(roomId, content, 'IMAGE', imageIds);
-      } else if (content) {
-        sendMessage(roomId, content, 'TEXT', []);
-      }
-    }, [roomId, sendMessage, connectionState]),
+        if (imageIds.length > 0) {
+          sendMessage(roomId, content, 'IMAGE', imageIds);
+        } else if (content) {
+          sendMessage(roomId, content, 'TEXT', []);
+        }
+      },
+      [roomId, sendMessage, connectionState]
+    ),
 
     renderMessage: useCallback(({ item }: { item: ChatMessageResponse }) => {
       return null;
@@ -55,10 +58,13 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   };
 
   const navigationHandlers = {
-    goToProfile: useCallback((userId: number) => {
-      router.push(`/profile/${userId}`);
-    }, [router]),
-    
+    goToProfile: useCallback(
+      (userId: number) => {
+        router.push(`/profile/${userId}`);
+      },
+      [router]
+    ),
+
     goToOtherUserProfile: useCallback(() => {
       if (otherUserInfo.id) {
         router.push(`/profile/${otherUserInfo.id}`);
@@ -68,7 +74,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
 
   const formatLastMessageDate = useCallback(() => {
     if (safeMessages.length === 0) return '대화를 시작해보세요';
-    
+
     const lastMessage = safeMessages[safeMessages.length - 1];
     return new Date(lastMessage.createdAt).toLocaleString('ko-KR', {
       month: 'short',
@@ -82,9 +88,8 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   const tradeEmbedConfig = {
     shouldShow: !!roomData?.product,
     product: roomData?.product,
-    onTradeRequest: roomData?.product && otherUserInfo.id 
-      ? tradeRequest.handleTradeRequest 
-      : undefined,
+    onTradeRequest:
+      roomData?.product && otherUserInfo.id ? tradeRequest.handleTradeRequest : undefined,
     showButtons: !roomData?.product?.isMine && !!roomData?.product?.isCompletable,
     isLoading: tradeRequest.isLoading,
     requestorNickname: otherUserInfo.nickname,
@@ -110,7 +115,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
 
   return {
     flatListRef,
-    
+
     messages: safeMessages,
     roomData,
     otherUserInfo,

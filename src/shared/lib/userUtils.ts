@@ -3,7 +3,7 @@ import { getData } from './getData';
 
 export const extractOtherUserInfo = (messages: readonly ChatMessageResponse[]) => {
   const otherUser = messages.find((msg) => !msg.isMine);
-  
+
   return {
     nickname: otherUser?.senderNickname || '상대방',
     id: otherUser?.senderId,

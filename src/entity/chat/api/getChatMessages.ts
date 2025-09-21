@@ -1,9 +1,9 @@
 import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import { getCurrentUserId } from '@/shared/lib/getCurrentUserId';
-import type { 
-  ChatMessageResponse, 
-  ChatApiError, 
+import type {
+  ChatMessageResponse,
+  ChatApiError,
   ChatRoomWithProduct,
   TradeProduct,
 } from '../model/chatTypes';
@@ -28,7 +28,8 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
     if (Array.isArray(response.data)) {
       messages = response.data;
     } else if (response.data && typeof response.data === 'object') {
-      const { product: serverProduct, messages: serverMessages } = response.data as ChatRoomApiResponse;
+      const { product: serverProduct, messages: serverMessages } =
+        response.data as ChatRoomApiResponse;
       messages = Array.isArray(serverMessages) ? serverMessages : [];
       product = serverProduct && isTradeProduct(serverProduct) ? serverProduct : null;
     }

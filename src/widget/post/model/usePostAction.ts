@@ -22,10 +22,10 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
-  
+
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
-  
+
   const [isMyPost, setIsMyPost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -48,28 +48,31 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
       setReviewLight(60);
       setReviewContents('');
     }, []),
-    onSubmit: useCallback(async (light: number, contents: string) => {
-      if (!id || !data) return;
+    onSubmit: useCallback(
+      async (light: number, contents: string) => {
+        if (!id || !data) return;
 
-      try {
-        await createReview({
-          productId: data.id,
-          content: contents,
-          light: light,
-        });
-        Toast.show({
-          type: 'success',
-          text1: '리뷰가 성공적으로 작성되었습니다.',
-        });
-        setIsReviewModalVisible(false);
-      } catch (error) {
-        Toast.show({
-          type: 'error',
-          text1: '리뷰 작성 실패',
-          text2: error as string,
-        });
-      }
-    }, [id, data]),
+        try {
+          await createReview({
+            productId: data.id,
+            content: contents,
+            light: light,
+          });
+          Toast.show({
+            type: 'success',
+            text1: '리뷰가 성공적으로 작성되었습니다.',
+          });
+          setIsReviewModalVisible(false);
+        } catch (error) {
+          Toast.show({
+            type: 'error',
+            text1: '리뷰 작성 실패',
+            text2: error as string,
+          });
+        }
+      },
+      [id, data]
+    ),
   };
 
   const navigationHandlers = {
@@ -123,8 +126,11 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     headerTitle: data?.mode === 'RECEIVER' ? '해주세요' : '해드립니다',
     canTrade: data?.mode === 'RECEIVER' && data?.isCompletable && !data?.isCompleted,
     isTradeButtonDisabled: tradeRequest.isLoading || data?.isCompleted || !data?.isCompletable,
-    tradeButtonText: tradeRequest.isLoading ? '신청 중...' : 
-                     data?.isCompleted ? '거래완료됨' : '거래신청',
+    tradeButtonText: tradeRequest.isLoading
+      ? '신청 중...'
+      : data?.isCompleted
+        ? '거래완료됨'
+        : '거래신청',
   };
 
   return {
@@ -137,7 +143,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     isReportModalVisible,
     isReviewModalVisible,
     reviewLight,
-    reviewContents, 
+    reviewContents,
     isChatLoading,
     isTradeRequestLoading: tradeRequest.isLoading,
     modalHandlers,

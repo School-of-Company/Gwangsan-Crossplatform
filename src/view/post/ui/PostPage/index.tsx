@@ -9,7 +9,7 @@ import { Header } from '~/shared/ui';
 
 export default function PostPageView() {
   const { id, review } = useLocalSearchParams<{ id: string; review?: string }>();
-  
+
   const {
     data,
     isLoading,
@@ -49,7 +49,7 @@ export default function PostPageView() {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={computedValues.headerTitle} />
-      
+
       <PostPageContent
         data={data}
         isMyPost={isMyPost}
