@@ -10,7 +10,8 @@ interface ChatRoomHeaderProps {
   readonly tradeEmbedConfig: {
     readonly shouldShow: boolean;
     readonly product?: TradeProduct | null;
-    readonly onTradeRequest?: () => Promise<void>;
+    readonly onTradeAccept?: () => Promise<void>;
+    readonly onReservation?: () => void;
     readonly showButtons: boolean;
     readonly isLoading: boolean;
     readonly requestorNickname: string;
@@ -38,7 +39,8 @@ export const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
         <View className="px-4 pb-4">
           <TradeEmbed
             product={tradeEmbedConfig.product}
-            onTradeRequest={tradeEmbedConfig.onTradeRequest}
+            onTradeAccept={tradeEmbedConfig.onTradeAccept}
+            onReservation={tradeEmbedConfig.onReservation}
             showButtons={tradeEmbedConfig.showButtons}
             isLoading={tradeEmbedConfig.isLoading}
             requestorNickname={tradeEmbedConfig.requestorNickname}
