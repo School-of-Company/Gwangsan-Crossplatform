@@ -4,7 +4,7 @@ import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper } from '~/shared/ui';
-import { REPORT_TYPES } from '~/entity/post/model/reportType';
+import { REPORT_TYPES, type ReportType } from '~/entity/post/model/reportType';
 import { useReport } from '../../model/useReport';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
 interface ReportModalProps {
@@ -57,7 +57,7 @@ const ReportModal = ({
   const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.15, []);
 
   const handleDropdownSelect = useCallback(
-    (value: string) => {
+    (value: ReportType) => {
       setReportType(value);
     },
     [setReportType]
@@ -94,7 +94,7 @@ const ReportModal = ({
       title="신고하기">
       <View className="flex-1 flex-col justify-between gap-4">
         <View className="gap-6">
-          <Dropdown
+          <Dropdown<ReportType>
             label="신고유형"
             items={REPORT_TYPES}
             placeholder="신고유형을 선택해주세요."
