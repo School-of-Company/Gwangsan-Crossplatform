@@ -2,22 +2,11 @@ import { Text, View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { usePathname, useRouter } from 'expo-router';
 import { Svg, Path } from 'react-native-svg';
-import { useEffect, useState } from 'react';
-import { getData } from '~/shared/lib/getData';
 
 export function Footer() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [memberId, setMemberId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const getMemberId = async () => {
-      const id = await getData('memberId');
-      setMemberId(id);
-    };
-    getMemberId();
-  }, []);
   return (
     <View className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 py-3">
       <TouchableOpacity className="flex items-center" onPress={() => router.push('/main')}>
@@ -52,17 +41,13 @@ export function Footer() {
         />
         <Text className={pathname === '/notice' ? 'text-[#8FC31D]' : 'text-gray-500'}>공지</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        className="flex items-center"
-        onPress={() => router.push('/profile/' + memberId)}>
+      <TouchableOpacity className="flex items-center" onPress={() => router.push('/profile')}>
         <Ionicons
           name="person-outline"
           size={24}
-          color={pathname === '/profile/' + memberId ? '#8FC31D' : '#8F9094'}
+          color={pathname === '/profile' ? '#8FC31D' : '#8F9094'}
         />
-        <Text className={pathname === '/profile/' + memberId ? 'text-[#8FC31D]' : 'text-gray-500'}>
-          프로필
-        </Text>
+        <Text className={pathname === '/profile' ? 'text-[#8FC31D]' : 'text-gray-500'}>프로필</Text>
       </TouchableOpacity>
     </View>
   );
