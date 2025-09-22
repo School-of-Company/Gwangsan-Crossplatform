@@ -34,7 +34,7 @@ export default function PlaceStep() {
       isNextDisabled={placeName?.trim() === ''}>
       <View>
         <Dropdown
-          items={[...PLACES]}
+          items={PLACES.map((place) => ({ value: place, label: place }))}
           selectedItem={placeName}
           onSelect={handlePlaceSelect}
           placeholder="지점을 선택해주세요"
