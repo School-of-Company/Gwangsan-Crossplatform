@@ -4,7 +4,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 interface DropdownProps<T extends string> {
   label?: string;
-  items: T[];
+  items: { value: T; label: string }[];
   placeholder?: string;
   selectedItem?: T;
   width?: string;
@@ -22,6 +22,12 @@ export function Dropdown<T extends string>({
   const [show, setShow] = useState(false);
   const [selected, setSelected] = useState<T | null>(selectedItem || null);
 
+  const selectedLabel = selected
+    ? items.find((item) => item.value === selected)?.label
+    : selectedItem
+      ? items.find((item) => item.value === selectedItem)?.label
+      : undefined;
+
   return (
     <View className={`${width} relative flex gap-2`}>
       {label && <Text className="text-label text-black">{label}</Text>}
@@ -29,24 +35,24 @@ export function Dropdown<T extends string>({
         className={`rounded-xl border ${show ? 'border-sub2-500' : 'border-gray-400'} px-4 py-5 text-body5`}
         onPress={() => setShow((prev) => !prev)}>
         <View className="flex-row items-center justify-between">
-          <Text>{selectedItem || selected || placeholder || '선택해주세요'}</Text>
+          <Text>{selectedLabel || placeholder || '선택해주세요'}</Text>
           <Icon name={show ? 'chevron-up' : 'chevron-down'} size={16} color="#000" />
         </View>
       </TouchableOpacity>
       {show && (
         <View className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 transition last:border-b-0">
-          {items.map((v, i) => (
+          {items.map((item, i) => (
             <Text
-              key={v}
+              key={item.value}
               className={`border-b border-gray-300 bg-gray-50 px-4 py-5 first:rounded-t-xl last:rounded-xl ${i === items.length - 1 ? 'border-b-0' : ''}`}
               onPress={() => {
-                setSelected(v);
+                setSelected(item.value);
                 if (onSelect) {
-                  onSelect(v);
+                  onSelect(item.value);
                 }
                 setShow(false);
               }}>
-              {v}
+              {item.label}
             </Text>
           ))}
         </View>
