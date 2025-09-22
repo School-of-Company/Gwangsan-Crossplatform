@@ -1,6 +1,6 @@
 export const TYPE = {
-  OBJECT: '물건',
-  SERVICE: '서비스',
+  OBJECT: 'OBJECT',
+  SERVICE: 'SERVICE',
 } as const;
 
 export type ProductType = (typeof TYPE)[keyof typeof TYPE];
