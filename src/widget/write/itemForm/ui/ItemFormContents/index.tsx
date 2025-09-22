@@ -35,13 +35,26 @@ const ItemFormContents = ({
           <Dropdown
             onSelect={onTypeChange}
             selectedItem={type}
-            items={Object.values(TYPE)}
+            items={[
+              { value: TYPE.OBJECT, label: '물건' },
+              { value: TYPE.SERVICE, label: '서비스' },
+            ]}
             label="카테고리"
           />
           <Dropdown
             onSelect={onModeChange}
             selectedItem={mode}
-            items={Object.values(MODE)}
+            items={
+              type === TYPE.OBJECT
+                ? [
+                    { value: MODE.GIVER, label: '팔아요' },
+                    { value: MODE.RECEIVER, label: '필요해요' },
+                  ]
+                : [
+                    { value: MODE.GIVER, label: '할 수 있어요' },
+                    { value: MODE.RECEIVER, label: '해주세요' },
+                  ]
+            }
             label="유형"
           />
           <Input
