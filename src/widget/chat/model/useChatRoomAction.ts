@@ -4,7 +4,6 @@ import { FlatList } from 'react-native';
 import { useChatMessages } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '~/entity/chat';
@@ -29,10 +28,6 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     chatMessageQueryKey: ['chatMessages', roomId],
   });
 
-  const tradeRequest = useTradeRequest({
-    productId: roomData?.product?.id || 0,
-    sellerId: otherUserInfo.id || 0,
-  });
 
   const scrollToEnd = useCallback((animated = true) => {
     flatListRef.current?.scrollToEnd({ animated });
@@ -85,13 +80,14 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     });
   }, [safeMessages]);
 
+  const hasTradeRequest = roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
+  
   const tradeEmbedConfig = {
-    shouldShow: !!roomData?.product,
+    shouldShow: hasTradeRequest,
     product: roomData?.product,
-    onTradeRequest:
-      roomData?.product && otherUserInfo.id ? tradeRequest.handleTradeRequest : undefined,
-    showButtons: !roomData?.product?.isMine && !!roomData?.product?.isCompletable,
-    isLoading: tradeRequest.isLoading,
+    onTradeRequest: undefined,
+    showButtons: false,
+    isLoading: false,
     requestorNickname: otherUserInfo.nickname,
   };
 

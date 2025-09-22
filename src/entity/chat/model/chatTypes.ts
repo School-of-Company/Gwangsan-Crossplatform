@@ -30,10 +30,9 @@ export interface TradeProduct {
   readonly id: number;
   readonly title: string;
   readonly images: readonly ProductImage[];
+  readonly createdAt: string | null;
   readonly isSeller: boolean;
   readonly isCompletable: boolean;
-  readonly isCompleted: boolean;
-  readonly isMine: boolean;
 }
 
 export interface ChatRoomWithProduct {
@@ -48,10 +47,14 @@ export const isTradeProduct = (value: unknown): value is TradeProduct => {
     'id' in value &&
     'title' in value &&
     'images' in value &&
+    'createdAt' in value &&
     'isSeller' in value &&
     'isCompletable' in value &&
-    'isCompleted' in value &&
-    'isMine' in value
+    typeof (value as any).id === 'number' &&
+    typeof (value as any).title === 'string' &&
+    Array.isArray((value as any).images) &&
+    typeof (value as any).isSeller === 'boolean' &&
+    typeof (value as any).isCompletable === 'boolean'
   );
 };
 
