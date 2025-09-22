@@ -90,7 +90,7 @@ const ItemFormPage = () => {
       await createItemMutation.mutateAsync(requestBody);
 
       router.replace({
-        pathname: '/post',
+        pathname: '/main',
       });
     } catch (error) {
       console.error(error);
