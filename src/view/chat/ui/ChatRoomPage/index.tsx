@@ -106,8 +106,6 @@ export default function ChatRoomPage() {
       otherUserId={otherUserInfo.id}
       lastMessageDate={formatLastMessageDate(messages)}
       onProfilePress={navigationHandlers.goToOtherUserProfile}
-      onMenuPress={handleMenuPress}
-      showMenuButton={menuConfig.shouldShowMenuButton}
     />
   );
 
@@ -129,7 +127,11 @@ export default function ChatRoomPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <Header headerTitle={updatedComponentState.headerTitle} />
+      <Header
+        headerTitle={updatedComponentState.headerTitle}
+        onMenuPress={handleMenuPress}
+        showMenuButton={menuConfig.shouldShowMenuButton}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
