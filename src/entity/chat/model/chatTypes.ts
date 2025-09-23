@@ -41,20 +41,24 @@ export interface ChatRoomWithProduct {
 }
 
 export const isTradeProduct = (value: unknown): value is TradeProduct => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const obj = value as Record<string, unknown>;
+
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    'title' in value &&
-    'images' in value &&
-    'createdAt' in value &&
-    'isSeller' in value &&
-    'isCompletable' in value &&
-    typeof (value as any).id === 'number' &&
-    typeof (value as any).title === 'string' &&
-    Array.isArray((value as any).images) &&
-    typeof (value as any).isSeller === 'boolean' &&
-    typeof (value as any).isCompletable === 'boolean'
+    'id' in obj &&
+    'title' in obj &&
+    'images' in obj &&
+    'createdAt' in obj &&
+    'isSeller' in obj &&
+    'isCompletable' in obj &&
+    typeof obj.id === 'number' &&
+    typeof obj.title === 'string' &&
+    Array.isArray(obj.images) &&
+    typeof obj.isSeller === 'boolean' &&
+    typeof obj.isCompletable === 'boolean'
   );
 };
 
