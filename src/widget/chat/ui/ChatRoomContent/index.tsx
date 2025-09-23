@@ -17,6 +17,7 @@ interface ChatRoomContentProps {
     readonly product?: TradeProduct | null;
     readonly onTradeAccept?: () => Promise<void>;
     readonly onReservation?: () => void;
+    readonly onCancelReservation?: () => void;
     readonly showButtons: boolean;
     readonly isLoading: boolean;
     readonly requestorNickname: string;
@@ -71,6 +72,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           product={config.product}
           onTradeAccept={config.onTradeAccept}
           onReservation={config.onReservation}
+          onCancelReservation={config.onCancelReservation}
           showButtons={config.showButtons}
           isLoading={config.isLoading}
           requestorNickname={config.requestorNickname}

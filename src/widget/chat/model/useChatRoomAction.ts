@@ -6,6 +6,8 @@ import { useChatMessages } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { requestTrade } from '~/entity/post/api/requestTrade';
+import { makeReservation } from '~/entity/post/api/makeReservation';
+import { cancelReservation } from '~/entity/post/api/cancelReservation';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import { useGetMyInformation } from '~/view/main/model/useGetMyInformation';
 import type { RoomId } from '~/shared/types/chatType';
@@ -110,13 +112,50 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     }
   }, [roomData?.product?.id, otherUserInfo.id]);
 
-  const handleReservation = useCallback(() => {}, []);
+  const handleReservation = useCallback(async () => {
+    if (!roomData?.product?.id) return;
+
+    try {
+      await makeReservation({ productId: roomData.product.id });
+      
+      Toast.show({
+        type: 'success',
+        text1: '예약이 완료되었습니다!',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '예약 실패',
+        text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+      });
+    }
+  }, [roomData?.product?.id]);
+
+  const handleCancelReservation = useCallback(async () => {
+    if (!roomData?.product?.id) return;
+
+    try {
+      await cancelReservation({ productId: roomData.product.id });
+      
+      Toast.show({
+        type: 'success',
+        text1: '예약이 취소되었습니다!',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '예약 취소 실패',
+        text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+      });
+    }
+  }, [roomData?.product?.id]);
 
   const tradeEmbedConfig = {
     shouldShow: hasTradeRequest,
     product: roomData?.product,
     onTradeAccept: shouldShowButtons ? handleTradeAccept : undefined,
     onReservation: shouldShowButtons ? handleReservation : undefined,
+    onCancelReservation: shouldShowButtons ? handleCancelReservation : undefined,
     showButtons: shouldShowButtons,
     isLoading: false,
     requestorNickname: shouldShowButtons ? otherUserInfo.nickname : myInfo?.nickname || '나',

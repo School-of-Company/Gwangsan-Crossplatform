@@ -7,6 +7,7 @@ export interface TradeEmbedProps {
   readonly product: TradeProduct;
   readonly onTradeAccept?: () => Promise<void>;
   readonly onReservation?: () => void;
+  readonly onCancelReservation?: () => void;
   readonly showButtons?: boolean;
   readonly isLoading?: boolean;
   readonly requestorNickname?: string;
@@ -17,12 +18,14 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   product,
   onTradeAccept,
   onReservation,
+  onCancelReservation,
   showButtons = false,
   isLoading = false,
   requestorNickname = '상대방',
   alignment = 'left',
 }) => {
   const [localLoading, setLocalLoading] = useState(false);
+  const [isReserved, setIsReserved] = useState(false);
 
   const handleTradeAccept = useCallback(async () => {
     if (!onTradeAccept || localLoading || isLoading) return;
@@ -37,9 +40,33 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
     }
   }, [onTradeAccept, localLoading, isLoading]);
 
-  const handleReservation = useCallback(() => {
-    console.log('예약예약예약예약예약예약예약예약예약', onReservation);
-  }, [onReservation]);
+  const handleReservation = useCallback(async () => {
+    if (!onReservation || localLoading || isLoading) return;
+
+    try {
+      setLocalLoading(true);
+      await onReservation();
+      setIsReserved(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLocalLoading(false);
+    }
+  }, [onReservation, localLoading, isLoading]);
+
+  const handleCancelReservation = useCallback(async () => {
+    if (!onCancelReservation || localLoading || isLoading) return;
+
+    try {
+      setLocalLoading(true);
+      await onCancelReservation();
+      setIsReserved(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLocalLoading(false);
+    }
+  }, [onCancelReservation, localLoading, isLoading]);
 
   const productImage = product.images[0];
 
@@ -73,13 +100,33 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
           {showButtons && (
             <>
               <View className="flex-row justify-between">
-                <Button
-                  variant="secondary"
-                  onPress={handleReservation}
-                  width="w-[48%]"
-                  style={{ minHeight: 40 }}>
-                  <Text className="text-sm font-medium text-[#8FC31D]">예약하기</Text>
-                </Button>
+                {isReserved ? (
+                  <Button
+                    variant="secondary"
+                    onPress={handleCancelReservation}
+                    disabled={localLoading || isLoading}
+                    width="w-[48%]"
+                    style={{ minHeight: 40 }}>
+                    {localLoading || isLoading ? (
+                      <ActivityIndicator size="small" color="#8FC31D" />
+                    ) : (
+                      <Text className="text-sm font-medium text-[#8FC31D]">예약 취소</Text>
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    onPress={handleReservation}
+                    disabled={localLoading || isLoading}
+                    width="w-[48%]"
+                    style={{ minHeight: 40 }}>
+                    {localLoading || isLoading ? (
+                      <ActivityIndicator size="small" color="#8FC31D" />
+                    ) : (
+                      <Text className="text-sm font-medium text-[#8FC31D]">예약하기</Text>
+                    )}
+                  </Button>
+                )}
 
                 <Button
                   variant="primary"
