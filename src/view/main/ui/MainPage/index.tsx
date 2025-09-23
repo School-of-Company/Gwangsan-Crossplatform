@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '~/entity/main/ui/header';
 import { Footer } from '~/shared/ui/Footer';
 import { Inform, MainSlideViewer } from '~/widget/main';
-import { useGetMyInformation } from '../../model/useGetMyInformation';
+import { useGetMyInformation } from '../../../../entity/main/model/useGetMyInformation';
 import Toast from 'react-native-toast-message';
 
 export default function MainPageView() {

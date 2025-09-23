@@ -18,7 +18,7 @@ export default function Information({ name, id, isMe }: InformationProps) {
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   const handleEditProfile = useCallback(() => {
-    R.push(`/profile/${id}/edit`);
+    R.push(`/profile?id=${id}/edit`);
   }, [R, id]);
 
   const handleLogoutIconPress = useCallback(() => {

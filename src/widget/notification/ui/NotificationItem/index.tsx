@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { AlertType } from '~/entity/notification/model/alertTypes';
 import { formatDate } from '~/shared/lib/formatDate';
-import { completeTrade } from '~/entity/post/api/completeTrade';
+import { requestTrade } from '~/entity/post/api/requestTrade';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useGetItem } from '~/entity/post/model/useGetItem';
@@ -61,7 +61,7 @@ const NotificationItem = ({
       if (!productId) {
         throw new Error('productId 정보가 없습니다.');
       }
-      await completeTrade({ productId, otherMemberId: sendMemberId });
+      await requestTrade({ productId, otherMemberId: sendMemberId });
     } catch (e) {
       setIsAccepted(false);
       Toast.show({

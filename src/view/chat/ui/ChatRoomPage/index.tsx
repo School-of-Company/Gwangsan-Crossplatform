@@ -1,34 +1,73 @@
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
-import { useEffect, useCallback, useRef } from 'react';
+import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatNavigation } from '~/widget/chat/model/useChatNavigation';
+import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
+import { useChatUIState } from '~/widget/chat/model/useChatUIState';
+import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
+import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
+import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
+import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { Header } from '@/shared/ui/Header';
-import { useChatMessages } from '@/entity/chat';
-import { useChatSocket } from '@/entity/chat/model/useChatSocket';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
-import type { ChatMessageResponse } from '@/entity/chat';
-import { MyMessage, OtherMessage, ChatInput } from '@/widget/chat';
+import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
-  const flatListRef = useRef<FlatList>(null);
 
-  const { data: messages, isLoading, isError } = useChatMessages(roomId);
-  const { sendMessage, markRoomAsRead, connectionState } = useChatSocket({
-    currentRoomId: roomId,
-    chatRoomQueryKey: ['chatRooms', 'list'],
-    chatMessageQueryKey: ['chatMessages', roomId],
+  const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
+
+  const {
+    flatListRef,
+    messages,
+    otherUserInfo,
+    isLoading,
+    isError,
+    connectionState,
+    messageHandlers,
+    scrollToEnd,
+    markRoomAsRead,
+  } = useChatMessages({ roomId });
+
+  const { navigationHandlers, formatLastMessageDate } = useChatNavigation({
+    otherUserInfo,
   });
+
+  const { data: roomData } = useChatRoomData({ roomId });
+
+  const {
+    handleTradeAccept,
+    handleReservation,
+    handleCancelReservation,
+    hasTradeRequest,
+    shouldShowButtons,
+  } = useTradeHandlers({
+    roomData: roomData || null,
+    otherUserInfo,
+  });
+
+  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
+    roomId,
+    otherUserInfo,
+    hasTradeRequest,
+    shouldShowButtons,
+    handleTradeAccept,
+    handleReservation,
+    handleCancelReservation,
+  });
+
+  const updatedComponentState = useMemo(
+    () => ({
+      ...componentState,
+      hasMessages: messages.length > 0,
+      canSendMessage: connectionState === 'connected',
+    }),
+    [componentState, messages.length, connectionState]
+  );
 
   useEffect(() => {
     if (roomId) {
@@ -37,71 +76,40 @@ export default function ChatRoomPage() {
   }, [roomId, markRoomAsRead]);
 
   useEffect(() => {
-    if (messages && messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+    if (messages.length > 0) {
+      setTimeout(() => scrollToEnd(true), 100);
     }
-  }, [messages]);
+  }, [messages.length, scrollToEnd]);
 
-  const handleSendMessage = useCallback(
-    (content: string | null, imageIds: number[]) => {
-      if (connectionState !== 'connected') return;
+  const { handleTradeRequest: executeTradeRequest, isLoading: isTradeRequestLoading } =
+    useTradeRequest({
+      productId: tradeRequestInfo.productId || 0,
+      sellerId: tradeRequestInfo.sellerId || 0,
+    });
 
-      if (imageIds.length > 0) {
-        sendMessage(roomId, content, 'IMAGE', imageIds);
-      } else if (content) {
-        sendMessage(roomId, content, 'TEXT', []);
-      }
-    },
-    [roomId, sendMessage, connectionState]
-  );
-
-  const otherUser = messages?.find((msg) => !msg.isMine);
-  const otherUserNickname = otherUser?.senderNickname || '상대방';
-  const otherUserId = otherUser?.senderId;
-
-  const handleProfilePress = useCallback((userId: number) => {
-    router.push(`/profile?id=${userId}`);
+  const handleMenuPress = useCallback(() => {
+    setIsTradeRequestModalVisible(true);
   }, []);
 
-  const renderMessage = useCallback(
-    ({ item }: { item: ChatMessageResponse }) => {
-      if (item.isMine) {
-        return <MyMessage message={item} />;
-      } else {
-        return <OtherMessage message={item} onProfilePress={handleProfilePress} />;
-      }
-    },
-    [handleProfilePress]
+  const handleTradeRequest = useCallback(async () => {
+    try {
+      await executeTradeRequest();
+      setIsTradeRequestModalVisible(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [executeTradeRequest]);
+
+  const renderHeader = () => (
+    <ChatRoomHeader
+      otherUserNickname={otherUserInfo.nickname}
+      otherUserId={otherUserInfo.id}
+      lastMessageDate={formatLastMessageDate(messages)}
+      onProfilePress={navigationHandlers.goToOtherUserProfile}
+      onMenuPress={handleMenuPress}
+      showMenuButton={menuConfig.shouldShowMenuButton}
+    />
   );
-
-  const renderHeader = useCallback(() => {
-    const handleHeaderProfilePress = () => {
-      if (otherUserId) {
-        router.push(`/profile?id=${otherUserId}`);
-      }
-    };
-
-    return (
-      <View className="items-center bg-white py-8">
-        <TouchableOpacity onPress={handleHeaderProfilePress} disabled={!otherUserId}>
-          <Text className="mb-2 text-xl font-bold text-gray-900">{otherUserNickname}</Text>
-        </TouchableOpacity>
-        <Text className="text-sm text-gray-500">
-          {messages && messages.length > 0
-            ? new Date(messages[messages.length - 1].createdAt).toLocaleString('ko-KR', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-              })
-            : '대화를 시작해보세요'}
-        </Text>
-      </View>
-    );
-  }, [otherUserNickname, otherUserId, messages]);
 
   if (isLoading) {
     return (
@@ -121,35 +129,34 @@ export default function ChatRoomPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <Header headerTitle={otherUserNickname} />
+      <Header headerTitle={updatedComponentState.headerTitle} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
         keyboardVerticalOffset={0}>
-        {messages && messages.length > 0 ? (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.messageId.toString()}
-            renderItem={renderMessage}
-            ListHeaderComponent={renderHeader}
-            className="flex-1 px-4"
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            contentContainerStyle={{ paddingBottom: 10 }}
-          />
-        ) : (
-          <View className="flex-1 items-center justify-center px-4">
-            <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
-            <Text className="mt-4 text-center text-gray-500">
-              아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
-            </Text>
-          </View>
-        )}
+        <ChatRoomContent
+          messages={messages}
+          hasMessages={updatedComponentState.hasMessages}
+          flatListRef={flatListRef}
+          renderHeader={renderHeader}
+          onProfilePress={navigationHandlers.goToProfile}
+          onScrollToEnd={() => scrollToEnd(true)}
+          tradeEmbedConfig={tradeEmbedConfig}
+        />
 
-        <ChatInput onSendMessage={handleSendMessage} disabled={connectionState !== 'connected'} />
+        <ChatInput
+          onSendMessage={messageHandlers.sendMessage}
+          disabled={!updatedComponentState.canSendMessage}
+        />
       </KeyboardAvoidingView>
+
+      <TradeRequestModal
+        isVisible={isTradeRequestModalVisible}
+        onClose={() => setIsTradeRequestModalVisible(false)}
+        onTradeRequest={handleTradeRequest}
+        isLoading={isTradeRequestLoading}
+      />
     </SafeAreaView>
   );
 }

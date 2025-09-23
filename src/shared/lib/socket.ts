@@ -3,6 +3,8 @@ import { getData } from './getData';
 import Toast from 'react-native-toast-message';
 import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
 
+const SOCKET_URL = process.env.API_URL + '/chat';
+
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
   private socket: Socket | null = null;
@@ -180,7 +182,7 @@ class SocketManager implements ISocketManager {
 
 export const createChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
-    url: 'https://api.gwangsan.io.kr/api/chat',
+    url: SOCKET_URL,
     transports: ['websocket'],
     timeout: 15000,
     reconnection: true,

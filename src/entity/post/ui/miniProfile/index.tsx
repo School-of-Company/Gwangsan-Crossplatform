@@ -15,7 +15,7 @@ export default function MiniProfile({ nickname, placeName, light, memberId }: Mi
   const lightColor = `text-${getLightColor(light)}`;
 
   const handleProfilePress = () => {
-    router.push(`/profile/${memberId}`);
+    router.push(`/profile?id=${memberId}`);
   };
 
   return (

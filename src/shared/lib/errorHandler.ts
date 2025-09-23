@@ -21,5 +21,14 @@ export const getErrorMessage = (error: unknown): string => {
     }
     return message;
   }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
   return 'Request failed with status code 500';
 };
