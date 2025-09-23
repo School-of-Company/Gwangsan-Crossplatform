@@ -22,7 +22,7 @@ export const getErrorMessage = (error: unknown): string => {
       }
       return message;
     }
-    
+
     const status = error.response?.status;
     if (status) {
       return `요청이 실패했습니다. (${status})`;
