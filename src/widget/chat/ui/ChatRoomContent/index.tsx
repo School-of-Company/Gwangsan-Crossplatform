@@ -34,7 +34,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
 }) => {
   const getCombinedData = () => {
     const combinedData: { type: 'message' | 'trade'; data: any; timestamp: string }[] = [];
-    
+
     messages.forEach((message) => {
       combinedData.push({
         type: 'message',
@@ -42,7 +42,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         timestamp: message.createdAt,
       });
     });
-    
+
     if (tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product?.createdAt) {
       combinedData.push({
         type: 'trade',
@@ -50,8 +50,10 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         timestamp: tradeEmbedConfig.product.createdAt,
       });
     }
-    
-    return combinedData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    return combinedData.sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
   };
 
   const renderItem = ({ item }: { item: { type: 'message' | 'trade'; data: any } }) => {
@@ -86,10 +88,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       <FlatList
         ref={flatListRef}
         data={combinedData}
-        keyExtractor={(item, index) => 
-          item.type === 'message' 
-            ? item.data.messageId.toString() 
-            : `trade-${index}`
+        keyExtractor={(item, index) =>
+          item.type === 'message' ? item.data.messageId.toString() : `trade-${index}`
         }
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}

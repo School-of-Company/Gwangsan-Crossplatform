@@ -119,7 +119,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     onReservation: shouldShowButtons ? handleReservation : undefined,
     showButtons: shouldShowButtons,
     isLoading: false,
-    requestorNickname: shouldShowButtons ? otherUserInfo.nickname : (myInfo?.nickname || '나')
+    requestorNickname: shouldShowButtons ? otherUserInfo.nickname : myInfo?.nickname || '나',
   };
 
   useEffect(() => {
