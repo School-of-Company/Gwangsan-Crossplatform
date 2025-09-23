@@ -26,7 +26,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   const { data: messages, isLoading, isError } = useChatMessages(roomId);
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
-  
+
   const productId = roomData?.product?.id?.toString();
   const { data: productDetail, isLoading: isProductLoading } = useGetItem(productId);
 
@@ -94,7 +94,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
 
   const shouldShowButtons = hasTradeRequest && roomData?.product?.isCompletable;
-  
+
   const isGiverMode = productDetail?.mode === MODE.GIVER;
   const shouldShowMenuButton = !isProductLoading && isGiverMode;
 
@@ -157,9 +157,6 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
       });
     }
   }, [roomData?.product?.id]);
-  const handleMenuPress = useCallback(() => {
-    console.log('dd');
-  }, []);
 
   const tradeEmbedConfig = {
     shouldShow: hasTradeRequest,
@@ -192,9 +189,13 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
 
   const menuConfig = {
     shouldShowMenuButton,
-    onMenuPress: handleMenuPress,
     isProductLoading,
     isGiverMode,
+  };
+
+  const tradeRequestInfo = {
+    productId: roomData?.product?.id,
+    sellerId: otherUserInfo.id,
   };
 
   return {
@@ -209,6 +210,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     navigationHandlers,
     tradeEmbedConfig,
     menuConfig,
+    tradeRequestInfo,
     formatLastMessageDate,
     scrollToEnd,
     componentState,

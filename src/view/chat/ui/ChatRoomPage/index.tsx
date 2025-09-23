@@ -1,16 +1,21 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useCallback } from 'react';
 import { useChatRoomAction } from '~/widget/chat/model/useChatRoomAction';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
+import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
+import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
+
+  const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
 
   const {
     flatListRef,
@@ -21,10 +26,31 @@ export default function ChatRoomPage() {
     messageHandlers,
     navigationHandlers,
     tradeEmbedConfig,
+    menuConfig,
+    tradeRequestInfo,
     formatLastMessageDate,
     scrollToEnd,
     componentState,
   } = useChatRoomAction({ roomId });
+
+  const { handleTradeRequest: executeTradeRequest, isLoading: isTradeRequestLoading } =
+    useTradeRequest({
+      productId: tradeRequestInfo.productId || 0,
+      sellerId: tradeRequestInfo.sellerId || 0,
+    });
+
+  const handleMenuPress = useCallback(() => {
+    setIsTradeRequestModalVisible(true);
+  }, []);
+
+  const handleTradeRequest = useCallback(async () => {
+    try {
+      await executeTradeRequest();
+      setIsTradeRequestModalVisible(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [executeTradeRequest]);
 
   const renderHeader = () => (
     <ChatRoomHeader
@@ -32,6 +58,8 @@ export default function ChatRoomPage() {
       otherUserId={otherUserInfo.id}
       lastMessageDate={formatLastMessageDate()}
       onProfilePress={navigationHandlers.goToOtherUserProfile}
+      onMenuPress={handleMenuPress}
+      showMenuButton={menuConfig.shouldShowMenuButton}
     />
   );
 
@@ -74,6 +102,13 @@ export default function ChatRoomPage() {
           disabled={!componentState.canSendMessage}
         />
       </KeyboardAvoidingView>
+
+      <TradeRequestModal
+        isVisible={isTradeRequestModalVisible}
+        onClose={() => setIsTradeRequestModalVisible(false)}
+        onTradeRequest={handleTradeRequest}
+        isLoading={isTradeRequestLoading}
+      />
     </SafeAreaView>
   );
 }
