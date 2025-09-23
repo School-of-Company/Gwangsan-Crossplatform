@@ -57,14 +57,14 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   const navigationHandlers = {
     goToProfile: useCallback(
       (userId: number) => {
-        router.push(`/profile/${userId}`);
+        router.push(`/profile?id=${userId}`);
       },
       [router]
     ),
 
     goToOtherUserProfile: useCallback(() => {
       if (otherUserInfo.id) {
-        router.push(`/profile/${otherUserInfo.id}`);
+        router.push(`/profile?id=${otherUserInfo.id}`);
       }
     }, [otherUserInfo.id, router]),
   };
