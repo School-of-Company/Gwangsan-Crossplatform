@@ -60,11 +60,14 @@ export default function ChatRoomPage() {
     handleCancelReservation,
   });
 
-  const updatedComponentState = useMemo(() => ({
-    ...componentState,
-    hasMessages: messages.length > 0,
-    canSendMessage: connectionState === 'connected',
-  }), [componentState, messages.length, connectionState]);
+  const updatedComponentState = useMemo(
+    () => ({
+      ...componentState,
+      hasMessages: messages.length > 0,
+      canSendMessage: connectionState === 'connected',
+    }),
+    [componentState, messages.length, connectionState]
+  );
 
   useEffect(() => {
     if (roomId) {

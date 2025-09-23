@@ -53,49 +53,61 @@ export const useChatUIState = ({
 }: UseChatUIStateParams): UseChatUIStateReturn => {
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
-  
+
   const productId = roomData?.product?.id?.toString();
   const { data: productDetail, isLoading: isProductLoading } = useGetItem(productId);
 
   const isGiverMode = productDetail?.mode === MODE.GIVER;
   const shouldShowMenuButton = !isProductLoading && isGiverMode;
 
-  const tradeEmbedConfig = useMemo(() => ({
-    shouldShow: hasTradeRequest,
-    product: roomData?.product,
-    onTradeAccept: shouldShowButtons ? handleTradeAccept : undefined,
-    onReservation: shouldShowButtons ? handleReservation : undefined,
-    onCancelReservation: shouldShowButtons ? handleCancelReservation : undefined,
-    showButtons: shouldShowButtons,
-    isLoading: false,
-    requestorNickname: shouldShowButtons ? otherUserInfo.nickname : myInfo?.nickname || '나',
-  }), [
-    hasTradeRequest,
-    roomData?.product,
-    shouldShowButtons,
-    handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
-    otherUserInfo.nickname,
-    myInfo?.nickname
-  ]);
+  const tradeEmbedConfig = useMemo(
+    () => ({
+      shouldShow: hasTradeRequest,
+      product: roomData?.product,
+      onTradeAccept: shouldShowButtons ? handleTradeAccept : undefined,
+      onReservation: shouldShowButtons ? handleReservation : undefined,
+      onCancelReservation: shouldShowButtons ? handleCancelReservation : undefined,
+      showButtons: shouldShowButtons,
+      isLoading: false,
+      requestorNickname: shouldShowButtons ? otherUserInfo.nickname : myInfo?.nickname || '나',
+    }),
+    [
+      hasTradeRequest,
+      roomData?.product,
+      shouldShowButtons,
+      handleTradeAccept,
+      handleReservation,
+      handleCancelReservation,
+      otherUserInfo.nickname,
+      myInfo?.nickname,
+    ]
+  );
 
-  const menuConfig = useMemo(() => ({
-    shouldShowMenuButton,
-    isProductLoading,
-    isGiverMode,
-  }), [shouldShowMenuButton, isProductLoading, isGiverMode]);
+  const menuConfig = useMemo(
+    () => ({
+      shouldShowMenuButton,
+      isProductLoading,
+      isGiverMode,
+    }),
+    [shouldShowMenuButton, isProductLoading, isGiverMode]
+  );
 
-  const tradeRequestInfo = useMemo(() => ({
-    productId: roomData?.product?.id,
-    sellerId: otherUserInfo.id,
-  }), [roomData?.product?.id, otherUserInfo.id]);
+  const tradeRequestInfo = useMemo(
+    () => ({
+      productId: roomData?.product?.id,
+      sellerId: otherUserInfo.id,
+    }),
+    [roomData?.product?.id, otherUserInfo.id]
+  );
 
-  const componentState = useMemo(() => ({
-    hasMessages: false,
-    canSendMessage: false,
-    headerTitle: otherUserInfo.nickname,
-  }), [otherUserInfo.nickname]);
+  const componentState = useMemo(
+    () => ({
+      hasMessages: false,
+      canSendMessage: false,
+      headerTitle: otherUserInfo.nickname,
+    }),
+    [otherUserInfo.nickname]
+  );
 
   return {
     tradeEmbedConfig,

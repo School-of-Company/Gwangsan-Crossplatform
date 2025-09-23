@@ -13,8 +13,8 @@ interface UseChatNavigationReturn {
   readonly formatLastMessageDate: (messages: any[]) => string;
 }
 
-export const useChatNavigation = ({ 
-  otherUserInfo 
+export const useChatNavigation = ({
+  otherUserInfo,
 }: UseChatNavigationParams): UseChatNavigationReturn => {
   const router = useRouter();
 

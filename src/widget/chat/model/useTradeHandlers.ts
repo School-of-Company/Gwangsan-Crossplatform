@@ -23,11 +23,10 @@ interface UseTradeHandlersReturn {
   readonly shouldShowButtons: boolean;
 }
 
-export const useTradeHandlers = ({ 
-  roomData, 
-  otherUserInfo 
+export const useTradeHandlers = ({
+  roomData,
+  otherUserInfo,
 }: UseTradeHandlersParams): UseTradeHandlersReturn => {
-  
   const hasTradeRequest =
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
 
