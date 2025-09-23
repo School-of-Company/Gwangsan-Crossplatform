@@ -8,8 +8,10 @@ import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
+import { useGetItem } from '~/entity/post/model/useGetItem';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import { useGetMyInformation } from '~/view/main/model/useGetMyInformation';
+import { MODE } from '~/widget/write/model/mode';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '~/entity/chat';
 
@@ -24,6 +26,9 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
   const { data: messages, isLoading, isError } = useChatMessages(roomId);
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
+  
+  const productId = roomData?.product?.id?.toString();
+  const { data: productDetail, isLoading: isProductLoading } = useGetItem(productId);
 
   const safeMessages = ensureMessagesArray(messages);
   const otherUserInfo = extractOtherUserInfo(safeMessages);
@@ -89,6 +94,9 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
 
   const shouldShowButtons = hasTradeRequest && roomData?.product?.isCompletable;
+  
+  const isGiverMode = productDetail?.mode === MODE.GIVER;
+  const shouldShowMenuButton = !isProductLoading && isGiverMode;
 
   const handleTradeAccept = useCallback(async () => {
     if (!roomData?.product?.id || !otherUserInfo.id) return;
@@ -149,6 +157,9 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
       });
     }
   }, [roomData?.product?.id]);
+  const handleMenuPress = useCallback(() => {
+    console.log('dd');
+  }, []);
 
   const tradeEmbedConfig = {
     shouldShow: hasTradeRequest,
@@ -179,6 +190,13 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     headerTitle: otherUserInfo.nickname,
   };
 
+  const menuConfig = {
+    shouldShowMenuButton,
+    onMenuPress: handleMenuPress,
+    isProductLoading,
+    isGiverMode,
+  };
+
   return {
     flatListRef,
 
@@ -190,6 +208,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     messageHandlers,
     navigationHandlers,
     tradeEmbedConfig,
+    menuConfig,
     formatLastMessageDate,
     scrollToEnd,
     componentState,
