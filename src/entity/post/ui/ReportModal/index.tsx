@@ -7,6 +7,7 @@ import { BottomSheetModalWrapper } from '~/shared/ui';
 import { REPORT_TYPES, type ReportType } from '~/entity/post/model/reportType';
 import { useReport } from '../../model/useReport';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
+
 interface ReportModalProps {
   productId?: number;
   memberId?: number;
@@ -94,7 +95,7 @@ const ReportModal = ({
       title="신고하기">
       <View className="flex-1 flex-col justify-between gap-4">
         <View className="gap-6">
-          <Dropdown<ReportType>
+          <Dropdown
             label="신고유형"
             items={REPORT_TYPES}
             placeholder="신고유형을 선택해주세요."

@@ -62,7 +62,7 @@ export default function ChatRoomPage() {
   const otherUserId = otherUser?.senderId;
 
   const handleProfilePress = useCallback((userId: number) => {
-    router.push(`/profile/${userId}`);
+    router.push(`/profile?id=${userId}`);
   }, []);
 
   const renderMessage = useCallback(
@@ -79,7 +79,7 @@ export default function ChatRoomPage() {
   const renderHeader = useCallback(() => {
     const handleHeaderProfilePress = () => {
       if (otherUserId) {
-        router.push(`/profile/${otherUserId}`);
+        router.push(`/profile?id=${otherUserId}`);
       }
     };
 
