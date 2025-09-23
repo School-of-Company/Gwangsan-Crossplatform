@@ -1,4 +1,4 @@
-import { NextButton, LastStepButton } from '~/entity/product/itemForm';
+import { NextButton, LastStepButton } from '~/entity/write/itemForm';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 import { useMemo } from 'react';
 

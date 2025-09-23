@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
 import Toast from 'react-native-toast-message';
-import QueryProvider from './QueryProvider';
+import QueryProvider from '../shared/lib/QueryProvider';
 
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();

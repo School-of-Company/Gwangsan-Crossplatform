@@ -4,11 +4,9 @@ import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper } from '~/shared/ui';
-import { REPORT_TYPE_MAP } from '~/entity/post/model/reportType';
+import { REPORT_TYPES, type ReportType } from '~/entity/post/model/reportType';
 import { useReport } from '../../model/useReport';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
-
-const REPORT_TYPES = Object.keys(REPORT_TYPE_MAP);
 
 interface ReportModalProps {
   productId?: number;
@@ -60,7 +58,7 @@ const ReportModal = ({
   const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.15, []);
 
   const handleDropdownSelect = useCallback(
-    (value: string) => {
+    (value: ReportType) => {
       setReportType(value);
     },
     [setReportType]
