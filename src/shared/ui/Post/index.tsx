@@ -25,7 +25,7 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
       disabled={isTemporary}>
       <View className="relative">
         <Image
-          source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/logo.png')}
+          source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
           className={`size-20 rounded-lg ${isTemporary ? 'opacity-70' : ''}`}
         />
         {additionalImagesCount > 0 && (
