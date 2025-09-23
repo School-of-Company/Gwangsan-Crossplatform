@@ -1,8 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-import { useState, useCallback } from 'react';
-import { useChatRoomAction } from '~/widget/chat/model/useChatRoomAction';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatNavigation } from '~/widget/chat/model/useChatNavigation';
+import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
+import { useChatUIState } from '~/widget/chat/model/useChatUIState';
+import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
@@ -23,15 +27,56 @@ export default function ChatRoomPage() {
     otherUserInfo,
     isLoading,
     isError,
+    connectionState,
     messageHandlers,
-    navigationHandlers,
-    tradeEmbedConfig,
-    menuConfig,
-    tradeRequestInfo,
-    formatLastMessageDate,
     scrollToEnd,
-    componentState,
-  } = useChatRoomAction({ roomId });
+    markRoomAsRead,
+  } = useChatMessages({ roomId });
+
+  const { navigationHandlers, formatLastMessageDate } = useChatNavigation({
+    otherUserInfo,
+  });
+
+  const { data: roomData } = useChatRoomData({ roomId });
+
+  const {
+    handleTradeAccept,
+    handleReservation,
+    handleCancelReservation,
+    hasTradeRequest,
+    shouldShowButtons,
+  } = useTradeHandlers({
+    roomData: roomData || null,
+    otherUserInfo,
+  });
+
+  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
+    roomId,
+    otherUserInfo,
+    hasTradeRequest,
+    shouldShowButtons,
+    handleTradeAccept,
+    handleReservation,
+    handleCancelReservation,
+  });
+
+  const updatedComponentState = useMemo(() => ({
+    ...componentState,
+    hasMessages: messages.length > 0,
+    canSendMessage: connectionState === 'connected',
+  }), [componentState, messages.length, connectionState]);
+
+  useEffect(() => {
+    if (roomId) {
+      markRoomAsRead(roomId).catch(console.error);
+    }
+  }, [roomId, markRoomAsRead]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => scrollToEnd(true), 100);
+    }
+  }, [messages.length, scrollToEnd]);
 
   const { handleTradeRequest: executeTradeRequest, isLoading: isTradeRequestLoading } =
     useTradeRequest({
@@ -56,7 +101,7 @@ export default function ChatRoomPage() {
     <ChatRoomHeader
       otherUserNickname={otherUserInfo.nickname}
       otherUserId={otherUserInfo.id}
-      lastMessageDate={formatLastMessageDate()}
+      lastMessageDate={formatLastMessageDate(messages)}
       onProfilePress={navigationHandlers.goToOtherUserProfile}
       onMenuPress={handleMenuPress}
       showMenuButton={menuConfig.shouldShowMenuButton}
@@ -81,7 +126,7 @@ export default function ChatRoomPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <Header headerTitle={componentState.headerTitle} />
+      <Header headerTitle={updatedComponentState.headerTitle} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -89,7 +134,7 @@ export default function ChatRoomPage() {
         keyboardVerticalOffset={0}>
         <ChatRoomContent
           messages={messages}
-          hasMessages={componentState.hasMessages}
+          hasMessages={updatedComponentState.hasMessages}
           flatListRef={flatListRef}
           renderHeader={renderHeader}
           onProfilePress={navigationHandlers.goToProfile}
@@ -99,7 +144,7 @@ export default function ChatRoomPage() {
 
         <ChatInput
           onSendMessage={messageHandlers.sendMessage}
-          disabled={!componentState.canSendMessage}
+          disabled={!updatedComponentState.canSendMessage}
         />
       </KeyboardAvoidingView>
 
