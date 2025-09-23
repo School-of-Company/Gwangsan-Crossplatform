@@ -2,6 +2,7 @@ import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import type { CreateChatRoomResponse, ChatApiError } from '../model/chatTypes';
 import type { ProductId } from '@/shared/types/chatType';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export const createChatRoom = async (productId: ProductId): Promise<CreateChatRoomResponse> => {
   try {
@@ -17,6 +18,6 @@ export const createChatRoom = async (productId: ProductId): Promise<CreateChatRo
       visibilityTime: 3000,
     });
 
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

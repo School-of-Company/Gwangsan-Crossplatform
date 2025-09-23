@@ -4,6 +4,7 @@ import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
 import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
 import { removeData } from '@/shared/lib/removeData';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 const auth = axios.create({
   baseURL: instance.defaults.baseURL,
@@ -30,7 +31,7 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 
     return response.data;
   } catch (error) {
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };
 
@@ -50,6 +51,6 @@ export const signinWithDeviceInfo = async (credentials: {
     return await signin(formData);
   } catch (error) {
     console.error(error);
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

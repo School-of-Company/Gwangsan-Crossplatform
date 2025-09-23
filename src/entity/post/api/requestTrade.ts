@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 export interface RequestTradeRequest {
   readonly productId: number;
   readonly otherMemberId: number;
@@ -15,6 +15,6 @@ export const requestTrade = async (data: RequestTradeRequest): Promise<RequestTr
     const response = await instance.post<RequestTradeResponse>('/post/trade', data);
     return response.data;
   } catch (error) {
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

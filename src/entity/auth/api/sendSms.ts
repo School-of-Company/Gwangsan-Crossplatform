@@ -1,4 +1,5 @@
 import { API_URL } from '@env';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export const sendSms = async (phoneNumber: string) => {
   try {
@@ -28,9 +29,6 @@ export const sendSms = async (phoneNumber: string) => {
     return data;
   } catch (error) {
     console.error(error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('SMS 전송 요청 중 알 수 없는 오류가 발생했습니다.');
+    throw new Error(getErrorMessage(error));
   }
 };

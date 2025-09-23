@@ -1,4 +1,5 @@
 import { instance } from '~/shared/lib/axios';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export interface WithdrawalResponse {
   message: string;
@@ -10,6 +11,6 @@ export const withdrawal = async (): Promise<WithdrawalResponse> => {
 
     return response.data;
   } catch (error) {
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

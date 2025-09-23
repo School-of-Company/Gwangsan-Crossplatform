@@ -1,6 +1,6 @@
 import { instance } from '~/shared/lib/axios';
 import { ReportType } from '../model/reportType';
-
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 interface BaseReportRequest {
   reportType: ReportType;
   content: string;
@@ -37,7 +37,7 @@ export const report = async (data: ReportRequest): Promise<void> => {
 
     await instance.post('/report', payload);
   } catch (error) {
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };
 
