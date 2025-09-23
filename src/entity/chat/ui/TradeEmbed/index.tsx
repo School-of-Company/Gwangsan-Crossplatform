@@ -137,7 +137,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
                   {localLoading || isLoading ? (
                     <ActivityIndicator size="small" color="white" />
                   ) : (
-                    <Text className="text-sm font-medium text-white">거래하기</Text>
+                    <Text className="text-sm font-medium text-white">거래 완료하기</Text>
                   )}
                 </Button>
               </View>
