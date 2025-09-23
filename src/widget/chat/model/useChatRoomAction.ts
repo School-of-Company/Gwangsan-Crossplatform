@@ -30,7 +30,6 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     chatMessageQueryKey: ['chatMessages', roomId],
   });
 
-
   const scrollToEnd = useCallback((animated = true) => {
     flatListRef.current?.scrollToEnd({ animated });
   }, []);
