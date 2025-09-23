@@ -83,11 +83,7 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
             </Button>
           ) : (
             <>
-              {isMyPost ? (
-                <Button variant="secondary" width="w-1/2" onPress={onEditPress}>
-                  수정하기
-                </Button>
-              ) : (
+              {!isMyPost && (
                 <Button
                   variant="secondary"
                   width="w-1/2"
@@ -97,7 +93,7 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
                 </Button>
               )}
               {isMyPost ? (
-                <Button variant="primary" width="w-1/2" onPress={onEditPress}>
+                <Button variant="primary" width="w-[100%]" onPress={onEditPress}>
                   수정하기
                 </Button>
               ) : (
