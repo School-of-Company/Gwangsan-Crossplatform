@@ -117,7 +117,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
 
     try {
       await makeReservation({ productId: roomData.product.id });
-      
+
       Toast.show({
         type: 'success',
         text1: '예약이 완료되었습니다!',
@@ -136,7 +136,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
 
     try {
       await cancelReservation({ productId: roomData.product.id });
-      
+
       Toast.show({
         type: 'success',
         text1: '예약이 취소되었습니다!',

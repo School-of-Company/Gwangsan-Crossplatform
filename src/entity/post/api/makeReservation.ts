@@ -8,9 +8,13 @@ export interface MakeReservationResponse {
   readonly message?: string;
 }
 
-export const makeReservation = async (data: MakeReservationRequest): Promise<MakeReservationResponse> => {
+export const makeReservation = async (
+  data: MakeReservationRequest
+): Promise<MakeReservationResponse> => {
   try {
-    const response = await instance.patch<MakeReservationResponse>(`/post/reservation${data.productId}`);
+    const response = await instance.patch<MakeReservationResponse>(
+      `/post/reservation${data.productId}`
+    );
     return response.data;
   } catch (error) {
     throw error;
