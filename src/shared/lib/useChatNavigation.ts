@@ -16,7 +16,7 @@ export const useChatNavigation = () => {
         const room = await findChatRoom(productId);
         router.push(`/chatting/${room.roomId}`);
       } catch (error: any) {
-        if (error?.status === 404) {
+        if (error.message === '해당하는 채팅방을 찾을 수 없습니다.') {
           try {
             const newRoom = await createChatRoom(productId);
             router.push(`/chatting/${newRoom.roomId}`);
