@@ -62,7 +62,7 @@ export const useCreateItem = () => {
       });
     },
 
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       if (!variables) return;
 
       queryClient.invalidateQueries({
@@ -76,7 +76,7 @@ export const useCreateItem = () => {
       });
     },
 
-    onSettled: (response, error, variables) => {
+    onSettled: (_response, _error, variables) => {
       if (!variables) return;
 
       queryClient.invalidateQueries({

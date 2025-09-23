@@ -12,7 +12,7 @@ interface UseReportParams {
 }
 
 interface ReportFormState {
-  reportType: string | null;
+  reportType: keyof typeof REPORT_TYPE_MAP | null;
   contents: string;
   imageIds: number[];
   imageUploadState?: ImageUploadState;
@@ -55,7 +55,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
     });
   }, []);
 
-  const setReportType = useCallback((reportType: string | null) => {
+  const setReportType = useCallback((reportType: keyof typeof REPORT_TYPE_MAP | null) => {
     setFormState((prev) => ({ ...prev, reportType }));
   }, []);
 
@@ -76,7 +76,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
 
     if (!reportType || !contents.trim()) return false;
 
-    const reportTypeValue = REPORT_TYPE_MAP[reportType];
+    const reportTypeValue = reportType ? REPORT_TYPE_MAP[reportType] : undefined;
     if (!reportTypeValue) return false;
 
     if (reportTypeValue === 'FRAUD' && !productId) return false;
@@ -93,7 +93,10 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
 
   const handleSubmit = useCallback(
     (type: string, reason: string) => {
-      const reportTypeValue = REPORT_TYPE_MAP[type];
+      const isValidKey = (type as string) in REPORT_TYPE_MAP;
+      const reportTypeValue = isValidKey
+        ? REPORT_TYPE_MAP[type as keyof typeof REPORT_TYPE_MAP]
+        : undefined;
       if (!reportTypeValue) {
         Toast.show({
           type: 'error',

@@ -10,11 +10,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '~/shared/ui';
-import { ItemFormProgressBar } from '~/entity/product/itemForm';
-import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/product/itemForm';
+import { ItemFormProgressBar } from '~/entity/write/itemForm';
+import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/write/itemForm';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useEditPost } from '~/entity/post/model/useEditPost';
 import Toast from 'react-native-toast-message';
+import { ProductType } from '~/widget/write/model/type';
+import { ModeType } from '~/widget/write/model/mode';
 
 const PostEditPage = () => {
   const router = useRouter();
@@ -24,6 +26,8 @@ const PostEditPage = () => {
 
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
+  const [type, setType] = useState<ProductType | undefined>(undefined);
+  const [mode, setMode] = useState<ModeType | undefined>(undefined);
   const [content, setContent] = useState('');
   const [gwangsan, setGwangsan] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -32,6 +36,8 @@ const PostEditPage = () => {
 
   useEffect(() => {
     if (postData) {
+      setType(postData.type as ProductType);
+      setMode(postData.mode as ModeType);
       setTitle(postData.title);
       setContent(postData.content);
       setGwangsan(postData.gwangsan.toString());
@@ -50,6 +56,8 @@ const PostEditPage = () => {
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
+  const handleModeChange = useCallback((v: ModeType) => setMode(v), []);
+  const handleTypeChange = useCallback((v: ProductType) => setType(v), []);
   const handleGwangsanChange = useCallback(
     (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
     []
@@ -110,6 +118,9 @@ const PostEditPage = () => {
 
   const headerTitle = postData.mode === 'RECEIVER' ? '해주세요 수정' : '해드립니다 수정';
 
+  const effectiveType = type ?? (postData.type as ProductType);
+  const effectiveMode = mode ?? (postData.mode as ModeType);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
@@ -124,12 +135,16 @@ const PostEditPage = () => {
           keyboardShouldPersistTaps="handled">
           <View className="flex-1 flex-col justify-between">
             <ItemFormRenderContent
+              type={effectiveType}
+              mode={effectiveMode}
               step={step}
               title={title}
               content={content}
               gwangsan={gwangsan}
               images={images}
               onTitleChange={handleTitleChange}
+              onModeChange={handleModeChange}
+              onTypeChange={handleTypeChange}
               onContentChange={handleContentChange}
               onImagesChange={handleImagesChange}
               onGwangsanChange={handleGwangsanChange}
