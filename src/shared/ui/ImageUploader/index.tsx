@@ -196,7 +196,7 @@ const ImageUploader = ({
           return (
             <TouchableOpacity
               key={`${uri}-${idx}`}
-              onLongPress={() => removeImage(idx)}
+              onPress={() => removeImage(idx)}
               disabled={readonly || isUploading}
               className="relative h-12 w-12">
               <Image
