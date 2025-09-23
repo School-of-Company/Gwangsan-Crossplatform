@@ -31,7 +31,6 @@ export default function ChatRoomPage() {
       otherUserNickname={otherUserInfo.nickname}
       otherUserId={otherUserInfo.id}
       lastMessageDate={formatLastMessageDate()}
-      tradeEmbedConfig={tradeEmbedConfig}
       onProfilePress={navigationHandlers.goToOtherUserProfile}
     />
   );
@@ -67,6 +66,7 @@ export default function ChatRoomPage() {
           renderHeader={renderHeader}
           onProfilePress={navigationHandlers.goToProfile}
           onScrollToEnd={() => scrollToEnd(true)}
+          tradeEmbedConfig={tradeEmbedConfig}
         />
 
         <ChatInput

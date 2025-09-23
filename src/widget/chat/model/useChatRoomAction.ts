@@ -7,6 +7,7 @@ import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
+import { useGetMyInformation } from '~/view/main/model/useGetMyInformation';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '~/entity/chat';
 
@@ -20,6 +21,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
 
   const { data: messages, isLoading, isError } = useChatMessages(roomId);
   const { data: roomData } = useChatRoomData({ roomId });
+  const { data: myInfo } = useGetMyInformation();
 
   const safeMessages = ensureMessagesArray(messages);
   const otherUserInfo = extractOtherUserInfo(safeMessages);
@@ -117,7 +119,7 @@ export const useChatRoomAction = ({ roomId }: UseChatRoomActionParams) => {
     onReservation: shouldShowButtons ? handleReservation : undefined,
     showButtons: shouldShowButtons,
     isLoading: false,
-    requestorNickname: otherUserInfo.nickname,
+    requestorNickname: shouldShowButtons ? otherUserInfo.nickname : (myInfo?.nickname || '나')
   };
 
   useEffect(() => {
