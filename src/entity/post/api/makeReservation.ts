@@ -13,7 +13,7 @@ export const makeReservation = async (
 ): Promise<MakeReservationResponse> => {
   try {
     const response = await instance.patch<MakeReservationResponse>(
-      `/post/reservation${data.productId}`
+      `/post/reservation/${data.productId}`
     );
     return response.data;
   } catch (error) {

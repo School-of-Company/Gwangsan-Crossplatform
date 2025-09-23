@@ -13,7 +13,7 @@ export const cancelReservation = async (
 ): Promise<CancelReservationResponse> => {
   try {
     const response = await instance.delete<CancelReservationResponse>(
-      `/post/reservation${data.productId}`
+      `/post/reservation/${data.productId}`
     );
     return response.data;
   } catch (error) {
