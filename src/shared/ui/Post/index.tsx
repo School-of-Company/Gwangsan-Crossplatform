@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { PostType } from '~/shared/types/postType';
 
-export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) {
+export default function Post({ id, title, gwangsan, imageUrls = [], images = [] }: PostType) {
   const router = useRouter();
 
   const handlePress = useCallback(() => {
@@ -13,10 +13,20 @@ export default function Post({ id, title, gwangsan, imageUrls = [] }: PostType) 
     router.push(`/post/${id}`);
   }, [router, id]);
 
-  const firstImage = imageUrls?.[0]?.imageUrl;
-  const additionalImagesCount = (imageUrls?.length ?? 0) - 1;
+  const firstImage =
+    imageUrls?.[0]?.imageUrl ??
+    (Array.isArray(images) && images.length > 0
+      ? typeof images[0] === 'string'
+        ? images[0]
+        : (images[0]?.imageUrl ?? images[0]?.imageUrl ?? images[0]?.imageUrl)
+      : null);
+  const additionalImagesCount =
+    (imageUrls?.length && imageUrls.length > 0
+      ? imageUrls.length
+      : Array.isArray(images)
+        ? images.length
+        : 0) - 1;
   const isTemporary = id < 0;
-
   return (
     <TouchableOpacity
       onPress={handlePress}
