@@ -12,23 +12,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetMyPosts } from '../../model/useGetMyPosts';
-import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [actualId, setActualId] = useState<string>('');
-  const [isMe, setIsMe] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const initializeProfile = async () => {
       try {
-        const currentUserId = await getCurrentUserId();
-        const isMyProfile = id === currentUserId.toString();
-
-        setIsMe(isMyProfile);
-        setActualId(isMyProfile ? currentUserId.toString() : id || '');
+        setActualId(id);
         setIsInitialized(true);
       } catch (error) {
         console.error(error);
@@ -58,15 +52,17 @@ export default function ProfilePageView() {
     );
   }
 
-  return <ProfileContent actualId={actualId} isMe={isMe} />;
+  return <ProfileContent actualId={actualId} />;
 }
 
-function ProfileContent({ actualId, isMe }: { actualId: string; isMe: boolean }) {
+function ProfileContent({ actualId }: { actualId: string }) {
   const {
     data: profileData,
     error: profileError,
     isError: profileIsError,
   } = useGetProfile(actualId);
+
+  const isMe = !Boolean(actualId);
 
   const { data: myProfileData } = useGetMyProfile(isMe);
 
