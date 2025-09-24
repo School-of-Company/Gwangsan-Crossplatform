@@ -86,7 +86,6 @@ export default function PhoneStep() {
             returnKeyType="done"
             editable={!verificationState.isVerifyingCode}
             maxLength={6}
-            minLength={6}
           />
           <ErrorMessage error={verificationError} />
         </View>
