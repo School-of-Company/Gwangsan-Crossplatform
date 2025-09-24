@@ -11,7 +11,8 @@ export interface PostType {
   title: string;
   content: string;
   gwangsan: number;
-  imageUrls: ImageType[];
+  imageUrls?: ImageType[];
   isCompletable: boolean;
   isCompleted: boolean;
+  images?: ImageType[];
 }

@@ -45,7 +45,7 @@ export const useChatSocket = ({
   const sendMessage = useCallback(
     async (
       roomId: RoomId,
-      content: string | null,
+      content: string,
       messageType: 'TEXT' | 'IMAGE' = 'TEXT',
       imageIds: number[] = []
     ) => {
