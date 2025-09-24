@@ -48,7 +48,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
         if (connectionState !== 'connected') return;
 
         if (imageIds.length > 0) {
-          sendMessage(roomId, content, 'IMAGE', imageIds);
+          sendMessage(roomId, ' ', 'IMAGE', imageIds);
         } else if (content) {
           sendMessage(roomId, content, 'TEXT', []);
         }
