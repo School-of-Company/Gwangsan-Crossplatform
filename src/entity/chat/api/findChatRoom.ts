@@ -1,6 +1,7 @@
 import { instance } from '@/shared/lib/axios';
 import type { FindChatRoomResponse, ChatApiError } from '../model/chatTypes';
 import type { ProductId } from '@/shared/types/chatType';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export const findChatRoom = async (productId: ProductId): Promise<FindChatRoomResponse> => {
   try {
@@ -9,6 +10,6 @@ export const findChatRoom = async (productId: ProductId): Promise<FindChatRoomRe
   } catch (e) {
     const error = e as ChatApiError;
 
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

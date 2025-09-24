@@ -2,6 +2,7 @@ import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import type { RoomId, MessageId } from '@/shared/types/chatType';
 import type { ChatApiError } from '../model/chatTypes';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 interface MarkChatAsReadRequest {
   roomId: RoomId;
@@ -26,6 +27,6 @@ export const markChatAsRead = async (roomId: RoomId, lastMessageId: MessageId): 
       visibilityTime: 3000,
     });
 
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

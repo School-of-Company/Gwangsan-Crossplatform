@@ -1,4 +1,5 @@
 import { API_URL } from '@env';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export const verifySms = async (phoneNumber: string, code: string) => {
   try {
@@ -12,25 +13,21 @@ export const verifySms = async (phoneNumber: string, code: string) => {
 
     const responseText = await response.text();
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     let data;
     try {
       data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error(parseError, responseText);
-      throw new Error(responseText.substring(0, 100));
-    }
-
-    if (!response.ok) {
-      const errorMessage = data.message || `HTTP ${response.status}: ${response.statusText}`;
-      throw new Error(errorMessage);
+    } catch {
+      console.warn(responseText);
+      data = {};
     }
 
     return data;
   } catch (error) {
     console.error(error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('SMS 인증 요청 중 알 수 없는 오류가 발생했습니다.');
+    throw new Error(getErrorMessage(error));
   }
 };

@@ -39,10 +39,22 @@ export const useTradeRequest = ({
         text2: '채팅방에서 대화를 시작해보세요!',
       });
 
-      if (response.roomId) {
-        router.push(`/chatting/${response.roomId}`);
-      } else {
-        await navigateToChat(productId);
+      try {
+        if (response.roomId) {
+          router.push(`/chatting/${response.roomId}`);
+        } else {
+          await navigateToChat(productId);
+        }
+      } catch (navigationError) {
+        console.error(navigationError);
+        Toast.show({
+          type: 'info',
+          text1: '채팅방 이동 중 오류가 발생했습니다',
+          text2:
+            navigationError instanceof Error
+              ? navigationError.message
+              : '채팅하기 버튼을 눌러 이동해주세요.',
+        });
       }
     } catch (error) {
       Toast.show({

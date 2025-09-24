@@ -1,4 +1,5 @@
 import { instance } from '~/shared/lib/axios';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export interface CancelReservationRequest {
   readonly productId: number;
@@ -17,6 +18,6 @@ export const cancelReservation = async (
     );
     return response.data;
   } catch (error) {
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

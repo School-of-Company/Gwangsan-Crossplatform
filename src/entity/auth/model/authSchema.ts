@@ -4,13 +4,13 @@ export const nameSchema = z
   .string()
   .trim()
   .min(1, '이름을 입력해주세요')
-  .regex(/^[가-힣]+$/, '한글만 입력 가능합니다');
+  .regex(/^[ㄱ-ㅎㅏ-ㅣ가-힣0-9 ()~]+$/, '한글만 입력 가능합니다');
 
 export const nicknameSchema = z
   .string()
   .trim()
   .min(1, '별칭을 입력해주세요')
-  .regex(/^[가-힣]+$/, '한글만 입력 가능합니다');
+  .regex(/^[ㄱ-ㅎㅏ-ㅣ가-힣0-9 ()~]+$/, '한글만 입력 가능합니다');
 
 export const passwordSchema = z
   .string()

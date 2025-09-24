@@ -1,5 +1,6 @@
 import { instance } from '~/shared/lib/axios';
 import { removeData } from '~/shared/lib/removeData';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export interface SignoutResponse {
   message: string;
@@ -15,6 +16,6 @@ export const signout = async (): Promise<SignoutResponse> => {
   } catch (error) {
     await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
 
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

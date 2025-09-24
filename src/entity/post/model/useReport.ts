@@ -93,11 +93,8 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
 
   const handleSubmit = useCallback(
     (type: string, reason: string) => {
-      const isValidKey = (type as string) in REPORT_TYPE_MAP;
-      const reportTypeValue = isValidKey
-        ? REPORT_TYPE_MAP[type as keyof typeof REPORT_TYPE_MAP]
-        : undefined;
-      if (!reportTypeValue) {
+      const reportTypeKey = type as keyof typeof REPORT_TYPE_MAP;
+      if (!reportTypeKey) {
         Toast.show({
           type: 'error',
           text1: '잘못된 신고 유형',
@@ -125,16 +122,16 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
         return;
       }
 
-      if (reportTypeValue === 'FRAUD' && productId) {
+      if (reportTypeKey === 'FRAUD' && productId) {
         reportMutation.mutate({
           reportType: 'FRAUD',
           productId,
           content: reason,
           imageIds: formState.imageIds,
         });
-      } else if (reportTypeValue !== 'FRAUD' && memberId) {
+      } else if (reportTypeKey !== 'FRAUD' && memberId) {
         reportMutation.mutate({
-          reportType: reportTypeValue as 'BAD_LANGUAGE' | 'MEMBER' | 'ETC',
+          reportType: reportTypeKey as 'BAD_LANGUAGE' | 'MEMBER' | 'ETC',
           memberId,
           content: reason,
           imageIds: formState.imageIds,
