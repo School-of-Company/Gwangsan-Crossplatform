@@ -14,12 +14,17 @@ import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
+import { createReview } from '~/entity/post/api/createReview';
+import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
+  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  const [reviewLight, setReviewLight] = useState<number>(60);
+  const [reviewContents, setReviewContents] = useState('');
 
   const {
     flatListRef,
@@ -100,6 +105,30 @@ export default function ChatRoomPage() {
     }
   }, [executeTradeRequest]);
 
+  const handleReviewSubmit = useCallback(
+    async (light: number, contents: string) => {
+      if (!roomData?.product?.id) return;
+
+      try {
+        await createReview({
+          productId: roomData.product.id,
+          content: contents,
+          light: light,
+        });
+        setIsReviewModalVisible(false);
+        setReviewLight(60);
+        setReviewContents('');
+      } catch (error) {
+        console.error('리뷰 작성 실패:', error);
+      }
+    },
+    [roomData?.product?.id]
+  );
+
+  const handleReviewButtonPress = useCallback(() => {
+    setIsReviewModalVisible(true);
+  }, []);
+
   const renderHeader = () => (
     <ChatRoomHeader
       otherUserNickname={otherUserInfo.nickname}
@@ -145,6 +174,8 @@ export default function ChatRoomPage() {
           onProfilePress={navigationHandlers.goToProfile}
           onScrollToEnd={() => scrollToEnd(true)}
           tradeEmbedConfig={tradeEmbedConfig}
+          onReviewButtonPress={handleReviewButtonPress}
+          showReviewButton={roomData?.product?.isCompleted}
         />
 
         <ChatInput
@@ -158,6 +189,20 @@ export default function ChatRoomPage() {
         onClose={() => setIsTradeRequestModalVisible(false)}
         onTradeRequest={handleTradeRequest}
         isLoading={isTradeRequestLoading}
+      />
+
+      <ReviewsModal
+        isVisible={isReviewModalVisible}
+        onClose={() => setIsReviewModalVisible(false)}
+        onSubmit={handleReviewSubmit}
+        light={reviewLight}
+        setLight={setReviewLight}
+        contents={reviewContents}
+        onContentsChange={setReviewContents}
+        onAnimationComplete={() => {
+          setReviewLight(60);
+          setReviewContents('');
+        }}
       />
     </SafeAreaView>
   );
