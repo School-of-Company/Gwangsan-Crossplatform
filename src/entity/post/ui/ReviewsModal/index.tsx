@@ -1,4 +1,4 @@
-import { useMemo, useCallback, memo } from 'react';
+import { useMemo, useCallback, memo, useState, useEffect } from 'react';
 import { View, Dimensions } from 'react-native';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
@@ -25,14 +25,34 @@ const ReviewsModal = ({
   onContentsChange,
   onAnimationComplete,
 }: ReviewsModalProps) => {
-  const isDisabled = useMemo(() => contents.trim().length === 0, [contents]);
+  const [localLight, setLocalLight] = useState(light);
+  const [localContents, setLocalContents] = useState(contents);
+  
+  useEffect(() => {
+    setLocalLight(light);
+  }, [light]);
+
+  useEffect(() => {
+    setLocalContents(contents);
+  }, [contents]);
+
+  const isDisabled = useMemo(() => localContents.trim().length === 0, [localContents]);
 
   const handleSubmit = useCallback(() => {
-    if (contents.trim()) {
-      onSubmit(light, contents.trim());
+    if (localContents.trim()) {
+      setLight(localLight);
+      onSubmit(localLight, localContents.trim());
       onClose();
     }
-  }, [contents, light, onSubmit, onClose]);
+  }, [localContents, localLight, onSubmit, onClose, setLight]);
+
+  const handleLightChange = useCallback((value: number) => {
+    setLocalLight(value);
+  }, []);
+
+  const handleContentsChange = useCallback((text: string) => {
+    setLocalContents(text);
+  }, []);
 
   const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.2, []);
 
@@ -44,12 +64,12 @@ const ReviewsModal = ({
       title="후기 작성">
       <View className="flex-1 flex-col justify-between gap-6">
         <View className="gap-8">
-          <ProgressBar value={light} onChange={setLight} />
+          <ProgressBar value={localLight} onChange={handleLightChange} />
           <TextField
             label="후기 작성"
             placeholder="거래의 후기를 입력해주세요"
-            value={contents}
-            onChangeText={onContentsChange}
+            value={localContents}
+            onChangeText={handleContentsChange}
             multiline
             style={{ maxHeight: maxTextFieldHeight }}
           />
