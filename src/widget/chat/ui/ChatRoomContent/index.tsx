@@ -22,6 +22,8 @@ interface ChatRoomContentProps {
     readonly isLoading: boolean;
     readonly requestorNickname: string;
   };
+  readonly onReviewButtonPress?: () => void;
+  readonly showReviewButton?: boolean;
 }
 
 export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
@@ -32,6 +34,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onProfilePress,
   onScrollToEnd,
   tradeEmbedConfig,
+  onReviewButtonPress,
+  showReviewButton,
 }) => {
   const getCombinedData = () => {
     const combinedData: { type: 'message' | 'trade'; data: any; timestamp: string }[] = [];
@@ -77,6 +81,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           isLoading={config.isLoading}
           requestorNickname={config.requestorNickname}
           alignment={config.showButtons ? 'left' : 'right'}
+          onReviewButtonPress={onReviewButtonPress}
+          showReviewButton={showReviewButton}
         />
       );
     }
