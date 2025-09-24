@@ -99,10 +99,9 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
             {product.title}
           </Text>
           <Text className="mb-4 text-sm text-gray-600">
-            {product.isCompleted 
-              ? '거래가 완료되었습니다' 
-              : `${requestorNickname}님께서 거래하기를 누르셨습니다`
-            }
+            {product.isCompleted
+              ? '거래가 완료되었습니다'
+              : `${requestorNickname}님께서 거래하기를 누르셨습니다`}
           </Text>
           {showReviewButton && product.isCompleted && (
             <Button

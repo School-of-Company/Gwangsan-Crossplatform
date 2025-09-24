@@ -27,7 +27,7 @@ const ReviewsModal = ({
 }: ReviewsModalProps) => {
   const [localLight, setLocalLight] = useState(light);
   const [localContents, setLocalContents] = useState(contents);
-  
+
   useEffect(() => {
     setLocalLight(light);
   }, [light]);
