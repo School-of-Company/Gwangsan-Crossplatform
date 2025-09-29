@@ -12,6 +12,8 @@ export interface TradeEmbedProps {
   readonly isLoading?: boolean;
   readonly requestorNickname?: string;
   readonly alignment?: 'left' | 'right';
+  readonly onReviewButtonPress?: () => void;
+  readonly showReviewButton?: boolean;
 }
 
 const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
@@ -23,6 +25,8 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   isLoading = false,
   requestorNickname = '상대방',
   alignment = 'left',
+  onReviewButtonPress,
+  showReviewButton = false,
 }) => {
   const [localLoading, setLocalLoading] = useState(false);
   const [isReserved, setIsReserved] = useState(false);
@@ -95,9 +99,20 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
             {product.title}
           </Text>
           <Text className="mb-4 text-sm text-gray-600">
-            {requestorNickname}님께서 거래하기를 누르셨습니다
+            {product.isCompleted
+              ? '거래가 완료되었습니다'
+              : `${requestorNickname}님께서 거래하기를 누르셨습니다`}
           </Text>
-          {showButtons && (
+          {showReviewButton && product.isCompleted && (
+            <Button
+              variant="primary"
+              onPress={onReviewButtonPress}
+              width="w-full"
+              style={{ minHeight: 40 }}>
+              <Text className="text-sm font-medium text-white">리뷰 작성하기</Text>
+            </Button>
+          )}
+          {showButtons && !product.isCompleted && (
             <>
               <View className="flex-row justify-between">
                 {isReserved ? (
