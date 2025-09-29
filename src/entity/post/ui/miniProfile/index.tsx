@@ -1,6 +1,6 @@
 import { Image, Text, View, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getLightColor } from '../../lib/handleTextColor';
+import { getLightColor } from '../../../../shared/lib/handleTextColor';
 
 interface MiniProfileProps {
   nickname: string;

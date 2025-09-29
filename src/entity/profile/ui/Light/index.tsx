@@ -20,7 +20,7 @@ export default function Light({ lightLevel = 1 }: LightProps) {
         </View>
       </View>
 
-      <Text className="ml-auto mt-1 text-sub2-300">{Math.ceil(lightLevel / 10)}단계</Text>
+      <Text className="ml-auto">{Math.ceil(lightLevel / 10)}단계</Text>
     </View>
   );
 }
