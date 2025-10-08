@@ -1,6 +1,5 @@
 import { clsx } from 'clsx';
 import { Text, View } from 'react-native';
-import { getLightColor } from '~/shared/lib/handleLightColor';
 
 interface LightProps {
   lightLevel?: number;
@@ -14,7 +13,7 @@ export default function Light({ lightLevel = 1 }: LightProps) {
       <View className="relative flex h-5 w-full justify-center rounded-xl bg-gray-200">
         <View className="absolute left-1 right-1 h-3 overflow-hidden rounded-xl">
           <View
-            className={clsx('h-full rounded-xl', getLightColor(lightLevel))}
+            className={clsx('h-full rounded-xl')}
             style={{ width: `${Math.min(Math.max(lightLevel, 0), 100)}%` }}
           />
         </View>
