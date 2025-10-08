@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 import { deletePost } from '../api/deletePost';
-import { TYPE, MODE } from '~/shared/types/postType';
+import { ProductType } from '~/shared/types/type';
+import { ModeType } from '~/shared/types/mode';
 
 interface UseDeletePostParams {
   onSuccess?: () => void;
@@ -38,12 +39,12 @@ export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
     },
   });
 
-  const getRedirectPath = useCallback((type: TYPE, mode: MODE): string => {
+  const getRedirectPath = useCallback((type: ProductType, mode: ModeType): string => {
     return `/post?type=${type}&mode=${mode}`;
   }, []);
 
   const handleDeletePost = useCallback(
-    (postId: number, type: TYPE, mode: MODE) => {
+    (postId: number, type: ProductType, mode: ModeType) => {
       deletePostMutation.mutate(postId, {
         onSuccess: () => {
           const redirectPath = getRedirectPath(type, mode);

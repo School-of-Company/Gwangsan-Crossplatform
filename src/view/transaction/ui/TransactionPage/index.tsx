@@ -10,15 +10,16 @@ import {
   LayoutChangeEvent,
 } from 'react-native';
 import { useGetPosts } from '~/shared/model/useGetPosts';
-import { MODE, TYPE } from '~/shared/types/postType';
 import { Header } from '~/shared/ui';
 import { handleCategory, returnValue } from '../../model/handleCategory';
 import { Category } from '../../model/category';
 import Post from '~/shared/ui/Post';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ModeType } from '~/shared/types/mode';
+import { ProductType } from '~/shared/types/type';
 
 export default function TransactionPageView() {
-  const { type, mode } = useLocalSearchParams<{ type: TYPE; mode?: MODE }>();
+  const { type, mode } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
 
   const getInitialCategory = (): Category => {
     if (mode) {
@@ -41,7 +42,7 @@ export default function TransactionPageView() {
   };
 
   const slideAnimation = useRef(new Animated.Value(0)).current;
-  const categories = handleCategory(type as TYPE) ?? [];
+  const categories = handleCategory(type as ProductType) ?? [];
   const selectedIndex = categories.indexOf(category);
 
   const segments = Math.max(categories.length, 1);
@@ -53,8 +54,8 @@ export default function TransactionPageView() {
   });
 
   const { data = [], refetch } = useGetPosts(
-    currentMode as MODE | undefined,
-    type as TYPE | undefined
+    currentMode as ModeType | undefined,
+    type as ProductType | undefined
   );
 
   useEffect(() => {

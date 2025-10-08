@@ -1,8 +1,10 @@
 import Toast from 'react-native-toast-message';
 import { instance } from '../lib/axios';
-import { MODE, TYPE, PostType } from '../types/postType';
+import { PostType } from '../types/postType';
+import { ProductType } from '../types/type';
+import { ModeType } from '../types/mode';
 
-export const getPosts = async (type?: TYPE, mode?: MODE): Promise<PostType[]> => {
+export const getPosts = async (type?: ProductType, mode?: ModeType): Promise<PostType[]> => {
   try {
     const params = new URLSearchParams();
     if (type) params.append('type', type);

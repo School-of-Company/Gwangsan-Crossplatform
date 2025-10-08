@@ -2,7 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createItem } from '../api/createItem';
 import { ItemFormRequestBody } from './itemFormSchema';
 import Toast from 'react-native-toast-message';
-import { MODE, PostType, TYPE } from '@/shared/types/postType';
+import { PostType } from '@/shared/types/postType';
+import { ProductType } from '~/shared/types/type';
+import { ModeType } from '~/shared/types/mode';
 
 type MutationContext = {
   previousPosts?: PostType[];
@@ -33,8 +35,8 @@ export const useCreateItem = () => {
           [
             {
               id: tempId,
-              type: newItem.type as TYPE,
-              mode: newItem.mode as MODE,
+              type: newItem.type as ProductType,
+              mode: newItem.mode as ModeType,
               title: newItem.title,
               content: newItem.content,
               gwangsan: newItem.gwangsan,

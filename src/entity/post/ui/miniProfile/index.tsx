@@ -1,6 +1,5 @@
 import { Image, Text, View, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getLightColor } from '~/shared/lib/handleLightColor';
 
 interface MiniProfileProps {
   nickname: string;
@@ -11,8 +10,6 @@ interface MiniProfileProps {
 
 export default function MiniProfile({ nickname, placeName, light, memberId }: MiniProfileProps) {
   const router = useRouter();
-  const lightText = `${light}단계`;
-  const lightColor = `text-${getLightColor(light)}`;
 
   const handleProfilePress = () => {
     router.push(`/profile?id=${memberId}`);
@@ -32,7 +29,7 @@ export default function MiniProfile({ nickname, placeName, light, memberId }: Mi
           <Text>{placeName}</Text>
         </View>
       </View>
-      <Text className={`text-body1 ${lightColor}`}>{lightText}</Text>
+      <Text className={`text-body1`}>{light + '단계'}</Text>
     </TouchableOpacity>
   );
 }
