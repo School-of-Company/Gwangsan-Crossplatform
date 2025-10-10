@@ -12,6 +12,8 @@ type SignupStep =
 
 type SigninStep = 'nickname' | 'password';
 
+type ResetPasswordStep = 'phoneNumber' | 'verification' | 'newPassword';
+
 export type SignupFormData = {
   name: string;
   nickname: string;
@@ -33,6 +35,13 @@ export type SigninFormData = {
   deviceId: string;
   osType: 'ANDROID' | 'IOS';
 } & Readonly<Record<string, string>>;
+
+export type ResetPasswordFormData = {
+  phoneNumber: string;
+  verificationCode: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+};
 
 export type AuthResponse = {
   accessToken: string;
@@ -58,5 +67,15 @@ export interface SigninState {
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: SigninStep) => void;
+  resetStore: () => void;
+}
+
+export interface ResetPasswordState {
+  currentStep: ResetPasswordStep;
+  formData: ResetPasswordFormData;
+  setField: (field: keyof ResetPasswordFormData, value: string) => void;
+  nextStep: () => void;
+  prevStep: () => void;
+  goToStep: (step: ResetPasswordStep) => void;
   resetStore: () => void;
 }
