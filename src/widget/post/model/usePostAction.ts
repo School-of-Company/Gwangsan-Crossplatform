@@ -78,7 +78,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const navigationHandlers = {
     goToEdit: useCallback(() => {
       if (id) {
-        router.push(`/post/${id}/edit`);
+        router.push(`/write?id=$${id}`);
       }
     }, [id, router]),
     goToChat: useCallback(async () => {
