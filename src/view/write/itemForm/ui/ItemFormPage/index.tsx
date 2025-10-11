@@ -143,7 +143,7 @@ const ItemFormPage = () => {
     );
   }
 
-  if (error || !postData) {
+  if (id && (error || !postData)) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
         <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
