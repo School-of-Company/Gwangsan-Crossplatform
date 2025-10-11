@@ -1,5 +1,12 @@
-import { useState, useCallback } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { useState, useCallback, useEffect } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { Header } from '@/shared/ui';
 import {
   ItemFormProgressBar,
@@ -8,11 +15,13 @@ import {
 } from '~/entity/write/itemForm';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/write/itemForm';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 import Toast from 'react-native-toast-message';
 import { ProductType } from '~/widget/write/model/type';
 import { ModeType } from '~/widget/write/model/mode';
+import { useEditPost } from '~/entity/post/model/useEditPost';
+import { useGetItem } from '~/entity/post';
 
 const ItemFormPage = () => {
   const [step, setStep] = useState(1);
@@ -27,8 +36,30 @@ const ItemFormPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createItemMutation = useCreateItem();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: postData, isLoading, error } = useGetItem(id);
+  const editPostMutation = useEditPost();
+
+  useEffect(() => {
+    if (postData) {
+      setType(postData.type as ProductType);
+      setMode(postData.mode as ModeType);
+      setTitle(postData.title);
+      setContent(postData.content);
+      setGwangsan(postData.gwangsan.toString());
+
+      if (postData.images && postData.images.length > 0) {
+        const imageUrls = postData.images.map((img) => img.imageUrl);
+        const existingImageIds = postData.images.map((img) => img.imageId);
+        setImages(imageUrls);
+        setImageIds(existingImageIds);
+      }
+    }
+  }, [postData]);
 
   const isStep1Valid =
+    mode.trim().length > 0 &&
+    type.trim().length > 0 &&
     title.trim().length > 0 &&
     content.trim().length > 0 &&
     !imageUploadState?.hasUploadingImages &&
@@ -87,7 +118,12 @@ const ItemFormPage = () => {
         imageIds,
       });
 
-      await createItemMutation.mutateAsync(requestBody);
+      if (id) {
+        const editPayload = { ...requestBody, imageIds: requestBody.imageIds ?? [] };
+        await editPostMutation.mutateAsync({ data: editPayload, id });
+      } else {
+        await createItemMutation.mutateAsync(requestBody);
+      }
 
       router.replace({
         pathname: '/main',
@@ -98,6 +134,22 @@ const ItemFormPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <ActivityIndicator size="large" color="#8FC31D" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !postData) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
