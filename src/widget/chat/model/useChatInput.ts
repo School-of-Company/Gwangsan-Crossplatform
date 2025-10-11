@@ -44,7 +44,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
   const selectImage = useCallback(async (): Promise<ImagePicker.ImagePickerAsset | null> => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: false,
         quality: 0.8,
         allowsEditing: true,
