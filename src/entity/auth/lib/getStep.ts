@@ -12,7 +12,7 @@ type SignupStep =
 
 type SigninStep = 'nickname' | 'password';
 
-type ResetPasswordStep = 'phoneNumber' | 'verification' | 'newPassword';
+type ResetPasswordStep = 'phoneNumber' | 'newPassword';
 
 const SIGNUP_STEPS: readonly SignupStep[] = [
   'name',
@@ -31,7 +31,6 @@ const SIGNIN_STEPS: readonly SigninStep[] = ['nickname', 'password'] as const;
 
 const RESET_PASSWORD_STEPS: readonly ResetPasswordStep[] = [
   'phoneNumber',
-  'verification', 
   'newPassword',
 ] as const;
 

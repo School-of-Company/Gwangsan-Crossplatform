@@ -12,7 +12,7 @@ type SignupStep =
 
 type SigninStep = 'nickname' | 'password';
 
-type ResetPasswordStep = 'phoneNumber' | 'verification' | 'newPassword';
+type ResetPasswordStep = 'phoneNumber' | 'newPassword';
 
 export type SignupFormData = {
   name: string;

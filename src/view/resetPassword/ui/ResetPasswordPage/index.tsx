@@ -1,11 +1,10 @@
 import { memo } from 'react';
 import { useResetPasswordCurrentStep } from '~/entity/auth/model/useAuthSelectors';
-import { PhoneStep, VerificationStep, NewPasswordStep } from '@/widget/resetPassword';
+import { PhoneStep, NewPasswordStep } from '@/widget/resetPassword';
 import type { ResetPasswordState } from '~/entity/auth/model/authState';
 
 const STEP_COMPONENTS: Record<ResetPasswordState['currentStep'], React.ComponentType> = {
   phoneNumber: PhoneStep,
-  verification: VerificationStep,
   newPassword: NewPasswordStep,
 } as const;
 
