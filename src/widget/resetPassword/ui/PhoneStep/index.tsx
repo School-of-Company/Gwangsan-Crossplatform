@@ -5,13 +5,19 @@ import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
 import { useResetPasswordFormField, useResetPasswordStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { Text, View } from 'react-native';
 import { useResetPasswordPhoneVerification } from '~/entity/auth/model/useResetPasswordPhoneVerification';
+import { router } from 'expo-router';
 
 export default function PhoneStep() {
   const { value: initialPhoneNumber, updateField: updatePhoneNumber } =
     useResetPasswordFormField('phoneNumber');
   const { value: initialVerificationCode, updateField: updateVerificationCode } =
     useResetPasswordFormField('verificationCode');
-  const { nextStep } = useResetPasswordStepNavigation();
+  const { nextStep, resetStore } = useResetPasswordStepNavigation();
+
+  const handleBack = () => {
+    resetStore();
+    router.replace('/onboarding');
+  };
 
   const handleVerificationSuccess = (phoneNumber: string, verificationCode: string) => {
     updatePhoneNumber(phoneNumber);
@@ -45,6 +51,7 @@ export default function PhoneStep() {
       title="비밀번호 재설정"
       description="가입 시 등록한 전화번호를 입력해주세요"
       onNext={verifyCode}
+      onBack={handleBack}
       isNextDisabled={!isVerificationComplete}>
       <View>
         <View className="flex-row items-end gap-2">
