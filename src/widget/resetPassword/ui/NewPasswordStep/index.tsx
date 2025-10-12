@@ -10,7 +10,7 @@ import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authS
 import { View, TextInput, Alert } from 'react-native';
 import { ZodError } from 'zod';
 import { resetPassword } from '~/entity/auth/api/resetPassword';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 
 export default function NewPasswordStep() {
   const { value: phoneNumber } = useResetPasswordFormField('phoneNumber');
@@ -19,7 +19,6 @@ export default function NewPasswordStep() {
   const { value: newPasswordConfirm, updateField: updateNewPasswordConfirm } =
     useResetPasswordFormField('newPasswordConfirm');
   const { resetStore } = useResetPasswordStepNavigation();
-  const navigation = useNavigation();
   const [localPassword, setLocalPassword] = useState<string>((newPassword as string) || '');
   const [localPasswordConfirm, setLocalPasswordConfirm] = useState<string>(
     (newPasswordConfirm as string) || ''
@@ -93,7 +92,7 @@ export default function NewPasswordStep() {
             text: '확인',
             onPress: () => {
               resetStore();
-              navigation.navigate('signin' as never);
+              router.replace('/signin');
             },
           },
         ]
@@ -115,7 +114,6 @@ export default function NewPasswordStep() {
     updateNewPassword,
     updateNewPasswordConfirm,
     resetStore,
-    navigation,
   ]);
 
   const handleConfirmSubmit = useCallback(() => {
