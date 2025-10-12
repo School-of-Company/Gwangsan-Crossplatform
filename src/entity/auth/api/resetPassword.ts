@@ -16,5 +16,15 @@ export const resetPassword = async (request: ResetPasswordRequest): Promise<Resp
     throw new Error(response.status.toString());
   }
 
-  return response.json();
+  const responseText = await response.text();
+
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    console.warn(responseText);
+    data = {};
+  }
+
+  return data;
 };

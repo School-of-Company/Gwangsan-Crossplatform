@@ -14,9 +14,19 @@ export const verifyPasswordResetSms = async (
     body: JSON.stringify(request),
   });
 
+  const responseText = await response.text();
+
   if (!response.ok) {
     throw new Error(response.status.toString());
   }
 
-  return response.json();
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    console.warn(responseText);
+    data = {};
+  }
+
+  return data;
 };
