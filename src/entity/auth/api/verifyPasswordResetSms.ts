@@ -1,4 +1,3 @@
-
 export interface VerifyPasswordResetSmsRequest {
   phoneNumber: string;
   code: string;

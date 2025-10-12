@@ -26,10 +26,10 @@ export function useStepNavigation<TState extends SignupState | SigninState | Res
   );
 }
 
-export function useFormField<TState extends SignupState | SigninState | ResetPasswordState, K extends string>(
-  fieldName: K,
-  useStore: (selector: (state: TState) => unknown) => unknown
-) {
+export function useFormField<
+  TState extends SignupState | SigninState | ResetPasswordState,
+  K extends string,
+>(fieldName: K, useStore: (selector: (state: TState) => unknown) => unknown) {
   const value = useStore((state: TState) => (state.formData as any)[fieldName]);
   const setField = useStore((state: TState) => state.setField) as (
     field: string,
@@ -48,11 +48,13 @@ export function useFormField<TState extends SignupState | SigninState | ResetPas
 
 export const useSignupCurrentStep = () => useCurrentStep<SignupState>(useSignupStore);
 export const useSigninCurrentStep = () => useCurrentStep<SigninState>(useSigninStore);
-export const useResetPasswordCurrentStep = () => useCurrentStep<ResetPasswordState>(useResetPasswordStore);
+export const useResetPasswordCurrentStep = () =>
+  useCurrentStep<ResetPasswordState>(useResetPasswordStore);
 
 export const useSignupStepNavigation = () => useStepNavigation<SignupState>(useSignupStore);
 export const useSigninStepNavigation = () => useStepNavigation<SigninState>(useSigninStore);
-export const useResetPasswordStepNavigation = () => useStepNavigation<ResetPasswordState>(useResetPasswordStore);
+export const useResetPasswordStepNavigation = () =>
+  useStepNavigation<ResetPasswordState>(useResetPasswordStore);
 
 export const useSignupFormField = <K extends keyof SignupState['formData']>(fieldName: K) =>
   useFormField<SignupState, K>(fieldName, useSignupStore);
@@ -60,5 +62,6 @@ export const useSignupFormField = <K extends keyof SignupState['formData']>(fiel
 export const useSigninFormField = <K extends keyof SigninState['formData']>(fieldName: K) =>
   useFormField<SigninState, K>(fieldName, useSigninStore);
 
-export const useResetPasswordFormField = <K extends keyof ResetPasswordState['formData']>(fieldName: K) =>
-  useFormField<ResetPasswordState, K>(fieldName, useResetPasswordStore);
+export const useResetPasswordFormField = <K extends keyof ResetPasswordState['formData']>(
+  fieldName: K
+) => useFormField<ResetPasswordState, K>(fieldName, useResetPasswordStore);

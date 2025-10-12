@@ -2,7 +2,10 @@ import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
-import { useResetPasswordFormField, useResetPasswordStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import {
+  useResetPasswordFormField,
+  useResetPasswordStepNavigation,
+} from '~/entity/auth/model/useAuthSelectors';
 import { Text, View } from 'react-native';
 import { useResetPasswordPhoneVerification } from '~/entity/auth/model/useResetPasswordPhoneVerification';
 import { router } from 'expo-router';

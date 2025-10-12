@@ -2,7 +2,10 @@ import { useState, useRef, useCallback } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
-import { useResetPasswordFormField, useResetPasswordStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import {
+  useResetPasswordFormField,
+  useResetPasswordStepNavigation,
+} from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
 import { View, TextInput, Alert } from 'react-native';
 import { ZodError } from 'zod';
@@ -17,23 +20,31 @@ export default function NewPasswordStep() {
     useResetPasswordFormField('newPasswordConfirm');
   const { resetStore } = useResetPasswordStepNavigation();
   const navigation = useNavigation();
-  const [localPassword, setLocalPassword] = useState<string>(newPassword as string || '');
-  const [localPasswordConfirm, setLocalPasswordConfirm] = useState<string>(newPasswordConfirm as string || '');
+  const [localPassword, setLocalPassword] = useState<string>((newPassword as string) || '');
+  const [localPasswordConfirm, setLocalPasswordConfirm] = useState<string>(
+    (newPasswordConfirm as string) || ''
+  );
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const passwordConfirmRef = useRef<TextInput>(null);
 
-  const handlePasswordChange = useCallback((text: string) => {
-    setLocalPassword(text);
-    if (passwordError) setPasswordError(null);
-  }, [passwordError]);
+  const handlePasswordChange = useCallback(
+    (text: string) => {
+      setLocalPassword(text);
+      if (passwordError) setPasswordError(null);
+    },
+    [passwordError]
+  );
 
-  const handleConfirmChange = useCallback((text: string) => {
-    setLocalPasswordConfirm(text);
-    if (confirmError) setConfirmError(null);
-  }, [confirmError]);
+  const handleConfirmChange = useCallback(
+    (text: string) => {
+      setLocalPasswordConfirm(text);
+      if (confirmError) setConfirmError(null);
+    },
+    [confirmError]
+  );
 
   const handlePasswordSubmit = useCallback(() => {
     passwordConfirmRef.current?.focus();
@@ -90,12 +101,22 @@ export default function NewPasswordStep() {
     } catch (error) {
       Alert.alert(
         '비밀번호 재설정 실패',
-        error instanceof Error ? error.message : '비밀번호 재설정에 실패했습니다. 다시 시도해주세요.'
+        error instanceof Error
+          ? error.message
+          : '비밀번호 재설정에 실패했습니다. 다시 시도해주세요.'
       );
     } finally {
       setIsLoading(false);
     }
-  }, [localPassword, localPasswordConfirm, phoneNumber, updateNewPassword, updateNewPasswordConfirm, resetStore, navigation]);
+  }, [
+    localPassword,
+    localPasswordConfirm,
+    phoneNumber,
+    updateNewPassword,
+    updateNewPasswordConfirm,
+    resetStore,
+    navigation,
+  ]);
 
   const handleConfirmSubmit = useCallback(() => {
     if (localPassword.trim() !== '' && localPasswordConfirm.trim() !== '') {
@@ -103,10 +124,7 @@ export default function NewPasswordStep() {
     }
   }, [localPassword, localPasswordConfirm, validateAndResetPassword]);
 
-  const isNextDisabled = 
-    !localPassword.trim() || 
-    !localPasswordConfirm.trim() || 
-    isLoading;
+  const isNextDisabled = !localPassword.trim() || !localPasswordConfirm.trim() || isLoading;
 
   return (
     <ResetPasswordForm

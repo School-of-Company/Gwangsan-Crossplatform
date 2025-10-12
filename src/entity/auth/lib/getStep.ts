@@ -29,10 +29,7 @@ const SIGNUP_STEPS: readonly SignupStep[] = [
 
 const SIGNIN_STEPS: readonly SigninStep[] = ['nickname', 'password'] as const;
 
-const RESET_PASSWORD_STEPS: readonly ResetPasswordStep[] = [
-  'phoneNumber',
-  'newPassword',
-] as const;
+const RESET_PASSWORD_STEPS: readonly ResetPasswordStep[] = ['phoneNumber', 'newPassword'] as const;
 
 const getStepIndexInternal = <T extends string>(step: T, steps: readonly T[]): number => {
   return steps.indexOf(step);

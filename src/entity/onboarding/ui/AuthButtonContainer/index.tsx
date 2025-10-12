@@ -9,7 +9,9 @@ const AuthButtonContainer = () => {
       <Button variant="secondary" onPress={() => router.push('/signup')}>
         회원가입
       </Button>
-      <Text className="text-sm text-center text-gray-500 underline" onPress={() => router.push('/resetPassword')}>
+      <Text
+        className="text-center text-sm text-gray-500 underline"
+        onPress={() => router.push('/resetPassword')}>
         비밀번호 변경하기{' '}
       </Text>
     </View>
