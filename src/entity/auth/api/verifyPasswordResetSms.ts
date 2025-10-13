@@ -1,3 +1,5 @@
+import { API_URL } from "@env";
+
 export interface VerifyPasswordResetSmsRequest {
   phoneNumber: string;
   code: string;
@@ -6,7 +8,7 @@ export interface VerifyPasswordResetSmsRequest {
 export const verifyPasswordResetSms = async (
   request: VerifyPasswordResetSmsRequest
 ): Promise<Response> => {
-  const response = await fetch('/sms/password/verify', {
+  const response = await fetch(`${API_URL}/sms/password/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
