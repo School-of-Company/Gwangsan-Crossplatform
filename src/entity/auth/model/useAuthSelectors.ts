@@ -1,15 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import { useSignupStore } from '@/shared/store/useSignupStore';
 import { useSigninStore } from '@/shared/store/useSigninStore';
-import type { SignupState, SigninState } from './authState';
+import { useResetPasswordStore } from '@/shared/store/useResetPasswordStore';
+import type { SignupState, SigninState, ResetPasswordState } from './authState';
 
-export function useCurrentStep<TState extends SignupState | SigninState>(
+export function useCurrentStep<TState extends SignupState | SigninState | ResetPasswordState>(
   useStore: (selector: (state: TState) => TState['currentStep']) => TState['currentStep']
 ): TState['currentStep'] {
   return useStore((state) => state.currentStep);
 }
 
-export function useStepNavigation<TState extends SignupState | SigninState>(
+export function useStepNavigation<TState extends SignupState | SigninState | ResetPasswordState>(
   useStore: (selector: (state: TState) => unknown) => unknown
 ) {
   const nextStep = useStore((state: TState) => state.nextStep) as () => void;
@@ -25,10 +26,10 @@ export function useStepNavigation<TState extends SignupState | SigninState>(
   );
 }
 
-export function useFormField<TState extends SignupState | SigninState, K extends string>(
-  fieldName: K,
-  useStore: (selector: (state: TState) => unknown) => unknown
-) {
+export function useFormField<
+  TState extends SignupState | SigninState | ResetPasswordState,
+  K extends string,
+>(fieldName: K, useStore: (selector: (state: TState) => unknown) => unknown) {
   const value = useStore((state: TState) => (state.formData as any)[fieldName]);
   const setField = useStore((state: TState) => state.setField) as (
     field: string,
@@ -47,12 +48,20 @@ export function useFormField<TState extends SignupState | SigninState, K extends
 
 export const useSignupCurrentStep = () => useCurrentStep<SignupState>(useSignupStore);
 export const useSigninCurrentStep = () => useCurrentStep<SigninState>(useSigninStore);
+export const useResetPasswordCurrentStep = () =>
+  useCurrentStep<ResetPasswordState>(useResetPasswordStore);
 
 export const useSignupStepNavigation = () => useStepNavigation<SignupState>(useSignupStore);
 export const useSigninStepNavigation = () => useStepNavigation<SigninState>(useSigninStore);
+export const useResetPasswordStepNavigation = () =>
+  useStepNavigation<ResetPasswordState>(useResetPasswordStore);
 
 export const useSignupFormField = <K extends keyof SignupState['formData']>(fieldName: K) =>
   useFormField<SignupState, K>(fieldName, useSignupStore);
 
 export const useSigninFormField = <K extends keyof SigninState['formData']>(fieldName: K) =>
   useFormField<SigninState, K>(fieldName, useSigninStore);
+
+export const useResetPasswordFormField = <K extends keyof ResetPasswordState['formData']>(
+  fieldName: K
+) => useFormField<ResetPasswordState, K>(fieldName, useResetPasswordStore);

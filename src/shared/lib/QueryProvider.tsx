@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { setQueryClientInstance } from './axios';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +19,10 @@ interface QueryProviderProps {
 }
 
 export default function QueryProvider({ children }: QueryProviderProps) {
+  useEffect(() => {
+    setQueryClientInstance(queryClient);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}
