@@ -19,12 +19,9 @@ export const useChatNavigation = ({
   const router = useRouter();
 
   const navigationHandlers = {
-    goToProfile: useCallback(
-      (userId: number) => {
-        router.push(`/profile?id=${userId}`);
-      },
-      [router]
-    ),
+    goToProfile: useCallback(() => {
+      router.push('/profile');
+    }, [router]),
 
     goToOtherUserProfile: useCallback(() => {
       if (otherUserInfo.id) {
