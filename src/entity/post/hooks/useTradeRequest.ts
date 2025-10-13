@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '../api/requestTrade';
-import { useChatNavigation } from '~/shared/lib/useChatNavigation';
+import { useChatNavigation } from '~/shared/lib/useChatEntry';
 
 interface UseTradeRequestOptions {
   readonly productId: number;

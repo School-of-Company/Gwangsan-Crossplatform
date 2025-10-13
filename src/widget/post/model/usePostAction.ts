@@ -6,7 +6,7 @@ import { createReview } from '~/entity/post/api/createReview';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { useChatNavigation } from '~/shared/lib/useChatNavigation';
+import { useChatNavigation } from '~/shared/lib/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
 
 interface UsePostPageLogicParams {

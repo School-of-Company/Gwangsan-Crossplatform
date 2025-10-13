@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
-import { useChatNavigation } from '~/widget/chat/model/useChatNavigation';
+import { useChatNavigation } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
