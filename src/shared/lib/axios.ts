@@ -65,11 +65,11 @@ instance.interceptors.response.use(
         } catch (error) {
           removeData('accessToken');
           removeData('refreshToken');
-          
+
           if (queryClientInstance) {
             queryClientInstance.clear();
           }
-          
+
           try {
             router.replace('/signin');
           } catch (routerError) {
