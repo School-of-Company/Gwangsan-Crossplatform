@@ -64,7 +64,7 @@ const ItemFormPage = () => {
     content.trim().length > 0 &&
     !imageUploadState?.hasUploadingImages &&
     !imageUploadState?.hasFailedImages;
-  const isStep2Valid = 
+  const isStep2Valid =
     gwangsan.trim().length > 0 &&
     !imageUploadState?.hasUploadingImages &&
     !imageUploadState?.hasFailedImages;
