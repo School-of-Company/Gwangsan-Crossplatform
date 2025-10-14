@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
 
-interface UseChatNavigationParams {
+interface UpdateProfileRequestseChatActionParams {
   readonly otherUserInfo: { nickname: string; id?: number };
 }
 
-interface UseChatNavigationReturn {
+interface UseChatActionReturn {
   readonly navigationHandlers: {
     readonly goToProfile: (userId: number) => void;
     readonly goToOtherUserProfile: () => void;
@@ -13,9 +13,9 @@ interface UseChatNavigationReturn {
   readonly formatLastMessageDate: (messages: any[]) => string;
 }
 
-export const useChatNavigation = ({
+export const useChatAction = ({
   otherUserInfo,
-}: UseChatNavigationParams): UseChatNavigationReturn => {
+}: UpdateProfileRequestseChatActionParams): UseChatActionReturn => {
   const router = useRouter();
 
   const navigationHandlers = {
