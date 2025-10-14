@@ -64,7 +64,10 @@ const ItemFormPage = () => {
     content.trim().length > 0 &&
     !imageUploadState?.hasUploadingImages &&
     !imageUploadState?.hasFailedImages;
-  const isStep2Valid = gwangsan.trim().length > 0;
+  const isStep2Valid = 
+    gwangsan.trim().length > 0 &&
+    !imageUploadState?.hasUploadingImages &&
+    !imageUploadState?.hasFailedImages;
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
