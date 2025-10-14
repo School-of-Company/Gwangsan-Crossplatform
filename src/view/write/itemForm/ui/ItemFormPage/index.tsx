@@ -61,13 +61,17 @@ const ItemFormPage = () => {
     mode.trim().length > 0 &&
     type.trim().length > 0 &&
     title.trim().length > 0 &&
-    content.trim().length > 0 &&
-    !imageUploadState?.hasUploadingImages &&
-    !imageUploadState?.hasFailedImages;
+    content.trim().length > 0;
+
+  const mustHaveImage = type === 'OBJECT' && mode === 'GIVER';
+
+  const imagesReady =
+    !imageUploadState ||
+    (!imageUploadState.hasUploadingImages && !imageUploadState.hasFailedImages);
+  const hasAtLeastOneImage = (images?.length ?? 0) > 0 || (imageIds?.length ?? 0) > 0;
+
   const isStep2Valid =
-    gwangsan.trim().length > 0 &&
-    !imageUploadState?.hasUploadingImages &&
-    !imageUploadState?.hasFailedImages;
+    gwangsan.trim().length > 0 && (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
