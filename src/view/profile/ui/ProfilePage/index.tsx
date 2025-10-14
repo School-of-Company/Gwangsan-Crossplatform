@@ -16,11 +16,16 @@ import { useGetMyPosts } from '../../model/useGetMyPosts';
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { data: profileData, error: profileError, isError: profileIsError } = useGetProfile(id);
+  const {
+    data: profileData,
+    error: profileError,
+    isError: profileIsError,
+    refetch: refetchProfile,
+  } = useGetProfile(id);
 
   const isMe = !Boolean(id);
 
-  const { data: myProfileData } = useGetMyProfile(isMe);
+  const { data: myProfileData, refetch: refetchMyProfile } = useGetMyProfile(isMe);
 
   const {
     data: myPostsData,
@@ -46,7 +51,7 @@ export default function ProfilePageView() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await refetchPosts();
+      await Promise.all([refetchPosts(), isMe ? refetchMyProfile() : refetchProfile()]);
     } finally {
       setRefreshing(false);
     }
