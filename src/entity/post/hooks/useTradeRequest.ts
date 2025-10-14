@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '../api/requestTrade';
-import { useChatNavigation } from '~/shared/lib/useChatEntry';
+import { useChatEntry } from '~/shared/lib/useChatEntry';
 
 interface UseTradeRequestOptions {
   readonly productId: number;
@@ -19,7 +19,7 @@ export const useTradeRequest = ({
   sellerId,
 }: UseTradeRequestOptions): UseTradeRequestReturn => {
   const [isLoading, setIsLoading] = useState(false);
-  const { navigateToChat } = useChatNavigation();
+  const { navigateToChat } = useChatEntry();
   const router = useRouter();
 
   const handleTradeRequest = useCallback(async () => {

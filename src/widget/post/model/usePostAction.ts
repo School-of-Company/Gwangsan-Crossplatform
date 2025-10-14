@@ -6,7 +6,7 @@ import { createReview } from '~/entity/post/api/createReview';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { useChatNavigation } from '~/shared/lib/useChatEntry';
+import { useChatEntry } from '~/shared/lib/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
 
 interface UsePostPageLogicParams {
@@ -18,7 +18,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const router = useRouter();
   const { data, isLoading, error, refetch } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
-  const { navigateToChat, isLoading: isChatLoading } = useChatNavigation();
+  const { navigateToChat, isLoading: isChatLoading } = useChatEntry();
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
