@@ -19,7 +19,11 @@ export default function MainPageView() {
       <Header />
       <ScrollView className="flex-1">
         <MainSlideViewer />
-        <Inform dong={data?.dongName} place={data?.placeName} />
+        <Inform
+          head={data?.headName ?? '본점'}
+          dong={data?.dongName ?? '동'}
+          place={data?.placeName ?? '지점'}
+        />
       </ScrollView>
       <Footer />
     </SafeAreaView>
