@@ -123,7 +123,14 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   }, [data]);
 
   const computedValues = {
-    headerTitle: data?.mode === 'RECEIVER' ? '해주세요' : '해드립니다',
+    headerTitle:
+      data?.mode === 'RECEIVER'
+        ? data.type === 'OBJECT'
+          ? '필요해요'
+          : '해주세요'
+        : data?.type === 'OBJECT'
+          ? '팔아요'
+          : '할 수 있어요',
     canTrade: data?.mode === 'RECEIVER' && data?.isCompletable && !data?.isCompleted,
     isTradeButtonDisabled: tradeRequest.isLoading || data?.isCompleted || !data?.isCompletable,
     tradeButtonText: tradeRequest.isLoading
