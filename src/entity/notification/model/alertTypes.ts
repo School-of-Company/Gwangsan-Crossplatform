@@ -8,15 +8,20 @@ export enum AlertType {
   REVIEW = 'REVIEW',
 }
 
-export interface Alert {
-  id: number;
-  title: string;
-  content: string;
-  alert_type: AlertType;
-  imageIds: number[];
-  createdAt: string;
+export interface AlertImage {
+  imageId: number;
+  imageUrl: string;
 }
 
-export interface AlertListResponse {
-  alert: Alert[];
+export interface Alert {
+  id?: number;
+  title: string;
+  content: string;
+  alertType: AlertType;
+  createdAt: string;
+  images: AlertImage[];
+  sendMemberId: number;
+  sourceId: number;
 }
+
+export type AlertListResponse = Alert[];
