@@ -6,8 +6,11 @@ export enum AlertType {
   OTHER_MEMBER_TRADE_COMPLETE = 'OTHER_MEMBER_TRADE_COMPLETE',
   RECOMMENDER = 'RECOMMENDER',
   REVIEW = 'REVIEW',
+  TRADE_CANCEL = 'TRADE_CANCEL',
+  TRADE_CANCEL_REJECT = 'TRADE_CANCEL_REJECT',
+  REPORT = 'REPORT',
+  REPORT_REJECT = 'REPORT_REJECT',
 }
-
 export interface AlertImage {
   imageId: number;
   imageUrl: string;
