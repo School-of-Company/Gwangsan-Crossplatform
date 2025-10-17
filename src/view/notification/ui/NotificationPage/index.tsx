@@ -54,7 +54,7 @@ const NotificationPage = () => {
             id={alert.id ?? index}
             title={alert.title}
             content={alert.content}
-            alertType={alert.alertType}            
+            alertType={alert.alertType}
             createdAt={alert.createdAt}
             sendMemberId={alert.sendMemberId}
             sourceId={alert.sourceId}
