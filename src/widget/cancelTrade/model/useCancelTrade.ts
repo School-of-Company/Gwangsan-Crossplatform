@@ -114,6 +114,7 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
   );
 
   return {
+    reason: formState.reason,
     setReason: setReason,
     imageIds: formState.imageIds,
     setImageIds,
