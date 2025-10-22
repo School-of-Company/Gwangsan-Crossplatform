@@ -5,7 +5,7 @@ import { cancelTrade } from '../api/cancelTrade';
 import Toast from 'react-native-toast-message';
 
 interface useCancelTradeProps {
-  productId?: string;
+  productId?: number;
   onSuccess?: () => void;
 }
 
@@ -22,7 +22,7 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
   });
 
   const cancelTradeMutation = useMutation({
-    mutationFn: (data: { reason: string; imageIds: number[]; productId: string }) =>
+    mutationFn: (data: { reason: string; imageIds: number[]; productId: number }) =>
       cancelTrade(data.reason, data.imageIds, data.productId),
     onSuccess: () => {
       Toast.show({
