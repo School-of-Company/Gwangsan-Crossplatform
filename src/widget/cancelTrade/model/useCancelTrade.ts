@@ -50,8 +50,8 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
     });
   }, []);
 
-  const setReason = useCallback((contents: string) => {
-    setFormState((prev) => ({ ...prev, contents }));
+  const setReason = useCallback((value: string) => {
+    setFormState((prev) => ({ ...prev, reason: value }));
   }, []);
 
   const setImageIds = useCallback((imageIds: number[]) => {
