@@ -5,10 +5,16 @@ import { Button, Header } from '~/shared/ui';
 import { useGetReview } from '../../model/useGetReview';
 import { getLightColor } from '~/shared/lib/handleLightColor';
 import { clsx } from 'clsx';
+import CancelTradeBottomSheet from '~/widget/cancelTrade/ui/CancelTradeBottomSheet';
+import { useState, useCallback } from 'react';
 
 export default function CancelTradeView() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { data } = useGetReview(id ?? '');
+  const [showCancelTradeModal, setShowCancelTradeModal] = useState(false);
+  const handleToggleCancelTradeModal = useCallback(() => {
+    setShowCancelTradeModal((prev) => !prev);
+  }, []);
 
   const imageUris = (data?.imageUrls ?? [])
     .map((u: any) => (typeof u === 'string' ? u : (u?.url ?? u?.uri)))
@@ -41,7 +47,14 @@ export default function CancelTradeView() {
             </View>
           </View>
         </View>
-        <Button variant="error">철회하기</Button>
+        <Button variant="error" onPress={handleToggleCancelTradeModal}>
+          철회하기
+        </Button>
+        <CancelTradeBottomSheet
+          productId={data?.review_id}
+          isVisible={showCancelTradeModal}
+          onClose={handleToggleCancelTradeModal}
+        />
       </View>
     </SafeAreaView>
   );
