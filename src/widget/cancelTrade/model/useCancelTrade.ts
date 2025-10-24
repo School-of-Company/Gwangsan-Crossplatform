@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ImageUploadState } from '~/shared/ui/ImageUploader';
 import { cancelTrade } from '../api/cancelTrade';
 import Toast from 'react-native-toast-message';
+import { produce } from 'immer';
 
 interface useCancelTradeProps {
   productId?: number;
@@ -51,15 +52,27 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
   }, []);
 
   const setReason = useCallback((value: string) => {
-    setFormState((prev) => ({ ...prev, reason: value }));
+    setFormState((prev) =>
+      produce(prev, (draft) => {
+        draft.reason = value;
+      })
+    );
   }, []);
 
-  const setImageIds = useCallback((imageIds: number[]) => {
-    setFormState((prev) => ({ ...prev, imageIds }));
+  const setImageIds = useCallback((value: number[]) => {
+    setFormState((prev) =>
+      produce(prev, (draft) => {
+        draft.imageIds = value;
+      })
+    );
   }, []);
 
-  const setImageUploadState = useCallback((imageUploadState: ImageUploadState) => {
-    setFormState((prev) => ({ ...prev, imageUploadState }));
+  const setImageUploadState = useCallback((value: ImageUploadState) => {
+    setFormState((prev) =>
+      produce(prev, (draft) => {
+        draft.imageUploadState = value;
+      })
+    );
   }, []);
 
   const canSubmit = useMemo(() => {
