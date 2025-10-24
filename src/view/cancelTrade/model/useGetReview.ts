@@ -11,7 +11,7 @@ interface ResponseData {
 }
 export const useGetReview = (id: string) => {
   return useQuery<ResponseData>({
-    queryKey: ['review'],
+    queryKey: ['review', id],
     queryFn: () => getReview(id),
     enabled: !!id,
   });
