@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { PostType } from '~/shared/types/postType';
 
 export default function Post({ id, title, gwangsan, imageUrls = [], images = [] }: PostType) {
@@ -27,6 +28,13 @@ export default function Post({ id, title, gwangsan, imageUrls = [], images = [] 
         ? images.length
         : 0) - 1;
   const isTemporary = id < 0;
+
+  useEffect(() => {
+    if (firstImage) {
+      ExpoImage.prefetch(firstImage);
+    }
+  }, [firstImage]);
+
   return (
     <TouchableOpacity
       onPress={handlePress}
@@ -34,9 +42,14 @@ export default function Post({ id, title, gwangsan, imageUrls = [], images = [] 
       activeOpacity={isTemporary ? 1 : 0.7}
       disabled={isTemporary}>
       <View className="relative">
-        <Image
+        <ExpoImage
           source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
           className={`size-20 rounded-lg ${isTemporary ? 'opacity-70' : ''}`}
+          style={{ width: 80, height: 80, borderRadius: 12 }}
+          cachePolicy="memory"
+          contentFit="cover"
+          recyclingKey={firstImage ?? 'placeholder'}
+          transition={200}
         />
         {additionalImagesCount > 0 && (
           <View className="absolute bottom-1 right-1 rounded-md bg-black/50 px-2 py-1">
