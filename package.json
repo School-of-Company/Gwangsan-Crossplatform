@@ -22,6 +22,7 @@
     "expo-constants": "~18.0.9",
     "expo-dev-client": "~6.0.15",
     "expo-device": "~8.0.9",
+    "expo-image": "~3.0.10",
     "expo-image-picker": "~17.0.8",
     "expo-linking": "~8.0.8",
     "expo-notifications": "~0.32.12",
