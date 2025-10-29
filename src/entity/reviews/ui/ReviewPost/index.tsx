@@ -12,7 +12,7 @@ interface ReviewPostProps {
 export default function ReviewPost({ review }: ReviewPostProps) {
   const R = useRouter();
   const handleClick = useCallback(() => {
-    R.push('/post/' + review.productId);
+    R.push('/cancelTrade/' + review.productId);
   }, [R, review]);
   return (
     <TouchableOpacity

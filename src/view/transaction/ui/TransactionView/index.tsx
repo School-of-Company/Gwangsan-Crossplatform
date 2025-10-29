@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModeType } from '~/shared/types/mode';
 import { ProductType } from '~/shared/types/type';
 
-export default function TransactionPageView() {
+export default function TransactionView() {
   const { type, mode } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
 
   const getInitialCategory = (): Category => {
