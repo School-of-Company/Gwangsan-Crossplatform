@@ -8,7 +8,7 @@ export const MESSAGE_STATUS = {
   FAILED: 'failed',
 } as const;
 
-export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
+export type MessageStatus = (typeof MESSAGE_STATUS)[keyof typeof MESSAGE_STATUS];
 
 export interface PendingMessage {
   tempId: string;
@@ -23,7 +23,9 @@ export interface PendingMessage {
 
 interface ChatQueueState {
   pendingMessages: PendingMessage[];
-  addMessage: (message: Omit<PendingMessage, 'tempId' | 'status' | 'createdAt' | 'retryCount'>) => string;
+  addMessage: (
+    message: Omit<PendingMessage, 'tempId' | 'status' | 'createdAt' | 'retryCount'>
+  ) => string;
   setStatus: (tempId: string, status: MessageStatus) => void;
   removeMessage: (tempId: string) => void;
   retry: (tempId: string) => void;
@@ -86,4 +88,3 @@ export const useChatQueueStore = create<ChatQueueState>((set, get) => ({
     );
   },
 }));
-

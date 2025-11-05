@@ -30,12 +30,16 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   const flatListRef = useRef<FlatList | null>(null);
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
-  const { sendMessage: socketSendMessage, markRoomAsRead, connectionState } = useChatSocket({
+  const {
+    sendMessage: socketSendMessage,
+    markRoomAsRead,
+    connectionState,
+  } = useChatSocket({
     currentRoomId: roomId,
     chatRoomQueryKey: ['chatRooms', 'list'],
     chatMessageQueryKey: ['chatMessages', roomId],
   });
-  
+
   const { sendMessage: resilientSendMessage } = useResilientMessageSender({
     roomId,
     isSocketConnected: connectionState === 'connected',
@@ -48,7 +52,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   const scrollToEnd = useCallback((animated = true) => {
     flatListRef.current?.scrollToEnd({ animated });
   }, []);
-  
+
   useEffect(() => {
     if (messages && messages.length > 0) setTimeout(() => scrollToEnd(true), 100);
   }, [messages?.length, scrollToEnd, messages]);

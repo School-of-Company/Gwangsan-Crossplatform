@@ -17,7 +17,7 @@ interface UseChatMessagesOptions {
 }
 
 export interface EnhancedChatMessage extends ChatMessageResponse {
-  status?: typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
+  status?: (typeof MESSAGE_STATUS)[keyof typeof MESSAGE_STATUS];
   tempId?: string;
 }
 
@@ -25,7 +25,7 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
   const { enabled = true, refetchInterval, onError } = options;
 
   const queryClient = useQueryClient();
-  
+
   const pendingMessages = useChatQueueStore(
     useCallback((state) => state.getByRoom(roomId), [roomId])
   );
@@ -47,20 +47,20 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
   if (query.error && onError) {
     onError(query.error as ChatApiError);
   }
-  
+
   const allMessages: EnhancedChatMessage[] = useMemo(() => {
-    const serverMessages: EnhancedChatMessage[] = (query.data || []).map(msg => ({
+    const serverMessages: EnhancedChatMessage[] = (query.data || []).map((msg) => ({
       ...msg,
       status: MESSAGE_STATUS.SENT,
     }));
-    
-    const pendingAsMessages: EnhancedChatMessage[] = pendingMessages.map(pending => ({
+
+    const pendingAsMessages: EnhancedChatMessage[] = pendingMessages.map((pending) => ({
       messageId: pending.tempId,
       roomId: pending.roomId,
       content: pending.content,
       messageType: pending.messageType,
       createdAt: pending.createdAt,
-      images: pending.imageIds.map(id => ({ imageId: id, imageUrl: '' })),
+      images: pending.imageIds.map((id) => ({ imageId: id, imageUrl: '' })),
       senderNickname: '나',
       senderId: -1,
       checked: false,
@@ -68,7 +68,7 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
       status: pending.status,
       tempId: pending.tempId,
     }));
-    
+
     return [...serverMessages, ...pendingAsMessages].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );

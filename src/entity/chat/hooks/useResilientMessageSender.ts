@@ -6,7 +6,12 @@ import Toast from 'react-native-toast-message';
 interface ResilientSenderProps {
   roomId: RoomId;
   isSocketConnected: boolean;
-  socketSendMessage: (roomId: RoomId, content: string, type: MessageType, imageIds: number[]) => void;
+  socketSendMessage: (
+    roomId: RoomId,
+    content: string,
+    type: MessageType,
+    imageIds: number[]
+  ) => void;
 }
 
 export const useResilientMessageSender = ({
@@ -15,39 +20,33 @@ export const useResilientMessageSender = ({
   socketSendMessage,
 }: ResilientSenderProps) => {
   const wasConnectedRef = useRef<boolean>(isSocketConnected);
-  
+
   const addMessage = useChatQueueStore((state) => state.addMessage);
   const setStatus = useChatQueueStore((state) => state.setStatus);
   const removeMessage = useChatQueueStore((state) => state.removeMessage);
   const getRetryable = useChatQueueStore((state) => state.getRetryable);
   const retry = useChatQueueStore((state) => state.retry);
-  
+
   const attemptSend = useCallback(
-    (
-      tempId: string,
-      content: string | null,
-      messageType: MessageType,
-      imageIds: number[]
-    ) => {
+    (tempId: string, content: string | null, messageType: MessageType, imageIds: number[]) => {
       try {
         if (!isSocketConnected) {
           setStatus(tempId, MESSAGE_STATUS.PENDING);
           return;
         }
-        
+
         setStatus(tempId, MESSAGE_STATUS.SENDING);
-        
+
         socketSendMessage(
           roomId,
           content || (messageType === 'IMAGE' ? ' ' : ''),
           messageType,
           imageIds
         );
-        
+
         setStatus(tempId, MESSAGE_STATUS.SENT);
-        
+
         setTimeout(() => removeMessage(tempId), 2000);
-        
       } catch (error) {
         console.error(error);
         setStatus(tempId, MESSAGE_STATUS.FAILED);
@@ -65,7 +64,7 @@ export const useResilientMessageSender = ({
     },
     [isSocketConnected, socketSendMessage, roomId, setStatus, removeMessage, retry]
   );
-  
+
   const sendMessage = useCallback(
     (content: string | null, messageType: MessageType, imageIds: number[] = []) => {
       const tempId = addMessage({
@@ -74,12 +73,12 @@ export const useResilientMessageSender = ({
         messageType,
         imageIds,
       });
-      
+
       attemptSend(tempId, content, messageType, imageIds);
     },
     [roomId, addMessage, attemptSend]
   );
-  
+
   useEffect(() => {
     const previouslyConnected = wasConnectedRef.current;
     if (!previouslyConnected && isSocketConnected) {
@@ -99,9 +98,8 @@ export const useResilientMessageSender = ({
     }
     wasConnectedRef.current = isSocketConnected;
   }, [isSocketConnected, roomId, getRetryable, retry, attemptSend]);
-  
+
   return {
     sendMessage,
   };
 };
-

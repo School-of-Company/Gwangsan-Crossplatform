@@ -32,7 +32,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
 
   const statusIcon = useMemo(() => {
     const status = message.status;
-    
+
     if (status === MESSAGE_STATUS.PENDING) {
       return <Icon name="time-outline" size={14} color="#B4B5B7" />;
     }
@@ -44,7 +44,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
     }
     return <Icon name="checkmark-outline" size={14} color="#10B981" />;
   }, [message.status]);
-  
+
   const handleRetry = () => {
     if (message.tempId && message.status === MESSAGE_STATUS.FAILED) {
       retryMessage(message.tempId);
@@ -62,7 +62,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
         </View>
         <View className="max-w-[280px] rounded-xl bg-orange-400 px-4 py-3">{content}</View>
       </View>
-      
+
       {message.status === MESSAGE_STATUS.FAILED && (
         <TouchableOpacity onPress={handleRetry} className="mt-1 flex-row items-center">
           <Icon name="refresh-outline" size={14} color="#DF454A" />
