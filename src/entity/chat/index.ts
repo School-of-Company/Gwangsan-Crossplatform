@@ -20,7 +20,7 @@ export {
 } from './lib/messageRenderer';
 
 export { useChatRooms, chatRoomKeys } from './model/useChatRooms';
-export { useChatMessages, chatMessageKeys } from './model/useChatMessages';
+export { useChatMessages, chatMessageKeys, type EnhancedChatMessage } from './model/useChatMessages';
 export { useCreateChatRoom } from './model/useCreateChatRoom';
 export { useFindChatRoom } from './model/useFindChatRoom';
 export { useChatRoomData } from './model/useChatRoomData';

@@ -1,7 +1,8 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { FlatList } from 'react-native';
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
+import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '~/entity/chat';
@@ -29,10 +30,16 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   const flatListRef = useRef<FlatList | null>(null);
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
-  const { sendMessage, markRoomAsRead, connectionState } = useChatSocket({
+  const { sendMessage: socketSendMessage, markRoomAsRead, connectionState } = useChatSocket({
     currentRoomId: roomId,
     chatRoomQueryKey: ['chatRooms', 'list'],
     chatMessageQueryKey: ['chatMessages', roomId],
+  });
+  
+  const { sendMessage: resilientSendMessage } = useResilientMessageSender({
+    roomId,
+    isSocketConnected: connectionState === 'connected',
+    socketSendMessage,
   });
 
   const safeMessages = ensureMessagesArray(messages);
@@ -41,19 +48,21 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   const scrollToEnd = useCallback((animated = true) => {
     flatListRef.current?.scrollToEnd({ animated });
   }, []);
+  
+  useEffect(() => {
+    if (messages && messages.length > 0) setTimeout(() => scrollToEnd(true), 100);
+  }, [messages?.length, scrollToEnd, messages]);
 
   const messageHandlers = {
     sendMessage: useCallback(
       (content: string | null, imageIds: number[]) => {
-        if (connectionState !== 'connected') return;
-
         if (imageIds.length > 0) {
-          sendMessage(roomId, ' ', 'IMAGE', imageIds);
+          resilientSendMessage(content, 'IMAGE', imageIds);
         } else if (content) {
-          sendMessage(roomId, content, 'TEXT', []);
+          resilientSendMessage(content, 'TEXT', []);
         }
       },
-      [roomId, sendMessage, connectionState]
+      [resilientSendMessage]
     ),
 
     renderMessage: useCallback(({ item }: { item: ChatMessageResponse }) => {
