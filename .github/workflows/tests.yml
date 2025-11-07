@@ -55,6 +55,32 @@ jobs:
           script: |
             export PATH="$PATH:$HOME/.maestro/bin"
 
+            echo "Waiting for emulator to be fully booted..."
+            adb wait-for-device
+
+            TIMEOUT=180
+            ELAPSED=0
+            while true; do
+              BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "")
+              if [ "$BOOT_COMPLETED" = "1" ]; then
+                echo "Emulator is ready"
+                break
+              fi
+              
+              if [ $ELAPSED -ge $TIMEOUT ]; then
+                echo "Timeout waiting for emulator to boot (${TIMEOUT}s)"
+                adb devices
+                exit 1
+              fi
+              
+              echo "Waiting for boot to complete... ($ELAPSED/$TIMEOUT seconds)"
+              sleep 5
+              ELAPSED=$((ELAPSED + 5))
+            done
+
+            sleep 10
+            adb shell input keyevent 82
+
             echo "Building and installing app..."
             npx expo prebuild --platform android --clean
             cd android
@@ -73,9 +99,7 @@ jobs:
               exit 1
             fi
 
-            adb wait-for-device
             sleep 5
-            adb shell input keyevent 82
 
             maestro test ../maestro/user/*.yml
 
