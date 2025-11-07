@@ -211,61 +211,36 @@ jobs:
           fi
           echo "Pods installed successfully"
 
-      - name: Build CocoaPods dependencies
+      - name: Verify workspace setup
         working-directory: ios
         run: |
           set -e
-          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
-          mkdir -p "$DERIVED_DATA_PATH"
-          
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
           if [ -z "$WORKSPACE_PATH" ]; then
             echo "Error: xcworkspace not found"
             exit 1
           fi
           
-          if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods-app"; then
-            echo "Building Pods-app scheme first..."
-            xcodebuild -workspace "$WORKSPACE_PATH" \
-              -scheme "Pods-app" \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              -destination "generic/platform=iOS Simulator" \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              ARCHS="arm64 x86_64" \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              ONLY_ACTIVE_ARCH=NO \
-              -jobs 1 \
-              build || echo "Pods-app scheme build failed, will rely on dependency graph"
-          elif [ -d "Pods/Pods.xcodeproj" ]; then
-            echo "Building Pods project directly..."
-            xcodebuild -project "Pods/Pods.xcodeproj" \
-              -alltargets \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              ARCHS="arm64 x86_64" \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              ONLY_ACTIVE_ARCH=NO \
-              -jobs 1 \
-              build || echo "Pods project build failed, will rely on dependency graph"
-          else
-            echo "No Pods project found, will rely on workspace dependency graph"
+          echo "Workspace: $WORKSPACE_PATH"
+          echo "Available schemes:"
+          xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 20 "Schemes:" || true
+          
+          echo "Checking Pods structure..."
+          if [ -d "Pods" ]; then
+            echo "Pods directory exists"
+            echo "Pods targets (first 20):"
+            find Pods -name "*.modulemap" -o -name "*.podspec" | head -20 || true
           fi
           
-          echo "Verifying modulemap files..."
-          MODULEMAP_COUNT=$(find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ' || echo "0")
-          echo "Found $MODULEMAP_COUNT modulemap files"
+          if [ -d "Pods/Pods.xcodeproj" ]; then
+            echo "Pods.xcodeproj exists"
+            echo "Listing Pods project targets:"
+            xcodebuild -list -project "Pods/Pods.xcodeproj" 2>/dev/null | grep -A 50 "Targets:" || true
+          fi
           
-          if [ "$MODULEMAP_COUNT" -gt "0" ]; then
-            echo "Modulemaps found:"
-            find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -name "*.modulemap" | head -5
-          else
-            echo "No modulemap files found yet (may be created during app build)"
+          echo "Checking Podfile configuration..."
+          if [ -f "Podfile.properties.json" ]; then
+            cat Podfile.properties.json
           fi
 
       - name: Build iOS app
@@ -291,6 +266,7 @@ jobs:
           DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
           
           echo "Building app: $SCHEME for device: $DEVICE_UDID"
+          
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
@@ -303,7 +279,13 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
             -jobs 1 \
-            build
+            build 2>&1 | tee /tmp/xcodebuild.log || {
+              echo "Build failed. Checking for modulemap issues..."
+              grep -i "modulemap" /tmp/xcodebuild.log | head -20 || true
+              echo "Checking DerivedData structure..."
+              find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -type d -maxdepth 2 2>/dev/null | head -20 || true
+              exit 1
+            }
 
       - name: Install app on simulator
         working-directory: ios
