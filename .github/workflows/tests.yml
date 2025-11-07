@@ -138,12 +138,23 @@ jobs:
           npx expo prebuild --platform ios --clean
           cd ios
           
-          WORKSPACE=$(find . -name "*.xcworkspace" -type d | head -1 | xargs basename | sed 's/.xcworkspace//')
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE.xcworkspace" 2>/dev/null | grep -A 1 "Schemes:" | tail -1 | xargs || echo "$WORKSPACE")
+          WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
+          if [ -z "$WORKSPACE_PATH" ]; then
+            echo "Error: xcworkspace not found"
+            exit 1
+          fi
           
-          echo "Building workspace: $WORKSPACE.xcworkspace, scheme: $SCHEME"
+          WORKSPACE=$(basename "$WORKSPACE_PATH" .xcworkspace)
+          echo "Found workspace: $WORKSPACE_PATH"
           
-          xcodebuild -workspace "$WORKSPACE.xcworkspace" \
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 10 "Schemes:" | grep -v "Schemes:" | head -1 | xargs)
+          if [ -z "$SCHEME" ]; then
+            SCHEME="$WORKSPACE"
+          fi
+          
+          echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME"
+          
+          xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
             -sdk iphonesimulator \
