@@ -181,26 +181,27 @@ jobs:
         id: simulator
         shell: bash
         run: |
-          set -euo pipefail
+          set -eu
           echo "== Show available runtimes/devices =="
           xcrun simctl list runtimes
           xcrun simctl list devices
-
-          # 선호 런타임 우선순위 (설치된 것 중 첫 매칭 사용)
-          RUNTIME_ID=$(
-            xcrun simctl list runtimes | \
-              awk -F '[()]' '/iOS / {print $2}' | \
-              grep -E 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-(18-1|18-0|17-5|17-4|17-3|17-2|17-1|17-0)' | \
-              head -1
-          )
-          if [ -z "${RUNTIME_ID:-}" ]; then
-            # 아무거나 iOS 런타임 하나
-            RUNTIME_ID=$(xcrun simctl list runtimes | awk -F '[()]' '/iOS / {print $2; exit}')
+          ALL_IOS_IDS=$(xcrun simctl list runtimes | awk -F '[()]' '/iOS [0-9]/{print $2}')
+          if [ -z "${ALL_IOS_IDS:-}" ]; then
+            echo "No iOS runtimes installed."
+            exit 1
+          fi
+          ALL_VERS=$(echo "$ALL_IOS_IDS" | sed -E 's/.*iOS-([0-9]+)-([0-9]+).*/\1.\2/' | sort -V || true)
+          BEST_VER=$(echo "$ALL_VERS" | tail -1 || true)
+          if [ -z "${BEST_VER:-}" ]; then
+            RUNTIME_ID=$(echo "$ALL_IOS_IDS" | tail -1)
+          else
+            WANT=$(echo "$BEST_VER" | sed -E 's/([0-9]+)\.([0-9]+)/\1-\2/')
+            RUNTIME_ID=$(echo "$ALL_IOS_IDS" | grep "iOS-${WANT}" | head -1 || true)
+            [ -z "${RUNTIME_ID:-}" ] && RUNTIME_ID=$(echo "$ALL_IOS_IDS" | tail -1)
           fi
           echo "Using runtime: $RUNTIME_ID"
 
           DEVICE_NAME="CI-iPhone-15"
-          # 같은 이름의 남아있는 기기 삭제(깨끗이)
           EXISTING=$(xcrun simctl list devices | grep "$DEVICE_NAME" | awk -F '[()]' '{print $2}' | head -1 || true)
           if [ -n "${EXISTING:-}" ]; then
             xcrun simctl delete "$EXISTING" || true
@@ -209,10 +210,8 @@ jobs:
           SIM_ID=$(xcrun simctl create "$DEVICE_NAME" "iPhone 15" "$RUNTIME_ID")
           echo "Created simulator: $SIM_ID"
 
-          # 부팅 및 대기
           xcrun simctl boot "$SIM_ID" || true
           xcrun simctl bootstatus "$SIM_ID" -b
-          # UI 서버가 완전히 올라오도록 소폭 대기
           sleep 10
 
           echo "device_udid=$SIM_ID" >> "$GITHUB_OUTPUT"
