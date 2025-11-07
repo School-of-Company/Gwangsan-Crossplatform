@@ -148,13 +148,22 @@ jobs:
           xcode-version: latest-stable
 
       - name: Start iOS Simulator
+        id: simulator
         run: |
           xcrun simctl list devices available
-
+          
           DEVICE=$(xcrun simctl list devices available | grep -i "iphone" | head -1 | sed 's/.*(\(.*\))/\1/' | xargs || echo "iPhone 15")
           echo "Booting device: $DEVICE"
           xcrun simctl boot "$DEVICE" || true
-
+          
+          DEVICE_UDID=$(xcrun simctl list devices | grep "$DEVICE" | grep Booted | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+          if [ -z "$DEVICE_UDID" ]; then
+            DEVICE_UDID=$(xcrun simctl list devices | grep "$DEVICE" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+          fi
+          
+          echo "device_udid=$DEVICE_UDID" >> $GITHUB_OUTPUT
+          echo "device_name=$DEVICE" >> $GITHUB_OUTPUT
+          
           sleep 10
 
       - name: Build and install iOS app
@@ -167,18 +176,28 @@ jobs:
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
           if [ -z "$WORKSPACE_PATH" ]; then
             echo "Error: xcworkspace not found"
+            ls -la
             exit 1
           fi
-
+          
+          WORKSPACE_PATH=$(realpath "$WORKSPACE_PATH" || echo "$WORKSPACE_PATH")
           WORKSPACE=$(basename "$WORKSPACE_PATH" .xcworkspace)
           SCHEME=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 10 "Schemes:" | grep -v "Schemes:" | head -1 | xargs || echo "$WORKSPACE")
+          
+          echo "Found workspace: $WORKSPACE_PATH"
 
-          echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME"
-
+          DEVICE_UDID="${{ steps.simulator.outputs.device_udid }}"
+          if [ -z "$DEVICE_UDID" ]; then
+            DEVICE_UDID=$(xcrun simctl list devices | grep Booted | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+          fi
+          
+          echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME, destination: $DEVICE_UDID"
+          
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
             -sdk iphonesimulator \
+            -destination "id=$DEVICE_UDID" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             ONLY_ACTIVE_ARCH=NO \
