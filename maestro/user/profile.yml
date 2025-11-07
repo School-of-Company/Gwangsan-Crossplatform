@@ -1,0 +1,31 @@
+appId: gwangsan.io.kr
+---
+- tapOn: 
+    id: "Footer-profile-button"
+- waitForAnimationToEnd
+
+- assertVisible: "프로필"
+- assertVisible: "내 정보 수정"
+- waitForAnimationToEnd
+
+- assertVisible: "프로필"
+- assertVisible: "테스트"
+- waitForAnimationToEnd
+- scroll
+- waitForAnimationToEnd
+
+- tapOn: 
+    text: "Profile"
+    optional: true
+- waitForAnimationToEnd
+- assertVisible: 
+    text: "Information-logout-button"
+    optional: true
+- tapOn: 
+    text: "취소"
+    optional: true
+- waitForAnimationToEnd
+
+- assertVisible: "프로필"
+- assertVisible: "내 정보 수정"
+
