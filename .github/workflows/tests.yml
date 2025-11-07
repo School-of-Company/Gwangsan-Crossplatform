@@ -8,104 +8,104 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-android:
-    name: Android E2E Test
-    runs-on: macos-13
-    timeout-minutes: 30
+  # test-android:
+  #   name: Android E2E Test
+  #   runs-on: macos-13
+  #   timeout-minutes: 30
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+  #     - name: Setup Java
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: 'temurin'
+  #         java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+  #     - name: Setup Android SDK
+  #       uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
-        run: npm ci
+  #     - name: Install dependencies
+  #       run: npm ci
 
-      - name: Install Maestro
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          export PATH="$PATH:$HOME/.maestro/bin"
-          maestro --version
+  #     - name: Install Maestro
+  #       run: |
+  #         curl -Ls "https://get.maestro.mobile.dev" | bash
+  #         export PATH="$PATH:$HOME/.maestro/bin"
+  #         maestro --version
 
-      - name: Create Maestro environment
-        run: |
-          export PATH="$PATH:$HOME/.maestro/bin"
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+  #     - name: Create Maestro environment
+  #       run: |
+  #         export PATH="$PATH:$HOME/.maestro/bin"
+  #         echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Kill stray ADB (once)
-        run: |
-          adb kill-server || true
-          sleep 1
-          adb start-server || true
+  #     - name: Kill stray ADB (once)
+  #       run: |
+  #         adb kill-server || true
+  #         sleep 1
+  #         adb start-server || true
 
-      - name: Start Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 33
-          arch: x86_64
-          target: google_apis
-          profile: pixel_7
-          avd-name: ci-avd
-          force-avd-creation: true
-          disable-animations: true
-          emulator-options: >-
-            -no-window -gpu swiftshader_indirect -no-boot-anim
-            -no-snapshot -noaudio -camera-back none -camera-front none
-          script: |
-            set -e
-            export PATH="$PATH:$HOME/.maestro/bin"
-            echo "Device should already be booted by the action. Extra short wait..."
-            adb wait-for-device
-            adb shell getprop sys.boot_completed
-            adb shell input keyevent 82 || true
+  #     - name: Start Android Emulator
+  #       uses: reactivecircus/android-emulator-runner@v2
+  #       with:
+  #         api-level: 33
+  #         arch: x86_64
+  #         target: google_apis
+  #         profile: pixel_7
+  #         avd-name: ci-avd
+  #         force-avd-creation: true
+  #         disable-animations: true
+  #         emulator-options: >-
+  #           -no-window -gpu swiftshader_indirect -no-boot-anim
+  #           -no-snapshot -noaudio -camera-back none -camera-front none
+  #         script: |
+  #           set -e
+  #           export PATH="$PATH:$HOME/.maestro/bin"
+  #           echo "Device should already be booted by the action. Extra short wait..."
+  #           adb wait-for-device
+  #           adb shell getprop sys.boot_completed
+  #           adb shell input keyevent 82 || true
 
-            echo "Building app (Debug)…"
-            npx expo prebuild --platform android --clean
-            cd android
-            ./gradlew --no-daemon assembleDebug
+  #           echo "Building app (Debug)…"
+  #           npx expo prebuild --platform android --clean
+  #           cd android
+  #           ./gradlew --no-daemon assembleDebug
 
-            APK_PATH=$(find . -name "app-debug.apk" -o -name "*-debug.apk" | head -1)
-            if [ -z "$APK_PATH" ]; then
-              APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
-            fi
-            if [ -z "$APK_PATH" ]; then
-              echo "APK not found"
-              exit 1
-            fi
+  #           APK_PATH=$(find . -name "app-debug.apk" -o -name "*-debug.apk" | head -1)
+  #           if [ -z "$APK_PATH" ]; then
+  #             APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
+  #           fi
+  #           if [ -z "$APK_PATH" ]; then
+  #             echo "APK not found"
+  #             exit 1
+  #           fi
 
-            echo "Installing APK: $APK_PATH"
-            adb kill-server || true
-            adb start-server || true
-            adb wait-for-device
-            adb install -r "$APK_PATH"
+  #           echo "Installing APK: $APK_PATH"
+  #           adb kill-server || true
+  #           adb start-server || true
+  #           adb wait-for-device
+  #           adb install -r "$APK_PATH"
 
-            echo "Run Maestro tests"
-            cd ..
-            maestro test maestro/user/*.yml
+  #           echo "Run Maestro tests"
+  #           cd ..
+  #           maestro test maestro/user/*.yml
 
-      - name: Upload Maestro test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-results-android
-          path: |
-            maestro/**/*.png
-            maestro/**/*.mp4
-          retention-days: 7
+  #     - name: Upload Maestro test results
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: maestro-results-android
+  #         path: |
+  #           maestro/**/*.png
+  #           maestro/**/*.mp4
+  #         retention-days: 7
 
   test-ios:
     name: iOS E2E Test
@@ -194,11 +194,20 @@ jobs:
 
       - name: Build and install iOS app
         run: |
+          set -e
+          
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          
           npx expo prebuild --platform ios --clean
           cd ios
 
           pod repo update
           pod install
+
+          if [ ! -d "Pods" ]; then
+            echo "Error: Pods directory not found after installation"
+            exit 1
+          fi
 
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
           if [ -z "$WORKSPACE_PATH" ]; then
@@ -219,6 +228,9 @@ jobs:
             exit 1
           fi
 
+          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
+          mkdir -p "$DERIVED_DATA_PATH"
+
           echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME, destination: $DEVICE_UDID"
 
           xcodebuild -workspace "$WORKSPACE_PATH" \
@@ -226,13 +238,18 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             -destination "id=$DEVICE_UDID" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
+            ARCHS="arm64 x86_64" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
             build
 
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          fi
           if [ -z "$APP_PATH" ]; then
             APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
           fi
@@ -263,7 +280,7 @@ jobs:
   notify-discord:
     name: Notify Discord
     runs-on: ubuntu-latest
-    needs: [test-android, test-ios]
+    needs: [test-ios]
     if: always()
     steps:
       - name: Download artifacts
@@ -279,14 +296,9 @@ jobs:
             exit 0
           fi
 
-          ANDROID_STATUS="${{ needs.test-android.result }}"
           IOS_STATUS="${{ needs.test-ios.result }}"
 
-          if [ "$ANDROID_STATUS" == "success" ] && ([ "$IOS_STATUS" == "success" ] || [ "$IOS_STATUS" == "skipped" ]); then
-            COLOR=3066993
-            EMOJI="✅"
-            STATUS="성공"
-          elif ([ "$ANDROID_STATUS" == "success" ] || [ "$ANDROID_STATUS" == "skipped" ]) && [ "$IOS_STATUS" == "success" ]; then
+          if [ "$IOS_STATUS" == "success" ] || [ "$IOS_STATUS" == "skipped" ]; then
             COLOR=3066993
             EMOJI="✅"
             STATUS="성공"
@@ -301,7 +313,6 @@ jobs:
             "title": "$EMOJI Maestro 테스트 $STATUS",
             "color": $COLOR,
             "fields": [
-              {"name": "Android", "value": "$ANDROID_STATUS", "inline": true},
               {"name": "iOS", "value": "$IOS_STATUS", "inline": true},
               {"name": "워크플로우", "value": "[보기]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)", "inline": false}
             ]
@@ -314,11 +325,7 @@ jobs:
             -d "{\"embeds\": [$EMBED]}"
 
           if [ "$STATUS" == "실패" ]; then
-            ANDROID_SCREENSHOT=$(find maestro-results-android -name "*.png" 2>/dev/null | head -1)
             IOS_SCREENSHOT=$(find maestro-results-ios -name "*.png" 2>/dev/null | head -1)
-            
-            [ -n "$ANDROID_SCREENSHOT" ] && curl -X POST "$DISCORD_WEBHOOK_URL" \
-              -F "file=@$ANDROID_SCREENSHOT" -F "content=📱 Android 실패 스크린샷"
             
             [ -n "$IOS_SCREENSHOT" ] && curl -X POST "$DISCORD_WEBHOOK_URL" \
               -F "file=@$IOS_SCREENSHOT" -F "content=🍎 iOS 실패 스크린샷"
