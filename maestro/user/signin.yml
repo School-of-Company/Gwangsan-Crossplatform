@@ -1,41 +1,40 @@
 appId: gwangsan.io.kr
 ---
-
 - launchApp
 - waitForAnimationToEnd
 
-- assertVisible: "로그인"
-- tapOn: "로그인"
+- assertVisible: '로그인'
+- tapOn: '로그인'
 - waitForAnimationToEnd
-- assertVisible: "별칭을 입력해주세요"
-- assertVisible: 
-    text: "별칭"
-- tapOn: 
-    id: "NicknameStep-nickname-input"
+- assertVisible: '별칭을 입력해주세요'
+- assertVisible:
+    text: '별칭'
+- tapOn:
+    id: 'NicknameStep-nickname-input'
     optional: false
 - waitForAnimationToEnd
-- inputText: 
-    text: "테스트"
-- assertVisible: "다음"
-- tapOn: "다음"
+- inputText:
+    text: '테스트'
+- assertVisible: '다음'
+- tapOn: '다음'
 - waitForAnimationToEnd
 
-- assertVisible: "비밀번호를 입력해주세요"
-- assertVisible: 
-    text: "비밀번호"
-- tapOn: 
-    id: "PasswordStep-password-input"
+- assertVisible: '비밀번호를 입력해주세요'
+- assertVisible:
+    text: '비밀번호'
+- tapOn:
+    id: 'PasswordStep-password-input'
     optional: false
 - waitForAnimationToEnd
-- inputText: 
-    text: "12345678"
+- inputText:
+    text: '12345678'
     secure: true
 - waitForAnimationToEnd
-- assertVisible: "로그인"
+- assertVisible: '로그인'
 - waitForAnimationToEnd
-- tapOn: 
-    id: "SigninForm-next-button"
+- tapOn:
+    id: 'SigninForm-next-button'
     optional: false
 - waitForAnimationToEnd
 
-- assertNotVisible: "로그인"
+- assertNotVisible: '로그인'
