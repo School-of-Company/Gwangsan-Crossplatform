@@ -46,92 +46,56 @@ jobs:
           export PATH="$PATH:$HOME/.maestro/bin"
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
+      - name: Kill stray ADB (once)
+        run: |
+          adb kill-server || true
+          sleep 1
+          adb start-server || true
+
       - name: Start Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
           arch: x86_64
-          profile: Nexus 6
-          emulator-options: -no-snapshot-save -no-snapshot-load -wipe-data
+          target: google_apis
+          profile: pixel_7
+          avd-name: ci-avd
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-boot-anim
+            -no-snapshot -noaudio -camera-back none -camera-front none
           script: |
-            bash << 'EOF'
             set -e
             export PATH="$PATH:$HOME/.maestro/bin"
-
-            echo "Waiting for emulator to be fully booted..."
-            
-            echo "Step 1: Waiting for device to be detected..."
-            for i in {1..30}; do
-              if adb devices | grep -q emulator; then
-                echo "Device detected"
-                break
-              fi
-              echo "Waiting for device... ($i/30)"
-              sleep 2
-            done
-            
-            echo "Step 2: Waiting for device to be online..."
-            TIMEOUT=300
-            ELAPSED=0
-            while true; do
-              if [ $((ELAPSED % 30)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
-                echo "Resetting ADB connection..."
-                adb kill-server || true
-                sleep 2
-                adb start-server || true
-                sleep 2
-              fi
-              
-              DEVICE_STATUS=$(adb devices 2>/dev/null | grep emulator | awk '{print $2}' || echo "offline")
-              echo "Device status: $DEVICE_STATUS"
-              
-              if [ "$DEVICE_STATUS" = "device" ]; then
-                BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "")
-                if [ "$BOOT_COMPLETED" = "1" ]; then
-                  echo "Emulator is ready (boot completed)"
-                  break
-                fi
-                echo "Boot not completed yet: $BOOT_COMPLETED"
-              else
-                echo "Device not online yet: $DEVICE_STATUS"
-              fi
-              
-              if [ $ELAPSED -ge $TIMEOUT ]; then
-                echo "Timeout waiting for emulator to boot (${TIMEOUT}s)"
-                adb devices
-                exit 1
-              fi
-              
-              sleep 5
-              ELAPSED=$((ELAPSED + 5))
-            done
-
-            echo "Emulator is fully ready, waiting additional 15 seconds..."
-            sleep 15
+            echo "Device should already be booted by the action. Extra short wait..."
+            adb wait-for-device
+            adb shell getprop sys.boot_completed
             adb shell input keyevent 82 || true
 
-            echo "Building and installing app..."
+            echo "Building app (Debug)…"
             npx expo prebuild --platform android --clean
             cd android
-            ./gradlew assembleDebug
+            ./gradlew --no-daemon assembleDebug
 
-            APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
+            APK_PATH=$(find . -name "app-debug.apk" -o -name "*-debug.apk" | head -1)
             if [ -z "$APK_PATH" ]; then
-              APK_PATH=$(find . -name "app-debug.apk" | head -1)
+              APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
             fi
-
-            if [ -n "$APK_PATH" ]; then
-              echo "Installing APK: $APK_PATH"
-              adb install -r "$APK_PATH"
-            else
+            if [ -z "$APK_PATH" ]; then
               echo "APK not found"
               exit 1
             fi
 
-            sleep 5
+            echo "Installing APK: $APK_PATH"
+            adb kill-server || true
+            adb start-server || true
+            adb wait-for-device
+            adb install -r "$APK_PATH"
 
-            maestro test ../maestro/user/*.yml
-            EOF
+            echo "Run Maestro tests"
+            cd ..
+            maestro test maestro/user/*.yml
 
       - name: Upload Maestro test results
         if: always()
