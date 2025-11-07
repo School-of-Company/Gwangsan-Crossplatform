@@ -145,7 +145,7 @@ jobs:
 
   test-ios:
     name: iOS E2E Test
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 30
 
     steps:
@@ -172,29 +172,51 @@ jobs:
           export PATH="$PATH:$HOME/.maestro/bin"
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Setup Xcode
+      - name: Setup Xcode (pin)
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '16.1'
 
-      - name: Start iOS Simulator
+      - name: Create & boot iOS Simulator (robust)
         id: simulator
+        shell: bash
         run: |
-          xcrun simctl list devices available
+          set -euo pipefail
+          echo "== Show available runtimes/devices =="
+          xcrun simctl list runtimes
+          xcrun simctl list devices
 
-          DEVICE=$(xcrun simctl list devices available | grep -i "iphone" | head -1 | sed 's/.*(\(.*\))/\1/' | xargs || echo "iPhone 15")
-          echo "Booting device: $DEVICE"
-          xcrun simctl boot "$DEVICE" || true
+          # 선호 런타임 우선순위 (설치된 것 중 첫 매칭 사용)
+          RUNTIME_ID=$(
+            xcrun simctl list runtimes | \
+              awk -F '[()]' '/iOS / {print $2}' | \
+              grep -E 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-(18-1|18-0|17-5|17-4|17-3|17-2|17-1|17-0)' | \
+              head -1
+          )
+          if [ -z "${RUNTIME_ID:-}" ]; then
+            # 아무거나 iOS 런타임 하나
+            RUNTIME_ID=$(xcrun simctl list runtimes | awk -F '[()]' '/iOS / {print $2; exit}')
+          fi
+          echo "Using runtime: $RUNTIME_ID"
 
-          DEVICE_UDID=$(xcrun simctl list devices | grep "$DEVICE" | grep Booted | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
-          if [ -z "$DEVICE_UDID" ]; then
-            DEVICE_UDID=$(xcrun simctl list devices | grep "$DEVICE" | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+          DEVICE_NAME="CI-iPhone-15"
+          # 같은 이름의 남아있는 기기 삭제(깨끗이)
+          EXISTING=$(xcrun simctl list devices | grep "$DEVICE_NAME" | awk -F '[()]' '{print $2}' | head -1 || true)
+          if [ -n "${EXISTING:-}" ]; then
+            xcrun simctl delete "$EXISTING" || true
           fi
 
-          echo "device_udid=$DEVICE_UDID" >> $GITHUB_OUTPUT
-          echo "device_name=$DEVICE" >> $GITHUB_OUTPUT
+          SIM_ID=$(xcrun simctl create "$DEVICE_NAME" "iPhone 15" "$RUNTIME_ID")
+          echo "Created simulator: $SIM_ID"
 
+          # 부팅 및 대기
+          xcrun simctl boot "$SIM_ID" || true
+          xcrun simctl bootstatus "$SIM_ID" -b
+          # UI 서버가 완전히 올라오도록 소폭 대기
           sleep 10
+
+          echo "device_udid=$SIM_ID" >> "$GITHUB_OUTPUT"
+          echo "device_name=$DEVICE_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Build and install iOS app
         run: |
@@ -218,7 +240,8 @@ jobs:
 
           DEVICE_UDID="${{ steps.simulator.outputs.device_udid }}"
           if [ -z "$DEVICE_UDID" ]; then
-            DEVICE_UDID=$(xcrun simctl list devices | grep Booted | grep -oE '[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}' | head -1)
+            echo "No simulator UDID from previous step"
+            exit 1
           fi
 
           echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME, destination: $DEVICE_UDID"
@@ -230,6 +253,7 @@ jobs:
             -destination "id=$DEVICE_UDID" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
             build
 
@@ -324,3 +348,13 @@ jobs:
             [ -n "$IOS_SCREENSHOT" ] && curl -X POST "$DISCORD_WEBHOOK_URL" \
               -F "file=@$IOS_SCREENSHOT" -F "content=🍎 iOS 실패 스크린샷"
           fi
+      - name: Xcode/SDK info
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          xcrun simctl list
+      
+      - name: Print DerivedData products
+        if: failure()
+        run: |
+          find ~/Library/Developer/Xcode/DerivedData -maxdepth 4 -type d -name "*.app" -print
