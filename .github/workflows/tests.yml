@@ -279,15 +279,32 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
             -jobs 1 \
-            build 2>&1 | tee /tmp/xcodebuild.log || {
-              echo "Build failed. Checking for modulemap issues..."
-              grep -i "modulemap" /tmp/xcodebuild.log | head -20 || true
-              echo "Checking DerivedData structure..."
-              find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -type d -maxdepth 2 2>/dev/null | head -20 || true
-              exit 1
-            }
+            build 2>&1 | tee /tmp/xcodebuild.log
+            
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          if [ "$BUILD_EXIT_CODE" -ne 0 ]; then
+            echo "Build failed with exit code $BUILD_EXIT_CODE"
+            grep -i "modulemap" /tmp/xcodebuild.log | head -20 || true
+            grep -i "error:" /tmp/xcodebuild.log | head -30 || true
+            find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -type d -maxdepth 2 2>/dev/null | head -20 || true
+            exit 1
+          fi
+          
+          if grep -qi "error:" /tmp/xcodebuild.log; then
+            echo "Swift/compilation errors:"
+            grep -i "error:" /tmp/xcodebuild.log | grep -v "note:" | head -30 || true
+            echo "Checking for BUILD FAILED:"
+            grep -i "BUILD FAILED" /tmp/xcodebuild.log || true
+            echo "Checking for failed commands:"
+            grep -i "failed with a nonzero exit code" /tmp/xcodebuild.log || true
+          fi
+          
+          if grep -qi "no such module\|module map file.*not found" /tmp/xcodebuild.log; then
+            echo "Module errors:"
+            grep -i "no such module\|module map file.*not found" /tmp/xcodebuild.log | head -20 || true
+          fi
 
-      - name: Install app on simulator
+      - name: Verify app bundle
         working-directory: ios
         run: |
           set -e
@@ -305,6 +322,55 @@ jobs:
             echo "Error: App not found in build output"
             echo "Searching in: $DERIVED_DATA_PATH"
             find "$DERIVED_DATA_PATH" -name "*.app" 2>/dev/null | head -10 || true
+            exit 1
+          fi
+          
+          echo "Found app at: $APP_PATH"
+          echo "Verifying app bundle structure..."
+          
+          APP_NAME=$(basename "$APP_PATH" .app)
+          EXECUTABLE_PATH="$APP_PATH/$APP_NAME"
+          
+          if [ ! -f "$EXECUTABLE_PATH" ]; then
+            echo "ERROR: Executable not found at expected path: $EXECUTABLE_PATH"
+            echo "App bundle contents:"
+            ls -la "$APP_PATH" || true
+            echo "Looking for any executable files:"
+            find "$APP_PATH" -type f -perm +111 2>/dev/null || true
+            echo "Checking Info.plist for executable name:"
+            if [ -f "$APP_PATH/Info.plist" ]; then
+              /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP_PATH/Info.plist" 2>/dev/null || true
+            fi
+            exit 1
+          fi
+          
+          if [ ! -x "$EXECUTABLE_PATH" ]; then
+            echo "ERROR: Executable exists but is not executable"
+            ls -la "$EXECUTABLE_PATH"
+            exit 1
+          fi
+          
+          echo "App bundle verification successful"
+          echo "Executable: $EXECUTABLE_PATH"
+          echo "Executable size: $(stat -f%z "$EXECUTABLE_PATH" 2>/dev/null || stat -c%s "$EXECUTABLE_PATH" 2>/dev/null) bytes"
+          file "$EXECUTABLE_PATH" || true
+
+      - name: Install app on simulator
+        working-directory: ios
+        run: |
+          set -e
+          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
+          
+          APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          fi
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          fi
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: App not found"
             exit 1
           fi
           
