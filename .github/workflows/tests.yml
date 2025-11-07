@@ -149,13 +149,16 @@ jobs:
           echo "== Show available runtimes/devices =="
           xcrun simctl list runtimes
           xcrun simctl list devices
-          ALL_IOS_IDS=$(xcrun simctl list runtimes | awk -F '[()]' '/iOS [0-9]/{print $2}')
+
+          ALL_IOS_IDS=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' || true)
           if [ -z "${ALL_IOS_IDS:-}" ]; then
             echo "No iOS runtimes installed."
             exit 1
           fi
-          ALL_VERS=$(echo "$ALL_IOS_IDS" | sed -E 's/.*iOS-([0-9]+)-([0-9]+).*/\1.\2/' | sort -V || true)
+
+          ALL_VERS=$(echo "$ALL_IOS_IDS" | sed -E 's/.*iOS-([0-9]+)-([0-9]+)/\1.\2/' | sort -V || true)
           BEST_VER=$(echo "$ALL_VERS" | tail -1 || true)
+
           if [ -z "${BEST_VER:-}" ]; then
             RUNTIME_ID=$(echo "$ALL_IOS_IDS" | tail -1)
           else
@@ -316,7 +319,7 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks
           xcrun simctl list
-      
+
       - name: Print DerivedData products
         if: failure()
         run: |
