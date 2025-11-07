@@ -77,6 +77,7 @@ export default function PasswordStep() {
           onSubmitEditing={handleSubmit}
           secureTextEntry={true}
           returnKeyType="done"
+          testID="PasswordStep-password-input"
           editable={!isLoading}
         />
         <ErrorMessage error={error} />
