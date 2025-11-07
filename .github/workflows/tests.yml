@@ -54,17 +54,17 @@ jobs:
           profile: Nexus 6
           script: |
             export PATH="$PATH:$HOME/.maestro/bin"
-            
+
             echo "Building and installing app..."
             npx expo prebuild --platform android --clean
             cd android
             ./gradlew assembleDebug
-            
+
             APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
             if [ -z "$APK_PATH" ]; then
               APK_PATH=$(find . -name "app-debug.apk" | head -1)
             fi
-            
+
             if [ -n "$APK_PATH" ]; then
               echo "Installing APK: $APK_PATH"
               adb install -r "$APK_PATH"
@@ -72,11 +72,11 @@ jobs:
               echo "APK not found"
               exit 1
             fi
-            
+
             adb wait-for-device
             sleep 5
             adb shell input keyevent 82
-            
+
             maestro test ../maestro/user/*.yml
 
       - name: Upload Maestro test results
@@ -126,34 +126,34 @@ jobs:
       - name: Start iOS Simulator
         run: |
           xcrun simctl list devices available
-          
+
           DEVICE=$(xcrun simctl list devices available | grep -i "iphone" | head -1 | sed 's/.*(\(.*\))/\1/' | xargs || echo "iPhone 15")
           echo "Booting device: $DEVICE"
           xcrun simctl boot "$DEVICE" || true
-          
+
           sleep 10
 
       - name: Build and install iOS app
         run: |
           npx expo prebuild --platform ios --clean
           cd ios
-          
+
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
           if [ -z "$WORKSPACE_PATH" ]; then
             echo "Error: xcworkspace not found"
             exit 1
           fi
-          
+
           WORKSPACE=$(basename "$WORKSPACE_PATH" .xcworkspace)
           echo "Found workspace: $WORKSPACE_PATH"
-          
+
           SCHEME=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 10 "Schemes:" | grep -v "Schemes:" | head -1 | xargs)
           if [ -z "$SCHEME" ]; then
             SCHEME="$WORKSPACE"
           fi
-          
+
           echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME"
-          
+
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
@@ -162,7 +162,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             ONLY_ACTIVE_ARCH=NO
-          
+
           APP_PATH=$(find ./build/Build/Products/Debug-iphonesimulator -name "*.app" -type d | head -1)
           if [ -n "$APP_PATH" ]; then
             xcrun simctl install booted "$APP_PATH"
@@ -204,10 +204,10 @@ jobs:
             echo "Discord webhook URL not set, skipping notification"
             exit 0
           fi
-          
+
           ANDROID_STATUS="${{ needs.test-android.result }}"
           IOS_STATUS="${{ needs.test-ios.result }}"
-          
+
           if [ "$ANDROID_STATUS" == "success" ] && ([ "$IOS_STATUS" == "success" ] || [ "$IOS_STATUS" == "skipped" ]); then
             COLOR=3066993
             EMOJI="✅"
@@ -221,7 +221,7 @@ jobs:
             EMOJI="❌"
             STATUS="실패"
           fi
-          
+
           EMBED=$(cat <<EOF
           {
             "title": "$EMOJI Maestro 테스트 $STATUS",
@@ -234,11 +234,11 @@ jobs:
           }
           EOF
           )
-          
+
           curl -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{\"embeds\": [$EMBED]}"
-          
+
           if [ "$STATUS" == "실패" ]; then
             ANDROID_SCREENSHOT=$(find maestro-results-android -name "*.png" 2>/dev/null | head -1)
             IOS_SCREENSHOT=$(find maestro-results-ios -name "*.png" 2>/dev/null | head -1)
@@ -249,4 +249,3 @@ jobs:
             [ -n "$IOS_SCREENSHOT" ] && curl -X POST "$DISCORD_WEBHOOK_URL" \
               -F "file=@$IOS_SCREENSHOT" -F "content=🍎 iOS 실패 스크린샷"
           fi
-
