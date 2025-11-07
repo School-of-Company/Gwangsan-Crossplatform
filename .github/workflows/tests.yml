@@ -233,6 +233,23 @@ jobs:
 
           echo "Building workspace: $WORKSPACE_PATH, scheme: $SCHEME, destination: $DEVICE_UDID"
 
+          echo "Building Pods dependencies..."
+          if [ -d "Pods/Pods.xcodeproj" ]; then
+            xcodebuild -project "Pods/Pods.xcodeproj" \
+              -alltargets \
+              -configuration Debug \
+              -sdk iphonesimulator \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              ARCHS="arm64 x86_64" \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              ONLY_ACTIVE_ARCH=NO \
+              build \
+              || echo "Warning: Pods build had issues, continuing..."
+          fi
+
+          echo "Building app target..."
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
@@ -244,6 +261,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
+            -jobs 1 \
             build
 
           APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
