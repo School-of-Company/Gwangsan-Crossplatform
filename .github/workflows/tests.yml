@@ -52,59 +52,63 @@ jobs:
           api-level: 33
           arch: x86_64
           profile: Nexus 6
+          emulator-options: -no-snapshot-save -no-snapshot-load -wipe-data
           script: |
             bash << 'EOF'
+            set -e
             export PATH="$PATH:$HOME/.maestro/bin"
 
-            echo "Resetting ADB connection..."
-            adb kill-server
-            sleep 2
-            adb start-server
-            sleep 2
-
             echo "Waiting for emulator to be fully booted..."
-            adb wait-for-device
-            sleep 5
-
-            TIMEOUT=240
+            
+            echo "Step 1: Waiting for device to be detected..."
+            for i in {1..30}; do
+              if adb devices | grep -q emulator; then
+                echo "Device detected"
+                break
+              fi
+              echo "Waiting for device... ($i/30)"
+              sleep 2
+            done
+            
+            echo "Step 2: Waiting for device to be online..."
+            TIMEOUT=300
             ELAPSED=0
             while true; do
-              # Check if device is online
-              DEVICE_STATUS=$(adb devices | grep emulator | awk '{print $2}' || echo "")
-              if [ "$DEVICE_STATUS" != "device" ]; then
-                echo "Device status: $DEVICE_STATUS (waiting for 'device' status)..."
-                sleep 5
-                ELAPSED=$((ELAPSED + 5))
-                if [ $ELAPSED -ge $TIMEOUT ]; then
-                  echo "Timeout waiting for device to be online (${TIMEOUT}s)"
-                  adb devices
-                  exit 1
-                fi
-                continue
+              if [ $((ELAPSED % 30)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
+                echo "Resetting ADB connection..."
+                adb kill-server || true
+                sleep 2
+                adb start-server || true
+                sleep 2
               fi
               
-              # Check boot completion
-              BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "")
-              if [ "$BOOT_COMPLETED" = "1" ]; then
-                echo "Emulator is ready (boot completed)"
-                break
+              DEVICE_STATUS=$(adb devices 2>/dev/null | grep emulator | awk '{print $2}' || echo "offline")
+              echo "Device status: $DEVICE_STATUS"
+              
+              if [ "$DEVICE_STATUS" = "device" ]; then
+                BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "")
+                if [ "$BOOT_COMPLETED" = "1" ]; then
+                  echo "Emulator is ready (boot completed)"
+                  break
+                fi
+                echo "Boot not completed yet: $BOOT_COMPLETED"
+              else
+                echo "Device not online yet: $DEVICE_STATUS"
               fi
               
               if [ $ELAPSED -ge $TIMEOUT ]; then
                 echo "Timeout waiting for emulator to boot (${TIMEOUT}s)"
                 adb devices
-                adb shell getprop sys.boot_completed
                 exit 1
               fi
               
-              echo "Waiting for boot to complete... ($ELAPSED/$TIMEOUT seconds)"
               sleep 5
               ELAPSED=$((ELAPSED + 5))
             done
 
-            echo "Emulator is fully ready, waiting additional 10 seconds..."
-            sleep 10
-            adb shell input keyevent 82
+            echo "Emulator is fully ready, waiting additional 15 seconds..."
+            sleep 15
+            adb shell input keyevent 82 || true
 
             echo "Building and installing app..."
             npx expo prebuild --platform android --clean
