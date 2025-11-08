@@ -373,9 +373,15 @@ jobs:
                 
                 MODULE_DIR="$MODULEMAP_DIR/$ACTUAL_MODULE_NAME"
                 mkdir -p "$MODULE_DIR"
-                
                 cp "$MODULEMAP_PATH" "$MODULE_DIR/$ACTUAL_MODULE_NAME.modulemap"
-                echo "  Copied $POD_DIR -> $ACTUAL_MODULE_NAME.modulemap"
+                echo "  Copied $POD_DIR -> $ACTUAL_MODULE_NAME/$ACTUAL_MODULE_NAME.modulemap"
+                
+                if [ "$POD_DIR" != "$ACTUAL_MODULE_NAME" ]; then
+                  POD_MODULE_DIR="$MODULEMAP_DIR/$POD_DIR"
+                  mkdir -p "$POD_MODULE_DIR"
+                  cp "$MODULEMAP_PATH" "$POD_MODULE_DIR/$ACTUAL_MODULE_NAME.modulemap"
+                  echo "  Copied $POD_DIR -> $POD_DIR/$ACTUAL_MODULE_NAME.modulemap"
+                fi
               done
               
               MODULEMAP_COUNT_AFTER=$(find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
