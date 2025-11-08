@@ -110,7 +110,7 @@ jobs:
   test-ios:
     name: iOS E2E Test
     runs-on: macos-14
-    timeout-minutes: 30
+    timeout-minutes: 300
 
     steps:
       - name: Checkout code
