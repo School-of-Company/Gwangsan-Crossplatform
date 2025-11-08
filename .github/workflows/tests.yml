@@ -202,8 +202,14 @@ jobs:
         working-directory: ios
         run: |
           set -e
-          pod repo update
-          pod install
+          echo "Pods 캐시 지울게~"
+          rm -rf Pods
+          rm -f Podfile.lock
+          rm -rf ~/Library/Caches/CocoaPods
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          
+          echo "Pods 낉여오기"
+          pod install --repo-update
           
           if [ ! -d "Pods" ]; then
             echo "Error: Pods directory not found after installation"
@@ -253,16 +259,16 @@ jobs:
             ls -la
             exit 1
           fi
-          
+
           WORKSPACE_PATH=$(realpath "$WORKSPACE_PATH" || echo "$WORKSPACE_PATH")
           SCHEME=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 10 "Schemes:" | grep -v "Schemes:" | head -1 | xargs || echo "app")
-          
+
           DEVICE_UDID="${{ steps.simulator.outputs.device_udid }}"
           if [ -z "$DEVICE_UDID" ]; then
             echo "No simulator UDID from previous step"
             exit 1
           fi
-          
+
           DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
           
           echo "Pre-build checks:"
@@ -341,6 +347,9 @@ jobs:
             MODULEMAP_COUNT=$(find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
             echo "Found $MODULEMAP_COUNT modulemaps in DerivedData after Pods build"
             
+            UMBRELLA_COUNT=$(find "$MODULEMAP_DIR" -name "*-umbrella.h" 2>/dev/null | wc -l | tr -d ' ')
+            echo "Found $UMBRELLA_COUNT umbrella headers in DerivedData after Pods build"
+            
             if [ "$MODULEMAP_COUNT" -eq 0 ]; then
               echo "No modulemaps in DerivedData - Pods are built as static libraries"
               echo "Copying modulemaps from Pods/Target Support Files to DerivedData..."
@@ -397,7 +406,7 @@ jobs:
           fi
           
           echo "Using -jobs 1 to ensure sequential build order"
-          
+
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
@@ -470,12 +479,12 @@ jobs:
           
           APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
           if [ -z "$APP_PATH" ]; then
-            APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
           fi
           if [ -z "$APP_PATH" ]; then
             APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
           fi
-          
+
           if [ -z "$APP_PATH" ]; then
             echo "Error: App not found in build output"
             echo "Searching in: $DERIVED_DATA_PATH"
