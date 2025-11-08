@@ -283,6 +283,25 @@ jobs:
           fi
           
           echo ""
+          echo "Step 0: Verifying workspace structure and dependencies"
+          echo "Checking if Pods are properly integrated in workspace..."
+          
+          if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods"; then
+            echo "✓ Pods found in workspace"
+          else
+            echo "⚠ Pods not found in workspace schemes - this may cause dependency issues"
+          fi
+          
+          if [ -f "app.xcodeproj/project.pbxproj" ]; then
+            echo "Checking app target dependencies..."
+            if grep -q "Pods-app" "app.xcodeproj/project.pbxproj" 2>/dev/null; then
+              echo "✓ Pods-app found in app project"
+            else
+              echo "⚠ Pods-app may not be in app target dependencies"
+            fi
+          fi
+          
+          echo ""
           echo "Step 1: Building Pods dependencies explicitly to generate modulemaps"
           echo "This is required because workspace dependency graph may not include Pods"
           
@@ -323,16 +342,47 @@ jobs:
             echo "Found $MODULEMAP_COUNT modulemaps in DerivedData after Pods build"
             
             if [ "$MODULEMAP_COUNT" -eq 0 ]; then
-              echo "No modulemaps in DerivedData, checking Pods..."
-              PODS_MODULEMAPS=$(find "Pods/Target Support Files" -name "*.modulemap" 2>/dev/null || true)
-              if [ -n "$PODS_MODULEMAPS" ]; then
-                echo "Found modulemaps in Pods, but they need to be in DerivedData for Swift to find them"
-                echo "Pods modulemaps are in Target Support Files, but Swift expects them in Build/Products"
-                echo "This indicates Pods need to be built as frameworks or the modulemap path needs adjustment"
-              fi
+              echo "No modulemaps in DerivedData - Pods are built as static libraries"
+              echo "Copying modulemaps from Pods/Target Support Files to DerivedData..."
               
-              echo "Listing DerivedData Products directory:"
-              ls -la "$MODULEMAP_DIR" 2>/dev/null | head -20 || echo "Directory empty or doesn't exist"
+              find "Pods/Target Support Files" -name "*.modulemap" 2>/dev/null | while read -r MODULEMAP_PATH; do
+                POD_DIR=$(basename "$(dirname "$MODULEMAP_PATH")")
+                MODULEMAP_FILE=$(basename "$MODULEMAP_PATH")
+                
+                if [ "$POD_DIR" = "Pods-app" ]; then
+                  continue
+                fi
+                
+                ACTUAL_MODULE_NAME=$(grep -E "^module\s+\S+" "$MODULEMAP_PATH" 2>/dev/null | head -1 | awk '{print $2}' | tr -d ';' || echo "$POD_DIR")
+                
+                if [ -z "$ACTUAL_MODULE_NAME" ] || [ "$ACTUAL_MODULE_NAME" = "$POD_DIR" ]; then
+                  ACTUAL_MODULE_NAME=$(echo "$MODULEMAP_FILE" | sed 's/\.modulemap$//')
+                fi
+                
+                case "$POD_DIR" in
+                  expo-dev-launcher)
+                    ACTUAL_MODULE_NAME="EXDevLauncher"
+                    ;;
+                  expo-dev-menu-interface)
+                    ACTUAL_MODULE_NAME="EXDevMenuInterface"
+                    ;;
+                  expo-dev-menu)
+                    ACTUAL_MODULE_NAME="EXDevMenu"
+                    ;;
+                esac
+                
+                MODULE_DIR="$MODULEMAP_DIR/$ACTUAL_MODULE_NAME"
+                mkdir -p "$MODULE_DIR"
+                
+                cp "$MODULEMAP_PATH" "$MODULE_DIR/$ACTUAL_MODULE_NAME.modulemap"
+                echo "  Copied $POD_DIR -> $ACTUAL_MODULE_NAME.modulemap"
+              done
+              
+              MODULEMAP_COUNT_AFTER=$(find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+              echo "✓ Copied $MODULEMAP_COUNT_AFTER modulemaps to DerivedData"
+              
+              echo "Sample of copied modulemaps:"
+              find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | head -10 || true
             else
               echo "✓ Modulemaps found in DerivedData - ready for app build"
             fi
@@ -340,8 +390,6 @@ jobs:
             echo "Pods project not found at $PODS_PROJECT"
           fi
           
-          echo ""
-          echo "Step 2: Building app with workspace"
           echo "Using -jobs 1 to ensure sequential build order"
           
           xcodebuild -workspace "$WORKSPACE_PATH" \
