@@ -265,80 +265,26 @@ jobs:
           
           DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
           
-          echo "Building Pods dependencies first to generate modulemaps..."
-          
-          if [ -d "Pods/Pods.xcodeproj" ]; then
-            echo "Building all Pods targets..."
-            PODS_BUILD_EXIT=0
-            xcodebuild -project "Pods/Pods.xcodeproj" \
-              -alltargets \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              ARCHS="arm64 x86_64" \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              ONLY_ACTIVE_ARCH=NO \
-              -jobs 1 \
-              build 2>&1 | tee /tmp/pods-build.log || PODS_BUILD_EXIT=$?
-            
-            if [ "$PODS_BUILD_EXIT" -ne 0 ]; then
-              echo "Pods build failed with exit code $PODS_BUILD_EXIT"
-              echo "Checking for errors in Pods build log:"
-              grep -i "error:" /tmp/pods-build.log | head -30 || true
-              echo "Pods must build successfully to generate modulemaps"
-              echo "Will continue to app build - workspace may handle dependencies"
-            else
-              echo "Pods build completed successfully"
-            fi
-            
-            echo "Checking for generated modulemaps..."
-            MODULEMAP_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-            REQUIRED_MODULES=("EXApplication" "EXConstants" "Expo" "ExpoModulesCore")
-            MISSING_MODULES=()
-            
-            for module in "${REQUIRED_MODULES[@]}"; do
-              MODULEMAP_PATH="$MODULEMAP_DIR/$module/$module.modulemap"
-              if [ ! -f "$MODULEMAP_PATH" ]; then
-                MISSING_MODULES+=("$module")
-                echo "Missing: $MODULEMAP_PATH"
-              else
-                echo "Found: $MODULEMAP_PATH"
-              fi
-            done
-            
-            if [ ${#MISSING_MODULES[@]} -gt 0 ]; then
-              echo "Required modulemaps are missing: ${MISSING_MODULES[*]}"
-              echo "Listing all modulemaps found:"
-              find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | head -20 || true
-              echo "Listing directory structure:"
-              ls -la "$MODULEMAP_DIR" 2>/dev/null | head -20 || true
-              echo "Pods build may have failed - modulemaps are required for app build"
-              echo "This will likely cause the app build to fail"
-            else
-              echo "All required modulemaps found - ready for app build"
-            fi
-          elif xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods-app"; then
-            echo "Building Pods-app scheme..."
-            xcodebuild -workspace "$WORKSPACE_PATH" \
-              -scheme "Pods-app" \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              -destination "generic/platform=iOS Simulator" \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              ARCHS="arm64 x86_64" \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              ONLY_ACTIVE_ARCH=NO \
-              -jobs 1 \
-              build || echo "Pods-app build failed, will rely on workspace dependency graph"
+          echo "Pre-build checks:"
+          if [ -d "Pods" ]; then
+            echo "✓ Pods directory exists"
+            POD_COUNT=$(find Pods -maxdepth 1 -type d -name "*" | wc -l | tr -d ' ')
+            echo "  Found $POD_COUNT items in Pods directory"
           else
-            echo "No Pods project found, will rely on workspace dependency graph"
+            echo "✗ Pods directory not found"
+            exit 1
           fi
           
-          echo "Building app: $SCHEME for device: $DEVICE_UDID"
+          if [ -d "Pods/Pods.xcodeproj" ]; then
+            echo "✓ Pods.xcodeproj exists"
+          else
+            echo "✗ Pods.xcodeproj not found"
+            exit 1
+          fi
+          
+          echo ""
+          echo "Building app with workspace - Xcode will build dependencies automatically"
+          echo "Using -jobs 1 to ensure sequential build order (dependencies before app)"
           
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
@@ -359,12 +305,31 @@ jobs:
           if grep -qi "module map file.*not found\|no such module" /tmp/xcodebuild.log; then
             echo "ERROR: Module import errors detected - build cannot succeed"
             echo "This indicates Pods dependencies were not built correctly"
+            echo ""
             echo "Module errors:"
             grep -i "module map file.*not found\|no such module" /tmp/xcodebuild.log | head -30 || true
             echo ""
-            echo "Checking if modulemaps exist now"
+            echo "Debugging information:"
+            echo "1. Checking DerivedData structure:"
             MODULEMAP_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-            find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps found"
+            if [ -d "$MODULEMAP_DIR" ]; then
+              echo "Directory exists: $MODULEMAP_DIR"
+              ls -la "$MODULEMAP_DIR" | head -20 || true
+            else
+              echo "Directory does not exist: $MODULEMAP_DIR"
+            fi
+            echo ""
+            echo "2. Searching for any modulemaps:"
+            find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -20 || echo "No modulemaps found anywhere"
+            echo ""
+            echo "3. Checking Pods structure:"
+            if [ -d "Pods" ]; then
+              echo "Pods directory exists"
+              find Pods -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps in Pods"
+            fi
+            echo ""
+            echo "4. Checking build log for Pods build information:"
+            grep -i "pods\|dependency" /tmp/xcodebuild.log | head -20 || true
             echo ""
             echo "Build will fail due to module errors"
             exit 1
