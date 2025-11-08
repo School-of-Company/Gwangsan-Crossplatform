@@ -265,6 +265,43 @@ jobs:
           
           DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
           
+          echo "Building Pods dependencies first to generate modulemaps..."
+          if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods-app"; then
+            echo "Building Pods-app scheme..."
+            xcodebuild -workspace "$WORKSPACE_PATH" \
+              -scheme "Pods-app" \
+              -configuration Debug \
+              -sdk iphonesimulator \
+              -destination "generic/platform=iOS Simulator" \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              ARCHS="arm64 x86_64" \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              ONLY_ACTIVE_ARCH=NO \
+              -jobs 1 \
+              build || {
+                echo "Pods-app build failed, trying alternative approach..."
+                if [ -d "Pods/Pods.xcodeproj" ]; then
+                  echo "Building Pods project directly..."
+                  xcodebuild -project "Pods/Pods.xcodeproj" \
+                    -target "EXApplication" \
+                    -target "EXConstants" \
+                    -target "Expo" \
+                    -configuration Debug \
+                    -sdk iphonesimulator \
+                    -derivedDataPath "$DERIVED_DATA_PATH" \
+                    ARCHS="arm64 x86_64" \
+                    CODE_SIGN_IDENTITY="" \
+                    CODE_SIGNING_REQUIRED=NO \
+                    CODE_SIGNING_ALLOWED=NO \
+                    ONLY_ACTIVE_ARCH=NO \
+                    -jobs 1 \
+                    build || echo "Warning: Some Pod targets failed to build"
+                fi
+              }
+          fi
+          
           echo "Building app: $SCHEME for device: $DEVICE_UDID"
           
           xcodebuild -workspace "$WORKSPACE_PATH" \
@@ -282,26 +319,28 @@ jobs:
             build 2>&1 | tee /tmp/xcodebuild.log
             
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if grep -qi "module map file.*not found\|no such module" /tmp/xcodebuild.log; then
+            echo "ERROR: Module import errors detected - build cannot succeed"
+            echo "Module errors:"
+            grep -i "module map file.*not found\|no such module" /tmp/xcodebuild.log | head -30 || true
+            echo "Build will fail due to module errors"
+            exit 1
+          fi
+          
           if [ "$BUILD_EXIT_CODE" -ne 0 ]; then
             echo "Build failed with exit code $BUILD_EXIT_CODE"
-            grep -i "modulemap" /tmp/xcodebuild.log | head -20 || true
-            grep -i "error:" /tmp/xcodebuild.log | head -30 || true
+            echo "Swift/compilation errors:"
+            grep -i "error:" /tmp/xcodebuild.log | grep -v "note:" | head -30 || true
+            echo "Checking DerivedData structure:"
             find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -type d -maxdepth 2 2>/dev/null | head -20 || true
             exit 1
           fi
           
-          if grep -qi "error:" /tmp/xcodebuild.log; then
-            echo "Swift/compilation errors:"
-            grep -i "error:" /tmp/xcodebuild.log | grep -v "note:" | head -30 || true
-            echo "Checking for BUILD FAILED:"
-            grep -i "BUILD FAILED" /tmp/xcodebuild.log || true
-            echo "Checking for failed commands:"
-            grep -i "failed with a nonzero exit code" /tmp/xcodebuild.log || true
-          fi
-          
-          if grep -qi "no such module\|module map file.*not found" /tmp/xcodebuild.log; then
-            echo "Module errors:"
-            grep -i "no such module\|module map file.*not found" /tmp/xcodebuild.log | head -20 || true
+          if grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/xcodebuild.log; then
+            echo "WARNING: Build failures detected in log"
+            grep -i "BUILD FAILED\|failed with a nonzero exit code" /tmp/xcodebuild.log | head -10 || true
+            exit 1
           fi
 
       - name: Verify app bundle
