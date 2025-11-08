@@ -283,8 +283,66 @@ jobs:
           fi
           
           echo ""
-          echo "Building app with workspace - Xcode will build dependencies automatically"
-          echo "Using -jobs 1 to ensure sequential build order (dependencies before app)"
+          echo "Step 1: Building Pods dependencies explicitly to generate modulemaps"
+          echo "This is required because workspace dependency graph may not include Pods"
+          
+          PODS_PROJECT="Pods/Pods.xcodeproj"
+          if [ -f "$PODS_PROJECT/project.pbxproj" ]; then
+            echo "Building Pods project to generate modulemaps..."
+            echo "Listing available Pods targets:"
+            xcodebuild -project "$PODS_PROJECT" -list 2>/dev/null | grep -A 100 "Targets:" | head -30 || true
+            
+            PODS_BUILD_EXIT=0
+            xcodebuild -project "$PODS_PROJECT" \
+              -alltargets \
+              -configuration Debug \
+              -sdk iphonesimulator \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              ARCHS="arm64 x86_64" \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              ONLY_ACTIVE_ARCH=NO \
+              -jobs 1 \
+              build 2>&1 | tee /tmp/pods-build.log || PODS_BUILD_EXIT=$?
+            
+            if [ "$PODS_BUILD_EXIT" -ne 0 ]; then
+              echo "Pods build failed with exit code $PODS_BUILD_EXIT"
+              echo "Checking for errors in Pods build log:"
+              grep -i "error:" /tmp/pods-build.log | head -30 || true
+              echo "This may be expected if some Pods don't need to be built"
+            else
+              echo "Pods build completed successfully"
+            fi
+            
+            echo "Checking if modulemaps were generated..."
+            MODULEMAP_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+            mkdir -p "$MODULEMAP_DIR"
+            
+            MODULEMAP_COUNT=$(find "$MODULEMAP_DIR" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+            echo "Found $MODULEMAP_COUNT modulemaps in DerivedData after Pods build"
+            
+            if [ "$MODULEMAP_COUNT" -eq 0 ]; then
+              echo "No modulemaps in DerivedData, checking Pods..."
+              PODS_MODULEMAPS=$(find "Pods/Target Support Files" -name "*.modulemap" 2>/dev/null || true)
+              if [ -n "$PODS_MODULEMAPS" ]; then
+                echo "Found modulemaps in Pods, but they need to be in DerivedData for Swift to find them"
+                echo "Pods modulemaps are in Target Support Files, but Swift expects them in Build/Products"
+                echo "This indicates Pods need to be built as frameworks or the modulemap path needs adjustment"
+              fi
+              
+              echo "Listing DerivedData Products directory:"
+              ls -la "$MODULEMAP_DIR" 2>/dev/null | head -20 || echo "Directory empty or doesn't exist"
+            else
+              echo "✓ Modulemaps found in DerivedData - ready for app build"
+            fi
+          else
+            echo "Pods project not found at $PODS_PROJECT"
+          fi
+          
+          echo ""
+          echo "Step 2: Building app with workspace"
+          echo "Using -jobs 1 to ensure sequential build order"
           
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
