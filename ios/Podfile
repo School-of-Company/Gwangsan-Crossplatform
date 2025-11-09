@@ -1,5 +1,3 @@
-use_modular_headers!
-
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
 require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
 
@@ -44,12 +42,10 @@ target 'app' do
   )
 
   post_install do |installer|
-    react_native_post_install(
-      installer,
-      config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
-    )
+  react_native_post_install(installer, config[:reactNativePath],
+    :mac_catalyst_enabled => false,
+    :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true'
+  )
 
     # This is necessary for Xcode 14, because it signs resource bundles by default
     # when building for devices.
@@ -58,24 +54,6 @@ target 'app' do
       target_installation_result.resource_bundle_targets.each do |resource_bundle_target|
         resource_bundle_target.build_configurations.each do |config|
           config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-        end
-      end
-    end
-
-    # Fix modulemap generation for Expo/EX* pods
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
-        config.build_settings['EXCLUDED_ARCHS'] = ''
-        
-        config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
-        
-        if target.name.start_with?('Expo') || target.name.start_with?('EX') || target.name.start_with?('expo-')
-          config.build_settings['DEFINES_MODULE'] = 'YES'
-          config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
-          config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
-          config.build_settings['SWIFT_OBJC_INTERFACE_HEADER_NAME'] = "$(SWIFT_MODULE_NAME)-Swift.h"
-          config.build_settings['SWIFT_OBJC_BRIDGING_HEADER'] = ''
         end
       end
     end

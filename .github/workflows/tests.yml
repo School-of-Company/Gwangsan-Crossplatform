@@ -207,11 +207,11 @@ jobs:
           rm -f Podfile.lock
           rm -rf ~/Library/Caches/CocoaPods
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
-          
+
           echo "Pods 낉여오기"
           pod repo update || true
           pod install --repo-update
-          
+
           if [ ! -d "Pods" ]; then
             echo "Error: Pods directory not found after installation"
             exit 1
@@ -227,24 +227,24 @@ jobs:
             echo "Error: xcworkspace not found"
             exit 1
           fi
-          
+
           echo "Workspace: $WORKSPACE_PATH"
           echo "Available schemes:"
           xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 20 "Schemes:" || true
-          
+
           echo "Checking Pods structure..."
           if [ -d "Pods" ]; then
             echo "Pods directory exists"
             echo "Pods targets (first 20):"
             find Pods -name "*.modulemap" -o -name "*.podspec" | head -20 || true
           fi
-          
+
           if [ -d "Pods/Pods.xcodeproj" ]; then
             echo "Pods.xcodeproj exists"
             echo "Listing Pods project targets:"
             xcodebuild -list -project "Pods/Pods.xcodeproj" 2>/dev/null | grep -A 50 "Targets:" || true
           fi
-          
+
           echo "Checking Podfile configuration..."
           if [ -f "Podfile.properties.json" ]; then
             cat Podfile.properties.json
@@ -271,7 +271,7 @@ jobs:
           fi
 
           DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
-          
+
           echo "Pre-build checks:"
           if [ -d "Pods" ]; then
             echo "✓ Pods directory exists"
@@ -281,33 +281,33 @@ jobs:
             echo "✗ Pods directory not found"
             exit 1
           fi
-          
+
           if [ -d "Pods/Pods.xcodeproj" ]; then
             echo "✓ Pods.xcodeproj exists"
           else
             echo "✗ Pods.xcodeproj not found"
             exit 1
           fi
-          
+
           echo ""
           echo "Step 0: Clean DerivedData completely before build"
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           rm -rf "$DERIVED_DATA_PATH"
           echo "✓ DerivedData cleaned"
-          
+
           echo ""
           echo "Step 1: Verifying workspace structure and dependencies"
           echo "Checking if Pods are properly integrated in workspace..."
-          
+
           if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods"; then
             echo "✓ Pods found in workspace"
           else
             echo "⚠ Pods not found in workspace schemes - this may cause dependency issues"
           fi
-          
+
           echo "Listing all schemes in workspace:"
           xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Schemes:" || true
-          
+
           if [ -f "app.xcodeproj/project.pbxproj" ]; then
             echo "Checking app target dependencies..."
             if grep -q "Pods-app" "app.xcodeproj/project.pbxproj" 2>/dev/null; then
@@ -316,12 +316,12 @@ jobs:
               echo "⚠ Pods-app may not be in app target dependencies"
             fi
           fi
-          
+
           echo ""
           echo "Step 2: Building Pods dependencies explicitly"
           echo "With use_frameworks! :linkage => :static, Pods must be built as frameworks first"
           echo "Since Pods schemes don't appear in workspace, building Pods.xcodeproj directly..."
-          
+
           if [ -d "Pods/Pods.xcodeproj" ]; then
             echo "Building all Pods targets from Pods.xcodeproj..."
             echo "This will build all Pods as static frameworks"
@@ -366,7 +366,7 @@ jobs:
             echo "ERROR: Pods.xcodeproj not found"
             exit 1
           fi
-          
+
           echo ""
           echo "Verifying Pods frameworks were built:"
           FRAMEWORKS=$(find "$DERIVED_DATA_PATH" -name "*.framework" -type d 2>/dev/null | head -10 || true)
@@ -376,7 +376,7 @@ jobs:
           else
             echo "⚠ No frameworks found in DerivedData"
           fi
-          
+
           MODULEMAPS=$(find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -10 || true)
           if [ -n "$MODULEMAPS" ]; then
             echo "✓ Found modulemaps:"
@@ -385,7 +385,7 @@ jobs:
             echo "⚠ No modulemaps found in DerivedData"
             echo "This will cause Swift compilation errors"
           fi
-          
+
           echo ""
           echo "Step 3: Building app with workspace"
           echo "Xcode will use the pre-built Pods frameworks from default DerivedData"
@@ -410,9 +410,9 @@ jobs:
             build 2>&1 | tee /tmp/xcodebuild.log
             
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          
+
           ACTUAL_DERIVED_DATA=$(grep -oE '/Users/[^/]+/Library/Developer/Xcode/DerivedData/[^/]+' /tmp/xcodebuild.log | head -1 | sed 's|/Build/.*||' || echo "")
-          
+
           if grep -qi "module map file.*not found\|no such module" /tmp/xcodebuild.log; then
             echo "ERROR: Module import errors detected - build cannot succeed"
             echo "This indicates Pods dependencies were not built correctly"
@@ -445,7 +445,7 @@ jobs:
             echo "Build will fail due to module errors"
             exit 1
           fi
-          
+
           if [ -n "$ACTUAL_DERIVED_DATA" ] && [ -d "$ACTUAL_DERIVED_DATA" ]; then
             ACTUAL_PRODUCTS="$ACTUAL_DERIVED_DATA/Build/Products/Debug-iphonesimulator"
             if [ -d "$ACTUAL_PRODUCTS" ]; then
@@ -462,7 +462,7 @@ jobs:
               fi
             fi
           fi
-          
+
           if [ "$BUILD_EXIT_CODE" -ne 0 ]; then
             echo "Build failed with exit code $BUILD_EXIT_CODE"
             echo "Swift/compilation errors:"
@@ -471,7 +471,7 @@ jobs:
             find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -type d -maxdepth 2 2>/dev/null | head -20 || true
             exit 1
           fi
-          
+
           if grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/xcodebuild.log; then
             echo "WARNING: Build failures detected in log"
             grep -i "BUILD FAILED\|failed with a nonzero exit code" /tmp/xcodebuild.log | head -10 || true
@@ -493,13 +493,13 @@ jobs:
             find ~/Library/Developer/Xcode/DerivedData -name "*.app" 2>/dev/null | head -10 || true
             exit 1
           fi
-          
+
           echo "Found app at: $APP_PATH"
           echo "Verifying app bundle structure..."
-          
+
           APP_NAME=$(basename "$APP_PATH" .app)
           EXECUTABLE_PATH="$APP_PATH/$APP_NAME"
-          
+
           if [ ! -f "$EXECUTABLE_PATH" ]; then
             echo "ERROR: Executable not found at expected path: $EXECUTABLE_PATH"
             echo "App bundle contents:"
@@ -512,13 +512,13 @@ jobs:
             fi
             exit 1
           fi
-          
+
           if [ ! -x "$EXECUTABLE_PATH" ]; then
             echo "ERROR: Executable exists but is not executable"
             ls -la "$EXECUTABLE_PATH"
             exit 1
           fi
-          
+
           echo "App bundle verification successful"
           echo "Executable: $EXECUTABLE_PATH"
           echo "Executable size: $(stat -f%z "$EXECUTABLE_PATH" 2>/dev/null || stat -c%s "$EXECUTABLE_PATH" 2>/dev/null) bytes"
@@ -532,12 +532,12 @@ jobs:
           if [ -z "$APP_PATH" ]; then
             APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" 2>/dev/null | head -1)
           fi
-          
+
           if [ -z "$APP_PATH" ]; then
             echo "Error: App not found"
             exit 1
           fi
-          
+
           echo "Installing app: $APP_PATH"
           xcrun simctl install booted "$APP_PATH"
 
