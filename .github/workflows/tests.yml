@@ -333,6 +333,8 @@ jobs:
               -configuration Debug \
               -sdk iphonesimulator \
               ARCHS="arm64 x86_64" \
+              EXCLUDED_ARCHS="" \
+              "EXCLUDED_ARCHS[sdk=iphonesimulator*]=" \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGNING_ALLOWED=NO \
@@ -398,6 +400,8 @@ jobs:
             -sdk iphonesimulator \
             -destination "id=$DEVICE_UDID" \
             ARCHS="arm64 x86_64" \
+            EXCLUDED_ARCHS="" \
+            "EXCLUDED_ARCHS[sdk=iphonesimulator*]=" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
