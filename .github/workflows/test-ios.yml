@@ -214,13 +214,11 @@ jobs:
           DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
 
           echo "Building Pods-app aggregate target from workspace"
-          echo "This will build all Pods as static frameworks with proper modulemaps"
+          echo "Using -target instead of -scheme since Pods-app is not a shared scheme"
           echo ""
 
-          # Build Pods-app aggregate target from workspace
-          # This ensures all Pods are built as static frameworks with modulemaps
           xcodebuild -workspace "$WORKSPACE_PATH" \
-            -scheme "Pods-app" \
+            -target "Pods-app" \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination "id=$DEVICE_UDID" \
@@ -240,6 +238,9 @@ jobs:
             echo "ERROR: Pods build failed with exit code $PODS_BUILD_EXIT_CODE"
             echo "Pods build errors:"
             grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -30 || true
+            echo ""
+            echo "Checking available targets in workspace:"
+            xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Targets:" || true
             exit 1
           fi
           

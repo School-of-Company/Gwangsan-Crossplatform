@@ -46,12 +46,6 @@ jobs:
           export PATH="$PATH:$HOME/.maestro/bin"
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Kill stray ADB (once)
-        run: |
-          adb kill-server || true
-          sleep 1
-          adb start-server || true
-
       - name: Start Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -68,10 +62,17 @@ jobs:
           script: |
             set -e
             export PATH="$PATH:$HOME/.maestro/bin"
-            echo "Device should already be booted by the action. Extra short wait..."
-            adb wait-for-device
-            adb shell getprop sys.boot_completed
-            adb shell input keyevent 82 || true
+            ADB="$ANDROID_SDK_ROOT/platform-tools/adb"
+            echo "Waiting for device to come online…"
+            "$ADB" wait-for-device
+            until [ "$("$ADB" shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do
+              sleep 2
+            done
+            "$ADB" shell input keyevent 82 || true
+            "$ADB" shell pm disable-user --user 0 com.google.android.setupwizard || true
+            "$ADB" shell settings put global window_animation_scale 0 || true
+            "$ADB" shell settings put global transition_animation_scale 0 || true
+            "$ADB" shell settings put global animator_duration_scale 0 || true
 
             echo "Building app (Debug)…"
             npx expo prebuild --platform android --clean
@@ -88,10 +89,8 @@ jobs:
             fi
 
             echo "Installing APK: $APK_PATH"
-            adb kill-server || true
-            adb start-server || true
-            adb wait-for-device
-            adb install -r "$APK_PATH"
+            "$ADB" wait-for-device
+            "$ADB" install -r "$APK_PATH"
 
             echo "Run Maestro tests"
             cd ..
