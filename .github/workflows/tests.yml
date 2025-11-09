@@ -270,7 +270,8 @@ jobs:
             exit 1
           fi
 
-          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build-$(date +%s)"
+          # Use consistent DerivedData path
+          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
 
           echo "Pre-build checks:"
           if [ -d "Pods" ]; then
@@ -298,99 +299,12 @@ jobs:
           echo "Listing all schemes in workspace:"
           xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Schemes:" || true
 
-          PODS_SCHEME=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -E "^\s+(Pods-app|Pods)" | head -1 | xargs || echo "")
-          
           echo ""
-          echo "Step 2: Build Pods dependencies first (using workspace)"
-          echo "Building Pods in workspace ensures same DerivedData as app build"
+          echo "Step 2: Building app with workspace"
+          echo "CocoaPods will automatically build Pods dependencies when building the app"
+          echo "The app target has Pods-app as a dependency, so Pods will be built first"
           echo "Using arm64 only for macOS-14 (Apple Silicon) - excluding x86_64"
-          
-          if [ -n "$PODS_SCHEME" ]; then
-            echo "Found Pods scheme: $PODS_SCHEME"
-            echo "Building Pods via workspace scheme..."
-            
-            xcodebuild -workspace "$WORKSPACE_PATH" \
-              -scheme "$PODS_SCHEME" \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              -destination "id=$DEVICE_UDID" \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
-              ARCHS="arm64" \
-              "EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64" \
-              ONLY_ACTIVE_ARCH=YES \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              -jobs 1 \
-              build 2>&1 | tee /tmp/pods-build.log
-            
-            PODS_BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          else
-            echo "⚠ Pods scheme not found in workspace, building Pods.xcodeproj directly"
-            echo "Note: This may use different DerivedData, but we'll verify products after"
-            
-            xcodebuild -project "Pods/Pods.xcodeproj" \
-              -alltargets \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              ARCHS="arm64" \
-              "EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64" \
-              ONLY_ACTIVE_ARCH=YES \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              -jobs 1 \
-              build 2>&1 | tee /tmp/pods-build.log
-            
-            PODS_BUILD_EXIT_CODE=${PIPESTATUS[0]}
-          fi
-          
-          if [ "$PODS_BUILD_EXIT_CODE" -ne 0 ] || grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log; then
-            echo "ERROR: Pods build failed"
-            echo "Pods build errors:"
-            grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -30 || true
-            exit 1
-          fi
-          
-          echo "✓ Pods build completed successfully"
-          
-          echo ""
-          echo "Verifying Pods frameworks and modulemaps were built:"
-          PODS_PRODUCTS="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-          
-          DEFAULT_DD=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -type d -name "Pods-*" 2>/dev/null | head -1 || echo "")
-          
-          if [ -d "$PODS_PRODUCTS" ]; then
-            FRAMEWORKS=$(find "$PODS_PRODUCTS" -name "*.framework" -type d 2>/dev/null | head -10 || true)
-            MODULEMAPS=$(find "$PODS_PRODUCTS" -name "*.modulemap" 2>/dev/null | head -10 || true)
-            
-            if [ -n "$FRAMEWORKS" ]; then
-              echo "✓ Found frameworks in DerivedData:"
-              echo "$FRAMEWORKS" | head -5
-            fi
-            
-            if [ -n "$MODULEMAPS" ]; then
-              echo "✓ Found modulemaps in DerivedData:"
-              echo "$MODULEMAPS" | head -5
-            else
-              echo "⚠ No modulemaps found in $PODS_PRODUCTS"
-              if [ -n "$DEFAULT_DD" ]; then
-                echo "Checking default DerivedData: $DEFAULT_DD"
-                find "$DEFAULT_DD/Build/Products/Debug-iphonesimulator" -name "*.modulemap" 2>/dev/null | head -5 || echo "  Not found"
-              fi
-            fi
-          else
-            echo "⚠ Pods products directory not found at $PODS_PRODUCTS"
-            if [ -n "$DEFAULT_DD" ]; then
-              echo "Checking default DerivedData: $DEFAULT_DD"
-              find "$DEFAULT_DD/Build/Products/Debug-iphonesimulator" -name "*.modulemap" 2>/dev/null | head -5 || echo "  Not found"
-            fi
-          fi
-
-          echo ""
-          echo "Step 3: Building app with workspace (same DerivedData)"
-          echo "Using same DerivedData path so app can find pre-built Pods frameworks"
-          echo "Building for arm64 only (excluding x86_64 for macOS-14)"
+          echo "Using -jobs 1 to ensure Pods are built before app compilation starts"
           echo ""
 
           xcodebuild -workspace "$WORKSPACE_PATH" \
@@ -410,7 +324,57 @@ jobs:
             
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
 
+          echo ""
+          echo "Step 3: Verifying build results"
+          echo "Checking if Pods were built and modulemaps exist..."
+          
+          PRODUCTS_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+          if [ -d "$PRODUCTS_DIR" ]; then
+            echo "Products directory: $PRODUCTS_DIR"
+            
+            FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+            MODULEMAPS_STANDALONE=$(find "$PRODUCTS_DIR" -name "*.modulemap" -not -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
+            MODULEMAPS_IN_FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.modulemap" -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
+            TOTAL_MODULEMAPS=$((MODULEMAPS_STANDALONE + MODULEMAPS_IN_FRAMEWORKS))
+            
+            echo "Found $FRAMEWORKS frameworks"
+            echo "Found $MODULEMAPS_STANDALONE standalone modulemaps"
+            echo "Found $MODULEMAPS_IN_FRAMEWORKS modulemaps inside frameworks"
+            echo "Total modulemaps: $TOTAL_MODULEMAPS"
+            
+            if [ "$TOTAL_MODULEMAPS" -eq 0 ]; then
+              echo "⚠ WARNING: No modulemaps found in products directory"
+              echo "This may cause build failures"
+              echo "Listing frameworks:"
+              find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | head -10 || true
+              echo ""
+              echo "Checking framework structure (first 3):"
+              for FW in $(find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | head -3); do
+                echo "Framework: $FW"
+                ls -la "$FW" | head -10 || true
+                if [ -f "$FW/Modules/module.modulemap" ]; then
+                  echo "  ✓ Found module.modulemap inside framework"
+                else
+                  echo "  ✗ No module.modulemap found inside framework"
+                fi
+              done
+            else
+              echo "✓ Modulemaps found"
+              if [ "$MODULEMAPS_STANDALONE" -gt 0 ]; then
+                echo "Standalone modulemaps (first 5):"
+                find "$PRODUCTS_DIR" -name "*.modulemap" -not -path "*.framework/*" 2>/dev/null | head -5 || true
+              fi
+              if [ "$MODULEMAPS_IN_FRAMEWORKS" -gt 0 ]; then
+                echo "Modulemaps in frameworks (first 5):"
+                find "$PRODUCTS_DIR" -name "*.modulemap" -path "*.framework/*" 2>/dev/null | head -5 || true
+              fi
+            fi
+          else
+            echo "⚠ Products directory not found: $PRODUCTS_DIR"
+          fi
+
           if grep -qi "module map file.*not found\|no such module" /tmp/xcodebuild.log; then
+            echo ""
             echo "ERROR: Module import errors detected - build cannot succeed"
             echo "This indicates Pods dependencies were not built correctly"
             echo ""
@@ -419,26 +383,42 @@ jobs:
             echo ""
             echo "Debugging information:"
             echo "DerivedData path: $DERIVED_DATA_PATH"
-            echo "Checking modulemaps in DerivedData:"
-            if [ -d "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" ]; then
-              find "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator" -name "*.modulemap" 2>/dev/null | head -20 || echo "No modulemaps found"
-            fi
+            echo "Checking all DerivedData directories:"
+            for DD_DIR in ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug-iphonesimulator; do
+              if [ -d "$DD_DIR" ]; then
+                echo "Found: $DD_DIR"
+                MODULEMAP_COUNT=$(find "$DD_DIR" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+                echo "  Modulemaps: $MODULEMAP_COUNT"
+                if [ "$MODULEMAP_COUNT" -gt 0 ]; then
+                  find "$DD_DIR" -name "*.modulemap" 2>/dev/null | head -5
+                fi
+              fi
+            done
+            echo ""
+            echo "Checking if Pods were built:"
+            grep -i "building.*pods\|pods.*build" /tmp/xcodebuild.log | head -10 || echo "No Pods build messages found"
             exit 1
           fi
 
           if [ "$BUILD_EXIT_CODE" -ne 0 ]; then
+            echo ""
             echo "Build failed with exit code $BUILD_EXIT_CODE"
             echo "Swift/compilation errors:"
             grep -i "error:" /tmp/xcodebuild.log | grep -v "note:" | head -30 || true
+            echo ""
+            echo "Checking build log for Pods-related issues:"
+            grep -i "pods\|framework\|module" /tmp/xcodebuild.log | grep -i "error\|fail" | head -20 || true
             exit 1
           fi
 
           if grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/xcodebuild.log; then
+            echo ""
             echo "WARNING: Build failures detected in log"
             grep -i "BUILD FAILED\|failed with a nonzero exit code" /tmp/xcodebuild.log | head -10 || true
             exit 1
           fi
 
+          echo ""
           echo "✓ Build completed successfully"
 
       - name: Verify app bundle
