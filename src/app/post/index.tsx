@@ -1,5 +1,5 @@
-import TransactionView from '~/view/transaction/ui/TransactionView';
+import PostView from '~/view/post/ui/PostView';
 
 export default function Transaction() {
-  return <TransactionView />;
+  return <PostView />;
 }

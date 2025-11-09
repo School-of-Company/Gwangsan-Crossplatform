@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModeType } from '~/shared/types/mode';
 import { ProductType } from '~/shared/types/type';
 
-export default function TransactionView() {
+export default function PostView() {
   const { type, mode } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
 
   const getInitialCategory = (): Category => {
@@ -82,10 +82,8 @@ export default function TransactionView() {
         onLayout={handleLayout}
         className="bg relative mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2">
         <Animated.View
-          className="absolute rounded-[32px] bg-white"
+          className="absolute top-[6px] h-8 rounded-[32px] bg-white"
           style={{
-            top: 6,
-            height: 32,
             width: segmentWidth * 0.94,
             transform: [{ translateX }],
             marginLeft: segmentWidth * 0.03,
@@ -97,10 +95,8 @@ export default function TransactionView() {
           <TouchableOpacity
             key={v}
             onPress={() => setCategory(v as Category)}
-            className="absolute items-center justify-center rounded-[32px]"
+            className="absolute h-8 w-[47%] items-center justify-center rounded-[32px]"
             style={{
-              height: 32,
-              width: '47%',
               left: index === 0 ? '2%' : '55%',
             }}>
             <Text className="text-center font-medium">{v}</Text>
