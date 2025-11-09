@@ -320,22 +320,18 @@ jobs:
           echo ""
           echo "Step 2: Building Pods dependencies explicitly"
           echo "With use_frameworks! :linkage => :static, Pods must be built as frameworks first"
-          echo "Checking available schemes..."
+          echo "Since Pods schemes don't appear in workspace, building Pods.xcodeproj directly..."
           
-          ALL_SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 100 "Schemes:" | grep -v "Schemes:" | grep -v "^$" | head -20 || true)
-          echo "Available schemes (first 20):"
-          echo "$ALL_SCHEMES" || echo "Could not list schemes"
-          
-          # Try Pods-app first, then fall back to building individual Pods
-          if echo "$ALL_SCHEMES" | grep -q "Pods-app"; then
-            echo ""
-            echo "Building Pods-app scheme (this builds all Pods as frameworks)..."
-            xcodebuild -workspace "$WORKSPACE_PATH" \
-              -scheme "Pods-app" \
+          if [ -d "Pods/Pods.xcodeproj" ]; then
+            echo "Building all Pods targets from Pods.xcodeproj..."
+            echo "This will build all Pods as static frameworks"
+            echo "Note: Using default DerivedData (cannot use -derivedDataPath with -project)"
+            echo "Workspace build will use the same DerivedData automatically"
+            
+            xcodebuild -project "Pods/Pods.xcodeproj" \
+              -alltargets \
               -configuration Debug \
               -sdk iphonesimulator \
-              -destination "id=$DEVICE_UDID" \
-              -derivedDataPath "$DERIVED_DATA_PATH" \
               ARCHS="arm64 x86_64" \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
@@ -347,70 +343,26 @@ jobs:
             PODS_BUILD_EXIT_CODE=${PIPESTATUS[0]}
             
             if [ "$PODS_BUILD_EXIT_CODE" -ne 0 ] || grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log; then
-              echo "ERROR: Pods-app build failed"
+              echo "ERROR: Pods build failed"
               echo "Pods build errors:"
-              grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -20 || true
+              grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -30 || true
               exit 1
             fi
             
-            echo "✓ Pods-app build completed successfully"
+            echo "✓ Pods build completed successfully"
+            
+            echo "Checking where Pods were built..."
+            DEFAULT_DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
+            PODS_PRODUCTS=$(find "$DEFAULT_DERIVED_DATA" -path "*/Build/Products/Debug-iphonesimulator/*.framework" -type d 2>/dev/null | head -10 || true)
+            if [ -n "$PODS_PRODUCTS" ]; then
+              echo "✓ Found Pods frameworks in default DerivedData:"
+              echo "$PODS_PRODUCTS" | head -5
+            else
+              echo "⚠ No Pods frameworks found in default DerivedData"
+            fi
           else
-            echo ""
-            echo "⚠ Pods-app scheme not found - building key Expo Pods individually..."
-            echo "This is necessary because workspace build doesn't include Pods in dependency graph"
-            
-            # Build key Expo Pods that are required for modulemaps
-            KEY_PODS=("EXApplication" "EXConstants" "EXManifests" "EXNotifications" "EXUpdatesInterface" "Expo" "ExpoModulesCore" "ExpoAsset" "ExpoDevice" "ExpoFileSystem" "ExpoFont" "ExpoHead" "ExpoImage" "ExpoImagePicker" "ExpoKeepAwake" "ExpoLinking" "expo-dev-launcher" "expo-dev-menu" "expo-dev-menu-interface")
-            
-            BUILT_COUNT=0
-            FAILED_PODS=()
-            for POD in "${KEY_PODS[@]}"; do
-              if echo "$ALL_SCHEMES" | grep -q "^[[:space:]]*${POD}$"; then
-                echo "Building $POD..."
-                xcodebuild -workspace "$WORKSPACE_PATH" \
-                  -scheme "$POD" \
-                  -configuration Debug \
-                  -sdk iphonesimulator \
-                  -destination "id=$DEVICE_UDID" \
-                  -derivedDataPath "$DERIVED_DATA_PATH" \
-                  ARCHS="arm64 x86_64" \
-                  CODE_SIGN_IDENTITY="" \
-                  CODE_SIGNING_REQUIRED=NO \
-                  CODE_SIGNING_ALLOWED=NO \
-                  ONLY_ACTIVE_ARCH=NO \
-                  -jobs 1 \
-                  build > /tmp/pod-${POD}-build.log 2>&1
-                
-                POD_BUILD_EXIT_CODE=$?
-                cat /tmp/pod-${POD}-build.log >> /tmp/pods-build.log
-                tail -5 /tmp/pod-${POD}-build.log || true
-                
-                # Check build status
-                if [ "$POD_BUILD_EXIT_CODE" -eq 0 ] && grep -qi "BUILD SUCCEEDED" /tmp/pod-${POD}-build.log && ! grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/pod-${POD}-build.log; then
-                  BUILT_COUNT=$((BUILT_COUNT + 1))
-                  echo "✓ $POD built successfully"
-                else
-                  FAILED_PODS+=("$POD")
-                  echo "⚠ $POD build failed or had issues"
-                fi
-              fi
-            done
-            
-            echo ""
-            echo "Built $BUILT_COUNT out of ${#KEY_PODS[@]} key Pods"
-            
-            if [ ${#FAILED_PODS[@]} -gt 0 ]; then
-              echo "Failed Pods: ${FAILED_PODS[*]}"
-            fi
-            
-            if [ "$BUILT_COUNT" -eq 0 ]; then
-              echo "ERROR: No Pods were built - app build will fail"
-              exit 1
-            fi
-            
-            if [ "$BUILT_COUNT" -lt $((${#KEY_PODS[@]} / 2)) ]; then
-              echo "WARNING: Only $BUILT_COUNT Pods were built - some modulemap errors may occur"
-            fi
+            echo "ERROR: Pods.xcodeproj not found"
+            exit 1
           fi
           
           echo ""
@@ -434,8 +386,9 @@ jobs:
           
           echo ""
           echo "Step 3: Building app with workspace"
-          echo "Xcode will use the pre-built Pods frameworks"
+          echo "Xcode will use the pre-built Pods frameworks from default DerivedData"
           echo "Using -jobs 1 to ensure sequential build order"
+          echo "Note: Not using -derivedDataPath so workspace can find pre-built Pods"
           echo ""
 
           echo "Starting build..."
@@ -444,7 +397,6 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             -destination "id=$DEVICE_UDID" \
-            -derivedDataPath "$DERIVED_DATA_PATH" \
             ARCHS="arm64 x86_64" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -474,13 +426,23 @@ jobs:
             echo ""
             echo "3. Checking DerivedData structure:"
             MODULEMAP_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+            DEFAULT_DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
+            
             if [ -d "$MODULEMAP_DIR" ]; then
-              echo "Directory exists: $MODULEMAP_DIR"
+              echo "Custom DerivedData directory exists: $MODULEMAP_DIR"
               ls -la "$MODULEMAP_DIR" | head -20 || true
               echo "Framework directories:"
               find "$MODULEMAP_DIR" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found"
             else
-              echo "Directory does not exist: $MODULEMAP_DIR"
+              echo "Custom DerivedData directory does not exist: $MODULEMAP_DIR"
+            fi
+            
+            echo "Checking default DerivedData for Pods frameworks:"
+            DEFAULT_PRODUCTS=$(find "$DEFAULT_DERIVED_DATA" -path "*/Build/Products/Debug-iphonesimulator" -type d 2>/dev/null | head -1 || true)
+            if [ -n "$DEFAULT_PRODUCTS" ]; then
+              echo "Found default DerivedData products: $DEFAULT_PRODUCTS"
+              find "$DEFAULT_PRODUCTS" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found"
+              find "$DEFAULT_PRODUCTS" -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps found"
             fi
             echo ""
             echo "4. Searching for any modulemaps:"
