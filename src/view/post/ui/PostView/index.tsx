@@ -1,22 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useState, useEffect, useRef } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-  Animated,
-  LayoutChangeEvent,
-} from 'react-native';
-import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useState, useEffect, useRef } from 'react';
+import { Text, TouchableOpacity, View, Animated, LayoutChangeEvent } from 'react-native';
 import { Header } from '~/shared/ui';
-import { handleCategory, returnValue } from '../../model/handleCategory';
+import { handleCategory } from '../../model/handleCategory';
 import { Category } from '../../model/category';
-import Post from '~/shared/ui/Post';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModeType } from '~/shared/types/mode';
 import { ProductType } from '~/shared/types/type';
+import PostList from '~/widget/post/ui/PostList';
 
 export default function PostView() {
   const { type, mode } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
@@ -33,8 +24,6 @@ export default function PostView() {
   };
 
   const [category, setCategory] = useState<Category>(getInitialCategory());
-  const [refreshing, setRefreshing] = useState(false);
-  const currentMode = category ? returnValue(category) : undefined;
 
   const [containerWidth, setContainerWidth] = useState(0);
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -53,11 +42,6 @@ export default function PostView() {
     extrapolate: 'clamp',
   });
 
-  const { data = [], refetch } = useGetPosts(
-    currentMode as ModeType | undefined,
-    type as ProductType | undefined
-  );
-
   useEffect(() => {
     Animated.timing(slideAnimation, {
       toValue: selectedIndex,
@@ -65,15 +49,6 @@ export default function PostView() {
       useNativeDriver: true,
     }).start();
   }, [selectedIndex, slideAnimation]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -103,11 +78,7 @@ export default function PostView() {
           </TouchableOpacity>
         ))}
       </View>
-      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        {data.map((v) => (
-          <Post key={v.id} {...v} />
-        ))}
-      </ScrollView>
+      <PostList category={category} />
     </SafeAreaView>
   );
 }
