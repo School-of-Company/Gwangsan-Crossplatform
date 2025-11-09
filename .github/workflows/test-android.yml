@@ -1,0 +1,172 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  test-android:
+    name: Android E2E Test
+    runs-on: macos-13
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          export PATH="$PATH:$HOME/.maestro/bin"
+          maestro --version
+
+      - name: Create Maestro environment
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Kill stray ADB (once)
+        run: |
+          adb kill-server || true
+          sleep 1
+          adb start-server || true
+
+      - name: Start Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          avd-name: ci-avd
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -no-boot-anim
+            -no-snapshot -noaudio -camera-back none -camera-front none
+          script: |
+            set -e
+            export PATH="$PATH:$HOME/.maestro/bin"
+            echo "Device should already be booted by the action. Extra short wait..."
+            adb wait-for-device
+            adb shell getprop sys.boot_completed
+            adb shell input keyevent 82 || true
+
+            echo "Building app (Debug)…"
+            npx expo prebuild --platform android --clean
+            cd android
+            ./gradlew --no-daemon assembleDebug
+
+            APK_PATH=$(find . -name "app-debug.apk" -o -name "*-debug.apk" | head -1)
+            if [ -z "$APK_PATH" ]; then
+              APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
+            fi
+            if [ -z "$APK_PATH" ]; then
+              echo "APK not found"
+              exit 1
+            fi
+
+            echo "Installing APK: $APK_PATH"
+            adb kill-server || true
+            adb start-server || true
+            adb wait-for-device
+            adb install -r "$APK_PATH"
+
+            echo "Run Maestro tests"
+            cd ..
+            maestro test maestro/user/*.yml
+
+      - name: Upload Maestro test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-results-android
+          path: |
+            maestro/**/*.png
+            maestro/**/*.mp4
+          retention-days: 7
+
+  notify-discord:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+    needs: [test-android]
+    if: always()
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook URL not set, skipping notification"
+            exit 0
+          fi
+
+          ANDROID_STATUS="${{ needs.test-android.result }}"
+
+          if [ "$ANDROID_STATUS" == "success" ] || [ "$ANDROID_STATUS" == "skipped" ]; then
+            COLOR=3066993
+            EMOJI="✅"
+            STATUS="성공"
+          else
+            COLOR=15158332
+            EMOJI="❌"
+            STATUS="실패"
+          fi
+
+          EMBED=$(cat <<EOF
+          {
+            "title": "$EMOJI Maestro 테스트 $STATUS",
+            "color": $COLOR,
+            "fields": [
+              {"name": "Android", "value": "$ANDROID_STATUS", "inline": true},
+              {"name": "워크플로우", "value": "[보기]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)", "inline": false}
+            ]
+          }
+          EOF
+          )
+
+          curl -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\": [$EMBED]}"
+
+          if [ "$STATUS" == "실패" ]; then
+            ANDROID_SCREENSHOT=$(find maestro-results-android -name "*.png" 2>/dev/null | head -1)
+            
+            [ -n "$ANDROID_SCREENSHOT" ] && curl -X POST "$DISCORD_WEBHOOK_URL" \
+              -F "file=@$ANDROID_SCREENSHOT" -F "content=🤖 Android 실패 스크린샷"
+          fi
+      - name: Xcode/SDK info
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          xcrun simctl list
+
+      - name: Print DerivedData products
+        if: failure()
+        run: |
+          find ~/Library/Developer/Xcode/DerivedData -maxdepth 4 -type d -name "*.app" -print

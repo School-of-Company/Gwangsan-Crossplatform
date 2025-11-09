@@ -8,105 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # test-android:
-  #   name: Android E2E Test
-  #   runs-on: macos-13
-  #   timeout-minutes: 30
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-
-  #     - name: Setup Java
-  #       uses: actions/setup-java@v4
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: '17'
-
-  #     - name: Setup Android SDK
-  #       uses: android-actions/setup-android@v3
-
-  #     - name: Install dependencies
-  #       run: npm ci
-
-  #     - name: Install Maestro
-  #       run: |
-  #         curl -Ls "https://get.maestro.mobile.dev" | bash
-  #         export PATH="$PATH:$HOME/.maestro/bin"
-  #         maestro --version
-
-  #     - name: Create Maestro environment
-  #       run: |
-  #         export PATH="$PATH:$HOME/.maestro/bin"
-  #         echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-  #     - name: Kill stray ADB (once)
-  #       run: |
-  #         adb kill-server || true
-  #         sleep 1
-  #         adb start-server || true
-
-  #     - name: Start Android Emulator
-  #       uses: reactivecircus/android-emulator-runner@v2
-  #       with:
-  #         api-level: 33
-  #         arch: x86_64
-  #         target: google_apis
-  #         profile: pixel_7
-  #         avd-name: ci-avd
-  #         force-avd-creation: true
-  #         disable-animations: true
-  #         emulator-options: >-
-  #           -no-window -gpu swiftshader_indirect -no-boot-anim
-  #           -no-snapshot -noaudio -camera-back none -camera-front none
-  #         script: |
-  #           set -e
-  #           export PATH="$PATH:$HOME/.maestro/bin"
-  #           echo "Device should already be booted by the action. Extra short wait..."
-  #           adb wait-for-device
-  #           adb shell getprop sys.boot_completed
-  #           adb shell input keyevent 82 || true
-
-  #           echo "Building app (Debug)…"
-  #           npx expo prebuild --platform android --clean
-  #           cd android
-  #           ./gradlew --no-daemon assembleDebug
-
-  #           APK_PATH=$(find . -name "app-debug.apk" -o -name "*-debug.apk" | head -1)
-  #           if [ -z "$APK_PATH" ]; then
-  #             APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
-  #           fi
-  #           if [ -z "$APK_PATH" ]; then
-  #             echo "APK not found"
-  #             exit 1
-  #           fi
-
-  #           echo "Installing APK: $APK_PATH"
-  #           adb kill-server || true
-  #           adb start-server || true
-  #           adb wait-for-device
-  #           adb install -r "$APK_PATH"
-
-  #           echo "Run Maestro tests"
-  #           cd ..
-  #           maestro test maestro/user/*.yml
-
-  #     - name: Upload Maestro test results
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: maestro-results-android
-  #         path: |
-  #           maestro/**/*.png
-  #           maestro/**/*.mp4
-  #         retention-days: 7
-
   test-ios:
     name: iOS E2E Test
     runs-on: macos-14
@@ -308,12 +209,22 @@ jobs:
         working-directory: ios
         run: |
           set -e
+          WORKSPACE_PATH="${{ steps.build-prep.outputs.workspace_path }}"
+          DEVICE_UDID="${{ steps.build-prep.outputs.device_udid }}"
           DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
 
-          xcodebuild -project "Pods/Pods.xcodeproj" \
-            -alltargets \
+          echo "Building Pods-app aggregate target from workspace"
+          echo "This will build all Pods as static frameworks with proper modulemaps"
+          echo ""
+
+          # Build Pods-app aggregate target from workspace
+          # This ensures all Pods are built as static frameworks with modulemaps
+          xcodebuild -workspace "$WORKSPACE_PATH" \
+            -scheme "Pods-app" \
             -configuration Debug \
             -sdk iphonesimulator \
+            -destination "id=$DEVICE_UDID" \
+            -derivedDataPath "$DERIVED_DATA_PATH" \
             ARCHS="arm64" \
             "EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64" \
             ONLY_ACTIVE_ARCH=YES \
@@ -326,53 +237,51 @@ jobs:
           PODS_BUILD_EXIT_CODE=${PIPESTATUS[0]}
           
           if [ "$PODS_BUILD_EXIT_CODE" -ne 0 ]; then
-            echo "Pods build failed with exit code $PODS_BUILD_EXIT_CODE"
+            echo "ERROR: Pods build failed with exit code $PODS_BUILD_EXIT_CODE"
+            echo "Pods build errors:"
             grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -30 || true
             exit 1
           fi
           
-          DEFAULT_DD=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -type d -name "Pods-*" 2>/dev/null | head -1 || echo "")
-          CUSTOM_DD="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+          echo ""
+          echo "✓ Pods build completed successfully"
           
-          if [ -n "$DEFAULT_DD" ]; then
-            DEFAULT_PRODUCTS="$DEFAULT_DD/Build/Products/Debug-iphonesimulator"
-            if [ -d "$DEFAULT_PRODUCTS" ]; then
-              FRAMEWORKS=$(find "$DEFAULT_PRODUCTS" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
-              MODULEMAPS=$(find "$DEFAULT_PRODUCTS" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
-              echo "Default DerivedData ($DEFAULT_DD):"
-              echo "  Frameworks: $FRAMEWORKS"
-              echo "  Modulemaps: $MODULEMAPS"
+          # Verify Pods were built in the correct location
+          PRODUCTS_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+          if [ -d "$PRODUCTS_DIR" ]; then
+            FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+            MODULEMAPS_STANDALONE=$(find "$PRODUCTS_DIR" -name "*.modulemap" -not -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
+            MODULEMAPS_IN_FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.modulemap" -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
+            TOTAL_MODULEMAPS=$((MODULEMAPS_STANDALONE + MODULEMAPS_IN_FRAMEWORKS))
+            
+            echo "Pods build verification:"
+            echo "  Frameworks: $FRAMEWORKS"
+            echo "  Standalone modulemaps: $MODULEMAPS_STANDALONE"
+            echo "  Modulemaps in frameworks: $MODULEMAPS_IN_FRAMEWORKS"
+            echo "  Total modulemaps: $TOTAL_MODULEMAPS"
+            
+            if [ "$FRAMEWORKS" -eq 0 ] && [ "$TOTAL_MODULEMAPS" -eq 0 ]; then
+              echo "ERROR: No Pods products found after build"
+              echo "This indicates Pods were not built correctly"
+              echo "Checking build log for clues..."
+              grep -i "framework\|modulemap\|building.*target" /tmp/pods-build.log | head -30 || true
+              exit 1
+            else
+              echo "✓ Pods ready for app build: $FRAMEWORKS frameworks, $TOTAL_MODULEMAPS modulemaps"
               
-              if [ "$FRAMEWORKS" -gt 0 ] || [ "$MODULEMAPS" -gt 0 ]; then
-                echo "✓ Pods found in default DerivedData"
-                echo "Copying Pods to custom DerivedData for app build..."
-                mkdir -p "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-                cp -R "$DEFAULT_PRODUCTS"/* "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/" 2>/dev/null || true
-                echo "✓ Pods copied to $DERIVED_DATA_PATH"
+              if [ "$FRAMEWORKS" -gt 0 ]; then
+                echo "Sample frameworks (first 5):"
+                find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | head -5 || true
+              fi
+              if [ "$TOTAL_MODULEMAPS" -gt 0 ]; then
+                echo "Sample modulemaps (first 5):"
+                find "$PRODUCTS_DIR" -name "*.modulemap" 2>/dev/null | head -5 || true
               fi
             fi
-          fi
-          
-          # Also check custom DerivedData
-          if [ -d "$CUSTOM_DD" ]; then
-            FRAMEWORKS=$(find "$CUSTOM_DD" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
-            MODULEMAPS=$(find "$CUSTOM_DD" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
-            echo "Custom DerivedData ($DERIVED_DATA_PATH):"
-            echo "  Frameworks: $FRAMEWORKS"
-            echo "  Modulemaps: $MODULEMAPS"
-          fi
-          
-          # Final check
-          FINAL_PRODUCTS="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-          if [ -d "$FINAL_PRODUCTS" ]; then
-            FINAL_FRAMEWORKS=$(find "$FINAL_PRODUCTS" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
-            FINAL_MODULEMAPS=$(find "$FINAL_PRODUCTS" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
-            if [ "$FINAL_FRAMEWORKS" -eq 0 ] && [ "$FINAL_MODULEMAPS" -eq 0 ]; then
-              echo "No Pods products found in final DerivedData location"
-              echo "This may cause app build to fail"
-            else
-              echo "Pods ready for app build: $FINAL_FRAMEWORKS frameworks, $FINAL_MODULEMAPS modulemaps"
-            fi
+          else
+            echo "ERROR: Products directory not found: $PRODUCTS_DIR"
+            echo "Pods build may have failed"
+            exit 1
           fi
 
       - name: Build iOS app
