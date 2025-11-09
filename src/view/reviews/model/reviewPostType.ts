@@ -6,4 +6,5 @@ export interface ReviewPostType {
   light: number;
   productId: number;
   images: ImageType[];
+  reviewId: string;
 }
