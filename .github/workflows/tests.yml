@@ -319,11 +319,17 @@ jobs:
           
           echo ""
           echo "Step 2: Building Pods dependencies explicitly"
-          echo "With use_frameworks! :linkage => :static, we need to build Pods as frameworks first"
-          echo "Building Pods-app scheme to ensure all Pods frameworks are generated..."
+          echo "With use_frameworks! :linkage => :static, Pods must be built as frameworks first"
+          echo "Checking available schemes..."
           
-          if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods-app"; then
-            echo "Building Pods-app scheme..."
+          ALL_SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 100 "Schemes:" | grep -v "Schemes:" | grep -v "^$" | head -20 || true)
+          echo "Available schemes (first 20):"
+          echo "$ALL_SCHEMES" || echo "Could not list schemes"
+          
+          # Try Pods-app first, then fall back to building individual Pods
+          if echo "$ALL_SCHEMES" | grep -q "Pods-app"; then
+            echo ""
+            echo "Building Pods-app scheme (this builds all Pods as frameworks)..."
             xcodebuild -workspace "$WORKSPACE_PATH" \
               -scheme "Pods-app" \
               -configuration Debug \
@@ -336,14 +342,95 @@ jobs:
               CODE_SIGNING_ALLOWED=NO \
               ONLY_ACTIVE_ARCH=NO \
               -jobs 1 \
-              build 2>&1 | tee /tmp/pods-build.log | grep -E "(BUILD|error|warning|Compiling|Linking)" | tail -20 || echo "Pods-app build completed"
+              build 2>&1 | tee /tmp/pods-build.log
+            
+            PODS_BUILD_EXIT_CODE=${PIPESTATUS[0]}
+            
+            if [ "$PODS_BUILD_EXIT_CODE" -ne 0 ] || grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log; then
+              echo "ERROR: Pods-app build failed"
+              echo "Pods build errors:"
+              grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -20 || true
+              exit 1
+            fi
+            
+            echo "✓ Pods-app build completed successfully"
           else
-            echo "Pods-app scheme not found, will rely on workspace build to build Pods"
+            echo ""
+            echo "⚠ Pods-app scheme not found - building key Expo Pods individually..."
+            echo "This is necessary because workspace build doesn't include Pods in dependency graph"
+            
+            # Build key Expo Pods that are required for modulemaps
+            KEY_PODS=("EXApplication" "EXConstants" "EXManifests" "EXNotifications" "EXUpdatesInterface" "Expo" "ExpoModulesCore" "ExpoAsset" "ExpoDevice" "ExpoFileSystem" "ExpoFont" "ExpoHead" "ExpoImage" "ExpoImagePicker" "ExpoKeepAwake" "ExpoLinking" "expo-dev-launcher" "expo-dev-menu" "expo-dev-menu-interface")
+            
+            BUILT_COUNT=0
+            FAILED_PODS=()
+            for POD in "${KEY_PODS[@]}"; do
+              if echo "$ALL_SCHEMES" | grep -q "^[[:space:]]*${POD}$"; then
+                echo "Building $POD..."
+                xcodebuild -workspace "$WORKSPACE_PATH" \
+                  -scheme "$POD" \
+                  -configuration Debug \
+                  -sdk iphonesimulator \
+                  -destination "id=$DEVICE_UDID" \
+                  -derivedDataPath "$DERIVED_DATA_PATH" \
+                  ARCHS="arm64 x86_64" \
+                  CODE_SIGN_IDENTITY="" \
+                  CODE_SIGNING_REQUIRED=NO \
+                  CODE_SIGNING_ALLOWED=NO \
+                  ONLY_ACTIVE_ARCH=NO \
+                  -jobs 1 \
+                  build > /tmp/pod-${POD}-build.log 2>&1
+                
+                POD_BUILD_EXIT_CODE=$?
+                cat /tmp/pod-${POD}-build.log >> /tmp/pods-build.log
+                tail -5 /tmp/pod-${POD}-build.log || true
+                
+                # Check build status
+                if [ "$POD_BUILD_EXIT_CODE" -eq 0 ] && grep -qi "BUILD SUCCEEDED" /tmp/pod-${POD}-build.log && ! grep -qi "BUILD FAILED\|failed with a nonzero exit code" /tmp/pod-${POD}-build.log; then
+                  BUILT_COUNT=$((BUILT_COUNT + 1))
+                  echo "✓ $POD built successfully"
+                else
+                  FAILED_PODS+=("$POD")
+                  echo "⚠ $POD build failed or had issues"
+                fi
+              fi
+            done
+            
+            echo ""
+            echo "Built $BUILT_COUNT out of ${#KEY_PODS[@]} key Pods"
+            
+            if [ ${#FAILED_PODS[@]} -gt 0 ]; then
+              echo "Failed Pods: ${FAILED_PODS[*]}"
+            fi
+            
+            if [ "$BUILT_COUNT" -eq 0 ]; then
+              echo "ERROR: No Pods were built - app build will fail"
+              exit 1
+            fi
+            
+            if [ "$BUILT_COUNT" -lt $((${#KEY_PODS[@]} / 2)) ]; then
+              echo "WARNING: Only $BUILT_COUNT Pods were built - some modulemap errors may occur"
+            fi
           fi
           
           echo ""
-          find "$DERIVED_DATA_PATH" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found yet (will be created during app build)"
-          find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps found yet"
+          echo "Verifying Pods frameworks were built:"
+          FRAMEWORKS=$(find "$DERIVED_DATA_PATH" -name "*.framework" -type d 2>/dev/null | head -10 || true)
+          if [ -n "$FRAMEWORKS" ]; then
+            echo "✓ Found frameworks:"
+            echo "$FRAMEWORKS"
+          else
+            echo "⚠ No frameworks found in DerivedData"
+          fi
+          
+          MODULEMAPS=$(find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -10 || true)
+          if [ -n "$MODULEMAPS" ]; then
+            echo "✓ Found modulemaps:"
+            echo "$MODULEMAPS"
+          else
+            echo "⚠ No modulemaps found in DerivedData"
+            echo "This will cause Swift compilation errors"
+          fi
           
           echo ""
           echo "Step 3: Building app with workspace"
