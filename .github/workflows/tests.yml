@@ -407,6 +407,8 @@ jobs:
             
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
           
+          ACTUAL_DERIVED_DATA=$(grep -oE '/Users/[^/]+/Library/Developer/Xcode/DerivedData/[^/]+' /tmp/xcodebuild.log | head -1 | sed 's|/Build/.*||' || echo "")
+          
           if grep -qi "module map file.*not found\|no such module" /tmp/xcodebuild.log; then
             echo "ERROR: Module import errors detected - build cannot succeed"
             echo "This indicates Pods dependencies were not built correctly"
@@ -415,47 +417,46 @@ jobs:
             grep -i "module map file.*not found\|no such module" /tmp/xcodebuild.log | head -30 || true
             echo ""
             echo "Debugging information:"
-            echo "1. Checking dependency graph from build log:"
-            grep -i "Target dependency graph\|Building targets in dependency order" /tmp/xcodebuild.log | head -5 || true
+            echo "1. Actual DerivedData path from build log: $ACTUAL_DERIVED_DATA"
             echo ""
-            echo "2. Checking if Pods were built (searching for framework builds):"
-            grep -i "Building.*framework\|\.framework.*build\|Pods.*build" /tmp/xcodebuild.log | head -30 || echo "No Pods framework build found in log"
+            echo "2. Checking if modulemaps exist in actual DerivedData:"
+            if [ -n "$ACTUAL_DERIVED_DATA" ] && [ -d "$ACTUAL_DERIVED_DATA" ]; then
+              ACTUAL_PRODUCTS="$ACTUAL_DERIVED_DATA/Build/Products/Debug-iphonesimulator"
+              if [ -d "$ACTUAL_PRODUCTS" ]; then
+                echo "Checking: $ACTUAL_PRODUCTS"
+                find "$ACTUAL_PRODUCTS" -name "*.modulemap" 2>/dev/null | head -20 || echo "No modulemaps found"
+                find "$ACTUAL_PRODUCTS" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found"
+              fi
+            fi
             echo ""
-            echo "2b. Checking for any Pods-related build activity:"
-            grep -i "EXApplication\|EXConstants\|Expo\|ExpoModulesCore" /tmp/xcodebuild.log | grep -i "build\|compile" | head -20 || echo "No Pods build activity found"
-            echo ""
-            echo "3. Checking DerivedData structure:"
-            MODULEMAP_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+            echo "3. Checking all DerivedData directories:"
             DEFAULT_DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
-            
-            if [ -d "$MODULEMAP_DIR" ]; then
-              echo "Custom DerivedData directory exists: $MODULEMAP_DIR"
-              ls -la "$MODULEMAP_DIR" | head -20 || true
-              echo "Framework directories:"
-              find "$MODULEMAP_DIR" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found"
-            else
-              echo "Custom DerivedData directory does not exist: $MODULEMAP_DIR"
-            fi
-            
-            echo "Checking default DerivedData for Pods frameworks:"
-            DEFAULT_PRODUCTS=$(find "$DEFAULT_DERIVED_DATA" -path "*/Build/Products/Debug-iphonesimulator" -type d 2>/dev/null | head -1 || true)
-            if [ -n "$DEFAULT_PRODUCTS" ]; then
-              echo "Found default DerivedData products: $DEFAULT_PRODUCTS"
-              find "$DEFAULT_PRODUCTS" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found"
-              find "$DEFAULT_PRODUCTS" -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps found"
-            fi
-            echo ""
-            echo "4. Searching for any modulemaps:"
-            find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -20 || echo "No modulemaps found anywhere"
-            echo ""
-            echo "5. Checking Pods structure:"
-            if [ -d "Pods" ]; then
-              echo "Pods directory exists"
-              find Pods -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps in Pods"
-            fi
+            for DD_DIR in "$DEFAULT_DERIVED_DATA"/*/Build/Products/Debug-iphonesimulator; do
+              if [ -d "$DD_DIR" ]; then
+                echo "Found: $DD_DIR"
+                find "$DD_DIR" -name "*.modulemap" 2>/dev/null | head -5 || echo "  No modulemaps"
+              fi
+            done
             echo ""
             echo "Build will fail due to module errors"
             exit 1
+          fi
+          
+          if [ -n "$ACTUAL_DERIVED_DATA" ] && [ -d "$ACTUAL_DERIVED_DATA" ]; then
+            ACTUAL_PRODUCTS="$ACTUAL_DERIVED_DATA/Build/Products/Debug-iphonesimulator"
+            if [ -d "$ACTUAL_PRODUCTS" ]; then
+              REQUIRED_MODULEMAPS=("EXApplication/EXApplication.modulemap" "Expo/Expo.modulemap" "ExpoModulesCore/ExpoModulesCore.modulemap")
+              MISSING_COUNT=0
+              for MODULEMAP in "${REQUIRED_MODULEMAPS[@]}"; do
+                if [ ! -f "$ACTUAL_PRODUCTS/$MODULEMAP" ]; then
+                  echo "⚠ Missing modulemap: $ACTUAL_PRODUCTS/$MODULEMAP"
+                  MISSING_COUNT=$((MISSING_COUNT + 1))
+                fi
+              done
+              if [ "$MISSING_COUNT" -eq 0 ]; then
+                echo "✓ All required modulemaps found in actual DerivedData"
+              fi
+            fi
           fi
           
           if [ "$BUILD_EXIT_CODE" -ne 0 ]; then
@@ -477,20 +478,15 @@ jobs:
         working-directory: ios
         run: |
           set -e
-          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
-          
-          APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" 2>/dev/null | head -1)
           if [ -z "$APP_PATH" ]; then
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
-          fi
-          if [ -z "$APP_PATH" ]; then
-            APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+            APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" 2>/dev/null | head -1)
           fi
 
           if [ -z "$APP_PATH" ]; then
             echo "Error: App not found in build output"
-            echo "Searching in: $DERIVED_DATA_PATH"
-            find "$DERIVED_DATA_PATH" -name "*.app" 2>/dev/null | head -10 || true
+            echo "Searching in all DerivedData directories:"
+            find ~/Library/Developer/Xcode/DerivedData -name "*.app" 2>/dev/null | head -10 || true
             exit 1
           fi
           
@@ -528,14 +524,9 @@ jobs:
         working-directory: ios
         run: |
           set -e
-          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
-          
-          APP_PATH=$(find "$DERIVED_DATA_PATH" -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" 2>/dev/null | head -1)
           if [ -z "$APP_PATH" ]; then
-            APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
-          fi
-          if [ -z "$APP_PATH" ]; then
-            APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" | head -1)
+            APP_PATH=$(find . -name "*.app" -path "*/Build/Products/Debug-iphonesimulator/*" 2>/dev/null | head -1)
           fi
           
           if [ -z "$APP_PATH" ]; then
