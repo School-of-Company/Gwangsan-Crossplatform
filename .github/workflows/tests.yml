@@ -209,6 +209,7 @@ jobs:
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           
           echo "Pods 낉여오기"
+          pod repo update || true
           pod install --repo-update
           
           if [ ! -d "Pods" ]; then
@@ -317,15 +318,37 @@ jobs:
           fi
           
           echo ""
-          echo "Step 2: Building app with workspace"
-          echo "Xcode will automatically build Pods dependencies first"
+          echo "Step 2: Building Pods dependencies explicitly"
+          echo "With use_frameworks! :linkage => :static, we need to build Pods as frameworks first"
+          echo "Building Pods-app scheme to ensure all Pods frameworks are generated..."
+          
+          if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods-app"; then
+            echo "Building Pods-app scheme..."
+            xcodebuild -workspace "$WORKSPACE_PATH" \
+              -scheme "Pods-app" \
+              -configuration Debug \
+              -sdk iphonesimulator \
+              -destination "id=$DEVICE_UDID" \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              ARCHS="arm64 x86_64" \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              ONLY_ACTIVE_ARCH=NO \
+              -jobs 1 \
+              build 2>&1 | tee /tmp/pods-build.log | grep -E "(BUILD|error|warning|Compiling|Linking)" | tail -20 || echo "Pods-app build completed"
+          else
+            echo "Pods-app scheme not found, will rely on workspace build to build Pods"
+          fi
+          
+          echo ""
+          find "$DERIVED_DATA_PATH" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found yet (will be created during app build)"
+          find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps found yet"
+          
+          echo ""
+          echo "Step 3: Building app with workspace"
+          echo "Xcode will use the pre-built Pods frameworks"
           echo "Using -jobs 1 to ensure sequential build order"
-          echo ""
-          echo "Build command:"
-          echo "  xcodebuild -workspace $WORKSPACE_PATH -scheme $SCHEME -configuration Debug -sdk iphonesimulator -destination id=$DEVICE_UDID -derivedDataPath $DERIVED_DATA_PATH -jobs 1 build"
-          echo ""
-          echo "Note: With use_frameworks! :linkage => :static, Pods should be built as frameworks"
-          echo "and included in the dependency graph automatically"
           echo ""
 
           echo "Starting build..."
