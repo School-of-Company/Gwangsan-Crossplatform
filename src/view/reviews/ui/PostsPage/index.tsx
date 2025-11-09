@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, Text, View, ScrollView } from 'react-native';
+import { Text, View, ScrollView, SafeAreaViewBase } from 'react-native';
 import { Header } from '~/shared/ui';
 import { getReceiveReview, getTossReview } from '../../api/getReviews';
 import { ReviewPostType } from '../../model/reviewPostType';
@@ -31,7 +31,7 @@ export default function ReviewsPageView() {
   }, [active, id]);
 
   return (
-    <SafeAreaView className="android:pt-10 h-full bg-white">
+    <SafeAreaViewBase className="android:pt-10 h-full bg-white">
       <Header headerTitle="게시글" />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {posts.length > 0 ? (
@@ -46,6 +46,6 @@ export default function ReviewsPageView() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaViewBase>
   );
 }
