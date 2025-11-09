@@ -64,11 +64,18 @@ target 'app' do
 
     # Fix modulemap generation for Expo/EX* pods
     installer.pods_project.targets.each do |target|
-      if target.name.start_with?('Expo') || target.name.start_with?('EX') || target.name.start_with?('expo-')
-        target.build_configurations.each do |config|
+      target.build_configurations.each do |config|
+        config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+        config.build_settings['EXCLUDED_ARCHS'] = ''
+        
+        config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+        
+        if target.name.start_with?('Expo') || target.name.start_with?('EX') || target.name.start_with?('expo-')
           config.build_settings['DEFINES_MODULE'] = 'YES'
           config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
           config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
+          config.build_settings['SWIFT_OBJC_INTERFACE_HEADER_NAME'] = "$(SWIFT_MODULE_NAME)-Swift.h"
+          config.build_settings['SWIFT_OBJC_BRIDGING_HEADER'] = ''
         end
       end
     end
