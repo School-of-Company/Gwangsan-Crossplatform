@@ -250,8 +250,9 @@ jobs:
             cat Podfile.properties.json
           fi
 
-      - name: Build iOS app
+      - name: Prepare build environment
         working-directory: ios
+        id: build-prep
         run: |
           set -e
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
@@ -270,9 +271,6 @@ jobs:
             exit 1
           fi
 
-          # Use consistent DerivedData path
-          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
-
           echo "Pre-build checks:"
           if [ -d "Pods" ]; then
             echo "✓ Pods directory exists"
@@ -288,24 +286,47 @@ jobs:
             exit 1
           fi
 
+          DERIVED_DATA_PATH="$HOME/Library/Developer/Xcode/DerivedData/ci-build"
+          echo "workspace_path=$WORKSPACE_PATH" >> "$GITHUB_OUTPUT"
+          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
+          echo "device_udid=$DEVICE_UDID" >> "$GITHUB_OUTPUT"
+          echo "derived_data_path=$DERIVED_DATA_PATH" >> "$GITHUB_OUTPUT"
+
           echo ""
-          echo "Step 0: Clean DerivedData before build"
+          echo "Workspace: $WORKSPACE_PATH"
+          echo "Scheme: $SCHEME"
+          echo "Device UDID: $DEVICE_UDID"
+          echo "DerivedData: $DERIVED_DATA_PATH"
+
+      - name: Clean DerivedData
+        working-directory: ios
+        run: |
+          set -e
+          DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
+          
+          echo "Cleaning DerivedData before build..."
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           mkdir -p "$DERIVED_DATA_PATH"
           echo "✓ DerivedData cleaned, using: $DERIVED_DATA_PATH"
 
-          echo ""
-          echo "Step 1: Verify workspace and schemes"
+      - name: Verify workspace schemes
+        working-directory: ios
+        run: |
+          set -e
+          WORKSPACE_PATH="${{ steps.build-prep.outputs.workspace_path }}"
+          
+          echo "Verifying workspace and schemes..."
           echo "Listing all schemes in workspace:"
           xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Schemes:" || true
 
-          echo ""
-          echo "Step 2: Building app with workspace"
-          echo "CocoaPods will automatically build Pods dependencies when building the app"
-          echo "The app target has Pods-app as a dependency, so Pods will be built first"
-          echo "Using arm64 only for macOS-14 (Apple Silicon) - excluding x86_64"
-          echo "Using -jobs 1 to ensure Pods are built before app compilation starts"
-          echo ""
+      - name: Build iOS app
+        working-directory: ios
+        run: |
+          set -e
+          WORKSPACE_PATH="${{ steps.build-prep.outputs.workspace_path }}"
+          SCHEME="${{ steps.build-prep.outputs.scheme }}"
+          DEVICE_UDID="${{ steps.build-prep.outputs.device_udid }}"
+          DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
 
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
@@ -321,11 +342,17 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -jobs 1 \
             build 2>&1 | tee /tmp/xcodebuild.log
-            
+          
           BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          echo "$BUILD_EXIT_CODE" > /tmp/build_exit_code.txt
 
-          echo ""
-          echo "Step 3: Verifying build results"
+      - name: Verify build results
+        working-directory: ios
+        run: |
+          set -e
+          DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
+          BUILD_EXIT_CODE=$(cat /tmp/build_exit_code.txt 2>/dev/null || echo "1")
+
           echo "Checking if Pods were built and modulemaps exist..."
           
           PRODUCTS_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
