@@ -289,7 +289,13 @@ jobs:
           fi
           
           echo ""
-          echo "Step 0: Verifying workspace structure and dependencies"
+          echo "Step 0: Clean DerivedData completely before build"
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          rm -rf "$DERIVED_DATA_PATH"
+          echo "✓ DerivedData cleaned"
+          
+          echo ""
+          echo "Step 1: Verifying workspace structure and dependencies"
           echo "Checking if Pods are properly integrated in workspace..."
           
           if xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -q "Pods"; then
@@ -297,6 +303,9 @@ jobs:
           else
             echo "⚠ Pods not found in workspace schemes - this may cause dependency issues"
           fi
+          
+          echo "Listing all schemes in workspace:"
+          xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Schemes:" || true
           
           if [ -f "app.xcodeproj/project.pbxproj" ]; then
             echo "Checking app target dependencies..."
@@ -308,9 +317,18 @@ jobs:
           fi
           
           echo ""
-          echo "Building app with workspace"
+          echo "Step 2: Building app with workspace"
+          echo "Xcode will automatically build Pods dependencies first"
           echo "Using -jobs 1 to ensure sequential build order"
+          echo ""
+          echo "Build command:"
+          echo "  xcodebuild -workspace $WORKSPACE_PATH -scheme $SCHEME -configuration Debug -sdk iphonesimulator -destination id=$DEVICE_UDID -derivedDataPath $DERIVED_DATA_PATH -jobs 1 build"
+          echo ""
+          echo "Note: With use_frameworks! :linkage => :static, Pods should be built as frameworks"
+          echo "and included in the dependency graph automatically"
+          echo ""
 
+          echo "Starting build..."
           xcodebuild -workspace "$WORKSPACE_PATH" \
             -scheme "$SCHEME" \
             -configuration Debug \
@@ -335,26 +353,34 @@ jobs:
             grep -i "module map file.*not found\|no such module" /tmp/xcodebuild.log | head -30 || true
             echo ""
             echo "Debugging information:"
-            echo "1. Checking DerivedData structure:"
+            echo "1. Checking dependency graph from build log:"
+            grep -i "Target dependency graph\|Building targets in dependency order" /tmp/xcodebuild.log | head -5 || true
+            echo ""
+            echo "2. Checking if Pods were built (searching for framework builds):"
+            grep -i "Building.*framework\|\.framework.*build\|Pods.*build" /tmp/xcodebuild.log | head -30 || echo "No Pods framework build found in log"
+            echo ""
+            echo "2b. Checking for any Pods-related build activity:"
+            grep -i "EXApplication\|EXConstants\|Expo\|ExpoModulesCore" /tmp/xcodebuild.log | grep -i "build\|compile" | head -20 || echo "No Pods build activity found"
+            echo ""
+            echo "3. Checking DerivedData structure:"
             MODULEMAP_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
             if [ -d "$MODULEMAP_DIR" ]; then
               echo "Directory exists: $MODULEMAP_DIR"
               ls -la "$MODULEMAP_DIR" | head -20 || true
+              echo "Framework directories:"
+              find "$MODULEMAP_DIR" -name "*.framework" -type d 2>/dev/null | head -10 || echo "No frameworks found"
             else
               echo "Directory does not exist: $MODULEMAP_DIR"
             fi
             echo ""
-            echo "2. Searching for any modulemaps:"
+            echo "4. Searching for any modulemaps:"
             find "$DERIVED_DATA_PATH" -name "*.modulemap" 2>/dev/null | head -20 || echo "No modulemaps found anywhere"
             echo ""
-            echo "3. Checking Pods structure:"
+            echo "5. Checking Pods structure:"
             if [ -d "Pods" ]; then
               echo "Pods directory exists"
               find Pods -name "*.modulemap" 2>/dev/null | head -10 || echo "No modulemaps in Pods"
             fi
-            echo ""
-            echo "4. Checking build log for Pods build information:"
-            grep -i "pods\|dependency" /tmp/xcodebuild.log | head -20 || true
             echo ""
             echo "Build will fail due to module errors"
             exit 1
