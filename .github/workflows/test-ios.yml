@@ -209,20 +209,17 @@ jobs:
         working-directory: ios
         run: |
           set -e
-          WORKSPACE_PATH="${{ steps.build-prep.outputs.workspace_path }}"
-          DEVICE_UDID="${{ steps.build-prep.outputs.device_udid }}"
           DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
 
-          echo "Building Pods-app aggregate target from workspace"
-          echo "Using -target instead of -scheme since Pods-app is not a shared scheme"
+          echo "Building Pods-app aggregate target from Pods.xcodeproj"
+          echo "Note: -project doesn't support -derivedDataPath, so we'll use default DerivedData"
+          echo "and copy the results to our custom DerivedData path"
           echo ""
 
-          xcodebuild -workspace "$WORKSPACE_PATH" \
+          xcodebuild -project "Pods/Pods.xcodeproj" \
             -target "Pods-app" \
             -configuration Debug \
             -sdk iphonesimulator \
-            -destination "id=$DEVICE_UDID" \
-            -derivedDataPath "$DERIVED_DATA_PATH" \
             ARCHS="arm64" \
             "EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64" \
             ONLY_ACTIVE_ARCH=YES \
@@ -238,50 +235,81 @@ jobs:
             echo "ERROR: Pods build failed with exit code $PODS_BUILD_EXIT_CODE"
             echo "Pods build errors:"
             grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -30 || true
-            echo ""
-            echo "Checking available targets in workspace:"
-            xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Targets:" || true
             exit 1
           fi
           
           echo ""
           echo "✓ Pods build completed successfully"
           
-          # Verify Pods were built in the correct location
-          PRODUCTS_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
-          if [ -d "$PRODUCTS_DIR" ]; then
-            FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
-            MODULEMAPS_STANDALONE=$(find "$PRODUCTS_DIR" -name "*.modulemap" -not -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
-            MODULEMAPS_IN_FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.modulemap" -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
-            TOTAL_MODULEMAPS=$((MODULEMAPS_STANDALONE + MODULEMAPS_IN_FRAMEWORKS))
+          DEFAULT_DD=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -type d -name "Pods-*" 2>/dev/null | head -1 || echo "")
+          
+          if [ -z "$DEFAULT_DD" ]; then
+            echo "ERROR: Could not find Pods build output in default DerivedData"
+            echo "Searching all DerivedData directories:"
+            ls -la ~/Library/Developer/Xcode/DerivedData/ | head -20 || true
+            exit 1
+          fi
+          
+          DEFAULT_PRODUCTS="$DEFAULT_DD/Build/Products/Debug-iphonesimulator"
+          
+          if [ ! -d "$DEFAULT_PRODUCTS" ]; then
+            echo "ERROR: Pods products directory not found: $DEFAULT_PRODUCTS"
+            echo "Checking build log for clues..."
+            grep -i "building.*target\|BUILD SUCCEEDED" /tmp/pods-build.log | tail -20 || true
+            exit 1
+          fi
+          
+          FRAMEWORKS=$(find "$DEFAULT_PRODUCTS" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+          MODULEMAPS_STANDALONE=$(find "$DEFAULT_PRODUCTS" -name "*.modulemap" -not -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
+          MODULEMAPS_IN_FRAMEWORKS=$(find "$DEFAULT_PRODUCTS" -name "*.modulemap" -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
+          TOTAL_MODULEMAPS=$((MODULEMAPS_STANDALONE + MODULEMAPS_IN_FRAMEWORKS))
+          
+          echo "Pods build verification (from default DerivedData):"
+          echo "  Location: $DEFAULT_PRODUCTS"
+          echo "  Frameworks: $FRAMEWORKS"
+          echo "  Standalone modulemaps: $MODULEMAPS_STANDALONE"
+          echo "  Modulemaps in frameworks: $MODULEMAPS_IN_FRAMEWORKS"
+          echo "  Total modulemaps: $TOTAL_MODULEMAPS"
+          
+          if [ "$FRAMEWORKS" -eq 0 ] && [ "$TOTAL_MODULEMAPS" -eq 0 ]; then
+            echo "ERROR: No Pods products found after build"
+            echo "This indicates Pods were not built correctly"
+            echo "Checking build log for clues..."
+            grep -i "framework\|modulemap\|building.*target" /tmp/pods-build.log | head -30 || true
+            exit 1
+          fi
+          
+          echo ""
+          echo "Copying Pods to custom DerivedData for app build..."
+          CUSTOM_PRODUCTS="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+          mkdir -p "$CUSTOM_PRODUCTS"
+          
+          cp -R "$DEFAULT_PRODUCTS"/* "$CUSTOM_PRODUCTS/" 2>/dev/null || {
+            echo "WARNING: Some files may not have been copied"
+            find "$DEFAULT_PRODUCTS" -name "*.framework" -type d -exec cp -R {} "$CUSTOM_PRODUCTS/" \; 2>/dev/null || true
+            find "$DEFAULT_PRODUCTS" -name "*.modulemap" -exec cp {} "$CUSTOM_PRODUCTS/" \; 2>/dev/null || true
+          }
+          
+          COPIED_FRAMEWORKS=$(find "$CUSTOM_PRODUCTS" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+          COPIED_MODULEMAPS=$(find "$CUSTOM_PRODUCTS" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+          
+          echo "✓ Pods copied to custom DerivedData"
+          echo "  Frameworks copied: $COPIED_FRAMEWORKS"
+          echo "  Modulemaps copied: $COPIED_MODULEMAPS"
+          
+          if [ "$COPIED_FRAMEWORKS" -gt 0 ] || [ "$COPIED_MODULEMAPS" -gt 0 ]; then
+            echo "✓ Pods ready for app build: $COPIED_FRAMEWORKS frameworks, $COPIED_MODULEMAPS modulemaps"
             
-            echo "Pods build verification:"
-            echo "  Frameworks: $FRAMEWORKS"
-            echo "  Standalone modulemaps: $MODULEMAPS_STANDALONE"
-            echo "  Modulemaps in frameworks: $MODULEMAPS_IN_FRAMEWORKS"
-            echo "  Total modulemaps: $TOTAL_MODULEMAPS"
-            
-            if [ "$FRAMEWORKS" -eq 0 ] && [ "$TOTAL_MODULEMAPS" -eq 0 ]; then
-              echo "ERROR: No Pods products found after build"
-              echo "This indicates Pods were not built correctly"
-              echo "Checking build log for clues..."
-              grep -i "framework\|modulemap\|building.*target" /tmp/pods-build.log | head -30 || true
-              exit 1
-            else
-              echo "✓ Pods ready for app build: $FRAMEWORKS frameworks, $TOTAL_MODULEMAPS modulemaps"
-              
-              if [ "$FRAMEWORKS" -gt 0 ]; then
-                echo "Sample frameworks (first 5):"
-                find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | head -5 || true
-              fi
-              if [ "$TOTAL_MODULEMAPS" -gt 0 ]; then
-                echo "Sample modulemaps (first 5):"
-                find "$PRODUCTS_DIR" -name "*.modulemap" 2>/dev/null | head -5 || true
-              fi
+            if [ "$COPIED_FRAMEWORKS" -gt 0 ]; then
+              echo "Sample frameworks (first 5):"
+              find "$CUSTOM_PRODUCTS" -name "*.framework" -type d 2>/dev/null | head -5 || true
+            fi
+            if [ "$COPIED_MODULEMAPS" -gt 0 ]; then
+              echo "Sample modulemaps (first 5):"
+              find "$CUSTOM_PRODUCTS" -name "*.modulemap" 2>/dev/null | head -5 || true
             fi
           else
-            echo "ERROR: Products directory not found: $PRODUCTS_DIR"
-            echo "Pods build may have failed"
+            echo "ERROR: Failed to copy Pods to custom DerivedData"
             exit 1
           fi
 
