@@ -154,7 +154,6 @@ jobs:
         shell: bash
         run: |
           set -eu
-          echo "== Show available runtimes/devices =="
           xcrun simctl list runtimes
           xcrun simctl list devices
 
@@ -202,18 +201,17 @@ jobs:
         working-directory: ios
         run: |
           set -e
-          echo "Pods 캐시 지울게~"
-          rm -rf Pods
-          rm -f Podfile.lock
-          rm -rf ~/Library/Caches/CocoaPods
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          # echo "Pods 캐시 지울게~"
+          # rm -rf Pods
+          # rm -f Podfile.lock
+          # rm -rf ~/Library/Caches/CocoaPods
+          # rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
-          echo "Pods 낉여오기"
           pod repo update || true
           pod install --repo-update
 
           if [ ! -d "Pods" ]; then
-            echo "Error: Pods directory not found after installation"
+            echo "Pods directory not found after installation"
             exit 1
           fi
           echo "Pods installed successfully"
@@ -224,28 +222,20 @@ jobs:
           set -e
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
           if [ -z "$WORKSPACE_PATH" ]; then
-            echo "Error: xcworkspace not found"
+            echo "xcworkspace not found"
             exit 1
           fi
 
-          echo "Workspace: $WORKSPACE_PATH"
-          echo "Available schemes:"
           xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 20 "Schemes:" || true
 
-          echo "Checking Pods structure..."
           if [ -d "Pods" ]; then
-            echo "Pods directory exists"
-            echo "Pods targets (first 20):"
             find Pods -name "*.modulemap" -o -name "*.podspec" | head -20 || true
           fi
 
           if [ -d "Pods/Pods.xcodeproj" ]; then
-            echo "Pods.xcodeproj exists"
-            echo "Listing Pods project targets:"
             xcodebuild -list -project "Pods/Pods.xcodeproj" 2>/dev/null | grep -A 50 "Targets:" || true
           fi
 
-          echo "Checking Podfile configuration..."
           if [ -f "Podfile.properties.json" ]; then
             cat Podfile.properties.json
           fi
@@ -257,7 +247,7 @@ jobs:
           set -e
           WORKSPACE_PATH=$(find . -name "*.xcworkspace" -type d | head -1)
           if [ -z "$WORKSPACE_PATH" ]; then
-            echo "Error: xcworkspace not found"
+            echo "xcworkspace not found"
             ls -la
             exit 1
           fi
@@ -267,22 +257,21 @@ jobs:
 
           DEVICE_UDID="${{ steps.simulator.outputs.device_udid }}"
           if [ -z "$DEVICE_UDID" ]; then
-            echo "No simulator UDID from previous step"
+            echo "no simulator UDID from previous step"
             exit 1
           fi
 
-          echo "Pre-build checks:"
           if [ -d "Pods" ]; then
-            echo "✓ Pods directory exists"
+            echo "Pods directory exists"
           else
-            echo "✗ Pods directory not found"
+            echo "Pods directory not found"
             exit 1
           fi
 
           if [ -d "Pods/Pods.xcodeproj" ]; then
-            echo "✓ Pods.xcodeproj exists"
+            echo "Pods.xcodeproj exists"
           else
-            echo "✗ Pods.xcodeproj not found"
+            echo "Pods.xcodeproj not found"
             exit 1
           fi
 
@@ -292,7 +281,6 @@ jobs:
           echo "device_udid=$DEVICE_UDID" >> "$GITHUB_OUTPUT"
           echo "derived_data_path=$DERIVED_DATA_PATH" >> "$GITHUB_OUTPUT"
 
-          echo ""
           echo "Workspace: $WORKSPACE_PATH"
           echo "Scheme: $SCHEME"
           echo "Device UDID: $DEVICE_UDID"
@@ -304,10 +292,9 @@ jobs:
           set -e
           DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
           
-          echo "Cleaning DerivedData before build..."
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           mkdir -p "$DERIVED_DATA_PATH"
-          echo "✓ DerivedData cleaned, using: $DERIVED_DATA_PATH"
+          echo "DerivedData cleaned, using: $DERIVED_DATA_PATH"
 
       - name: Verify workspace schemes
         working-directory: ios
@@ -315,9 +302,78 @@ jobs:
           set -e
           WORKSPACE_PATH="${{ steps.build-prep.outputs.workspace_path }}"
           
-          echo "Verifying workspace and schemes..."
-          echo "Listing all schemes in workspace:"
           xcodebuild -list -workspace "$WORKSPACE_PATH" 2>/dev/null | grep -A 50 "Schemes:" || true
+
+      - name: Build Pods dependencies
+        working-directory: ios
+        run: |
+          set -e
+          DERIVED_DATA_PATH="${{ steps.build-prep.outputs.derived_data_path }}"
+
+          xcodebuild -project "Pods/Pods.xcodeproj" \
+            -alltargets \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            ARCHS="arm64" \
+            "EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64" \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -jobs 1 \
+            build 2>&1 | tee /tmp/pods-build.log
+          
+          PODS_BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ "$PODS_BUILD_EXIT_CODE" -ne 0 ]; then
+            echo "Pods build failed with exit code $PODS_BUILD_EXIT_CODE"
+            grep -i "error:\|BUILD FAILED\|failed with a nonzero exit code" /tmp/pods-build.log | head -30 || true
+            exit 1
+          fi
+          
+          DEFAULT_DD=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -type d -name "Pods-*" 2>/dev/null | head -1 || echo "")
+          CUSTOM_DD="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+          
+          if [ -n "$DEFAULT_DD" ]; then
+            DEFAULT_PRODUCTS="$DEFAULT_DD/Build/Products/Debug-iphonesimulator"
+            if [ -d "$DEFAULT_PRODUCTS" ]; then
+              FRAMEWORKS=$(find "$DEFAULT_PRODUCTS" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+              MODULEMAPS=$(find "$DEFAULT_PRODUCTS" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+              echo "Default DerivedData ($DEFAULT_DD):"
+              echo "  Frameworks: $FRAMEWORKS"
+              echo "  Modulemaps: $MODULEMAPS"
+              
+              if [ "$FRAMEWORKS" -gt 0 ] || [ "$MODULEMAPS" -gt 0 ]; then
+                echo "✓ Pods found in default DerivedData"
+                echo "Copying Pods to custom DerivedData for app build..."
+                mkdir -p "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+                cp -R "$DEFAULT_PRODUCTS"/* "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/" 2>/dev/null || true
+                echo "✓ Pods copied to $DERIVED_DATA_PATH"
+              fi
+            fi
+          fi
+          
+          # Also check custom DerivedData
+          if [ -d "$CUSTOM_DD" ]; then
+            FRAMEWORKS=$(find "$CUSTOM_DD" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+            MODULEMAPS=$(find "$CUSTOM_DD" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+            echo "Custom DerivedData ($DERIVED_DATA_PATH):"
+            echo "  Frameworks: $FRAMEWORKS"
+            echo "  Modulemaps: $MODULEMAPS"
+          fi
+          
+          # Final check
+          FINAL_PRODUCTS="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
+          if [ -d "$FINAL_PRODUCTS" ]; then
+            FINAL_FRAMEWORKS=$(find "$FINAL_PRODUCTS" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
+            FINAL_MODULEMAPS=$(find "$FINAL_PRODUCTS" -name "*.modulemap" 2>/dev/null | wc -l | tr -d ' ')
+            if [ "$FINAL_FRAMEWORKS" -eq 0 ] && [ "$FINAL_MODULEMAPS" -eq 0 ]; then
+              echo "No Pods products found in final DerivedData location"
+              echo "This may cause app build to fail"
+            else
+              echo "Pods ready for app build: $FINAL_FRAMEWORKS frameworks, $FINAL_MODULEMAPS modulemaps"
+            fi
+          fi
 
       - name: Build iOS app
         working-directory: ios
@@ -357,8 +413,6 @@ jobs:
           
           PRODUCTS_DIR="$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator"
           if [ -d "$PRODUCTS_DIR" ]; then
-            echo "Products directory: $PRODUCTS_DIR"
-            
             FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.framework" -type d 2>/dev/null | wc -l | tr -d ' ')
             MODULEMAPS_STANDALONE=$(find "$PRODUCTS_DIR" -name "*.modulemap" -not -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
             MODULEMAPS_IN_FRAMEWORKS=$(find "$PRODUCTS_DIR" -name "*.modulemap" -path "*.framework/*" 2>/dev/null | wc -l | tr -d ' ')
