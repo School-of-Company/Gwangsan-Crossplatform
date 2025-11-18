@@ -1,4 +1,4 @@
-import { RefreshControl, ScrollView } from 'react-native';
+import { RefreshControl } from 'react-native';
 import Post from '~/shared/ui/Post';
 import { useLocalSearchParams } from 'expo-router';
 import { ProductType } from '~/shared/types/type';
@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { returnValue } from '~/view/post/model/handleCategory';
 import { Category } from '~/view/post/model/category';
+import { VirtualList } from 'scrolloop/native';
 
 export default function PostList({ category }: { category: Category }) {
   const { type } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
@@ -29,10 +30,16 @@ export default function PostList({ category }: { category: Category }) {
   }, [refetch]);
 
   return (
-    <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-      {data.map((v) => (
-        <Post key={v.id} {...v} />
-      ))}
-    </ScrollView>
+    <VirtualList
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      itemSize={120}
+      count={data.length}
+      renderItem={(index) => {
+        const item = data[index];
+        if (!item) return null;
+
+        return <Post key={item.id} {...item} />;
+      }}
+    />
   );
 }
