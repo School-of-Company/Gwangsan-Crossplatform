@@ -31,14 +31,16 @@ export default function PostList({ category }: { category: Category }) {
 
   return (
     <VirtualList
+      decelerationRate={0}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       itemSize={120}
+      overscan={10}
       count={data.length}
       renderItem={(index) => {
         const item = data[index];
         if (!item) return null;
 
-        return <Post key={item.id} {...item} />;
+        return <Post {...item} />;
       }}
     />
   );
