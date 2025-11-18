@@ -78,13 +78,42 @@ jobs:
             export PATH="$PATH:$HOME/.maestro/bin:$ANDROID_SDK_ROOT/platform-tools"
             ADB=adb
 
+            echo "Restarting ADB server..."
+            $ADB kill-server || true
+            sleep 2
+            $ADB start-server
+
             echo "Waiting for device to come online…"
             $ADB wait-for-device
+            sleep 5
+
+            echo "Checking device connection..."
+            $ADB devices -l
 
             echo "Waiting for sys.boot_completed=1…"
-            until [ "$($ADB shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do
+            TIMEOUT=300
+            ELAPSED=0
+            while [ $ELAPSED -lt $TIMEOUT ]; do
+              if $ADB devices | grep -q "device$"; then
+                BOOT_COMPLETED=$($ADB shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "0")
+                if [ "$BOOT_COMPLETED" = "1" ]; then
+                  echo "Device is ready!"
+                  break
+                fi
+              else
+                echo "Device not found, waiting..."
+                $ADB wait-for-device
+                sleep 2
+              fi
               sleep 2
+              ELAPSED=$((ELAPSED + 2))
             done
+
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+              echo "Timeout waiting for device to boot"
+              $ADB devices -l
+              exit 1
+            fi
 
             $ADB shell pm disable-user --user 0 com.google.android.setupwizard || true
             $ADB shell settings put global window_animation_scale 0 || true
