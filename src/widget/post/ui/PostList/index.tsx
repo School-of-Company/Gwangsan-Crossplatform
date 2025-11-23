@@ -34,7 +34,7 @@ export default function PostList({ category }: { category: Category }) {
       decelerationRate={0}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       itemSize={120}
-      overscan={10}
+      overscan={12}
       count={data.length}
       renderItem={(index) => {
         const item = data[index];
