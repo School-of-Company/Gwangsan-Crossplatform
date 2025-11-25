@@ -1,24 +1,15 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useState, useEffect, useRef } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-  Animated,
-  LayoutChangeEvent,
-} from 'react-native';
-import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useState, useEffect, useRef } from 'react';
+import { Text, TouchableOpacity, View, Animated, LayoutChangeEvent } from 'react-native';
 import { Header } from '~/shared/ui';
-import { handleCategory, returnValue } from '../../model/handleCategory';
+import { handleCategory } from '../../model/handleCategory';
 import { Category } from '../../model/category';
-import Post from '~/shared/ui/Post';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModeType } from '~/shared/types/mode';
 import { ProductType } from '~/shared/types/type';
+import PostList from '~/widget/post/ui/PostList';
 
-export default function TransactionView() {
+export default function PostView() {
   const { type, mode } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
 
   const getInitialCategory = (): Category => {
@@ -33,8 +24,6 @@ export default function TransactionView() {
   };
 
   const [category, setCategory] = useState<Category>(getInitialCategory());
-  const [refreshing, setRefreshing] = useState(false);
-  const currentMode = category ? returnValue(category) : undefined;
 
   const [containerWidth, setContainerWidth] = useState(0);
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -53,11 +42,6 @@ export default function TransactionView() {
     extrapolate: 'clamp',
   });
 
-  const { data = [], refetch } = useGetPosts(
-    currentMode as ModeType | undefined,
-    type as ProductType | undefined
-  );
-
   useEffect(() => {
     Animated.timing(slideAnimation, {
       toValue: selectedIndex,
@@ -66,15 +50,6 @@ export default function TransactionView() {
     }).start();
   }, [selectedIndex, slideAnimation]);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
@@ -82,10 +57,8 @@ export default function TransactionView() {
         onLayout={handleLayout}
         className="bg relative mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2">
         <Animated.View
-          className="absolute rounded-[32px] bg-white"
+          className="absolute top-[8px] h-8 rounded-[32px] bg-white"
           style={{
-            top: 6,
-            height: 32,
             width: segmentWidth * 0.94,
             transform: [{ translateX }],
             marginLeft: segmentWidth * 0.03,
@@ -97,21 +70,15 @@ export default function TransactionView() {
           <TouchableOpacity
             key={v}
             onPress={() => setCategory(v as Category)}
-            className="absolute items-center justify-center rounded-[32px]"
+            className="absolute h-8 w-[47%] items-center justify-center rounded-[32px]"
             style={{
-              height: 32,
-              width: '47%',
               left: index === 0 ? '2%' : '55%',
             }}>
             <Text className="text-center font-medium">{v}</Text>
           </TouchableOpacity>
         ))}
       </View>
-      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        {data.map((v) => (
-          <Post key={v.id} {...v} />
-        ))}
-      </ScrollView>
+      <PostList type={type} category={category} />
     </SafeAreaView>
   );
 }
