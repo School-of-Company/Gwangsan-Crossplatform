@@ -80,51 +80,79 @@ jobs:
 
             echo "Restarting ADB server..."
             $ADB kill-server || true
-            sleep 2
+            sleep 3
             $ADB start-server
+            sleep 2
 
-            echo "Waiting for device to come online…"
-            $ADB wait-for-device
-            sleep 5
-
-            echo "Checking device connection..."
-            $ADB devices -l
-
-            echo "Waiting for sys.boot_completed=1…"
-            TIMEOUT=300
-            ELAPSED=0
-            while [ $ELAPSED -lt $TIMEOUT ]; do
-              if $ADB devices | grep -q "device$"; then
-                BOOT_COMPLETED=$($ADB shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "0")
-                if [ "$BOOT_COMPLETED" = "1" ]; then
-                  echo "Device is ready!"
-                  break
-                fi
-              else
-                echo "Device not found, waiting..."
-                $ADB wait-for-device
-                sleep 2
+            echo "Waiting for any device to appear..."
+            DEVICE_WAIT_TIMEOUT=60
+            DEVICE_WAIT_ELAPSED=0
+            while [ $DEVICE_WAIT_ELAPSED -lt $DEVICE_WAIT_TIMEOUT ]; do
+              if $ADB devices | grep -q "emulator"; then
+                echo "Emulator device detected!"
+                break
               fi
+              echo "No emulator found yet, waiting... ($DEVICE_WAIT_ELAPSED/$DEVICE_WAIT_TIMEOUT)"
               sleep 2
-              ELAPSED=$((ELAPSED + 2))
+              DEVICE_WAIT_ELAPSED=$((DEVICE_WAIT_ELAPSED + 2))
             done
 
-            if [ $ELAPSED -ge $TIMEOUT ]; then
-              echo "Timeout waiting for device to boot"
+            if [ $DEVICE_WAIT_ELAPSED -ge $DEVICE_WAIT_TIMEOUT ]; then
+              echo "ERROR: No emulator device appeared within timeout"
               $ADB devices -l
               exit 1
             fi
 
-            $ADB shell pm disable-user --user 0 com.google.android.setupwizard || true
-            $ADB shell settings put global window_animation_scale 0 || true
-            $ADB shell settings put global transition_animation_scale 0 || true
-            $ADB shell settings put global animator_duration_scale 0 || true
-            $ADB shell input keyevent 82 || true
+            echo "Detecting emulator serial..."
+            DEVICE_SERIAL=$($ADB devices | grep "emulator" | head -1 | awk '{print $1}')
+            
+            if [ -z "$DEVICE_SERIAL" ]; then
+              echo "ERROR: Could not detect emulator serial"
+              $ADB devices -l
+              exit 1
+            fi
+            
+            echo "Using emulator: $DEVICE_SERIAL"
+            $ADB -s $DEVICE_SERIAL devices -l
+
+            echo "Waiting for device to be fully online..."
+            $ADB -s $DEVICE_SERIAL wait-for-device
+            sleep 5
+
+            echo "Waiting for sys.boot_completed=1..."
+            BOOT_TIMEOUT=300
+            BOOT_ELAPSED=0
+            while [ $BOOT_ELAPSED -lt $BOOT_TIMEOUT ]; do
+              BOOT_COMPLETED=$($ADB -s $DEVICE_SERIAL shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || echo "0")
+              echo "Boot status: $BOOT_COMPLETED (elapsed: $BOOT_ELAPSED/$BOOT_TIMEOUT)"
+              
+              if [ "$BOOT_COMPLETED" = "1" ]; then
+                echo "Device is fully booted!"
+                break
+              fi
+              
+              sleep 5
+              BOOT_ELAPSED=$((BOOT_ELAPSED + 5))
+            done
+
+            if [ $BOOT_ELAPSED -ge $BOOT_TIMEOUT ]; then
+              echo "ERROR: Timeout waiting for device to boot"
+              $ADB -s $DEVICE_SERIAL devices -l
+              $ADB -s $DEVICE_SERIAL shell getprop
+              exit 1
+            fi
+
+            echo "Disabling setup wizard and animations..."
+            $ADB -s $DEVICE_SERIAL shell pm disable-user --user 0 com.google.android.setupwizard || true
+            $ADB -s $DEVICE_SERIAL shell settings put global window_animation_scale 0 || true
+            $ADB -s $DEVICE_SERIAL shell settings put global transition_animation_scale 0 || true
+            $ADB -s $DEVICE_SERIAL shell settings put global animator_duration_scale 0 || true
+            $ADB -s $DEVICE_SERIAL shell input keyevent 82 || true
 
             echo "Installing APK: $APK_PATH"
-            $ADB install -r "$APK_PATH"
+            $ADB -s $DEVICE_SERIAL install -r "$APK_PATH"
 
-            echo "Run Maestro tests"
+            echo "Running Maestro tests..."
             maestro test maestro/user/*.yml
 
       - name: Upload Maestro test results
