@@ -1,6 +1,5 @@
 import { RefreshControl } from 'react-native';
 import Post from '~/shared/ui/Post';
-import { useLocalSearchParams } from 'expo-router';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { useCallback, useState } from 'react';
@@ -9,9 +8,7 @@ import { returnValue } from '~/view/post/model/handleCategory';
 import { Category } from '~/view/post/model/category';
 import { VirtualList } from 'scrolloop/native';
 
-export default function PostList({ category }: { category: Category }) {
-  const { type } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();
-
+export default function PostList({ category, type }: { category: Category; type: ProductType }) {
   const [refreshing, setRefreshing] = useState(false);
   const currentMode = category ? returnValue(category) : undefined;
 

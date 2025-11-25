@@ -78,7 +78,7 @@ export default function PostView() {
           </TouchableOpacity>
         ))}
       </View>
-      <PostList category={category} />
+      <PostList type={type} category={category} />
     </SafeAreaView>
   );
 }
