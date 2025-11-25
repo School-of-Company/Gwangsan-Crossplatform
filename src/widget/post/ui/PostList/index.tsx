@@ -29,6 +29,15 @@ export default function PostList({ category }: { category: Category }) {
     }
   }, [refetch]);
 
+  const renderItem = useCallback(
+    (index: number) => {
+      const item = data[index];
+      if (!item) return null;
+      return <Post {...item} />;
+    },
+    [data]
+  );
+
   return (
     <VirtualList
       decelerationRate={0}
@@ -36,12 +45,7 @@ export default function PostList({ category }: { category: Category }) {
       itemSize={120}
       overscan={12}
       count={data.length}
-      renderItem={(index) => {
-        const item = data[index];
-        if (!item) return null;
-
-        return <Post {...item} />;
-      }}
+      renderItem={renderItem}
     />
   );
 }
