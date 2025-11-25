@@ -57,7 +57,7 @@ export default function PostView() {
         onLayout={handleLayout}
         className="bg relative mx-6 mb-6 mt-5 h-[45px] flex-row items-center rounded-[30px] bg-sub2-300 px-2">
         <Animated.View
-          className="absolute top-[6px] h-8 rounded-[32px] bg-white"
+          className="absolute top-[8px] h-8 rounded-[32px] bg-white"
           style={{
             width: segmentWidth * 0.94,
             transform: [{ translateX }],
