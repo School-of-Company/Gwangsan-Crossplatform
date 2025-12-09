@@ -6,33 +6,39 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 
 const registerForPushNotificationsAsync = async (): Promise<string | null> => {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    console.warn('푸시 알림 권한이 거부되었습니다.');
-    return null;
-  }
-
   try {
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      console.warn('푸시 알림 권한이 거부되었습니다.', finalStatus);
+      return null;
+    }
+
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+
+    if (!projectId) {
+      console.warn('Project ID를 찾을 수 없어 default 설정을 시도합니다. app.json 설정을 확인해 주세요.');
+    }
 
     const pushToken = await Notifications.getExpoPushTokenAsync({
-      projectId: projectId,
+      projectId: projectId || undefined,
     });
 
     return pushToken.data;
@@ -57,7 +63,8 @@ const generateDeviceId = async (): Promise<string> => {
     const modelId = Device.modelId || 'unknown';
 
     const deviceInfo = `${deviceType}-${brand}-${modelName}-${modelId}-${osVersion}-${osInternalBuildId}`;
-    const deviceId = btoa(deviceInfo).replace(/[/+=]/g, '').substring(0, 20);
+    
+    const deviceId = deviceInfo.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20) || Math.random().toString(36).substring(2, 18);
 
     await setData('deviceId', deviceId);
 
