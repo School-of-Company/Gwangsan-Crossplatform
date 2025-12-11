@@ -25,7 +25,8 @@
       "developmentClient": true
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {}
     }
   },
   "submit": {

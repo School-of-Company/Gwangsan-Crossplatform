@@ -1,11 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_URL } from '@env';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { getData } from './getData';
 import { removeData } from './removeData';
 import { setData } from './setData';
 
-export const baseURL = API_URL;
+export const baseURL = Constants.expoConfig?.extra?.apiUrl;
 
 let queryClientInstance: any = null;
 
