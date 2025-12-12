@@ -29,12 +29,12 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
       return null;
     }
 
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId;
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
     if (!projectId) {
-      console.warn('Project ID를 찾을 수 없어 default 설정을 시도합니다. app.json 설정을 확인해 주세요.');
+      console.warn(
+        'Project ID를 찾을 수 없어 default 설정을 시도합니다. app.json 설정을 확인해 주세요.'
+      );
     }
 
     const pushToken = await Notifications.getExpoPushTokenAsync({
@@ -63,8 +63,10 @@ const generateDeviceId = async (): Promise<string> => {
     const modelId = Device.modelId || 'unknown';
 
     const deviceInfo = `${deviceType}-${brand}-${modelName}-${modelId}-${osVersion}-${osInternalBuildId}`;
-    
-    const deviceId = deviceInfo.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20) || Math.random().toString(36).substring(2, 18);
+
+    const deviceId =
+      deviceInfo.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20) ||
+      Math.random().toString(36).substring(2, 18);
 
     await setData('deviceId', deviceId);
 
