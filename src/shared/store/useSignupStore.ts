@@ -10,7 +10,7 @@ const INITIAL_FORM_DATA: SignupState['formData'] = {
   phoneNumber: '',
   verificationCode: '',
   dongName: '',
-  placeName: '',
+  placeId: 0,
   specialties: [],
   description: '',
   recommender: '',
