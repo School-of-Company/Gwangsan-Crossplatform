@@ -48,7 +48,7 @@ export function Dropdown<T extends string>({
             {items.map((item, i) => (
               <Text
                 key={item.value}
-                className={`border-b border-gray-300 bg-gray-50 px-4 py-5 ${i === 0 ? 'rounded-t-xl' : ''} ${i === items.length - 1 ? 'border-b-0 rounded-b-xl' : ''}`}
+                className={`border-b border-gray-300 bg-gray-50 px-4 py-5 ${i === 0 ? 'rounded-t-xl' : ''} ${i === items.length - 1 ? 'rounded-b-xl border-b-0' : ''}`}
                 onPress={() => {
                   setSelected(item.value);
                   if (onSelect) {
