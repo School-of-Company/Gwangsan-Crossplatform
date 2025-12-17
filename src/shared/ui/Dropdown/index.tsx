@@ -1,6 +1,6 @@
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View, ScrollView } from 'react-native';
 
 interface DropdownProps<T extends string> {
   label?: string;
@@ -40,21 +40,26 @@ export function Dropdown<T extends string>({
         </View>
       </TouchableOpacity>
       {show && (
-        <View className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 transition last:border-b-0">
-          {items.map((item, i) => (
-            <Text
-              key={item.value}
-              className={`border-b border-gray-300 bg-gray-50 px-4 py-5 first:rounded-t-xl last:rounded-xl ${i === items.length - 1 ? 'border-b-0' : ''}`}
-              onPress={() => {
-                setSelected(item.value);
-                if (onSelect) {
-                  onSelect(item.value);
-                }
-                setShow(false);
-              }}>
-              {item.label}
-            </Text>
-          ))}
+        <View className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 last:border-b-0">
+          <ScrollView
+            style={{ maxHeight: 200 }}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={true}>
+            {items.map((item, i) => (
+              <Text
+                key={item.value}
+                className={`border-b border-gray-300 bg-gray-50 px-4 py-5 ${i === 0 ? 'rounded-t-xl' : ''} ${i === items.length - 1 ? 'border-b-0 rounded-b-xl' : ''}`}
+                onPress={() => {
+                  setSelected(item.value);
+                  if (onSelect) {
+                    onSelect(item.value);
+                  }
+                  setShow(false);
+                }}>
+                {item.label}
+              </Text>
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
