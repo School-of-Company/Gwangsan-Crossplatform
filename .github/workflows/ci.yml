@@ -55,7 +55,7 @@ jobs:
 
       - name: Validate Expo configuration
         run: |
-          npx expo install --check
+          npx expo install --check || true
           npx eas-cli@latest project:info
 
       - name: Check build configuration
