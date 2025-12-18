@@ -22,7 +22,7 @@ export type SignupFormData = {
   phoneNumber: string;
   verificationCode: string;
   dongName: string;
-  placeName: string;
+  placeId: number;
   specialties: string[];
   description: string;
   recommender: string;
