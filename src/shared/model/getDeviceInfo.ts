@@ -83,12 +83,12 @@ export const getDeviceInfo = async () => {
   const osType = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
 
   try {
-    const deviceToken = await registerForPushNotificationsAsync();
     const deviceId = await generateDeviceId();
+    const deviceToken = await registerForPushNotificationsAsync();
 
     return {
       osType: osType as 'IOS' | 'ANDROID',
-      deviceToken: deviceToken || '',
+      deviceToken: deviceToken,
       deviceId: deviceId,
     };
   } catch (error) {
