@@ -88,7 +88,7 @@ export const getDeviceInfo = async () => {
 
     return {
       osType: osType as 'IOS' | 'ANDROID',
-      deviceToken: deviceToken,
+      deviceToken: deviceToken || '',
       deviceId: deviceId,
     };
   } catch (error) {
