@@ -11,7 +11,7 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": ["expo-router"],
+    "plugins": ["expo-router", "sentry-expo"],
     "orientation": "portrait",
     "icon": "./src/shared/assets/png/icon.png",
     "userInterfaceStyle": "light",
