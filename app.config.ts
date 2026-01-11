@@ -4,6 +4,10 @@ import { ExpoConfig } from '@expo/config';
 export default ({ config }: { config: ExpoConfig }) => {
   return {
     ...config,
+    android: {
+      ...config.android,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
+    },
     plugins: [
       [
         '@sentry/react-native',

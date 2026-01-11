@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "environment": "development",
       "developmentClient": true,
       "distribution": "internal",
       "env": {
@@ -15,6 +16,7 @@
       }
     },
     "preview": {
+      "environment": "preview",
       "env": {
         "NODE_ENV": "production"
       },
@@ -23,6 +25,7 @@
       }
     },
     "preview2": {
+      "environment": "preview",
       "env": {
         "NODE_ENV": "production"
       },
@@ -31,12 +34,14 @@
       }
     },
     "preview3": {
+      "environment": "development",
       "developmentClient": true,
       "env": {
         "NODE_ENV": "development"
       }
     },
     "production": {
+      "environment": "production",
       "autoIncrement": true,
       "env": {
         "NODE_ENV": "production",
