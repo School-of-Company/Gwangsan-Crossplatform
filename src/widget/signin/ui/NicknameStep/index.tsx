@@ -58,6 +58,7 @@ export default function NicknameStep() {
         <Input
           label="별칭"
           placeholder="별칭을 입력해주세요"
+          testID="NicknameStep-nickname-input"
           value={nickname as string}
           onChangeText={handleNicknameChange}
           onSubmitEditing={handleSubmit}

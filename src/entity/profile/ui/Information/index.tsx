@@ -53,6 +53,7 @@ export default function Information({ name, id, isMe }: InformationProps) {
             <Text className="text-body1">{name ?? '사용자'}</Text>
             {isMe && (
               <TouchableOpacity
+                testID="Information-logout-button"
                 onPress={handleLogoutIconPress}
                 className="flex flex-row items-center gap-3"
                 disabled={isSignoutLoading || isWithdrawalLoading}>
