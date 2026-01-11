@@ -1,13 +1,11 @@
 import { ImageType } from './imageType';
-
-export type TYPE = 'OBJECT' | 'SERVICE';
-
-export type MODE = 'GIVER' | 'RECEIVER';
+import { ModeType } from './mode';
+import { ProductType } from './type';
 
 export interface PostType {
   id: number;
-  type: TYPE;
-  mode: MODE;
+  type: ProductType;
+  mode: ModeType;
   title: string;
   content: string;
   gwangsan: number;

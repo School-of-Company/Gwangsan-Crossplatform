@@ -34,7 +34,8 @@
         "foregroundImage": "./src/shared/assets/png/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "gwangsan.io.kr"
+      "package": "gwangsan.io.kr",
+      "googleServicesFile": "./google-services.json"
     },
     "extra": {
       "eas": {

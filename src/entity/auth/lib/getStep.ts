@@ -12,6 +12,8 @@ type SignupStep =
 
 type SigninStep = 'nickname' | 'password';
 
+type ResetPasswordStep = 'phoneNumber' | 'newPassword';
+
 const SIGNUP_STEPS: readonly SignupStep[] = [
   'name',
   'nickname',
@@ -26,6 +28,8 @@ const SIGNUP_STEPS: readonly SignupStep[] = [
 ] as const;
 
 const SIGNIN_STEPS: readonly SigninStep[] = ['nickname', 'password'] as const;
+
+const RESET_PASSWORD_STEPS: readonly ResetPasswordStep[] = ['phoneNumber', 'newPassword'] as const;
 
 const getStepIndexInternal = <T extends string>(step: T, steps: readonly T[]): number => {
   return steps.indexOf(step);
@@ -65,6 +69,18 @@ export const getNextSigninStep = (currentStep: SigninStep): SigninStep => {
 
 export const getPrevSigninStep = (currentStep: SigninStep): SigninStep => {
   return getPrevStepInternal(currentStep, SIGNIN_STEPS);
+};
+
+export const getResetPasswordStepIndex = (step: ResetPasswordStep): number => {
+  return getStepIndexInternal(step, RESET_PASSWORD_STEPS);
+};
+
+export const getNextResetPasswordStep = (currentStep: ResetPasswordStep): ResetPasswordStep => {
+  return getNextStepInternal(currentStep, RESET_PASSWORD_STEPS);
+};
+
+export const getPrevResetPasswordStep = (currentStep: ResetPasswordStep): ResetPasswordStep => {
+  return getPrevStepInternal(currentStep, RESET_PASSWORD_STEPS);
 };
 
 export const getNextStep = getNextSignupStep;

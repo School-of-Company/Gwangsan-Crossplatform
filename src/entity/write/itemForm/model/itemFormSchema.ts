@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { MODE, TYPE } from '@/shared/types/postType';
+import { ModeType } from '~/shared/types/mode';
+import { ProductType } from '~/shared/types/type';
 
 export const itemFormSchema = z.object({
   type: z.string(),
@@ -13,8 +14,8 @@ export const itemFormSchema = z.object({
 export type ItemFormData = z.infer<typeof itemFormSchema>;
 
 export type ItemFormRequestBody = {
-  type: TYPE;
-  mode: MODE;
+  type: ProductType;
+  mode: ModeType;
   title: string;
   content: string;
   gwangsan: number;
@@ -31,8 +32,8 @@ export const createItemFormRequestBody = (data: {
   imageIds?: number[];
 }): ItemFormRequestBody => {
   return {
-    type: data.type as TYPE,
-    mode: data.mode as MODE,
+    type: data.type as ProductType,
+    mode: data.mode as ModeType,
     title: data.title,
     content: data.content,
     gwangsan: parseInt(data.gwangsan, 10),

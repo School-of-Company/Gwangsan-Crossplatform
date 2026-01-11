@@ -1,12 +1,17 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_URL } from '@env';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { getData } from './getData';
 import { removeData } from './removeData';
 import { setData } from './setData';
-import { useQueryClient } from '@tanstack/react-query';
 
-export const baseURL = API_URL;
+export const baseURL = Constants.expoConfig?.extra?.apiUrl;
+
+let queryClientInstance: any = null;
+
+export const setQueryClientInstance = (client: any) => {
+  queryClientInstance = client;
+};
 
 export const instance = axios.create({
   baseURL,
@@ -60,7 +65,11 @@ instance.interceptors.response.use(
         } catch (error) {
           removeData('accessToken');
           removeData('refreshToken');
-          useQueryClient().clear();
+
+          if (queryClientInstance) {
+            queryClientInstance.clear();
+          }
+
           try {
             router.replace('/signin');
           } catch (routerError) {

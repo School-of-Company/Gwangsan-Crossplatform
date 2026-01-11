@@ -4,7 +4,7 @@ import Toast from 'react-native-toast-message';
 import { findChatRoom, createChatRoom } from '@/entity/chat';
 import type { ProductId } from '@/shared/types/chatType';
 
-export const useChatNavigation = () => {
+export const useChatEntry = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 

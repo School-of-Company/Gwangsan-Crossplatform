@@ -6,7 +6,7 @@ import { createReview } from '~/entity/post/api/createReview';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { useChatNavigation } from '~/shared/lib/useChatNavigation';
+import { useChatEntry } from '~/shared/lib/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
 
 interface UsePostPageLogicParams {
@@ -18,7 +18,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const router = useRouter();
   const { data, isLoading, error, refetch } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
-  const { navigateToChat, isLoading: isChatLoading } = useChatNavigation();
+  const { navigateToChat, isLoading: isChatLoading } = useChatEntry();
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
@@ -78,7 +78,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const navigationHandlers = {
     goToEdit: useCallback(() => {
       if (id) {
-        router.push(`/post/${id}/edit`);
+        router.push(`/write?id=${id}`);
       }
     }, [id, router]),
     goToChat: useCallback(async () => {
@@ -123,7 +123,14 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   }, [data]);
 
   const computedValues = {
-    headerTitle: data?.mode === 'RECEIVER' ? '해주세요' : '해드립니다',
+    headerTitle:
+      data?.mode === 'RECEIVER'
+        ? data.type === 'OBJECT'
+          ? '필요해요'
+          : '해주세요'
+        : data?.type === 'OBJECT'
+          ? '팔아요'
+          : '할 수 있어요',
     canTrade: data?.mode === 'RECEIVER' && data?.isCompletable && !data?.isCompleted,
     isTradeButtonDisabled: tradeRequest.isLoading || data?.isCompleted || !data?.isCompletable,
     tradeButtonText: tradeRequest.isLoading

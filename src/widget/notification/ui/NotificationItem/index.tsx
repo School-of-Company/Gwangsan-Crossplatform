@@ -8,15 +8,14 @@ import { useGetItem } from '~/entity/post/model/useGetItem';
 import Toast from 'react-native-toast-message';
 
 interface NotificationItemProps {
-  id: number;
+  id?: number;
   title: string;
   content: string;
   alertType: AlertType;
-  imageIds: number[];
+  images: { imageId: number; imageUrl: string }[];
   createdAt: string;
-  sendMemberId?: number | null;
-  sourceId?: number | null;
-  images?: { imageId: number; imageUrl: string }[];
+  sendMemberId: number;
+  sourceId: number;
   raw?: any;
 }
 
@@ -37,7 +36,6 @@ const NotificationItem = ({
 
   const shouldShowAcceptButton =
     alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE &&
-    sendMemberId &&
     postData?.isCompletable === true &&
     postData?.isCompleted === false;
 
@@ -45,8 +43,6 @@ const NotificationItem = ({
   const [isAccepted, setIsAccepted] = useState(false);
 
   const handleAcceptTrade = async () => {
-    if (!sendMemberId) return;
-
     setIsAccepted(true);
     setLoading(true);
 
@@ -57,11 +53,7 @@ const NotificationItem = ({
     });
 
     try {
-      const productId = sourceId;
-      if (!productId) {
-        throw new Error('productId 정보가 없습니다.');
-      }
-      await requestTrade({ productId, otherMemberId: sendMemberId });
+      await requestTrade({ productId: sourceId, otherMemberId: sendMemberId });
     } catch (e) {
       setIsAccepted(false);
       Toast.show({
