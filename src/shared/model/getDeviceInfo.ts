@@ -4,6 +4,8 @@ import { getData } from '../lib/getData';
 import { setData } from '../lib/setData';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import * as Sentry from '@sentry/react-native';
+
 
 const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   try {
@@ -44,6 +46,13 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
     return pushToken.data;
   } catch (error) {
     console.error(error);
+    Sentry.captureException(error, {
+      extra: {
+        context: 'registerForPushNotificationsAsync',
+        platform: Platform.OS,
+        projectId: Constants.expoConfig?.extra?.eas?.projectId,
+      },
+    });
     return null;
   }
 };
