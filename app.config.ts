@@ -21,6 +21,7 @@ export default ({ config }: { config: ExpoConfig }) => {
     extra: {
       ...config.extra,
       apiUrl: process.env.API_URL,
+      sentryDsn: process.env.SENTRY_DSN,
     },
   };
 };
