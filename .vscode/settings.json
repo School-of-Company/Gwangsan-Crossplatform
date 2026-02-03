@@ -1,4 +1,4 @@
 {
   "cSpell.words": ["gwangsan"],
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "git.ignoreLimitWarning": true
 }
