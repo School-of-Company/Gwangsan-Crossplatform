@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
+import Constants from 'expo-constants';
 
 Sentry.init({
-  dsn: 'SENTRY_DSN',
+  dsn: Constants.expoConfig?.extra?.sentryDsn,
 });
