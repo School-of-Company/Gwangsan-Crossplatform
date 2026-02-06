@@ -22,7 +22,7 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "kr.hs.gsm.gwangsan",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
