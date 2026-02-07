@@ -1,0 +1,183 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  test-android:
+    name: Android E2E Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build APK (Debug)
+        run: |
+          npx expo prebuild --platform android --clean --non-interactive
+          cd android
+          ./gradlew --no-daemon assembleDebug
+          cd ..
+          APK_PATH=$(find android -name "app-debug.apk" -o -name "*-debug.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find android -name "*.apk" -path "*/debug/*" | head -1)
+          fi
+          if [ -z "$APK_PATH" ]; then
+            echo "APK not found"
+            exit 1
+          fi
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
+          echo "Built APK at: $APK_PATH"
+
+      - name: Install Maestro & update PATH
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+          maestro --version || true
+
+      - name: Start Android Emulator & run Maestro tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          avd-name: ci-avd
+          force-avd-creation: true
+          disable-animations: true
+          emulator-boot-timeout: 1200000
+          emulator-options: >-
+            -no-window -no-boot-anim -no-snapshot -wipe-data
+            -noaudio -camera-back none -camera-front none
+          script: |
+            set -e
+            export PATH="$PATH:$HOME/.maestro/bin:$ANDROID_SDK_ROOT/platform-tools"
+            ADB=adb
+
+            echo "Detecting emulator serial..."
+            # The action usually starts emulator-5554, but let's be safe
+            DEVICE_SERIAL=$($ADB devices | grep "emulator" | head -1 | awk '{print $1}')
+            
+            if [ -z "$DEVICE_SERIAL" ]; then
+              echo "WARNING: Could not detect emulator serial from 'adb devices', defaulting to emulator-5554"
+              DEVICE_SERIAL="emulator-5554"
+            fi
+            
+            echo "Using emulator: $DEVICE_SERIAL"
+            $ADB -s $DEVICE_SERIAL devices -l
+
+            echo "Disabling setup wizard and animations..."
+            $ADB -s $DEVICE_SERIAL shell settings put global window_animation_scale 0 || true
+            $ADB -s $DEVICE_SERIAL shell settings put global transition_animation_scale 0 || true
+            $ADB -s $DEVICE_SERIAL shell settings put global animator_duration_scale 0 || true
+            $ADB -s $DEVICE_SERIAL shell input keyevent 82 || true
+
+            echo "Installing APK: $APK_PATH"
+            $ADB -s $DEVICE_SERIAL install -r "$APK_PATH"
+
+            echo "Running Maestro tests..."
+            maestro test maestro/user/*.yml
+
+      - name: Upload Maestro test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-results-android
+          path: |
+            maestro/**/*.png
+            maestro/**/*.mp4
+          retention-days: 7
+
+  notify-discord:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+    needs: [test-android]
+    if: always()
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook URL not set, skipping notification"
+            exit 0
+          fi
+
+          ANDROID_STATUS="${{ needs.test-android.result }}"
+
+          if [ "$ANDROID_STATUS" == "success" ] || [ "$ANDROID_STATUS" == "skipped" ]; then
+            COLOR=3066993
+            EMOJI="✅"
+            STATUS="성공"
+          else
+            COLOR=15158332
+            EMOJI="❌"
+            STATUS="실패"
+          fi
+
+          EMBED=$(cat <<EOF
+          {
+            "title": "$EMOJI Maestro 테스트 $STATUS",
+            "color": $COLOR,
+            "fields": [
+              {"name": "Android", "value": "$ANDROID_STATUS", "inline": true},
+              {"name": "워크플로우", "value": "[보기]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)", "inline": false}
+            ]
+          }
+          EOF
+          )
+
+          curl -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\": [$EMBED]}"
+
+          if [ "$STATUS" == "실패" ]; then
+            ANDROID_SCREENSHOT=$(find maestro-results-android -name "*.png" 2>/dev/null | head -1)
+            [ -n "$ANDROID_SCREENSHOT" ] && curl -X POST "$DISCORD_WEBHOOK_URL" \
+              -F "file=@$ANDROID_SCREENSHOT" -F "content=🤖 Android 실패 스크린샷"
+          fi
+
+      - name: Xcode/SDK info
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          xcrun simctl list
+
+      - name: Print DerivedData products
+        if: failure()
+        run: |
+          find ~/Library/Developer/Xcode/DerivedData -maxdepth 4 -type d -name "*.app" -print
