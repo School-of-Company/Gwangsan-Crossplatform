@@ -209,10 +209,7 @@ export const useResetPasswordPhoneVerification = ({
     [phoneNumber.length, verificationState]
   );
 
-  const isVerificationComplete = useMemo(
-    () => true,
-    []
-  );
+  const isVerificationComplete = useMemo(() => true, []);
 
   return {
     phoneNumber,
