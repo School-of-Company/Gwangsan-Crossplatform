@@ -13,9 +13,14 @@ web-build/
 
 .env
 
-ios
 android
-
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+**/*.xcuserdatad/
+**/*.xcuserstate
+DerivedData/
 # macOS
 .DS_Store
 
