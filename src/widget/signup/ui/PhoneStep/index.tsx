@@ -69,9 +69,7 @@ export default function PhoneStep() {
             />
           </View>
           <Button
-            className={`h-16 items-center justify-center rounded-xl px-8 ${
-              buttonState.canSend ? 'bg-[#8FC31D]' : 'bg-gray-300'
-            }`}
+            className="h-16 items-center justify-center rounded-xl px-8"
             onPress={requestVerification}
             disabled={buttonState.isDisabled}>
             <Text className="font-medium text-white">{buttonState.text}</Text>
@@ -98,9 +96,7 @@ export default function PhoneStep() {
               />
             </View>
             <Button
-              className={`h-16 items-center justify-center rounded-xl px-8 ${
-                !verifyButtonState.isDisabled ? 'bg-[#8FC31D]' : 'bg-gray-300'
-              }`}
+              className="h-16 items-center justify-center rounded-xl px-8"
               onPress={verifyCode}
               disabled={verifyButtonState.isDisabled}>
               <Text className="font-medium text-white">{verifyButtonState.text}</Text>
