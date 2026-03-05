@@ -212,8 +212,7 @@ export const useResetPasswordPhoneVerification = ({
 
   const verifyButtonState = useMemo(
     () => ({
-      isDisabled:
-        verificationCode.trim() === '' || verificationState.isVerifyingCode || isVerified,
+      isDisabled: verificationCode.trim() === '' || verificationState.isVerifyingCode || isVerified,
       text: verificationState.isVerifyingCode ? '인증중...' : isVerified ? '인증완료' : '인증',
     }),
     [verificationCode, verificationState.isVerifyingCode, isVerified]
