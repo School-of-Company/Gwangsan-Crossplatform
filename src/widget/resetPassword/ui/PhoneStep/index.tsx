@@ -22,12 +22,6 @@ export default function PhoneStep() {
     router.replace('/onboarding');
   };
 
-  const handleVerificationSuccess = (phoneNumber: string, verificationCode: string) => {
-    updatePhoneNumber(phoneNumber);
-    updateVerificationCode(verificationCode);
-    nextStep();
-  };
-
   const {
     phoneNumber,
     verificationCode,
@@ -47,7 +41,6 @@ export default function PhoneStep() {
   } = usePasswordResetPhoneVerification({
     initialPhoneNumber: initialPhoneNumber as string,
     initialVerificationCode: initialVerificationCode as string,
-    onSuccess: handleVerificationSuccess,
   });
 
   const handleNext = () => {

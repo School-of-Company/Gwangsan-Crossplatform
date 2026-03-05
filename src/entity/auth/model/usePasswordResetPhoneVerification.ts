@@ -5,7 +5,6 @@ import { usePhoneVerification } from './usePhoneVerification';
 interface UsePasswordResetPhoneVerificationProps {
   initialPhoneNumber?: string;
   initialVerificationCode?: string;
-  onSuccess: (phoneNumber: string, verificationCode: string) => void;
 }
 
 export const usePasswordResetPhoneVerification = ({
