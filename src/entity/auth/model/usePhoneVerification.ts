@@ -220,7 +220,7 @@ export const usePhoneVerification = ({
     [verificationCode, verificationState.isVerifyingCode, isVerified]
   );
 
-  const isVerificationComplete = useMemo(() => isVerified, [isVerified]);
+  const isVerificationComplete = isVerified;
 
   return {
     phoneNumber,
