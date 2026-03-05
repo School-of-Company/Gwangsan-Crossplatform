@@ -6,7 +6,7 @@ import {
   useResetPasswordFormField,
   useResetPasswordStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useResetPasswordPhoneVerification } from '~/entity/auth/model/useResetPasswordPhoneVerification';
 import { router } from 'expo-router';
 
@@ -79,10 +79,10 @@ export default function PhoneStep() {
             />
           </View>
           <Button
-            className="h-16 items-center justify-center rounded-xl px-8"
+            width="w-auto"
             onPress={requestVerification}
             disabled={buttonState.isDisabled}>
-            <Text className="font-medium text-white">{buttonState.text}</Text>
+            {buttonState.text}
           </Button>
         </View>
         <ErrorMessage error={phoneError} />
@@ -106,10 +106,10 @@ export default function PhoneStep() {
               />
             </View>
             <Button
-              className="h-16 items-center justify-center rounded-xl px-8"
+              width="w-auto"
               onPress={verifyCode}
               disabled={verifyButtonState.isDisabled}>
-              <Text className="font-medium text-white">{verifyButtonState.text}</Text>
+              {verifyButtonState.text}
             </Button>
           </View>
           <ErrorMessage error={verificationError} />
