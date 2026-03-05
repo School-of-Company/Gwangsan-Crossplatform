@@ -41,6 +41,7 @@ export default function PhoneStep() {
     requestVerification,
     verifyCode,
     buttonState,
+    verifyButtonState,
     isVerificationComplete,
     verificationRef,
   } = useResetPasswordPhoneVerification({
@@ -49,11 +50,17 @@ export default function PhoneStep() {
     onSuccess: handleVerificationSuccess,
   });
 
+  const handleNext = () => {
+    updatePhoneNumber(phoneNumber);
+    updateVerificationCode(verificationCode);
+    nextStep();
+  };
+
   return (
     <ResetPasswordForm
       title="비밀번호 재설정"
       description="가입 시 등록한 전화번호를 입력해주세요"
-      onNext={verifyCode}
+      onNext={handleNext}
       onBack={handleBack}
       isNextDisabled={!isVerificationComplete}>
       <View>
@@ -85,18 +92,30 @@ export default function PhoneStep() {
 
       {verificationState.isVerifying && (
         <View className="mt-4">
-          <Input
-            ref={verificationRef}
-            label="전화번호 인증"
-            placeholder="인증번호를 입력해주세요"
-            value={verificationCode}
-            onChangeText={handleVerificationChange}
-            onSubmitEditing={handleVerificationSubmit}
-            keyboardType="numeric"
-            returnKeyType="done"
-            editable={!verificationState.isVerifyingCode}
-            maxLength={6}
-          />
+          <View className="flex-row items-end gap-2">
+            <View className="flex-1">
+              <Input
+                ref={verificationRef}
+                label="전화번호 인증"
+                placeholder="인증번호를 입력해주세요"
+                value={verificationCode}
+                onChangeText={handleVerificationChange}
+                onSubmitEditing={handleVerificationSubmit}
+                keyboardType="numeric"
+                returnKeyType="done"
+                editable={!verificationState.isVerifyingCode && !isVerificationComplete}
+                maxLength={6}
+              />
+            </View>
+            <Button
+              className={`h-16 items-center justify-center rounded-xl px-8 ${
+                !verifyButtonState.isDisabled ? 'bg-[#8FC31D]' : 'bg-gray-300'
+              }`}
+              onPress={verifyCode}
+              disabled={verifyButtonState.isDisabled}>
+              <Text className="font-medium text-white">{verifyButtonState.text}</Text>
+            </Button>
+          </View>
           <ErrorMessage error={verificationError} />
         </View>
       )}
