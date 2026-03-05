@@ -23,18 +23,20 @@ interface UseResetPasswordPhoneVerificationProps {
 export const useResetPasswordPhoneVerification = ({
   initialPhoneNumber = '',
   initialVerificationCode = '',
-  onSuccess,
 }: UseResetPasswordPhoneVerificationProps) => {
   const isMountedRef = useRef(true);
   const verificationRef = useRef<TextInput>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [phoneNumber, setPhoneNumber] = useState((initialPhoneNumber as string) || '');
+  const phoneNumberRef = useRef(phoneNumber);
+  phoneNumberRef.current = phoneNumber;
   const [verificationCode, setVerificationCode] = useState(
     (initialVerificationCode as string) || ''
   );
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   const [verificationState, setVerificationState] = useState<VerificationState>({
     isVerifying: false,
@@ -108,14 +110,12 @@ export const useResetPasswordPhoneVerification = ({
   }, [phoneNumber, safeSetState]);
 
   const verifyCode = useCallback(async () => {
-    onSuccess(phoneNumber, verificationCode || '000000');
-    return true;
-
-    /*
     if (!verificationState.isVerifying) {
       setPhoneError('인증을 먼저 진행해주세요');
       return false;
     }
+
+    const phoneAtVerificationStart = phoneNumber;
 
     try {
       verificationCodeSchema.parse(verificationCode);
@@ -126,8 +126,17 @@ export const useResetPasswordPhoneVerification = ({
       });
 
       await verifyPasswordResetSms({
-        phoneNumber,
+        phoneNumber: phoneAtVerificationStart,
         code: verificationCode,
+      });
+
+      safeSetState(() => {
+        if (phoneNumberRef.current !== phoneAtVerificationStart) {
+          setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
+          return;
+        }
+        setIsVerified(true);
+        setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
       });
 
       Toast.show({
@@ -136,7 +145,6 @@ export const useResetPasswordPhoneVerification = ({
         text2: '전화번호 인증이 완료되었습니다.',
       });
 
-      onSuccess(phoneNumber, verificationCode);
       return true;
     } catch (err) {
       safeSetState(() => {
@@ -155,13 +163,13 @@ export const useResetPasswordPhoneVerification = ({
       });
       return false;
     }
-    */
-  }, [phoneNumber, verificationCode, onSuccess]);
+  }, [verificationState.isVerifying, verificationCode, phoneNumber, safeSetState]);
 
   const handlePhoneChange = useCallback(
     (text: string) => {
       setPhoneNumber(text);
       if (phoneError) setPhoneError(null);
+      setIsVerified(false);
       setVerificationState((prev) => ({
         ...prev,
         isVerifying: false,
@@ -209,7 +217,15 @@ export const useResetPasswordPhoneVerification = ({
     [phoneNumber.length, verificationState]
   );
 
-  const isVerificationComplete = useMemo(() => true, []);
+  const verifyButtonState = useMemo(
+    () => ({
+      isDisabled: verificationCode.trim() === '' || verificationState.isVerifyingCode || isVerified,
+      text: verificationState.isVerifyingCode ? '인증중...' : isVerified ? '인증완료' : '인증',
+    }),
+    [verificationCode, verificationState.isVerifyingCode, isVerified]
+  );
+
+  const isVerificationComplete = useMemo(() => isVerified, [isVerified]);
 
   return {
     phoneNumber,
@@ -226,6 +242,7 @@ export const useResetPasswordPhoneVerification = ({
     verifyCode,
 
     buttonState,
+    verifyButtonState,
     isVerificationComplete,
 
     verificationRef,
