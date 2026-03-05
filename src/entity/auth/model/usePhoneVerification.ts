@@ -201,7 +201,6 @@ export const usePhoneVerification = ({
         phoneNumber.length !== 11 ||
         verificationState.isSendingCode ||
         verificationState.isVerifyingCode,
-      canSend: phoneNumber.length === 11 && !verificationState.isSendingCode,
       text: verificationState.isSendingCode
         ? '전송중...'
         : verificationState.isVerificationSent
