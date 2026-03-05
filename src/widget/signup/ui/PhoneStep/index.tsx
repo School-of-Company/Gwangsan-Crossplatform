@@ -61,10 +61,7 @@ export default function PhoneStep() {
               editable={!verificationState.isSendingCode}
             />
           </View>
-          <Button
-            width="w-auto"
-            onPress={requestVerification}
-            disabled={buttonState.isDisabled}>
+          <Button width="w-auto" onPress={requestVerification} disabled={buttonState.isDisabled}>
             {buttonState.text}
           </Button>
         </View>
@@ -88,10 +85,7 @@ export default function PhoneStep() {
                 maxLength={6}
               />
             </View>
-            <Button
-              width="w-auto"
-              onPress={verifyCode}
-              disabled={verifyButtonState.isDisabled}>
+            <Button width="w-auto" onPress={verifyCode} disabled={verifyButtonState.isDisabled}>
               {verifyButtonState.text}
             </Button>
           </View>
