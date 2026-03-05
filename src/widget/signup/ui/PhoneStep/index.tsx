@@ -13,12 +13,6 @@ export default function PhoneStep() {
     useSignupFormField('verificationCode');
   const { nextStep } = useSignupStepNavigation();
 
-  const handleVerificationSuccess = (phoneNumber: string, verificationCode: string) => {
-    updatePhoneNumber(phoneNumber);
-    updateVerificationCode(verificationCode);
-    nextStep();
-  };
-
   const {
     phoneNumber,
     verificationCode,
@@ -38,7 +32,6 @@ export default function PhoneStep() {
   } = usePhoneVerification({
     initialPhoneNumber: initialPhoneNumber as string,
     initialVerificationCode: initialVerificationCode as string,
-    onSuccess: handleVerificationSuccess,
   });
 
   const handleNext = () => {

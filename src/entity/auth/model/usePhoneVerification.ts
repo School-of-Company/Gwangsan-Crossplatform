@@ -17,19 +17,19 @@ interface VerificationState {
 interface UsePhoneVerificationProps {
   initialPhoneNumber?: string;
   initialVerificationCode?: string;
-  onSuccess: (phoneNumber: string, verificationCode: string) => void;
 }
 
 export const usePhoneVerification = ({
   initialPhoneNumber = '',
   initialVerificationCode = '',
-  onSuccess,
 }: UsePhoneVerificationProps) => {
   const isMountedRef = useRef(true);
   const verificationRef = useRef<TextInput>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [phoneNumber, setPhoneNumber] = useState((initialPhoneNumber as string) || '');
+  const phoneNumberRef = useRef(phoneNumber);
+  phoneNumberRef.current = phoneNumber;
   const [verificationCode, setVerificationCode] = useState(
     (initialVerificationCode as string) || ''
   );
@@ -114,6 +114,8 @@ export const usePhoneVerification = ({
       return false;
     }
 
+    const phoneAtVerificationStart = phoneNumber;
+
     try {
       verificationCodeSchema.parse(verificationCode);
 
@@ -122,9 +124,13 @@ export const usePhoneVerification = ({
         setVerificationState((prev) => ({ ...prev, isVerifyingCode: true }));
       });
 
-      await verifySms(phoneNumber, verificationCode);
+      await verifySms(phoneAtVerificationStart, verificationCode);
 
       safeSetState(() => {
+        if (phoneNumberRef.current !== phoneAtVerificationStart) {
+          setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
+          return;
+        }
         setIsVerified(true);
         setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
       });

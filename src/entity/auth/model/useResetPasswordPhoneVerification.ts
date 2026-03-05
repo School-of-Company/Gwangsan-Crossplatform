@@ -23,13 +23,14 @@ interface UseResetPasswordPhoneVerificationProps {
 export const useResetPasswordPhoneVerification = ({
   initialPhoneNumber = '',
   initialVerificationCode = '',
-  onSuccess,
 }: UseResetPasswordPhoneVerificationProps) => {
   const isMountedRef = useRef(true);
   const verificationRef = useRef<TextInput>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [phoneNumber, setPhoneNumber] = useState((initialPhoneNumber as string) || '');
+  const phoneNumberRef = useRef(phoneNumber);
+  phoneNumberRef.current = phoneNumber;
   const [verificationCode, setVerificationCode] = useState(
     (initialVerificationCode as string) || ''
   );
@@ -114,6 +115,8 @@ export const useResetPasswordPhoneVerification = ({
       return false;
     }
 
+    const phoneAtVerificationStart = phoneNumber;
+
     try {
       verificationCodeSchema.parse(verificationCode);
 
@@ -123,11 +126,15 @@ export const useResetPasswordPhoneVerification = ({
       });
 
       await verifyPasswordResetSms({
-        phoneNumber,
+        phoneNumber: phoneAtVerificationStart,
         code: verificationCode,
       });
 
       safeSetState(() => {
+        if (phoneNumberRef.current !== phoneAtVerificationStart) {
+          setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
+          return;
+        }
         setIsVerified(true);
         setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
       });
