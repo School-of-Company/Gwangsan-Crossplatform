@@ -35,6 +35,7 @@ export const usePhoneVerification = ({
   );
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   const [verificationState, setVerificationState] = useState<VerificationState>({
     isVerifying: false,
@@ -123,13 +124,17 @@ export const usePhoneVerification = ({
 
       await verifySms(phoneNumber, verificationCode);
 
+      safeSetState(() => {
+        setIsVerified(true);
+        setVerificationState((prev) => ({ ...prev, isVerifyingCode: false }));
+      });
+
       Toast.show({
         type: 'success',
         text1: '인증 완료',
         text2: '전화번호 인증이 완료되었습니다.',
       });
 
-      onSuccess(phoneNumber, verificationCode);
       return true;
     } catch (err) {
       safeSetState(() => {
@@ -148,12 +153,13 @@ export const usePhoneVerification = ({
       });
       return false;
     }
-  }, [verificationState.isVerifying, verificationCode, phoneNumber, safeSetState, onSuccess]);
+  }, [verificationState.isVerifying, verificationCode, phoneNumber, safeSetState]);
 
   const handlePhoneChange = useCallback(
     (text: string) => {
       setPhoneNumber(text);
       if (phoneError) setPhoneError(null);
+      setIsVerified(false);
       setVerificationState((prev) => ({
         ...prev,
         isVerifying: false,
@@ -201,13 +207,16 @@ export const usePhoneVerification = ({
     [phoneNumber.length, verificationState]
   );
 
-  const isVerificationComplete = useMemo(
-    () =>
-      verificationState.isVerifying &&
-      verificationCode.trim() !== '' &&
-      !verificationState.isVerifyingCode,
-    [verificationState.isVerifying, verificationState.isVerifyingCode, verificationCode]
+  const verifyButtonState = useMemo(
+    () => ({
+      isDisabled:
+        verificationCode.trim() === '' || verificationState.isVerifyingCode || isVerified,
+      text: verificationState.isVerifyingCode ? '인증중...' : isVerified ? '인증완료' : '인증',
+    }),
+    [verificationCode, verificationState.isVerifyingCode, isVerified]
   );
+
+  const isVerificationComplete = useMemo(() => isVerified, [isVerified]);
 
   return {
     phoneNumber,
@@ -224,6 +233,7 @@ export const usePhoneVerification = ({
     verifyCode,
 
     buttonState,
+    verifyButtonState,
     isVerificationComplete,
 
     verificationRef,
