@@ -4,7 +4,7 @@ import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
-import { useSignupPhoneVerification } from '../../../../entity/auth/model/useSignupPhoneVerification';
+import { useSignupPhoneVerification } from '~/entity/auth/model/useSignupPhoneVerification';
 
 export default function PhoneStep() {
   const { value: initialPhoneNumber, updateField: updatePhoneNumber } =
