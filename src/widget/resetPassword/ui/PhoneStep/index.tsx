@@ -7,7 +7,7 @@ import {
   useResetPasswordStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
-import { useResetPasswordPhoneVerification } from '~/entity/auth/model/useResetPasswordPhoneVerification';
+import { usePasswordResetPhoneVerification } from '~/entity/auth/model/usePasswordResetPhoneVerification';
 import { router } from 'expo-router';
 
 export default function PhoneStep() {
@@ -20,12 +20,6 @@ export default function PhoneStep() {
   const handleBack = () => {
     resetStore();
     router.replace('/onboarding');
-  };
-
-  const handleVerificationSuccess = (phoneNumber: string, verificationCode: string) => {
-    updatePhoneNumber(phoneNumber);
-    updateVerificationCode(verificationCode);
-    nextStep();
   };
 
   const {
@@ -44,10 +38,9 @@ export default function PhoneStep() {
     verifyButtonState,
     isVerificationComplete,
     verificationRef,
-  } = useResetPasswordPhoneVerification({
+  } = usePasswordResetPhoneVerification({
     initialPhoneNumber: initialPhoneNumber as string,
     initialVerificationCode: initialVerificationCode as string,
-    onSuccess: handleVerificationSuccess,
   });
 
   const handleNext = () => {
