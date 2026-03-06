@@ -6,8 +6,8 @@ import {
   useResetPasswordFormField,
   useResetPasswordStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
-import { Text, View } from 'react-native';
-import { useResetPasswordPhoneVerification } from '~/entity/auth/model/useResetPasswordPhoneVerification';
+import { View } from 'react-native';
+import { usePasswordResetPhoneVerification } from '~/entity/auth/model/usePasswordResetPhoneVerification';
 import { router } from 'expo-router';
 
 export default function PhoneStep() {
@@ -20,12 +20,6 @@ export default function PhoneStep() {
   const handleBack = () => {
     resetStore();
     router.replace('/onboarding');
-  };
-
-  const handleVerificationSuccess = (phoneNumber: string, verificationCode: string) => {
-    updatePhoneNumber(phoneNumber);
-    updateVerificationCode(verificationCode);
-    nextStep();
   };
 
   const {
@@ -41,19 +35,25 @@ export default function PhoneStep() {
     requestVerification,
     verifyCode,
     buttonState,
+    verifyButtonState,
     isVerificationComplete,
     verificationRef,
-  } = useResetPasswordPhoneVerification({
+  } = usePasswordResetPhoneVerification({
     initialPhoneNumber: initialPhoneNumber as string,
     initialVerificationCode: initialVerificationCode as string,
-    onSuccess: handleVerificationSuccess,
   });
+
+  const handleNext = () => {
+    updatePhoneNumber(phoneNumber);
+    updateVerificationCode(verificationCode);
+    nextStep();
+  };
 
   return (
     <ResetPasswordForm
       title="비밀번호 재설정"
       description="가입 시 등록한 전화번호를 입력해주세요"
-      onNext={verifyCode}
+      onNext={handleNext}
       onBack={handleBack}
       isNextDisabled={!isVerificationComplete}>
       <View>
@@ -71,13 +71,8 @@ export default function PhoneStep() {
               editable={!verificationState.isSendingCode}
             />
           </View>
-          <Button
-            className={`h-16 items-center justify-center rounded-xl px-8 ${
-              buttonState.canSend ? 'bg-[#8FC31D]' : 'bg-gray-300'
-            }`}
-            onPress={requestVerification}
-            disabled={buttonState.isDisabled}>
-            <Text className="font-medium text-white">{buttonState.text}</Text>
+          <Button width="w-auto" onPress={requestVerification} disabled={buttonState.isDisabled}>
+            {buttonState.text}
           </Button>
         </View>
         <ErrorMessage error={phoneError} />
@@ -85,18 +80,25 @@ export default function PhoneStep() {
 
       {verificationState.isVerifying && (
         <View className="mt-4">
-          <Input
-            ref={verificationRef}
-            label="전화번호 인증"
-            placeholder="인증번호를 입력해주세요"
-            value={verificationCode}
-            onChangeText={handleVerificationChange}
-            onSubmitEditing={handleVerificationSubmit}
-            keyboardType="numeric"
-            returnKeyType="done"
-            editable={!verificationState.isVerifyingCode}
-            maxLength={6}
-          />
+          <View className="flex-row items-end gap-2">
+            <View className="flex-1">
+              <Input
+                ref={verificationRef}
+                label="전화번호 인증"
+                placeholder="인증번호를 입력해주세요"
+                value={verificationCode}
+                onChangeText={handleVerificationChange}
+                onSubmitEditing={handleVerificationSubmit}
+                keyboardType="numeric"
+                returnKeyType="done"
+                editable={!verificationState.isVerifyingCode && !isVerificationComplete}
+                maxLength={6}
+              />
+            </View>
+            <Button width="w-auto" onPress={verifyCode} disabled={verifyButtonState.isDisabled}>
+              {verifyButtonState.text}
+            </Button>
+          </View>
           <ErrorMessage error={verificationError} />
         </View>
       )}
