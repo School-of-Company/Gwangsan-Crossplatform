@@ -158,23 +158,17 @@ export const usePhoneVerification = ({
     }
   }, [verificationState.isVerifying, verificationCode, phoneNumber, safeSetState, verifySmsApi]);
 
-  const handlePhoneChange = useCallback(
-    (text: string) => {
-      setPhoneNumber(text);
-      if (phoneError) setPhoneError(null);
-      setIsVerified(false);
-      setVerificationState((prev) => ({ ...prev, isVerifying: false }));
-    },
-    [phoneError]
-  );
+  const handlePhoneChange = useCallback((text: string) => {
+    setPhoneNumber(text);
+    setPhoneError(null);
+    setIsVerified(false);
+    setVerificationState((prev) => ({ ...prev, isVerifying: false }));
+  }, []);
 
-  const handleVerificationChange = useCallback(
-    (text: string) => {
-      setVerificationCode(text);
-      if (verificationError) setVerificationError(null);
-    },
-    [verificationError]
-  );
+  const handleVerificationChange = useCallback((text: string) => {
+    setVerificationCode(text);
+    setVerificationError(null);
+  }, []);
 
   const handlePhoneSubmit = useCallback(() => {
     if (phoneNumber.length === 11) {
