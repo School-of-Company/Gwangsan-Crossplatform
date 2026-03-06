@@ -7,7 +7,6 @@ import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 interface VerificationState {
   isVerifying: boolean;
-  isVerificationSent: boolean;
   isSendingCode: boolean;
   isVerifyingCode: boolean;
 }
@@ -39,7 +38,6 @@ export const usePhoneVerification = ({
 
   const [verificationState, setVerificationState] = useState<VerificationState>({
     isVerifying: false,
-    isVerificationSent: false,
     isSendingCode: false,
     isVerifyingCode: false,
   });
@@ -74,7 +72,6 @@ export const usePhoneVerification = ({
         setVerificationState((prev) => ({
           ...prev,
           isVerifying: true,
-          isVerificationSent: true,
           isSendingCode: false,
         }));
       });
@@ -166,11 +163,7 @@ export const usePhoneVerification = ({
       setPhoneNumber(text);
       if (phoneError) setPhoneError(null);
       setIsVerified(false);
-      setVerificationState((prev) => ({
-        ...prev,
-        isVerifying: false,
-        isVerificationSent: false,
-      }));
+      setVerificationState((prev) => ({ ...prev, isVerifying: false }));
     },
     [phoneError]
   );
@@ -203,11 +196,9 @@ export const usePhoneVerification = ({
         verificationState.isVerifyingCode,
       text: verificationState.isSendingCode
         ? '전송중...'
-        : verificationState.isVerificationSent
+        : verificationState.isVerifying
           ? '재전송'
-          : verificationState.isVerifyingCode
-            ? '인증중...'
-            : '인증',
+          : '인증',
     }),
     [phoneNumber.length, verificationState]
   );
