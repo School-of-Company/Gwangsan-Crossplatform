@@ -42,7 +42,7 @@ export default function NicknameStep() {
         });
       } catch (e) {
         console.error(e);
-        throw error;
+        return;
       }
 
       if (result.success) {
@@ -54,7 +54,7 @@ export default function NicknameStep() {
     };
 
     tryBiometricLogin();
-  }, [resetStore, error]);
+  }, [resetStore]);
 
   const handleBack = () => {
     resetStore();
