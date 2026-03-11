@@ -26,11 +26,6 @@ export default function NicknameStep() {
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
       const savedCredentials = await getCredentialsForBiometric();
 
-      console.log('[Biometric]', {
-        hasHardware,
-        isEnrolled,
-        hasSavedCredentials: !!savedCredentials,
-      });
       if (!hasHardware || !isEnrolled || !savedCredentials) return;
 
       let result;
