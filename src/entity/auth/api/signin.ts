@@ -37,8 +37,8 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 };
 
 export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
-  await SecureStore.setItemAsync('biometric_nickname', nickname);
-  await SecureStore.setItemAsync('biometric_password', password);
+  await SecureStore.setItemAsync('biometric_nickname', nickname, { requireAuthentication: true });
+  await SecureStore.setItemAsync('biometric_password', password, { requireAuthentication: true });
 };
 
 export const getCredentialsForBiometric = async () => {
