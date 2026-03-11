@@ -8,10 +8,7 @@ import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
-import {
-  getCredentialsForBiometric,
-  signinWithDeviceInfo,
-} from '~/entity/auth/api/signin';
+import { getCredentialsForBiometric, signinWithDeviceInfo } from '~/entity/auth/api/signin';
 
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSigninFormField('nickname');
@@ -21,9 +18,11 @@ export default function NicknameStep() {
 
   useEffect(() => {
     const tryBiometricLogin = async () => {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      const savedCredentials = await getCredentialsForBiometric();
+      const [hasHardware, isEnrolled, savedCredentials] = await Promise.all([
+        LocalAuthentication.hasHardwareAsync(),
+        LocalAuthentication.isEnrolledAsync(),
+        getCredentialsForBiometric(),
+      ]);
 
       if (!hasHardware || !isEnrolled || !savedCredentials) return;
 
