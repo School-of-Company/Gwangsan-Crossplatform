@@ -30,8 +30,10 @@ export default function PasswordStep() {
       updateField(trimmedPassword);
       setIsLoading(true);
 
-      await signinWithDeviceInfo({ nickname: trimmedNickname, password: trimmedPassword });
-      await saveCredentialsForBiometric(trimmedNickname, trimmedPassword);
+      await Promise.all([
+        signinWithDeviceInfo({ nickname: trimmedNickname, password: trimmedPassword }),
+        saveCredentialsForBiometric(trimmedNickname, trimmedPassword),
+      ]);
 
       resetStore();
       router.replace('/main');
