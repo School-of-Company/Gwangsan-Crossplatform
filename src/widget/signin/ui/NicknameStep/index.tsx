@@ -11,7 +11,6 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import {
   getCredentialsForBiometric,
   signinWithDeviceInfo,
-  saveCredentialsForBiometric,
 } from '~/entity/auth/api/signin';
 
 export default function NicknameStep() {
@@ -42,7 +41,6 @@ export default function NicknameStep() {
 
       if (result.success) {
         await signinWithDeviceInfo(savedCredentials);
-        await saveCredentialsForBiometric(savedCredentials.nickname, savedCredentials.password);
         resetStore();
         router.replace('/main');
       }
