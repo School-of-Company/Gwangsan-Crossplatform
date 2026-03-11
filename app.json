@@ -16,7 +16,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
+          "faceIDPermission": "$(PRODUCT_NAME)이(가) Face ID를 사용하도록 허용합니다."
         }
       ]
     ],
