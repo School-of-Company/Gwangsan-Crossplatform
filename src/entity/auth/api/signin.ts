@@ -6,6 +6,7 @@ import axios from 'axios';
 import { removeData } from '@/shared/lib/removeData';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import * as SecureStore from 'expo-secure-store';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 const auth = axios.create({
   baseURL: instance.defaults.baseURL,
@@ -37,8 +38,10 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 };
 
 export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
-  await SecureStore.setItemAsync('biometric_nickname', nickname, { requireAuthentication: true });
-  await SecureStore.setItemAsync('biometric_password', password, { requireAuthentication: true });
+  const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+  const options = isEnrolled ? { requireAuthentication: true } : {};
+  await SecureStore.setItemAsync('biometric_nickname', nickname, options);
+  await SecureStore.setItemAsync('biometric_password', password, options);
 };
 
 export const getCredentialsForBiometric = async () => {
