@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Input } from '@/shared/ui/Input';
+import { PasswordInput } from '@/shared/ui/PasswordInput';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
@@ -79,27 +79,25 @@ export default function PasswordStep() {
       onNext={validateAndNext}
       isNextDisabled={password?.trim() === '' || passwordConfirm?.trim() === ''}>
       <View>
-        <Input
+        <PasswordInput
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요"
           value={password as string}
           onChangeText={handlePasswordChange}
           onSubmitEditing={handlePasswordSubmit}
-          secureTextEntry={true}
           returnKeyType="next"
         />
         <ErrorMessage error={passwordError} />
       </View>
 
       <View className="mt-4">
-        <Input
+        <PasswordInput
           ref={passwordConfirmRef}
           label="비밀번호 재입력"
           placeholder="비밀번호를 다시 입력해주세요"
           value={passwordConfirm as string}
           onChangeText={handleConfirmChange}
           onSubmitEditing={handleConfirmSubmit}
-          secureTextEntry={true}
           returnKeyType="done"
         />
         <ErrorMessage error={confirmError} />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
@@ -7,12 +7,46 @@ import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { getCredentialsForBiometric, signinWithDeviceInfo } from '~/entity/auth/api/signin';
 
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSigninFormField('nickname');
   const { nextStep, resetStore } = useSigninStepNavigation();
   const [nickname, setNickname] = useState<string | undefined>(initialNickname as string);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tryBiometricLogin = async () => {
+      const [hasHardware, isEnrolled, savedCredentials] = await Promise.all([
+        LocalAuthentication.hasHardwareAsync(),
+        LocalAuthentication.isEnrolledAsync(),
+        getCredentialsForBiometric(),
+      ]);
+
+      if (!hasHardware || !isEnrolled || !savedCredentials) return;
+
+      let result;
+      try {
+        result = await LocalAuthentication.authenticateAsync({
+          promptMessage: '생체 인증으로 로그인',
+          cancelLabel: '취소',
+          disableDeviceFallback: true,
+        });
+      } catch (e) {
+        console.error(e);
+        return;
+      }
+
+      if (result.success) {
+        await signinWithDeviceInfo(savedCredentials);
+        resetStore();
+        router.replace('/main');
+      }
+    };
+
+    tryBiometricLogin();
+  }, [resetStore]);
 
   const handleBack = () => {
     resetStore();

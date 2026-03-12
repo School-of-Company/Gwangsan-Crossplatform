@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Input } from '@/shared/ui/Input';
+import { PasswordInput } from '@/shared/ui/PasswordInput';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
 import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema } from '~/entity/auth/model/authSchema';
-import { signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { signinWithDeviceInfo, saveCredentialsForBiometric } from '~/entity/auth/api/signin';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
@@ -30,10 +30,10 @@ export default function PasswordStep() {
       updateField(trimmedPassword);
       setIsLoading(true);
 
-      await signinWithDeviceInfo({
-        nickname: trimmedNickname,
-        password: trimmedPassword,
-      });
+      await Promise.all([
+        signinWithDeviceInfo({ nickname: trimmedNickname, password: trimmedPassword }),
+        saveCredentialsForBiometric(trimmedNickname, trimmedPassword),
+      ]);
 
       resetStore();
       router.replace('/main');
@@ -69,13 +69,12 @@ export default function PasswordStep() {
       nextButtonText={isLoading ? '로그인 중...' : '로그인'}
       isNextDisabled={password?.trim() === '' || isLoading}>
       <View>
-        <Input
+        <PasswordInput
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요"
           value={password as string}
           onChangeText={handlePasswordChange}
           onSubmitEditing={handleSubmit}
-          secureTextEntry={true}
           returnKeyType="done"
           editable={!isLoading}
         />

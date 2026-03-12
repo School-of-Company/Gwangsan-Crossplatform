@@ -11,7 +11,15 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "$(PRODUCT_NAME)이(가) Face ID를 사용하도록 허용합니다."
+        }
+      ]
+    ],
     "orientation": "portrait",
     "icon": "./src/shared/assets/png/icon.png",
     "userInterfaceStyle": "light",
