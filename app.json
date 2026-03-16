@@ -24,6 +24,14 @@
         {
           "iosDisplayInForeground": true
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "schoolcompany"
+        }
       ]
     ],
     "orientation": "portrait",
@@ -55,7 +63,8 @@
     "extra": {
       "eas": {
         "projectId": "9d65e0fb-0ca0-4235-ba71-1e60a7843a0e"
-      }
+      },
+      "sentryDsn": "https://f3132bf3dcb64a690769c6c76312a2c4@o4510603897667584.ingest.us.sentry.io/4510603899764736"
     }
   }
 }
