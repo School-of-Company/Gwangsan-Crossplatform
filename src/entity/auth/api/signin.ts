@@ -40,8 +40,10 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
   const isEnrolled = await LocalAuthentication.isEnrolledAsync();
   const options = isEnrolled ? { requireAuthentication: true } : {};
-  await SecureStore.setItemAsync('biometric_nickname', nickname, options);
-  await SecureStore.setItemAsync('biometric_password', password, options);
+  await Promise.all([
+    SecureStore.setItemAsync('biometric_nickname', nickname, options),
+    SecureStore.setItemAsync('biometric_password', password, options),
+  ]);
 };
 
 export const getCredentialsForBiometric = async () => {
