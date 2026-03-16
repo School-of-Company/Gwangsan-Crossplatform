@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Dimensions, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 
 import image1 from '@/shared/assets/png/mainSlides/slide1.png';
 import image2 from '@/shared/assets/png/mainSlides/slide2.png';
@@ -10,6 +11,7 @@ import image6 from '@/shared/assets/png/mainSlides/slide6.png';
 
 const images = [image1, image2, image3, image4, image5, image6];
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SLIDE_HEIGHT = 210;
 
 const MainSlideViewer = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -41,11 +43,10 @@ const MainSlideViewer = () => {
           <Image
             key={idx}
             source={img}
-            style={{
-              width: SCREEN_WIDTH,
-              height: 210,
-              resizeMode: 'contain',
-            }}
+            style={{ width: SCREEN_WIDTH, height: SLIDE_HEIGHT }}
+            contentFit="contain"
+            transition={0}
+            priority={idx === 0 ? 'high' : 'low'}
           />
         ))}
       </ScrollView>
