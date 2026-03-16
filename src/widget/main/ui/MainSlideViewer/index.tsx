@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Dimensions, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 
 import image1 from '@/shared/assets/png/mainSlides/slide1.png';
 import image2 from '@/shared/assets/png/mainSlides/slide2.png';
@@ -41,11 +42,10 @@ const MainSlideViewer = () => {
           <Image
             key={idx}
             source={img}
-            style={{
-              width: SCREEN_WIDTH,
-              height: 210,
-              resizeMode: 'contain',
-            }}
+            style={{ width: SCREEN_WIDTH, height: 210 }}
+            contentFit="contain"
+            transition={0}
+            priority={idx === 0 ? 'high' : 'low'}
           />
         ))}
       </ScrollView>
