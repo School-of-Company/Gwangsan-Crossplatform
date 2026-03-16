@@ -53,8 +53,13 @@ export const getCredentialsForBiometric = async () => {
   });
   if (!raw) return null;
 
-  const { nickname, password } = JSON.parse(raw);
-  return nickname && password ? { nickname, password } : null;
+  try {
+    const { nickname, password } = JSON.parse(raw);
+    return nickname && password ? { nickname, password } : null;
+  } catch (error) {
+    console.error('Failed to parse biometric credentials:', error);
+    return null;
+  }
 };
 
 export const signinWithDeviceInfo = async (credentials: {
