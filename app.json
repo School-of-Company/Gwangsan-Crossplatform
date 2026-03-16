@@ -24,6 +24,14 @@
         {
           "iosDisplayInForeground": true
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "schoolcompany"
+        }
       ]
     ],
     "orientation": "portrait",
