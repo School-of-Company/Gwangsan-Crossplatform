@@ -5,6 +5,8 @@ import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
 import { removeData } from '@/shared/lib/removeData';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import * as SecureStore from 'expo-secure-store';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 const auth = axios.create({
   baseURL: instance.defaults.baseURL,
@@ -32,6 +34,31 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
     return response.data;
   } catch (error) {
     throw new Error(getErrorMessage(error));
+  }
+};
+
+export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
+  const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+  if (!isEnrolled) return;
+
+  const credentials = JSON.stringify({ nickname, password });
+  await SecureStore.setItemAsync('biometric_credentials', credentials, {
+    requireAuthentication: true,
+  });
+};
+
+export const getCredentialsForBiometric = async () => {
+  const raw = await SecureStore.getItemAsync('biometric_credentials', {
+    requireAuthentication: true,
+  });
+  if (!raw) return null;
+
+  try {
+    const { nickname, password } = JSON.parse(raw);
+    return nickname && password ? { nickname, password } : null;
+  } catch (error) {
+    console.error('Failed to parse biometric credentials:', error);
+    return null;
   }
 };
 

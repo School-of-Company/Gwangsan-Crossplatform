@@ -9,6 +9,7 @@ export default ({ config }: { config: ExpoConfig }) => {
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     },
     plugins: [
+      ...(config.plugins ?? []),
       [
         '@sentry/react-native',
         {
