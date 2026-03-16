@@ -18,30 +18,22 @@ export default function NicknameStep() {
 
   useEffect(() => {
     const tryBiometricLogin = async () => {
-      const [hasHardware, isEnrolled, savedCredentials] = await Promise.all([
+      const [hasHardware, isEnrolled] = await Promise.all([
         LocalAuthentication.hasHardwareAsync(),
         LocalAuthentication.isEnrolledAsync(),
-        getCredentialsForBiometric(),
       ]);
 
-      if (!hasHardware || !isEnrolled || !savedCredentials) return;
+      if (!hasHardware || !isEnrolled) return;
 
-      let result;
       try {
-        result = await LocalAuthentication.authenticateAsync({
-          promptMessage: '생체 인증으로 로그인',
-          cancelLabel: '취소',
-          disableDeviceFallback: true,
-        });
-      } catch (e) {
-        console.error(e);
-        return;
-      }
+        const savedCredentials = await getCredentialsForBiometric();
+        if (!savedCredentials) return;
 
-      if (result.success) {
         await signinWithDeviceInfo(savedCredentials);
         resetStore();
         router.replace('/main');
+      } catch (e) {
+        console.error(e);
       }
     };
 
