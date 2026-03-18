@@ -128,7 +128,13 @@ class SocketManager implements ISocketManager {
     });
   }
 
-  private static readonly RESERVED_EVENTS = new Set(['connect', 'connect_error', 'disconnect', 'receiveMessage', 'updateRoomList']);
+  private static readonly RESERVED_EVENTS = new Set([
+    'connect',
+    'connect_error',
+    'disconnect',
+    'receiveMessage',
+    'updateRoomList',
+  ]);
 
   emit(event: string, ...args: any[]): void {
     if (this.socket?.connected && !SocketManager.RESERVED_EVENTS.has(event)) {
