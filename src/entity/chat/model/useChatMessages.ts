@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { getChatMessages } from '../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatApiError } from './chatTypes';
@@ -27,7 +28,7 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
   const queryClient = useQueryClient();
 
   const pendingMessages = useChatQueueStore(
-    useCallback((state) => state.getByRoom(roomId), [roomId])
+    useShallow((state) => state.pendingMessages.filter((msg) => msg.roomId === roomId))
   );
 
   const query = useQuery({
