@@ -1,4 +1,5 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
+
 import { FlatList } from 'react-native';
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
@@ -26,12 +27,13 @@ interface UseChatMessagesReturn {
   readonly markRoomAsRead: (roomId: RoomId) => Promise<void>;
 }
 
+const CHAT_ROOM_QUERY_KEY = ['chatRooms', 'list'] as const;
+
 export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
   const flatListRef = useRef<FlatList | null>(null);
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
 
-  const chatRoomQueryKey = useMemo(() => ['chatRooms', 'list'] as const, []);
   const chatMessageQueryKey = useMemo(() => ['chatMessages', roomId] as const, [roomId]);
 
   const {
@@ -40,7 +42,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
     connectionState,
   } = useChatSocket({
     currentRoomId: roomId,
-    chatRoomQueryKey,
+    chatRoomQueryKey: CHAT_ROOM_QUERY_KEY,
     chatMessageQueryKey,
   });
 
