@@ -27,6 +27,7 @@ class SocketManager implements ISocketManager {
   }
 
   async connect(): Promise<void> {
+    if (this.isConnecting || this.socket?.connected) return;
     this.isConnecting = true;
 
     try {
