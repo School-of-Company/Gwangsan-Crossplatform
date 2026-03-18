@@ -192,7 +192,7 @@ class SocketManager implements ISocketManager {
 export const createChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
     url: SOCKET_URL,
-    transports: ['websocket'],
+    transports: ['polling', 'websocket'],
     timeout: 15000,
     reconnection: true,
     autoConnect: true,
