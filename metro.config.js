@@ -3,6 +3,7 @@ const path = require('path');
 const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
 const config = getSentryExpoConfig(__dirname);
+config.resolver.unstable_enablePackageExports = false;
 config.resolver.assetExts.push('ico');
 config.resolver.alias = {
   '~': path.resolve(__dirname, 'src'),
