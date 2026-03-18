@@ -36,12 +36,6 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
     enabled: enabled && !!roomId,
     refetchInterval,
     staleTime: 5000,
-    select: useCallback((data: ChatMessageResponse[] | undefined) => {
-      if (!Array.isArray(data)) return [];
-      return [...data].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-    }, []),
   });
 
   if (query.error && onError) {
