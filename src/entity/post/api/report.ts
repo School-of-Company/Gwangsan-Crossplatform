@@ -1,27 +1,39 @@
 import { instance } from '~/shared/lib/axios';
-import { ReportType } from '../model/reportType';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+
+export type ReportReason =
+  | 'SEXUAL'
+  | 'ABUSE_HATE_HARASSMENT'
+  | 'SPAM_AD'
+  | 'IMPERSONATION'
+  | 'SELF_HARM_DANGER'
+  | 'ETC';
+
+export type ReportTargetType = 'PRODUCT' | 'MEMBER';
+
 interface BaseReportRequest {
-  reportType: ReportType;
+  targetType: ReportTargetType;
+  reason: ReportReason;
   content: string;
   imageIds: number[];
 }
 
-interface FraudReportRequest extends BaseReportRequest {
-  reportType: 'FRAUD';
+interface ProductReportRequest extends BaseReportRequest {
+  targetType: 'PRODUCT';
   productId: number;
 }
 
 interface MemberReportRequest extends BaseReportRequest {
-  reportType: 'BAD_LANGUAGE' | 'MEMBER' | 'ETC';
+  targetType: 'MEMBER';
   memberId: number;
 }
 
-type ReportRequest = FraudReportRequest | MemberReportRequest;
+export type ReportRequest = ProductReportRequest | MemberReportRequest;
 
 interface ReportApiPayload {
   sourceId: number;
-  reportType: ReportType;
+  targetType: ReportTargetType;
+  reason: ReportReason;
   content: string;
   imageIds: number[];
 }
@@ -29,8 +41,9 @@ interface ReportApiPayload {
 export const report = async (data: ReportRequest): Promise<void> => {
   try {
     const payload: ReportApiPayload = {
-      sourceId: data.reportType === 'FRAUD' ? data.productId : data.memberId,
-      reportType: data.reportType,
+      sourceId: data.targetType === 'PRODUCT' ? data.productId : data.memberId,
+      targetType: data.targetType,
+      reason: data.reason,
       content: data.content,
       imageIds: data.imageIds,
     };
@@ -40,5 +53,3 @@ export const report = async (data: ReportRequest): Promise<void> => {
     throw new Error(getErrorMessage(error));
   }
 };
-
-export type { ReportRequest, FraudReportRequest, MemberReportRequest };

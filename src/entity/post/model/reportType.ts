@@ -1,9 +1,13 @@
-export type ReportType = 'BAD_LANGUAGE' | 'FRAUD' | 'MEMBER' | 'ETC';
+import type { ReportReason } from '../api/report';
+
+export type ReportType = ReportReason;
 
 export const REPORT_TYPE_MAP: Record<ReportType, string> = {
-  BAD_LANGUAGE: '욕설/비방',
-  FRAUD: '스팸/홍보',
-  MEMBER: '문제 있는 회원',
+  SEXUAL: '성적/선정적',
+  ABUSE_HATE_HARASSMENT: '욕설/혐오/괴롭힘',
+  SPAM_AD: '스팸/광고',
+  IMPERSONATION: '사칭',
+  SELF_HARM_DANGER: '자해/위험',
   ETC: '기타',
 };
 
