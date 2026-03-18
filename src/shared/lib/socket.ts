@@ -128,8 +128,10 @@ class SocketManager implements ISocketManager {
     });
   }
 
+  private static readonly RESERVED_EVENTS = new Set(['connect', 'connect_error', 'disconnect']);
+
   emit(event: string, ...args: any[]): void {
-    if (this.socket?.connected) {
+    if (this.socket?.connected && !SocketManager.RESERVED_EVENTS.has(event)) {
       this.socket.emit(event, ...args);
     }
 
