@@ -27,6 +27,7 @@ class SocketManager implements ISocketManager {
   }
 
   async connect(): Promise<void> {
+    if (this.isConnecting || this.socket?.connected) return;
     this.isConnecting = true;
 
     try {
@@ -128,8 +129,16 @@ class SocketManager implements ISocketManager {
     });
   }
 
+  private static readonly RESERVED_EVENTS = new Set([
+    'connect',
+    'connect_error',
+    'disconnect',
+    'receiveMessage',
+    'updateRoomList',
+  ]);
+
   emit(event: string, ...args: any[]): void {
-    if (this.socket?.connected) {
+    if (this.socket?.connected && !SocketManager.RESERVED_EVENTS.has(event)) {
       this.socket.emit(event, ...args);
     }
 
@@ -183,7 +192,7 @@ class SocketManager implements ISocketManager {
 export const createChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
     url: SOCKET_URL,
-    transports: ['websocket'],
+    transports: ['polling', 'websocket'],
     timeout: 15000,
     reconnection: true,
     autoConnect: true,

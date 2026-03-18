@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { IChatSocketService } from '../lib/socketService';
@@ -13,6 +13,23 @@ export const useSocketConnection = ({
   autoConnect = true,
 }: UseSocketConnectionProps) => {
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const [connectionState, setConnectionState] = useState(socketService.connectionState);
+
+  useEffect(() => {
+    const handleConnect = () => setConnectionState('connected');
+    const handleDisconnect = () => setConnectionState('disconnected');
+    const handleConnectError = () => setConnectionState('disconnected');
+
+    socketService.on('connect', handleConnect);
+    socketService.on('disconnect', handleDisconnect);
+    socketService.on('connect_error', handleConnectError);
+
+    return () => {
+      socketService.off('connect', handleConnect);
+      socketService.off('disconnect', handleDisconnect);
+      socketService.off('connect_error', handleConnectError);
+    };
+  }, [socketService]);
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
@@ -46,8 +63,8 @@ export const useSocketConnection = ({
   const disconnect = useCallback(() => socketService.disconnect(), [socketService]);
 
   return {
-    isConnected: socketService.isConnected,
-    connectionState: socketService.connectionState,
+    isConnected: connectionState === 'connected',
+    connectionState,
     connect,
     disconnect,
   };
