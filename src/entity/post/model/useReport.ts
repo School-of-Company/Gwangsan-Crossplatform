@@ -1,8 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState, useMemo } from 'react';
 import Toast from 'react-native-toast-message';
-import { report, type ReportRequest } from '../api/report';
-import { REPORT_TYPE_MAP } from './reportType';
+import { report, type ReportRequest, type ReportReason } from '../api/report';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 
 interface UseReportParams {
@@ -12,7 +11,7 @@ interface UseReportParams {
 }
 
 interface ReportFormState {
-  reportType: keyof typeof REPORT_TYPE_MAP | null;
+  reportType: ReportReason | null;
   contents: string;
   imageIds: number[];
   imageUploadState?: ImageUploadState;
@@ -55,7 +54,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
     });
   }, []);
 
-  const setReportType = useCallback((reportType: keyof typeof REPORT_TYPE_MAP | null) => {
+  const setReportType = useCallback((reportType: ReportReason | null) => {
     setFormState((prev) => ({ ...prev, reportType }));
   }, []);
 
@@ -75,12 +74,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
     const { reportType, contents, imageUploadState } = formState;
 
     if (!reportType || !contents.trim()) return false;
-
-    const reportTypeValue = reportType ? REPORT_TYPE_MAP[reportType] : undefined;
-    if (!reportTypeValue) return false;
-
-    if (reportTypeValue === 'FRAUD' && !productId) return false;
-    if (reportTypeValue !== 'FRAUD' && !memberId) return false;
+    if (!productId && !memberId) return false;
 
     if (imageUploadState) {
       if (imageUploadState.hasUploadingImages || imageUploadState.hasFailedImages) {
@@ -93,7 +87,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
 
   const handleSubmit = useCallback(
     (type: string, reason: string) => {
-      const reportTypeKey = type as keyof typeof REPORT_TYPE_MAP;
+      const reportTypeKey = type as ReportReason;
       if (!reportTypeKey) {
         Toast.show({
           type: 'error',
@@ -122,17 +116,19 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
         return;
       }
 
-      if (reportTypeKey === 'FRAUD' && productId) {
+      if (productId) {
         reportMutation.mutate({
-          reportType: 'FRAUD',
+          targetType: 'PRODUCT',
           productId,
+          reason: reportTypeKey,
           content: reason,
           imageIds: formState.imageIds,
         });
-      } else if (reportTypeKey !== 'FRAUD' && memberId) {
+      } else if (memberId) {
         reportMutation.mutate({
-          reportType: reportTypeKey as 'BAD_LANGUAGE' | 'MEMBER' | 'ETC',
+          targetType: 'MEMBER',
           memberId,
+          reason: reportTypeKey,
           content: reason,
           imageIds: formState.imageIds,
         });
