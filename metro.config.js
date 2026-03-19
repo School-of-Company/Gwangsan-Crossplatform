@@ -5,6 +5,18 @@ const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 const config = getSentryExpoConfig(__dirname);
 config.resolver.unstable_enablePackageExports = false;
 config.resolver.assetExts.push('ico');
+const defaultResolver = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'scrolloop/native') {
+    return {
+      filePath: require.resolve('./node_modules/scrolloop/packages/react-native/dist/index.cjs'),
+      type: 'sourceFile',
+    };
+  }
+  return defaultResolver
+    ? defaultResolver(context, moduleName, platform)
+    : context.resolveRequest(context, moduleName, platform);
+};
 config.resolver.alias = {
   '~': path.resolve(__dirname, 'src'),
   '@/app': path.resolve(__dirname, 'src/app'),
