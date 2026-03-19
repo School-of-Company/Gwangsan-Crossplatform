@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSignout, useWithdrawal } from '~/entity/auth';
 import { BottomSheetModalWrapper } from '~/shared/ui';
+import { useBlockUser } from '~/view/profile/model/useBlockUser';
 
 interface InformationProps {
   name?: string;
@@ -16,6 +17,8 @@ export default function Information({ name, id, isMe }: InformationProps) {
   const { signout: handleSignout, isLoading: isSignoutLoading } = useSignout();
   const { withdrawal: handleWithdrawal, isLoading: isWithdrawalLoading } = useWithdrawal();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const { block, unblock } = useBlockUser(id!);
 
   const handleEditProfile = useCallback(() => {
     R.push(`/profile/${id}/edit`);
@@ -38,6 +41,31 @@ export default function Information({ name, id, isMe }: InformationProps) {
     handleWithdrawal();
     setIsBottomSheetVisible(false);
   }, [handleWithdrawal]);
+
+  const handleBlockPress = useCallback(() => {
+    if (isBlocked) {
+      Alert.alert('차단 해제', `${name}님의 차단을 해제하시겠습니까?`, [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '해제',
+          onPress: () => {
+            unblock.mutate(undefined, { onSuccess: () => setIsBlocked(false) });
+          },
+        },
+      ]);
+    } else {
+      Alert.alert('사용자 차단', `${name}님을 차단하시겠습니까?`, [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '차단',
+          style: 'destructive',
+          onPress: () => {
+            block.mutate(undefined, { onSuccess: () => setIsBlocked(true) });
+          },
+        },
+      ]);
+    }
+  }, [isBlocked, name, block, unblock]);
 
   return (
     <>
@@ -68,7 +96,16 @@ export default function Information({ name, id, isMe }: InformationProps) {
             <Text className="text-main-500">내 정보 수정</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity className="flex justify-center rounded-[30px] px-4 py-[10px]"></TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleBlockPress}
+            disabled={block.isPending || unblock.isPending}
+            className="flex justify-center px-2 py-2">
+            <MaterialIcons
+              name="block"
+              size={28}
+              color={isBlocked ? '#9CA3AF' : '#DF454A'}
+            />
+          </TouchableOpacity>
         )}
       </View>
 
