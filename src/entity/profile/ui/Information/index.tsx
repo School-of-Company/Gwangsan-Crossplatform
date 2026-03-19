@@ -10,14 +10,15 @@ interface InformationProps {
   name?: string;
   id?: number;
   isMe: boolean;
+  initialBlocked?: boolean;
 }
 
-export default function Information({ name, id, isMe }: InformationProps) {
+export default function Information({ name, id, isMe, initialBlocked = false }: InformationProps) {
   const R = useRouter();
   const { signout: handleSignout, isLoading: isSignoutLoading } = useSignout();
   const { withdrawal: handleWithdrawal, isLoading: isWithdrawalLoading } = useWithdrawal();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(initialBlocked);
   const { block, unblock } = useBlockUser(id!);
 
   const handleEditProfile = useCallback(() => {

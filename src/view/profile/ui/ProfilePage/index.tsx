@@ -12,6 +12,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetMyPosts } from '../../model/useGetMyPosts';
+import { useGetBlockList } from '../../model/useGetBlockList';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,6 +41,10 @@ export default function ProfilePageView() {
     isError: otherPostsIsError,
     refetch: refetchOtherPosts,
   } = useGetPosts(id);
+
+  const { data: blockList } = useGetBlockList();
+  const targetMemberId = profileData?.memberId;
+  const initialBlocked = !!blockList?.some((b) => b.memberId === targetMemberId);
 
   const postsData = isMe ? myPostsData : otherPostsData;
   const error = isMe ? myPostsError : otherPostsError;
@@ -80,6 +85,7 @@ export default function ProfilePageView() {
         isMe={isMe}
         id={isMe ? myProfileData?.memberId : profileData?.memberId}
         name={isMe ? myProfileData?.nickname : profileData?.nickname}
+        initialBlocked={initialBlocked}
       />
       <ScrollView
         className="flex-0.8 flex gap-3"
