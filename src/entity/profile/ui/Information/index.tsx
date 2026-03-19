@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSignout, useWithdrawal } from '~/entity/auth';
+import { ReportModal } from '~/entity/post/ui';
 import { BottomSheetModalWrapper } from '~/shared/ui';
 import { useBlockUser } from '~/view/profile/model/useBlockUser';
 
@@ -18,6 +19,8 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
   const { signout: handleSignout, isLoading: isSignoutLoading } = useSignout();
   const { withdrawal: handleWithdrawal, isLoading: isWithdrawalLoading } = useWithdrawal();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isReportVisible, setIsReportVisible] = useState(false);
   const { block, unblock } = useBlockUser(id);
 
   const handleEditProfile = useCallback(() => {
@@ -42,7 +45,16 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
     setIsBottomSheetVisible(false);
   }, [handleWithdrawal]);
 
+  const handleMenuPress = useCallback(() => {
+    setIsMenuVisible(true);
+  }, []);
+
+  const handleCloseMenu = useCallback(() => {
+    setIsMenuVisible(false);
+  }, []);
+
   const handleBlockPress = useCallback(() => {
+    setIsMenuVisible(false);
     if (isBlocked) {
       Alert.alert('차단 해제', `${name}님의 차단을 해제하시겠습니까?`, [
         { text: '취소', style: 'cancel' },
@@ -55,6 +67,15 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
       ]);
     }
   }, [isBlocked, name, block, unblock]);
+
+  const handleReportPress = useCallback(() => {
+    setIsMenuVisible(false);
+    setIsReportVisible(true);
+  }, []);
+
+  const handleCloseReport = useCallback(() => {
+    setIsReportVisible(false);
+  }, []);
 
   return (
     <>
@@ -86,13 +107,39 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            onPress={handleBlockPress}
+            onPress={handleMenuPress}
             disabled={block.isPending || unblock.isPending}
             className="flex justify-center px-2 py-2">
-            <MaterialIcons name="block" size={28} color={isBlocked ? '#9CA3AF' : '#DF454A'} />
+            <MaterialIcons name="more-vert" size={28} color="#374151" />
           </TouchableOpacity>
         )}
       </View>
+
+      <BottomSheetModalWrapper
+        isVisible={isMenuVisible}
+        onClose={handleCloseMenu}
+        title=""
+        hasHeader={false}
+        height={230}>
+        <View className="gap-8">
+          <TouchableOpacity
+            onPress={handleBlockPress}
+            disabled={block.isPending || unblock.isPending}
+            className="items-center py-4">
+            <Text className="text-lg">{isBlocked ? '차단 해제하기' : '차단하기'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleReportPress} className="items-center py-4">
+            <Text className="text-lg">신고하기</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleCloseMenu} className="items-center py-4">
+            <Text className="text-lg text-red-500">취소</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheetModalWrapper>
+
+      <ReportModal memberId={id} isVisible={isReportVisible} onClose={handleCloseReport} />
 
       <BottomSheetModalWrapper
         isVisible={isBottomSheetVisible}
