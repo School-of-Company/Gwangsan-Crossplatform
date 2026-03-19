@@ -120,6 +120,7 @@ export const useReport = ({ productId, memberId, onSuccess }: UseReportParams) =
         reportMutation.mutate({
           targetType: 'PRODUCT',
           productId,
+          memberId: memberId!,
           reason: reportTypeKey,
           content: reason,
           imageIds: formState.imageIds,

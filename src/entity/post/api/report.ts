@@ -21,6 +21,7 @@ interface BaseReportRequest {
 interface ProductReportRequest extends BaseReportRequest {
   targetType: 'PRODUCT';
   productId: number;
+  memberId: number;
 }
 
 interface MemberReportRequest extends BaseReportRequest {
@@ -32,8 +33,7 @@ export type ReportRequest = ProductReportRequest | MemberReportRequest;
 
 interface ReportApiPayload {
   sourceId: number;
-  targetType: ReportTargetType;
-  reason: ReportReason;
+  reportType: ReportReason;
   content: string;
   imageIds: number[];
 }
@@ -41,9 +41,8 @@ interface ReportApiPayload {
 export const report = async (data: ReportRequest): Promise<void> => {
   try {
     const payload: ReportApiPayload = {
-      sourceId: data.targetType === 'PRODUCT' ? data.productId : data.memberId,
-      targetType: data.targetType,
-      reason: data.reason,
+      sourceId: data.memberId,
+      reportType: data.reason,
       content: data.content,
       imageIds: data.imageIds,
     };
