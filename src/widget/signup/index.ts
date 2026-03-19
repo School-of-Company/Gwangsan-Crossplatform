@@ -1,3 +1,4 @@
+export { default as TermsStep } from './ui/TermsStep';
 export { default as NameStep } from './ui/NameStep';
 export { default as NicknameStep } from './ui/NicknameStep';
 export { default as PasswordStep } from './ui/PasswordStep';

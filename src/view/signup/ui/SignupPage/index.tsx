@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { useSignupCurrentStep } from '~/entity/auth/model/useAuthSelectors';
 import {
+  TermsStep,
   NameStep,
   NicknameStep,
   PasswordStep,
@@ -14,6 +15,7 @@ import {
 } from '@/widget/signup';
 
 const STEP_COMPONENTS = {
+  terms: TermsStep,
   name: NameStep,
   nickname: NicknameStep,
   password: PasswordStep,
