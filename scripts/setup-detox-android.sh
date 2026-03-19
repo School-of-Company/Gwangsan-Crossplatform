@@ -12,7 +12,13 @@ if ! grep -q "testInstrumentationRunner" "$APP_DIR/build.gradle"; then
 fi
 
 if ! grep -q "com.wix:detox" "$APP_DIR/build.gradle"; then
-  sed -i "s/^}$/\n    androidTestImplementation('com.wix:detox:+') { transitive = true }\n    androidTestImplementation 'junit:junit:4.13.2'\n}/" "$APP_DIR/build.gradle"
+  cat >> "$APP_DIR/build.gradle" << 'GRADLE'
+
+dependencies {
+    androidTestImplementation('com.wix:detox:+') { transitive = true }
+    androidTestImplementation 'junit:junit:4.13.2'
+}
+GRADLE
   echo "  ✓ Detox androidTestImplementation 추가됨"
 fi
 
