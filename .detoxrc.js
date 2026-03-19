@@ -36,7 +36,10 @@ module.exports = {
     'android.debug': {
       type: 'android.apk',
       binaryPath: path.join(root, 'android/app/build/outputs/apk/debug/app-debug.apk'),
-      testBinaryPath: path.join(root, 'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'),
+      testBinaryPath: path.join(
+        root,
+        'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'
+      ),
       build: `cd ${path.join(root, 'android')} && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug`,
       reversePorts: [8081],
     },
