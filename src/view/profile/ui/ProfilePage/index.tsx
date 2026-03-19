@@ -85,7 +85,7 @@ export default function ProfilePageView() {
         isMe={isMe}
         id={isMe ? myProfileData?.memberId : profileData?.memberId}
         name={isMe ? myProfileData?.nickname : profileData?.nickname}
-        initialBlocked={initialBlocked}
+        isBlocked={initialBlocked}
       />
       <ScrollView
         className="flex-0.8 flex gap-3"

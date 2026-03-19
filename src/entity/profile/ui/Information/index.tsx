@@ -10,15 +10,14 @@ interface InformationProps {
   name?: string;
   id?: number;
   isMe: boolean;
-  initialBlocked?: boolean;
+  isBlocked?: boolean;
 }
 
-export default function Information({ name, id, isMe, initialBlocked = false }: InformationProps) {
+export default function Information({ name, id, isMe, isBlocked = false }: InformationProps) {
   const R = useRouter();
   const { signout: handleSignout, isLoading: isSignoutLoading } = useSignout();
   const { withdrawal: handleWithdrawal, isLoading: isWithdrawalLoading } = useWithdrawal();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(initialBlocked);
   const { block, unblock } = useBlockUser(id);
 
   const handleEditProfile = useCallback(() => {
@@ -47,23 +46,12 @@ export default function Information({ name, id, isMe, initialBlocked = false }: 
     if (isBlocked) {
       Alert.alert('차단 해제', `${name}님의 차단을 해제하시겠습니까?`, [
         { text: '취소', style: 'cancel' },
-        {
-          text: '해제',
-          onPress: () => {
-            unblock.mutate(undefined, { onSuccess: () => setIsBlocked(false) });
-          },
-        },
+        { text: '해제', onPress: () => unblock.mutate() },
       ]);
     } else {
       Alert.alert('사용자 차단', `${name}님을 차단하시겠습니까?`, [
         { text: '취소', style: 'cancel' },
-        {
-          text: '차단',
-          style: 'destructive',
-          onPress: () => {
-            block.mutate(undefined, { onSuccess: () => setIsBlocked(true) });
-          },
-        },
+        { text: '차단', style: 'destructive', onPress: () => block.mutate() },
       ]);
     }
   }, [isBlocked, name, block, unblock]);
