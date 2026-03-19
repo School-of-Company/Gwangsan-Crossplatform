@@ -4,6 +4,9 @@ const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
 const config = getSentryExpoConfig(__dirname);
 config.resolver.unstable_enablePackageExports = false;
+config.resolver.extraNodeModules = {
+  'scrolloop/native': require.resolve('./node_modules/scrolloop/packages/react-native/dist/index.cjs'),
+};
 config.resolver.assetExts.push('ico');
 config.resolver.alias = {
   '~': path.resolve(__dirname, 'src'),
