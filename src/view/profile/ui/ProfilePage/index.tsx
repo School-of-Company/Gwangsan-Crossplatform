@@ -44,7 +44,7 @@ export default function ProfilePageView() {
 
   const { data: blockList } = useGetBlockList();
   const targetMemberId = profileData?.memberId;
-  const initialBlocked = !!blockList?.some((b) => b.memberId === targetMemberId);
+  const isBlocked = !!blockList?.some((b) => b.memberId === targetMemberId);
 
   const postsData = isMe ? myPostsData : otherPostsData;
   const error = isMe ? myPostsError : otherPostsError;
@@ -85,7 +85,7 @@ export default function ProfilePageView() {
         isMe={isMe}
         id={isMe ? myProfileData?.memberId : profileData?.memberId}
         name={isMe ? myProfileData?.nickname : profileData?.nickname}
-        isBlocked={initialBlocked}
+        isBlocked={isBlocked}
       />
       <ScrollView
         className="flex-0.8 flex gap-3"
