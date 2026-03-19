@@ -7,7 +7,7 @@ interface SlideIndicatorProps {
 }
 
 const SlideIndicator = ({ total, current, onPress }: SlideIndicatorProps) => (
-  <View className="mt-4 flex-row items-center justify-center gap-2">
+  <View className="flex-row items-center justify-center gap-2">
     {Array.from({ length: total }).map((_, idx) => {
       const dot = (
         <View
