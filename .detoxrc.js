@@ -1,3 +1,6 @@
+const path = require('path');
+const root = __dirname;
+
 /** @type {Detox.DetoxConfig} */
 module.exports = {
   testRunner: {
@@ -12,14 +15,14 @@ module.exports = {
   apps: {
     'ios.debug': {
       type: 'ios.app',
-      binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/app.app',
+      binaryPath: path.join(root, 'ios/build/Build/Products/Debug-iphonesimulator/app.app'),
       build: [
         'xcodebuild',
-        '-workspace ios/app.xcworkspace',
+        `-workspace ${path.join(root, 'ios/app.xcworkspace')}`,
         '-scheme app',
         '-configuration Debug',
         '-sdk iphonesimulator',
-        '-derivedDataPath ios/build',
+        `-derivedDataPath ${path.join(root, 'ios/build')}`,
         'ARCHS=arm64',
         '"EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64"',
         'ONLY_ACTIVE_ARCH=YES',
@@ -32,9 +35,9 @@ module.exports = {
     },
     'android.debug': {
       type: 'android.apk',
-      binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
-      testBinaryPath: 'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk',
-      build: 'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug && cd ..',
+      binaryPath: path.join(root, 'android/app/build/outputs/apk/debug/app-debug.apk'),
+      testBinaryPath: path.join(root, 'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'),
+      build: `cd ${path.join(root, 'android')} && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug`,
       reversePorts: [8081],
     },
   },
