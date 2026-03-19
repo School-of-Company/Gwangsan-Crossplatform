@@ -41,6 +41,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create dummy google-services.json for prebuild
+        run: |
+          cat > google-services.json << 'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "dummy-project",
+              "storage_bucket": "dummy-project.appspot.com"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                "android_client_info": { "package_name": "com.app" }
+              },
+              "api_key": [{ "current_key": "dummy_key" }],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+            }],
+            "configuration_version": "1"
+          }
+          EOF
+
       - name: Prebuild Android (android/ is gitignored)
         run: npx expo prebuild --platform android --non-interactive
 
