@@ -1,3 +1,4 @@
+/* global __dirname */
 const path = require('path');
 const root = __dirname;
 
