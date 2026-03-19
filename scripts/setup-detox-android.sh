@@ -1,13 +1,22 @@
+#!/bin/bash
 set -e
 
 ANDROID_DIR="$(cd "$(dirname "$0")/.." && pwd)/android"
 APP_DIR="$ANDROID_DIR/app"
-TEST_DIR="$APP_DIR/src/androidTest/java/com/app"
+PACKAGE="gwangsan.io.kr"
+PACKAGE_PATH="gwangsan/io/kr"
+TEST_DIR="$APP_DIR/src/androidTest/java/$PACKAGE_PATH"
 
 echo "Patching android/app/build.gradle for Detox..."
 
 if ! grep -q "testInstrumentationRunner" "$APP_DIR/build.gradle"; then
-  sed -i "s/versionName \"1.0\"/versionName \"1.0\"\n        testBuildType System.getProperty('testBuildType', 'debug')\n        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'/" "$APP_DIR/build.gradle"
+  awk '/versionName/{
+    print
+    print "        testBuildType System.getProperty(\"testBuildType\", \"debug\")"
+    print "        testInstrumentationRunner \"androidx.test.runner.AndroidJUnitRunner\""
+    next
+  }1' "$APP_DIR/build.gradle" > /tmp/build.gradle.tmp
+  mv /tmp/build.gradle.tmp "$APP_DIR/build.gradle"
   echo "  ✓ testInstrumentationRunner 추가됨"
 fi
 
@@ -19,13 +28,13 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
 }
 GRADLE
-  echo "  ✓ Detox androidTestImplementation 추가됨"
+  echo "  ✓ Detox dependencies 추가됨"
 fi
 
-echo "Creating DetoxTest.kt..."
+echo "Creating DetoxTest.kt at $TEST_DIR..."
 mkdir -p "$TEST_DIR"
-cat > "$TEST_DIR/DetoxTest.kt" << 'EOF'
-package com.app
+cat > "$TEST_DIR/DetoxTest.kt" << EOF
+package $PACKAGE
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -53,5 +62,5 @@ class DetoxTest {
     }
 }
 EOF
-echo "  ✓ DetoxTest.kt 생성됨"
+echo "  ✓ DetoxTest.kt 생성됨 (package: $PACKAGE)"
 echo "Android Detox 설정 완료"

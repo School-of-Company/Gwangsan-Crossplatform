@@ -41,7 +41,7 @@ module.exports = {
         root,
         'android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'
       ),
-      build: `cd ${path.join(root, 'android')} && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug`,
+      build: `cd ${path.join(root, 'android')} && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug --stacktrace`,
       reversePorts: [8081],
     },
   },
