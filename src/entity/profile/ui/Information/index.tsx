@@ -19,7 +19,7 @@ export default function Information({ name, id, isMe, initialBlocked = false }: 
   const { withdrawal: handleWithdrawal, isLoading: isWithdrawalLoading } = useWithdrawal();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isBlocked, setIsBlocked] = useState(initialBlocked);
-  const { block, unblock } = useBlockUser(id!);
+  const { block, unblock } = useBlockUser(id);
 
   const handleEditProfile = useCallback(() => {
     R.push(`/profile/${id}/edit`);

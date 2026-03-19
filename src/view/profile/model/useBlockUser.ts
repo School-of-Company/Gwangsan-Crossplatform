@@ -2,9 +2,12 @@ import { useMutation } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { blockUser, unblockUser } from '../api/blockUser';
 
-export const useBlockUser = (targetMemberId: number) => {
+export const useBlockUser = (targetMemberId: number | undefined) => {
   const block = useMutation({
-    mutationFn: () => blockUser(targetMemberId),
+    mutationFn: () => {
+      if (targetMemberId === undefined) throw new Error('targetMemberId is undefined');
+      return blockUser(targetMemberId);
+    },
     onSuccess: () => {
       Toast.show({ type: 'success', text1: '차단되었습니다.' });
     },
@@ -14,7 +17,10 @@ export const useBlockUser = (targetMemberId: number) => {
   });
 
   const unblock = useMutation({
-    mutationFn: () => unblockUser(targetMemberId),
+    mutationFn: () => {
+      if (targetMemberId === undefined) throw new Error('targetMemberId is undefined');
+      return unblockUser(targetMemberId);
+    },
     onSuccess: () => {
       Toast.show({ type: 'success', text1: '차단이 해제되었습니다.' });
     },
