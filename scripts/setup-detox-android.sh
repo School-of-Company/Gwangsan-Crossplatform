@@ -31,6 +31,18 @@ GRADLE
   echo "  ✓ Detox dependencies 추가됨"
 fi
 
+echo "Creating androidTest AndroidManifest.xml..."
+ANDROIDTEST_DIR="$APP_DIR/src/androidTest"
+mkdir -p "$ANDROIDTEST_DIR"
+cat > "$ANDROIDTEST_DIR/AndroidManifest.xml" << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-sdk tools:overrideLibrary="com.wix.detox"/>
+</manifest>
+EOF
+echo "  ✓ androidTest AndroidManifest.xml 생성됨"
+
 echo "Creating DetoxTest.kt at $TEST_DIR..."
 mkdir -p "$TEST_DIR"
 cat > "$TEST_DIR/DetoxTest.kt" << EOF
