@@ -17,7 +17,7 @@ const INITIAL_FORM_DATA: SignupState['formData'] = {
 };
 
 export const useSignupStore = create<SignupState>((set) => ({
-  currentStep: 'name' as SignupState['currentStep'],
+  currentStep: 'terms' as SignupState['currentStep'],
   formData: INITIAL_FORM_DATA,
   setField: (field, value) =>
     set((state) => ({
@@ -34,7 +34,7 @@ export const useSignupStore = create<SignupState>((set) => ({
   goToStep: (step: SignupState['currentStep']) => set({ currentStep: step }),
   resetStore: () =>
     set({
-      currentStep: 'name',
+      currentStep: 'terms',
       formData: INITIAL_FORM_DATA,
     }),
 }));

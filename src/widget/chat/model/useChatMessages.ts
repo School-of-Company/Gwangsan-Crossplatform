@@ -1,7 +1,9 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
+
 import { FlatList } from 'react-native';
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
+import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '~/entity/chat';
@@ -25,14 +27,29 @@ interface UseChatMessagesReturn {
   readonly markRoomAsRead: (roomId: RoomId) => Promise<void>;
 }
 
+const CHAT_ROOM_QUERY_KEY = ['chatRooms', 'list'] as const;
+
 export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
   const flatListRef = useRef<FlatList | null>(null);
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
-  const { sendMessage, markRoomAsRead, connectionState } = useChatSocket({
+
+  const chatMessageQueryKey = useMemo(() => ['chatMessages', roomId] as const, [roomId]);
+
+  const {
+    sendMessage: socketSendMessage,
+    markRoomAsRead,
+    connectionState,
+  } = useChatSocket({
     currentRoomId: roomId,
-    chatRoomQueryKey: ['chatRooms', 'list'],
-    chatMessageQueryKey: ['chatMessages', roomId],
+    chatRoomQueryKey: CHAT_ROOM_QUERY_KEY,
+    chatMessageQueryKey,
+  });
+
+  const { sendMessage: resilientSendMessage } = useResilientMessageSender({
+    roomId,
+    isSocketConnected: connectionState === 'connected',
+    socketSendMessage,
   });
 
   const safeMessages = ensureMessagesArray(messages);
@@ -42,18 +59,20 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
     flatListRef.current?.scrollToEnd({ animated });
   }, []);
 
+  useEffect(() => {
+    if (messages && messages.length > 0) setTimeout(() => scrollToEnd(true), 100);
+  }, [messages?.length, scrollToEnd, messages]);
+
   const messageHandlers = {
     sendMessage: useCallback(
       (content: string | null, imageIds: number[]) => {
-        if (connectionState !== 'connected') return;
-
         if (imageIds.length > 0) {
-          sendMessage(roomId, ' ', 'IMAGE', imageIds);
+          resilientSendMessage(content, 'IMAGE', imageIds);
         } else if (content) {
-          sendMessage(roomId, content, 'TEXT', []);
+          resilientSendMessage(content, 'TEXT', []);
         }
       },
-      [roomId, sendMessage, connectionState]
+      [resilientSendMessage]
     ),
 
     renderMessage: useCallback(({ item }: { item: ChatMessageResponse }) => {
