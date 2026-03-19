@@ -41,8 +41,17 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
   }, [handleSignout]);
 
   const handleWithdrawalPress = useCallback(() => {
-    handleWithdrawal();
-    setIsBottomSheetVisible(false);
+    Alert.alert('회원탈퇴', '정말로 탈퇴하시겠습니까?\n탈퇴 시 모든 데이터가 삭제됩니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '탈퇴',
+        style: 'destructive',
+        onPress: () => {
+          handleWithdrawal();
+          setIsBottomSheetVisible(false);
+        },
+      },
+    ]);
   }, [handleWithdrawal]);
 
   const handleMenuPress = useCallback(() => {
