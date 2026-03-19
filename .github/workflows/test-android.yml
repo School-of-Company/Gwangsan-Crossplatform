@@ -41,6 +41,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prebuild Android (android/ is gitignored)
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: Inject Detox into Android build
+        run: bash scripts/setup-detox-android.sh
+
       - name: Build app for Detox
         run: npm run e2e:build:android
 
