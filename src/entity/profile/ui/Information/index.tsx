@@ -100,11 +100,7 @@ export default function Information({ name, id, isMe }: InformationProps) {
             onPress={handleBlockPress}
             disabled={block.isPending || unblock.isPending}
             className="flex justify-center px-2 py-2">
-            <MaterialIcons
-              name="block"
-              size={28}
-              color={isBlocked ? '#9CA3AF' : '#DF454A'}
-            />
+            <MaterialIcons name="block" size={28} color={isBlocked ? '#9CA3AF' : '#DF454A'} />
           </TouchableOpacity>
         )}
       </View>
