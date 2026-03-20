@@ -13,20 +13,21 @@ export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
 
-  if (!fontsLoaded) return null;
   return (
     <View className="mb-6 flex-1 bg-white">
       <QueryProvider>
-        <SentryRN.ErrorBoundary fallback={<></>}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              gestureEnabled: true,
-              gestureDirection: 'horizontal',
-            }}
-          />
-        </SentryRN.ErrorBoundary>
+        {fontsLoaded && (
+          <SentryRN.ErrorBoundary fallback={<></>}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                gestureEnabled: true,
+                gestureDirection: 'horizontal',
+              }}
+            />
+          </SentryRN.ErrorBoundary>
+        )}
         <Toast />
         <NoNetworkOverlay visible={!isConnected} />
       </QueryProvider>
