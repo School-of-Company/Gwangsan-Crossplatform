@@ -7,7 +7,6 @@ import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { getCredentialsForBiometric, signinWithDeviceInfo } from '~/entity/auth/api/signin';
 
 export default function NicknameStep() {
@@ -18,13 +17,6 @@ export default function NicknameStep() {
 
   useEffect(() => {
     const tryBiometricLogin = async () => {
-      const [hasHardware, isEnrolled] = await Promise.all([
-        LocalAuthentication.hasHardwareAsync(),
-        LocalAuthentication.isEnrolledAsync(),
-      ]);
-
-      if (!hasHardware || !isEnrolled) return;
-
       try {
         const savedCredentials = await getCredentialsForBiometric();
         if (!savedCredentials) return;

@@ -5,8 +5,7 @@ import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
 import { removeData } from '@/shared/lib/removeData';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
-import * as SecureStore from 'expo-secure-store';
-import * as LocalAuthentication from 'expo-local-authentication';
+import * as Keychain from 'react-native-keychain';
 
 const auth = axios.create({
   baseURL: instance.defaults.baseURL,
@@ -38,29 +37,31 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 };
 
 export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
-  const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-  if (!isEnrolled) return;
+  const supportedBiometry = await Keychain.getSupportedBiometryType();
+  if (!supportedBiometry) return;
 
-  const credentials = JSON.stringify({ nickname, password });
-  await SecureStore.setItemAsync('biometric_credentials', credentials);
+  await Keychain.setGenericPassword(nickname, password, {
+    accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+    accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
+    authenticationPrompt: { title: '생체 인증으로 로그인' },
+  });
 };
 
 export const getCredentialsForBiometric = async () => {
-  const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: '생체 인증으로 로그인',
-    cancelLabel: '취소',
-  });
-
-  if (!result.success) return null;
-
-  const raw = await SecureStore.getItemAsync('biometric_credentials');
-  if (!raw) return null;
-
   try {
-    const { nickname, password } = JSON.parse(raw);
-    return nickname && password ? { nickname, password } : null;
+    const result = await Keychain.getGenericPassword({
+      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+      authenticationPrompt: {
+        title: '생체 인증으로 로그인',
+        cancel: '취소',
+      },
+    });
+
+    if (!result) return null;
+
+    return { nickname: result.username, password: result.password };
   } catch (error) {
-    console.error('Failed to parse biometric credentials:', error);
+    console.error('Biometric auth failed:', error);
     return null;
   }
 };
