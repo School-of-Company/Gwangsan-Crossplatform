@@ -68,6 +68,11 @@ jobs:
       - name: Inject Detox into Android build
         run: bash scripts/setup-detox-android.sh
 
+      - name: Configure Gradle JVM memory
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
+          echo "org.gradle.daemon=false" >> android/gradle.properties
+
       - name: Build app for Detox
         env:
           SENTRY_DISABLE_AUTO_UPLOAD: true
