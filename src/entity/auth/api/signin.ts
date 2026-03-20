@@ -50,7 +50,6 @@ export const saveCredentialsForBiometric = async (nickname: string, password: st
 export const getCredentialsForBiometric = async () => {
   try {
     const result = await Keychain.getGenericPassword({
-      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
       authenticationPrompt: {
         title: '생체 인증으로 로그인',
         cancel: '취소',
