@@ -6,9 +6,13 @@ import Toast from 'react-native-toast-message';
 import QueryProvider from '../shared/lib/QueryProvider';
 import '@/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
+import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
+import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
+  const isConnected = useNetworkStatus();
+
   if (!fontsLoaded) return null;
   return (
     <View className="mb-6 flex-1 bg-white">
@@ -24,6 +28,7 @@ export default function RootLayout() {
           />
         </SentryRN.ErrorBoundary>
         <Toast />
+        <NoNetworkOverlay visible={!isConnected} />
       </QueryProvider>
     </View>
   );
