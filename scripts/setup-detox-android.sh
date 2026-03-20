@@ -39,9 +39,6 @@ cat > "$ANDROIDTEST_DIR/AndroidManifest.xml" << EOF
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-sdk tools:overrideLibrary="com.wix.detox"/>
-    <application
-        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-        tools:replace="android:appComponentFactory"/>
 </manifest>
 EOF
 echo "  ✓ androidTest AndroidManifest.xml 생성됨"
