@@ -42,15 +42,18 @@ export const saveCredentialsForBiometric = async (nickname: string, password: st
   if (!isEnrolled) return;
 
   const credentials = JSON.stringify({ nickname, password });
-  await SecureStore.setItemAsync('biometric_credentials', credentials, {
-    requireAuthentication: true,
-  });
+  await SecureStore.setItemAsync('biometric_credentials', credentials);
 };
 
 export const getCredentialsForBiometric = async () => {
-  const raw = await SecureStore.getItemAsync('biometric_credentials', {
-    requireAuthentication: true,
+  const result = await LocalAuthentication.authenticateAsync({
+    promptMessage: '생체 인증으로 로그인',
+    cancelLabel: '취소',
   });
+
+  if (!result.success) return null;
+
+  const raw = await SecureStore.getItemAsync('biometric_credentials');
   if (!raw) return null;
 
   try {
