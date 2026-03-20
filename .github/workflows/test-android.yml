@@ -69,6 +69,8 @@ jobs:
         run: bash scripts/setup-detox-android.sh
 
       - name: Build app for Detox
+        env:
+          SENTRY_DISABLE_AUTO_UPLOAD: true
         run: npm run e2e:build:android:release
 
       - name: Run Detox E2E tests
