@@ -37,14 +37,18 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 };
 
 export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
-  const supportedBiometry = await Keychain.getSupportedBiometryType();
-  if (!supportedBiometry) return;
+  try {
+    const supportedBiometry = await Keychain.getSupportedBiometryType();
+    if (!supportedBiometry) return;
 
-  await Keychain.setGenericPassword(nickname, password, {
-    accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
-    accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-    authenticationPrompt: { title: '생체 인증으로 로그인' },
-  });
+    await Keychain.setGenericPassword(nickname, password, {
+      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
+      authenticationPrompt: { title: '생체 인증으로 로그인' },
+    });
+  } catch (error) {
+    console.error('Failed to save credentials for biometric auth:', error);
+  }
 };
 
 export const getCredentialsForBiometric = async () => {
