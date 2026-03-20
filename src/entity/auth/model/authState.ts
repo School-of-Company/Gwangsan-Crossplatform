@@ -1,4 +1,5 @@
-type SignupStep =
+export type SignupStep =
+  | 'terms'
   | 'name'
   | 'nickname'
   | 'password'

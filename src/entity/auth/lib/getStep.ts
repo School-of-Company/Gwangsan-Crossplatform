@@ -1,20 +1,11 @@
-type SignupStep =
-  | 'name'
-  | 'nickname'
-  | 'password'
-  | 'phoneNumber'
-  | 'dongName'
-  | 'placeName'
-  | 'specialties'
-  | 'description'
-  | 'recommender'
-  | 'complete';
+import type { SignupStep } from '../model/authState';
 
 type SigninStep = 'nickname' | 'password';
 
 type ResetPasswordStep = 'phoneNumber' | 'newPassword';
 
 const SIGNUP_STEPS: readonly SignupStep[] = [
+  'terms',
   'name',
   'nickname',
   'password',
