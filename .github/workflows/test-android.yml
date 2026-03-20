@@ -69,7 +69,7 @@ jobs:
         run: bash scripts/setup-detox-android.sh
 
       - name: Build app for Detox
-        run: npm run e2e:build:android
+        run: npm run e2e:build:android:release
 
       - name: Run Detox E2E tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -84,7 +84,7 @@ jobs:
           emulator-options: >-
             -no-window -no-boot-anim -no-snapshot -wipe-data
             -noaudio -camera-back none -camera-front none
-          script: npm run e2e:test:android
+          script: npm run e2e:test:android:release
 
       - name: Upload test artifacts
         if: always()
