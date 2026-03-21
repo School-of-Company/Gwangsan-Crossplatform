@@ -10,12 +10,12 @@ import { ZodError } from 'zod';
 export default function RecommenderStep() {
   const { value: initialRecommender, updateField } = useSignupFormField('recommender');
   const { nextStep } = useSignupStepNavigation();
-  const [recommender, setRecommender] = useState<string | undefined>(initialRecommender as string);
+  const [recommender, setRecommender] = useState(initialRecommender);
   const [error, setError] = useState<string | null>(null);
 
   const validateAndNext = () => {
     try {
-      nicknameSchema.parse(recommender as string);
+      nicknameSchema.parse(recommender);
       setError(null);
       updateField(recommender);
       nextStep();
