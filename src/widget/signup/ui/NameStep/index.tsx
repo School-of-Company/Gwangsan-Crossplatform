@@ -11,7 +11,7 @@ import { ZodError } from 'zod';
 function NameStep() {
   const { value: initialName, updateField } = useSignupFormField('name');
   const { nextStep, resetStore } = useSignupStepNavigation();
-  const [name, setName] = useState<string | undefined>(initialName as string);
+  const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
 
   const handleBack = () => {
@@ -22,7 +22,7 @@ function NameStep() {
   const validateAndNext = () => {
     try {
       setError(null);
-      updateField(nameSchema.parse(name as string));
+      updateField(nameSchema.parse(name));
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {
@@ -57,7 +57,7 @@ function NameStep() {
         <Input
           label="이름"
           placeholder="본인의 이름을 입력해주세요"
-          value={name as string}
+          value={name}
           onChangeText={handleNameChange}
           onSubmitEditing={handleSubmit}
           returnKeyType="next"

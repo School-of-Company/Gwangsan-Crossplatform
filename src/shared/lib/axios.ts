@@ -4,12 +4,13 @@ import { router } from 'expo-router';
 import { getData } from './getData';
 import { removeData } from './removeData';
 import { setData } from './setData';
+import { QueryClient } from '@tanstack/react-query';
 
 export const baseURL = Constants.expoConfig?.extra?.apiUrl;
 
-let queryClientInstance: any = null;
+let queryClientInstance: QueryClient | null = null;
 
-export const setQueryClientInstance = (client: any) => {
+export const setQueryClientInstance = (client: QueryClient) => {
   queryClientInstance = client;
 };
 
