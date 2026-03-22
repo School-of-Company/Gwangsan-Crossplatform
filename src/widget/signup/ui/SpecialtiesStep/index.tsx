@@ -10,9 +10,7 @@ export default function SpecialtiesStep() {
   const { value: initialSpecialties, updateField } = useSignupFormField('specialties');
   const { nextStep } = useSignupStepNavigation();
 
-  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(
-    Array.isArray(initialSpecialties) ? initialSpecialties : []
-  );
+  const [selectedSpecialties, setSelectedSpecialties] = useState(initialSpecialties);
   const [error, setError] = useState<string | null>(null);
 
   const handleNext = () => {

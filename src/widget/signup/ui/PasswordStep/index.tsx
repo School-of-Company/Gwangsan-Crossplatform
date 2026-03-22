@@ -13,10 +13,8 @@ export default function PasswordStep() {
     useSignupFormField('passwordConfirm');
   const { nextStep } = useSignupStepNavigation();
 
-  const [password, setPassword] = useState<string | undefined>(initialPassword as string);
-  const [passwordConfirm, setPasswordConfirm] = useState<string | undefined>(
-    initialPasswordConfirm as string
-  );
+  const [password, setPassword] = useState(initialPassword);
+  const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
@@ -36,7 +34,7 @@ export default function PasswordStep() {
     }
 
     try {
-      passwordConfirmSchema(password as string).parse(passwordConfirm as string);
+      passwordConfirmSchema(password).parse(passwordConfirm);
       setConfirmError(null);
     } catch (err) {
       if (err instanceof ZodError) {
@@ -82,7 +80,7 @@ export default function PasswordStep() {
         <PasswordInput
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요"
-          value={password as string}
+          value={password}
           onChangeText={handlePasswordChange}
           onSubmitEditing={handlePasswordSubmit}
           returnKeyType="next"
@@ -95,7 +93,7 @@ export default function PasswordStep() {
           ref={passwordConfirmRef}
           label="비밀번호 재입력"
           placeholder="비밀번호를 다시 입력해주세요"
-          value={passwordConfirm as string}
+          value={passwordConfirm}
           onChangeText={handleConfirmChange}
           onSubmitEditing={handleConfirmSubmit}
           returnKeyType="done"

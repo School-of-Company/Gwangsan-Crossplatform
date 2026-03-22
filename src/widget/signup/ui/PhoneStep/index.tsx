@@ -30,8 +30,8 @@ export default function PhoneStep() {
     isVerificationComplete,
     verificationRef,
   } = useSignupPhoneVerification({
-    initialPhoneNumber: initialPhoneNumber as string,
-    initialVerificationCode: initialVerificationCode as string,
+    initialPhoneNumber,
+    initialVerificationCode,
   });
 
   const handleNext = () => {
