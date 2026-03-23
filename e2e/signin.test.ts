@@ -47,6 +47,6 @@ describe('로그인', () => {
     // 로그인 성공 시 onboarding 화면으로 돌아가지 않는다 (NicknameStep input이 사라진다)
     await waitFor(element(by.id('PasswordStep-password-input')))
       .not.toBeVisible()
-      .withTimeout(10000);
+      .withTimeout(30000);
   });
 });

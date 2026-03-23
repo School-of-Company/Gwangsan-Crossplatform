@@ -4,6 +4,14 @@ const root = __dirname;
 
 /** @type {Detox.DetoxConfig} */
 module.exports = {
+  artifacts: {
+    rootDir: './artifacts',
+    plugins: {
+      screenshot: { shouldTakeAutomaticSnapshots: true, keepOnlyFailedTestsArtifacts: true },
+      video: 'none',
+      log: { enabled: true, keepOnlyFailedTestsArtifacts: true },
+    },
+  },
   testRunner: {
     args: {
       $0: 'jest',
