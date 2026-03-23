@@ -24,7 +24,7 @@ if ! grep -q "com.wix:detox" "$APP_DIR/build.gradle"; then
   cat >> "$APP_DIR/build.gradle" << 'GRADLE'
 
 dependencies {
-    androidTestImplementation('com.wix:detox:+') { transitive = true }
+    androidTestImplementation('com.wix:detox:20.47.0') { transitive = true }
     androidTestImplementation 'junit:junit:4.13.2'
 }
 GRADLE
@@ -38,7 +38,7 @@ cat > "$ANDROIDTEST_DIR/AndroidManifest.xml" << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-sdk tools:overrideLibrary="com.wix.detox"/>
+    <uses-sdk android:minSdkVersion="24" tools:overrideLibrary="com.wix.detox"/>
 </manifest>
 EOF
 echo "  ✓ androidTest AndroidManifest.xml 생성됨"
