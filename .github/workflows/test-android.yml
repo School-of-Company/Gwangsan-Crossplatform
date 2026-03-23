@@ -1,0 +1,137 @@
+name: Android E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  test-android:
+    name: Android E2E Test (Detox)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Create dummy google-services.json
+        run: |
+          cat > google-services.json << 'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "dummy-project",
+              "storage_bucket": "dummy-project.appspot.com"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                "android_client_info": { "package_name": "gwangsan.io.kr" }
+              },
+              "api_key": [{ "current_key": "dummy_key" }],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+            }],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: Inject Detox into Android build
+        run: bash scripts/setup-detox-android.sh
+
+      - name: Configure Gradle JVM memory
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
+          echo "org.gradle.daemon=false" >> android/gradle.properties
+
+      - name: Build app for Detox
+        env:
+          SENTRY_DISABLE_AUTO_UPLOAD: true
+        run: npm run e2e:build:android
+
+      - name: Run Detox E2E tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          avd-name: Pixel_7_API_33
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: >-
+            -no-window -no-boot-anim -no-snapshot -wipe-data
+            -noaudio -camera-back none -camera-front none
+          script: npm run e2e:test:android
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detox-artifacts-android
+          path: artifacts/
+          retention-days: 7
+
+  notify-discord:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+    needs: [test-android]
+    if: always()
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook URL not set, skipping"
+            exit 0
+          fi
+
+          STATUS="${{ needs.test-android.result }}"
+          if [ "$STATUS" == "success" ]; then
+            COLOR=3066993; EMOJI="✅"
+          else
+            COLOR=15158332; EMOJI="❌"
+          fi
+
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"$EMOJI Detox Android E2E $STATUS\",\"color\":$COLOR,\"fields\":[{\"name\":\"워크플로우\",\"value\":\"[보기]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)\"}]}]}"

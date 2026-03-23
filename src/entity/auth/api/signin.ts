@@ -9,7 +9,7 @@ import * as Keychain from 'react-native-keychain';
 
 const auth = axios.create({
   baseURL: instance.defaults.baseURL,
-  timeout: 5000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
