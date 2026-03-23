@@ -38,9 +38,12 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
       );
     }
 
-    const pushToken = await Notifications.getExpoPushTokenAsync({
-      projectId: projectId || undefined,
-    });
+    const pushToken = await Promise.race([
+      Notifications.getExpoPushTokenAsync({ projectId: projectId || undefined }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('getExpoPushTokenAsync timeout')), 5000)
+      ),
+    ]);
 
     return pushToken.data;
   } catch (error) {
