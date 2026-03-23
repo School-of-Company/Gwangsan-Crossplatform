@@ -54,6 +54,9 @@ jobs:
           key: xcode-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}-release
           restore-keys: xcode-build-
 
+      - name: Build Detox framework cache
+        run: npx detox clean-framework-cache && npx detox build-framework-cache
+
       - name: Boot iOS Simulator
         run: |
           RUNTIME=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' | tail -1)
