@@ -35,7 +35,7 @@ export type SigninFormData = {
   deviceToken: string;
   deviceId: string;
   osType: 'ANDROID' | 'IOS';
-} & Readonly<Record<string, string>>;
+};
 
 export type ResetPasswordFormData = {
   phoneNumber: string;
@@ -54,7 +54,7 @@ export type AuthResponse = {
 export interface SignupState {
   currentStep: SignupStep;
   formData: SignupFormData;
-  setField: (field: string, value: string | string[]) => void;
+  setField: <K extends keyof SignupFormData>(field: K, value: SignupFormData[K]) => void;
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: SignupStep) => void;
@@ -64,7 +64,7 @@ export interface SignupState {
 export interface SigninState {
   currentStep: SigninStep;
   formData: SigninFormData;
-  setField: (field: string, value: string) => void;
+  setField: <K extends keyof SigninFormData>(field: K, value: SigninFormData[K]) => void;
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: SigninStep) => void;

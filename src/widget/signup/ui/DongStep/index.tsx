@@ -11,7 +11,7 @@ export default function DongStep() {
   const { value: initialDongName, updateField } = useSignupFormField('dongName');
   const { nextStep } = useSignupStepNavigation();
   const [searchText, setSearchText] = useState('');
-  const [dongName, setDongName] = useState<string | undefined>(initialDongName as string);
+  const [dongName, setDongName] = useState(initialDongName);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 

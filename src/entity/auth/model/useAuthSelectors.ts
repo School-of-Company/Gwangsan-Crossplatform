@@ -28,16 +28,18 @@ export function useStepNavigation<TState extends SignupState | SigninState | Res
 
 export function useFormField<
   TState extends SignupState | SigninState | ResetPasswordState,
-  K extends string,
+  K extends keyof TState['formData'],
 >(fieldName: K, useStore: (selector: (state: TState) => unknown) => unknown) {
-  const value = useStore((state: TState) => (state.formData as any)[fieldName]);
+  const value = useStore(
+    (state: TState) => (state.formData as Record<PropertyKey, unknown>)[fieldName]
+  ) as TState['formData'][K];
   const setField = useStore((state: TState) => state.setField) as (
-    field: string,
-    value: unknown
+    field: K,
+    value: TState['formData'][K]
   ) => void;
 
   const updateField = useCallback(
-    (newValue: unknown) => {
+    (newValue: TState['formData'][K]) => {
       setField(fieldName, newValue);
     },
     [fieldName, setField]

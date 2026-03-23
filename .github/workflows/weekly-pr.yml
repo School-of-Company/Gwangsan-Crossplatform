@@ -1,0 +1,47 @@
+name: Weekly PR to Main
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # 매주 월요일 오전 9시 (KST = UTC+9)
+  workflow_dispatch:
+
+jobs:
+  create-pr:
+    name: Create Weekly PR develop → main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TODAY=$(date +'%Y-%m-%d')
+
+          # develop과 main의 차이가 있는지 확인
+          git fetch origin main develop
+          DIFF=$(git log origin/main..origin/develop --oneline)
+
+          if [ -z "$DIFF" ]; then
+            echo "develop과 main 사이에 변경사항이 없습니다. PR을 생성하지 않습니다."
+            exit 0
+          fi
+
+          # 이미 열린 PR이 있는지 확인
+          EXISTING_PR=$(gh pr list --base main --head develop --state open --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "이미 열린 PR이 있습니다: #$EXISTING_PR"
+            exit 0
+          fi
+
+          gh pr create \
+            --base main \
+            --head develop \
+            --title "chore: weekly release $TODAY" \
+            --body "$(cat <<'EOF'
+
+## 주간 정기 릴리즈

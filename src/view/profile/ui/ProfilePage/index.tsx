@@ -107,7 +107,11 @@ export default function ProfilePageView() {
           <Text className=" text-titleSmall">
             {isMe ? '내 글' : `${profileData?.nickname}님의 글`}
           </Text>
-          {Array.isArray(postsData) && postsData.map((post) => <Post {...post} key={post.id} />)}
+          {Array.isArray(postsData) && postsData.length > 0 ? (
+            postsData.map((post) => <Post {...post} key={post.id} />)
+          ) : (
+            <Text className="text-center text-gray-500">게시물이 없습니다.</Text>
+          )}
         </View>
       </ScrollView>
       <Footer />

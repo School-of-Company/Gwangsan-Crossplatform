@@ -1,4 +1,4 @@
-import { RefreshControl } from 'react-native';
+import { RefreshControl, Text, View } from 'react-native';
 import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
@@ -34,6 +34,14 @@ export default function PostList({ category, type }: { category: Category; type:
     },
     [data]
   );
+
+  if (data.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center py-20">
+        <Text className="text-center text-gray-500">게시물이 없습니다.</Text>
+      </View>
+    );
+  }
 
   return (
     <VirtualList

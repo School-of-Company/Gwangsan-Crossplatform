@@ -10,13 +10,13 @@ import { ZodError } from 'zod';
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSignupFormField('nickname');
   const { nextStep } = useSignupStepNavigation();
-  const [nickname, setNickname] = useState<string | undefined>(initialNickname as string);
+  const [nickname, setNickname] = useState(initialNickname);
   const [error, setError] = useState<string | null>(null);
 
   const validateAndNext = () => {
     try {
       setError(null);
-      updateField(nicknameSchema.parse(nickname as string));
+      updateField(nicknameSchema.parse(nickname));
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {
@@ -50,7 +50,7 @@ export default function NicknameStep() {
         <Input
           label="별칭"
           placeholder="별칭을 입력해주세요"
-          value={nickname as string}
+          value={nickname}
           onChangeText={handleNicknameChange}
           onSubmitEditing={handleSubmit}
           returnKeyType="next"
