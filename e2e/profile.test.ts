@@ -10,7 +10,9 @@ describe('프로필', () => {
     });
 
     // 로그인 선행 처리
-    await waitFor(element(by.text('로그인'))).toBeVisible().withTimeout(10000);
+    await waitFor(element(by.text('로그인')))
+      .toBeVisible()
+      .withTimeout(10000);
     await element(by.text('로그인')).tap();
 
     await element(by.id('NicknameStep-nickname-input')).typeText('테스트');
@@ -20,7 +22,9 @@ describe('프로필', () => {
     await element(by.id('SigninForm-next-button')).tap();
 
     // 로그인 성공 시 PasswordStep이 사라진다 (네트워크 지연을 고려해 30초 대기)
-    await waitFor(element(by.id('PasswordStep-password-input'))).not.toBeVisible().withTimeout(30000);
+    await waitFor(element(by.id('PasswordStep-password-input')))
+      .not.toBeVisible()
+      .withTimeout(30000);
   });
 
   it('푸터의 프로필 버튼을 탭하면 프로필 화면으로 이동한다', async () => {

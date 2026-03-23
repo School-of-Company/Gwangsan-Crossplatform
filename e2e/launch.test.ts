@@ -10,6 +10,8 @@ describe('앱 실행', () => {
   });
 
   it('앱이 실행되고 초기 화면이 표시된다', async () => {
-    await waitFor(element(by.text('로그인'))).toBeVisible().withTimeout(15000);
+    await waitFor(element(by.text('로그인')))
+      .toBeVisible()
+      .withTimeout(15000);
   });
 });

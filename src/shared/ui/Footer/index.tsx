@@ -50,9 +50,7 @@ export function Footer() {
           size={24}
           color={pathname === '/profile' ? '#8FC31D' : '#8F9094'}
         />
-        <Text className={pathname === '/profile' ? 'text-[#8FC31D]' : 'text-gray-500'}>
-          프로필
-        </Text>
+        <Text className={pathname === '/profile' ? 'text-[#8FC31D]' : 'text-gray-500'}>프로필</Text>
       </TouchableOpacity>
     </View>
   );
