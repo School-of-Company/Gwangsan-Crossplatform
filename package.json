@@ -19,7 +19,8 @@
     "e2e:build:android:release": "detox build --configuration android.emu.release",
     "e2e:test:android:release": "detox test --configuration android.emu.release --cleanup",
     "e2e:test:ios:debug": "detox test --configuration ios.sim.debug --loglevel verbose",
-    "e2e:test:android:debug": "detox test --configuration android.emu.debug --loglevel verbose"
+    "e2e:test:android:debug": "detox test --configuration android.emu.debug --loglevel verbose",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -79,11 +80,17 @@
     "eslint-config-prettier": "^10.1.2",
     "eslint-import-resolver-babel-module": "^5.3.2",
     "jest": "^29.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.0",
     "ts-jest": "^29.4.6",
     "typescript": "~5.9.2"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": "eslint --fix",
+    "**/*.{js,jsx,ts,tsx,json}": "prettier --write"
   },
   "main": "expo-router/entry",
   "private": true
