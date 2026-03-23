@@ -29,22 +29,30 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.1'
-
-      - name: Setup Ruby & CocoaPods
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
+          xcode-version: latest-stable
 
       - name: Install applesimutils
         run: |
           brew tap wix/brew
           brew install applesimutils
 
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-
+
       - name: Install CocoaPods dependencies
         working-directory: ios
         run: pod install --repo-update
+
+      - name: Cache Xcode build
+        uses: actions/cache@v4
+        with:
+          path: ios/build
+          key: xcode-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}-release
+          restore-keys: xcode-build-
 
       - name: Boot iOS Simulator
         run: |
@@ -58,10 +66,10 @@ jobs:
         run: npm run e2e:build:ios:release
 
       - name: Run Detox E2E tests
-        run: npm run e2e:test:ios:release
+        run: npx detox test --configuration ios.sim.release --loglevel error
 
       - name: Upload test artifacts
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: detox-artifacts-ios

@@ -41,7 +41,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create dummy google-services.json for prebuild
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Create dummy google-services.json
         run: |
           cat > google-services.json << 'EOF'
           {
@@ -62,7 +71,7 @@ jobs:
           }
           EOF
 
-      - name: Prebuild Android (android/ is gitignored)
+      - name: Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
       - name: Inject Detox into Android build
@@ -76,7 +85,7 @@ jobs:
       - name: Build app for Detox
         env:
           SENTRY_DISABLE_AUTO_UPLOAD: true
-        run: npm run e2e:build:android:release
+        run: npm run e2e:build:android
 
       - name: Run Detox E2E tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -91,10 +100,10 @@ jobs:
           emulator-options: >-
             -no-window -no-boot-anim -no-snapshot -wipe-data
             -noaudio -camera-back none -camera-front none
-          script: npm run e2e:test:android:release
+          script: npm run e2e:test:android
 
       - name: Upload test artifacts
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: detox-artifacts-android
