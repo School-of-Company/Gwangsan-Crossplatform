@@ -41,15 +41,16 @@ export function Footer() {
         />
         <Text className={pathname === '/notice' ? 'text-[#8FC31D]' : 'text-gray-500'}>공지</Text>
       </TouchableOpacity>
-      <TouchableOpacity className="flex items-center" onPress={() => router.push('/profile')}>
+      <TouchableOpacity
+        testID="Footer-profile-button"
+        className="flex items-center"
+        onPress={() => router.push('/profile')}>
         <Ionicons
           name="person-outline"
           size={24}
           color={pathname === '/profile' ? '#8FC31D' : '#8F9094'}
         />
-        <Text
-          testID="Footer-profile-button"
-          className={pathname === '/profile' ? 'text-[#8FC31D]' : 'text-gray-500'}>
+        <Text className={pathname === '/profile' ? 'text-[#8FC31D]' : 'text-gray-500'}>
           프로필
         </Text>
       </TouchableOpacity>
