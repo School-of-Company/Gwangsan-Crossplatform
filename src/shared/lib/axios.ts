@@ -5,6 +5,7 @@ import { getData } from './getData';
 import { removeData } from './removeData';
 import { setData } from './setData';
 import { QueryClient } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react-native';
 
 export const baseURL = Constants.expoConfig?.extra?.apiUrl;
 
@@ -44,6 +45,12 @@ instance.interceptors.request.use(
     const accessToken = await getData('accessToken');
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    } else {
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: `No accessToken in AsyncStorage when requesting ${config.url}`,
+        level: 'warning',
+      });
     }
     return config;
   },
@@ -81,6 +88,12 @@ instance.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: `401 on ${originalRequest.url}, attempting token refresh`,
+          level: 'warning',
+        });
+
         const refreshToken = await getData('refreshToken');
         if (!refreshToken) {
           throw new Error('No refresh token');
@@ -101,6 +114,14 @@ instance.interceptors.response.use(
       } catch (error) {
         isRefreshing = false;
         onRefreshFailed(error);
+
+        Sentry.captureException(error, {
+          extra: {
+            context: 'token_refresh_failed',
+            url: originalRequest.url,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          },
+        });
 
         await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
 
