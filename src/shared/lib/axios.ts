@@ -15,24 +15,7 @@ export const setQueryClientInstance = (client: QueryClient) => {
   queryClientInstance = client;
 };
 
-let isRefreshing = false;
-let refreshSubscribers: ((token: string | null, error?: unknown) => void)[] = [];
-
-const subscribeTokenRefresh = (cb: (token: string | null, error?: unknown) => void) => {
-  refreshSubscribers.push(cb);
-};
-
-const onTokenRefreshed = (token: string) => {
-  const subscribers = refreshSubscribers;
-  refreshSubscribers = [];
-  subscribers.forEach((cb) => cb(token, null));
-};
-
-const onRefreshFailed = (error: unknown) => {
-  const subscribers = refreshSubscribers;
-  refreshSubscribers = [];
-  subscribers.forEach((cb) => cb(null, error));
-};
+let refreshPromise: Promise<string> | null = null;
 
 export const instance = axios.create({
   baseURL,
@@ -70,24 +53,17 @@ instance.interceptors.response.use(undefined, async (error: AxiosError) => {
   if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
     originalRequest._retry = true;
 
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        subscribeTokenRefresh((token, error) => {
-          if (error || !token) {
-            return reject(error);
-          }
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          resolve(instance(originalRequest));
-        });
-      });
+    if (refreshPromise) {
+      try {
+        const token = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return instance(originalRequest);
+      } catch {
+        return Promise.reject(error);
+      }
     }
 
-    isRefreshing = true;
-
-    let newAccessToken: string | null = null;
-    let refreshError: unknown = null;
-
-    try {
+    refreshPromise = (async () => {
       Sentry.addBreadcrumb({
         category: 'auth',
         message: `401 on ${originalRequest.url}, attempting token refresh`,
@@ -103,46 +79,40 @@ instance.interceptors.response.use(undefined, async (error: AxiosError) => {
         refreshToken,
       });
 
-      newAccessToken = response.data.accessToken;
+      const newAccessToken = response.data.accessToken;
       await setData('accessToken', newAccessToken);
-    } catch (error) {
-      refreshError = error;
+      return newAccessToken;
+    })();
 
-      Sentry.captureException(error, {
+    try {
+      const newAccessToken = await refreshPromise;
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return instance(originalRequest);
+    } catch (refreshError) {
+      Sentry.captureException(refreshError, {
         extra: {
           context: 'token_refresh_failed',
           url: originalRequest.url,
-          errorMessage: error instanceof Error ? error.message : String(error),
+          errorMessage: refreshError instanceof Error ? refreshError.message : String(refreshError),
         },
       });
-    } finally {
-      isRefreshing = false;
 
-      if (newAccessToken) {
-        onTokenRefreshed(newAccessToken);
-      } else {
-        onRefreshFailed(refreshError);
+      await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+
+      if (queryClientInstance) {
+        queryClientInstance.clear();
       }
+
+      try {
+        router.replace('/signin');
+      } catch (routerError) {
+        console.warn('Router navigation failed:', routerError);
+      }
+
+      return Promise.reject(refreshError);
+    } finally {
+      refreshPromise = null;
     }
-
-    if (newAccessToken) {
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-      return instance(originalRequest);
-    }
-
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
-
-    if (queryClientInstance) {
-      queryClientInstance.clear();
-    }
-
-    try {
-      router.replace('/signin');
-    } catch (routerError) {
-      console.warn('Router navigation failed:', routerError);
-    }
-
-    return Promise.reject(refreshError);
   }
 
   return Promise.reject(error);
