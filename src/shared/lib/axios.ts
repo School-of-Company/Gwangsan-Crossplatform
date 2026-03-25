@@ -100,7 +100,7 @@ instance.interceptors.response.use(
         return instance(originalRequest);
       } catch (error) {
         isRefreshing = false;
-        onRefreshFailed();
+        onRefreshFailed(error);
 
         await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
 
