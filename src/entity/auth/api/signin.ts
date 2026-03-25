@@ -3,7 +3,6 @@ import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
 import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
-import { removeData } from '@/shared/lib/removeData';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import * as Keychain from 'react-native-keychain';
 
@@ -17,7 +16,6 @@ const auth = axios.create({
 
 const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   try {
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
     const response = await auth.post<AuthResponse>('/auth/signin', {
       nickname: formData.nickname,
       password: formData.password,
@@ -74,7 +72,6 @@ export const signinWithDeviceInfo = async (credentials: {
   password: string;
 }): Promise<AuthResponse> => {
   try {
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
     const deviceInfo = await getDeviceInfo();
 
     const formData: SigninFormData = {
