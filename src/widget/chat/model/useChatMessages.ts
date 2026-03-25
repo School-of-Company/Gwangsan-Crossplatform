@@ -1,12 +1,12 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
-
+import { useQueryClient } from '@tanstack/react-query';
 import { FlatList } from 'react-native';
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
-import type { ChatMessageResponse } from '~/entity/chat';
+import type { ChatMessageResponse, ChatRoomListItem } from '~/entity/chat';
 
 interface UseChatMessagesParams {
   readonly roomId: RoomId;
@@ -31,6 +31,7 @@ const CHAT_ROOM_QUERY_KEY = ['chatRooms', 'list'] as const;
 
 export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
   const flatListRef = useRef<FlatList | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
 
@@ -53,7 +54,18 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   });
 
   const safeMessages = ensureMessagesArray(messages);
-  const otherUserInfo = extractOtherUserInfo(safeMessages);
+
+  const otherUserInfo = useMemo(() => {
+    const roomsCache = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_QUERY_KEY);
+    const currentRoom = roomsCache?.find((r) => r.roomId === roomId);
+    if (currentRoom?.member) {
+      return {
+        nickname: currentRoom.member.nickname,
+        id: Number(currentRoom.member.memberId),
+      };
+    }
+    return extractOtherUserInfo(safeMessages);
+  }, [queryClient, roomId, safeMessages]);
 
   const scrollToEnd = useCallback((animated = true) => {
     flatListRef.current?.scrollToEnd({ animated });
