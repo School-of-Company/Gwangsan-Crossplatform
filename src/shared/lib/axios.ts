@@ -15,18 +15,19 @@ export const setQueryClientInstance = (client: QueryClient) => {
 };
 
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: ((token: string | null, error?: any) => void)[] = [];
 
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
+const subscribeTokenRefresh = (cb: (token: string | null, error?: any) => void) => {
   refreshSubscribers.push(cb);
 };
 
 const onTokenRefreshed = (token: string) => {
-  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers.forEach((cb) => cb(token, null));
   refreshSubscribers = [];
 };
 
-const onRefreshFailed = () => {
+const onRefreshFailed = (error: any) => {
+  refreshSubscribers.forEach((cb) => cb(null, error));
   refreshSubscribers = [];
 };
 
