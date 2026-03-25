@@ -107,7 +107,6 @@ export const useResilientMessageSender = ({
         });
         retryableMessages.forEach((msg) => {
           retry(msg.tempId);
-          attemptSend(msg.tempId, msg.content, msg.messageType, msg.imageIds);
         });
       }
     }
