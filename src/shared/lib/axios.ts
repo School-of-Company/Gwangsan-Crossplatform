@@ -58,8 +58,8 @@ instance.interceptors.response.use(undefined, async (error: AxiosError) => {
         const token = await refreshPromise;
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return instance(originalRequest);
-      } catch {
-        return Promise.reject(error);
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
       }
     }
 
