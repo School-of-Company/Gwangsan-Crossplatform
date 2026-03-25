@@ -45,12 +45,19 @@ export const useMessageSync = ({
           );
 
           const queueState = useChatQueueStore.getState();
-          const matchingTemp = queueState.pendingMessages.find(
-            (msg) =>
-              msg.roomId === message.roomId &&
-              msg.messageType === message.messageType &&
-              (message.messageType !== 'TEXT' || msg.content === message.content)
-          );
+          const matchingTemp = queueState.pendingMessages.find((msg) => {
+            if (msg.roomId !== message.roomId || msg.messageType !== message.messageType) {
+              return false;
+            }
+            if (msg.messageType === 'IMAGE') {
+              if (!message.images || message.images.length !== msg.imageIds.length) {
+                return false;
+              }
+              const receivedImageIds = new Set(message.images.map((img) => img.imageId));
+              return msg.imageIds.every((id) => receivedImageIds.has(id));
+            }
+            return msg.content === message.content;
+          });
           if (matchingTemp) {
             queueState.removeMessage(matchingTemp.tempId);
           }
