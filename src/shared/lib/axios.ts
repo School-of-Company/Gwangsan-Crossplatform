@@ -14,6 +14,22 @@ export const setQueryClientInstance = (client: QueryClient) => {
   queryClientInstance = client;
 };
 
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+  refreshSubscribers.push(cb);
+};
+
+const onTokenRefreshed = (token: string) => {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+};
+
+const onRefreshFailed = () => {
+  refreshSubscribers = [];
+};
+
 export const instance = axios.create({
   baseURL,
   timeout: 5000,
@@ -42,43 +58,59 @@ instance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthRequest =
+      originalRequest.url?.includes('/auth/signin') ||
+      originalRequest.url?.includes('/auth/reissue');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
 
-      const isSigninRequest = originalRequest.url?.includes('/auth/signin');
-
-      if (!isSigninRequest) {
-        try {
-          const refreshToken = await getData('refreshToken');
-          if (!refreshToken) {
-            throw new Error('No refresh token');
-          }
-
-          const response = await instance.post<{ accessToken: string }>('/auth/reissue', {
-            refreshToken,
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          subscribeTokenRefresh((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(instance(originalRequest));
           });
+        });
+      }
 
-          const { accessToken } = response.data;
-          setData('accessToken', accessToken);
+      isRefreshing = true;
 
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return instance(originalRequest);
-        } catch (error) {
-          removeData('accessToken');
-          removeData('refreshToken');
-
-          if (queryClientInstance) {
-            queryClientInstance.clear();
-          }
-
-          try {
-            router.replace('/signin');
-          } catch (routerError) {
-            console.warn('Router navigation failed:', routerError);
-          }
-
-          return Promise.reject(error);
+      try {
+        const refreshToken = await getData('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token');
         }
+
+        const response = await instance.post<{ accessToken: string }>('/auth/reissue', {
+          refreshToken,
+        });
+
+        const { accessToken } = response.data;
+        await setData('accessToken', accessToken);
+
+        isRefreshing = false;
+        onTokenRefreshed(accessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return instance(originalRequest);
+      } catch (error) {
+        isRefreshing = false;
+        onRefreshFailed();
+
+        await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+
+        if (queryClientInstance) {
+          queryClientInstance.clear();
+        }
+
+        try {
+          router.replace('/signin');
+        } catch (routerError) {
+          console.warn('Router navigation failed:', routerError);
+        }
+
+        return Promise.reject(error);
       }
     }
 
