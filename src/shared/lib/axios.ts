@@ -67,8 +67,11 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((token) => {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((token, error) => {
+            if (error || !token) {
+              return reject(error);
+            }
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(instance(originalRequest));
           });
