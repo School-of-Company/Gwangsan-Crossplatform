@@ -87,6 +87,9 @@ instance.interceptors.response.use(
 
       isRefreshing = true;
 
+      let newAccessToken: string | null = null;
+      let refreshError: unknown = null;
+
       try {
         Sentry.addBreadcrumb({
           category: 'auth',
@@ -103,17 +106,10 @@ instance.interceptors.response.use(
           refreshToken,
         });
 
-        const { accessToken } = response.data;
-        await setData('accessToken', accessToken);
-
-        isRefreshing = false;
-        onTokenRefreshed(accessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return instance(originalRequest);
+        newAccessToken = response.data.accessToken;
+        await setData('accessToken', newAccessToken);
       } catch (error) {
-        isRefreshing = false;
-        onRefreshFailed(error);
+        refreshError = error;
 
         Sentry.captureException(error, {
           extra: {
@@ -122,21 +118,34 @@ instance.interceptors.response.use(
             errorMessage: error instanceof Error ? error.message : String(error),
           },
         });
+      } finally {
+        isRefreshing = false;
 
-        await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
-
-        if (queryClientInstance) {
-          queryClientInstance.clear();
+        if (newAccessToken) {
+          onTokenRefreshed(newAccessToken);
+        } else {
+          onRefreshFailed(refreshError);
         }
-
-        try {
-          router.replace('/signin');
-        } catch (routerError) {
-          console.warn('Router navigation failed:', routerError);
-        }
-
-        return Promise.reject(error);
       }
+
+      if (newAccessToken) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return instance(originalRequest);
+      }
+
+      await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+
+      if (queryClientInstance) {
+        queryClientInstance.clear();
+      }
+
+      try {
+        router.replace('/signin');
+      } catch (routerError) {
+        console.warn('Router navigation failed:', routerError);
+      }
+
+      return Promise.reject(refreshError);
     }
 
     return Promise.reject(error);
