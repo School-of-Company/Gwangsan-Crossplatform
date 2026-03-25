@@ -18,7 +18,7 @@ interface UseChatMessagesReturn {
   readonly otherUserInfo: { nickname: string; id?: number };
   readonly isLoading: boolean;
   readonly isError: boolean;
-  readonly connectionState: string;
+  readonly connectionState: 'connected' | 'connecting' | 'disconnected';
   readonly messageHandlers: {
     readonly sendMessage: (content: string | null, imageIds: number[]) => void;
     readonly renderMessage: ({ item }: { item: ChatMessageResponse }) => null;
