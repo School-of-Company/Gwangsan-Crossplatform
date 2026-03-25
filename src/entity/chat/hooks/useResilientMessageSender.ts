@@ -67,19 +67,13 @@ export const useResilientMessageSender = ({
             .pendingMessages.find((m) => m.tempId === tempId);
           if (currentMsg && currentMsg.status === MESSAGE_STATUS.SENDING) {
             setStatus(tempId, MESSAGE_STATUS.FAILED);
-            showSendFailedToast(() => {
-              retry(tempId);
-              attemptSend(tempId, content, messageType, imageIds);
-            });
+            showSendFailedToast(() => retry(tempId));
           }
         }, SEND_TIMEOUT_MS);
       } catch (error) {
         console.error(error);
         setStatus(tempId, MESSAGE_STATUS.FAILED);
-        showSendFailedToast(() => {
-          retry(tempId);
-          attemptSend(tempId, content, messageType, imageIds);
-        });
+        showSendFailedToast(() => retry(tempId));
       }
     },
     [isSocketConnected, socketSendMessage, roomId, setStatus, retry]
