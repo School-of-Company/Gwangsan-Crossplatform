@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentUserId } from '@/shared/lib/getCurrentUserId';
 import { markChatAsRead } from '../api/markChatAsRead';
+import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 
@@ -22,39 +22,38 @@ export const useMessageSync = ({
     if (chatRoomQueryKey) {
       queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
     }
-
-    if (currentRoomId && chatMessageQueryKey) {
-      queryClient.invalidateQueries({ queryKey: chatMessageQueryKey });
-    }
-  }, [queryClient, chatRoomQueryKey, currentRoomId, chatMessageQueryKey]);
+  }, [queryClient, chatRoomQueryKey]);
 
   const handleReceiveMessage = useCallback(
-    async (message: ChatMessageResponse) => {
+    (message: ChatMessageResponse) => {
       try {
         if (!message || typeof message !== 'object') return;
 
-        const userId = await getCurrentUserId();
-        if (!userId) return;
-
-        const correctedMessage = {
-          ...message,
-          isMine: message.senderId === userId,
-        };
-
-        if (currentRoomId && correctedMessage.roomId === currentRoomId && chatMessageQueryKey) {
+        if (currentRoomId && message.roomId === currentRoomId && chatMessageQueryKey) {
           queryClient.setQueryData(
             chatMessageQueryKey,
             (oldData: ChatMessageResponse[] | undefined) => {
-              if (!oldData) return [correctedMessage];
+              if (!oldData) return [message];
 
-              const exists = oldData.some((msg) => msg.messageId === correctedMessage.messageId);
+              const exists = oldData.some((msg) => msg.messageId === message.messageId);
               if (exists) return oldData;
 
-              return [...oldData, correctedMessage].sort(
+              return [...oldData, message].sort(
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
               );
             }
           );
+
+          const queueState = useChatQueueStore.getState();
+          const matchingTemp = queueState.pendingMessages.find(
+            (msg) =>
+              msg.roomId === message.roomId &&
+              msg.messageType === message.messageType &&
+              (message.messageType !== 'TEXT' || msg.content === message.content)
+          );
+          if (matchingTemp) {
+            queueState.removeMessage(matchingTemp.tempId);
+          }
         }
 
         if (chatRoomQueryKey) {
@@ -62,13 +61,13 @@ export const useMessageSync = ({
             if (!oldData) return oldData;
 
             return oldData.map((room) => {
-              if (room.roomId === correctedMessage.roomId) {
+              if (room.roomId === message.roomId) {
                 return {
                   ...room,
-                  lastMessage: correctedMessage.content || '(사진)',
-                  lastMessageType: correctedMessage.messageType,
-                  lastMessageTime: correctedMessage.createdAt,
-                  unreadMessageCount: correctedMessage.isMine
+                  lastMessage: message.content || '(사진)',
+                  lastMessageType: message.messageType,
+                  lastMessageTime: message.createdAt,
+                  unreadMessageCount: message.isMine
                     ? room.unreadMessageCount
                     : room.unreadMessageCount + 1,
                 };
