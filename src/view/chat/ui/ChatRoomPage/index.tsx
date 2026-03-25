@@ -160,6 +160,7 @@ export default function ChatRoomPage() {
         headerTitle={updatedComponentState.headerTitle}
         onMenuPress={handleMenuPress}
         showMenuButton={menuConfig.shouldShowMenuButton}
+        connectionState={connectionState}
       />
 
       <KeyboardAvoidingView
