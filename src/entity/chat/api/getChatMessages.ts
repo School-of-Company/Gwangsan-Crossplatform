@@ -33,7 +33,7 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
 
     return {
       product,
-      messages: messages as ChatMessageResponse[],
+      messages: messages,
     };
   } catch (e) {
     const error = e as ChatApiError;
