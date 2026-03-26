@@ -151,6 +151,7 @@ describe('getChatRoomData', () => {
     it('API와 getCurrentUserId를 병렬로 호출한다', async () => {
       const callOrder: string[] = [];
       mockGet.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10)); // API 호출 지연 시뮬레이션
         callOrder.push('api');
         return { data: [] };
       });
@@ -161,8 +162,7 @@ describe('getChatRoomData', () => {
 
       await getChatRoomData(100);
 
-      expect(callOrder).toContain('api');
-      expect(callOrder).toContain('userId');
+      expect(callOrder).toEqual(['userId', 'api']);
     });
   });
 });
