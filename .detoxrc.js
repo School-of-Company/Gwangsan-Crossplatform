@@ -105,6 +105,10 @@ module.exports = {
       device: 'simulator',
       app: 'ios.debug',
     },
+    'ios.sim.coverage': {
+      device: 'simulator',
+      app: 'ios.debug',
+    },
     'ios.sim.release': {
       device: 'simulator',
       app: 'ios.release',

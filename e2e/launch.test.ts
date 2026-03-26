@@ -1,6 +1,9 @@
 import { device, element, by, waitFor } from 'detox';
+import { collectCoverage } from './coverage';
 
 describe('앱 실행', () => {
+  afterAll(collectCoverage);
+
   beforeAll(async () => {
     await device.launchApp({
       newInstance: true,

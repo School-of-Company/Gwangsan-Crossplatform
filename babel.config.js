@@ -1,6 +1,7 @@
 module.exports = function (api) {
   api.cache.using(() => process.env.NODE_ENV);
   const isTest = api.env('test');
+  const isE2ECoverage = process.env.E2E_COVERAGE === 'true';
 
   return {
     presets: [
@@ -40,6 +41,16 @@ module.exports = function (api) {
           allowUndefined: true,
         },
       ],
+      ...(isE2ECoverage
+        ? [
+            [
+              'istanbul',
+              {
+                exclude: ['e2e/**', '**/__tests__/**'],
+              },
+            ],
+          ]
+        : []),
     ],
   };
 };
