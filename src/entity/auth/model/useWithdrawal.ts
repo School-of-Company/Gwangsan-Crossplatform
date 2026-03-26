@@ -13,9 +13,8 @@ export const useWithdrawal = () => {
 
   const withdrawalMutation = useMutation({
     mutationFn: withdrawal,
-    onSuccess: () => {
-      clearAuthTokens();
-      removeData('memberId');
+    onSuccess: async () => {
+      await Promise.all([clearAuthTokens(), removeData('memberId')]);
       clearCurrentUserId();
       queryClient.clear();
       router.replace('/onboarding');
