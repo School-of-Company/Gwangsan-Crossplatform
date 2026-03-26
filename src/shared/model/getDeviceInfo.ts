@@ -86,8 +86,10 @@ const generateDeviceId = async (): Promise<string> => {
 
 export const getDeviceInfo = async () => {
   const osType = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
-  const deviceId = await generateDeviceId();
-  const deviceToken = await registerForPushNotificationsAsync();
+  const [deviceId, deviceToken] = await Promise.all([
+    generateDeviceId(),
+    registerForPushNotificationsAsync(),
+  ]);
 
   return {
     osType: osType as 'IOS' | 'ANDROID',
