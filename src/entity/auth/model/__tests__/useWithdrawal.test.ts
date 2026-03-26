@@ -129,6 +129,7 @@ describe('useWithdrawal', () => {
   });
 
   it('회원탈퇴 실패 시 에러 토스트를 표시한다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     mockWithdrawal.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHookWithProviders(() => useWithdrawal());
@@ -146,6 +147,7 @@ describe('useWithdrawal', () => {
   });
 
   it('회원탈퇴 실패 시 토큰을 삭제하지 않는다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     mockWithdrawal.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHookWithProviders(() => useWithdrawal());
