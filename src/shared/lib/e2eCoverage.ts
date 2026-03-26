@@ -1,13 +1,11 @@
-import * as FileSystem from 'expo-file-system/legacy';
+import { Paths, File } from 'expo-file-system';
 
 declare global {
   var __coverage__: Record<string, unknown> | undefined;
 }
 
-export async function saveE2ECoverage(): Promise<void> {
+export function saveE2ECoverage(): void {
   if (!global.__coverage__) return;
-  await FileSystem.writeAsStringAsync(
-    FileSystem.documentDirectory + 'e2e-coverage.json',
-    JSON.stringify(global.__coverage__)
-  );
+  const file = new File(Paths.document, 'e2e-coverage.json');
+  file.write(JSON.stringify(global.__coverage__), { overwrite: true });
 }

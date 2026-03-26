@@ -17,7 +17,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'background') void saveE2ECoverage();
+      if (state === 'background') saveE2ECoverage();
     });
     return () => sub.remove();
   }, []);
