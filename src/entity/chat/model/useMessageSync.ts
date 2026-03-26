@@ -4,6 +4,7 @@ import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
+import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -25,20 +26,28 @@ export const useMessageSync = ({
   }, [queryClient, chatRoomQueryKey]);
 
   const handleReceiveMessage = useCallback(
-    (message: ChatMessageResponse) => {
+    async (message: ChatMessageResponse) => {
       try {
         if (!message || typeof message !== 'object') return;
 
-        if (currentRoomId && message.roomId === currentRoomId && chatMessageQueryKey) {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        const correctedMessage = {
+          ...message,
+          isMine: message.senderId === userId,
+        };
+
+        if (currentRoomId && correctedMessage.roomId === currentRoomId && chatMessageQueryKey) {
           queryClient.setQueryData(
             chatMessageQueryKey,
             (oldData: ChatMessageResponse[] | undefined) => {
-              if (!oldData) return [message];
+              if (!oldData) return [correctedMessage];
 
-              const exists = oldData.some((msg) => msg.messageId === message.messageId);
+              const exists = oldData.some((msg) => msg.messageId === correctedMessage.messageId);
               if (exists) return oldData;
 
-              return [...oldData, message].sort(
+              return [...oldData, correctedMessage].sort(
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
               );
             }
@@ -46,17 +55,23 @@ export const useMessageSync = ({
 
           const queueState = useChatQueueStore.getState();
           const matchingTemp = queueState.pendingMessages.find((msg) => {
-            if (msg.roomId !== message.roomId || msg.messageType !== message.messageType) {
+            if (
+              msg.roomId !== correctedMessage.roomId ||
+              msg.messageType !== correctedMessage.messageType
+            ) {
               return false;
             }
             if (msg.messageType === 'IMAGE') {
-              if (!message.images || message.images.length !== msg.imageIds.length) {
+              if (
+                !correctedMessage.images ||
+                correctedMessage.images.length !== msg.imageIds.length
+              ) {
                 return false;
               }
-              const receivedImageIds = new Set(message.images.map((img) => img.imageId));
+              const receivedImageIds = new Set(correctedMessage.images.map((img) => img.imageId));
               return msg.imageIds.every((id) => receivedImageIds.has(id));
             }
-            return msg.content === message.content;
+            return msg.content === correctedMessage.content;
           });
           if (matchingTemp) {
             queueState.removeMessage(matchingTemp.tempId);
@@ -68,13 +83,13 @@ export const useMessageSync = ({
             if (!oldData) return oldData;
 
             return oldData.map((room) => {
-              if (room.roomId === message.roomId) {
+              if (room.roomId === correctedMessage.roomId) {
                 return {
                   ...room,
-                  lastMessage: message.content || '(사진)',
-                  lastMessageType: message.messageType,
-                  lastMessageTime: message.createdAt,
-                  unreadMessageCount: message.isMine
+                  lastMessage: correctedMessage.content || '(사진)',
+                  lastMessageType: correctedMessage.messageType,
+                  lastMessageTime: correctedMessage.createdAt,
+                  unreadMessageCount: correctedMessage.isMine
                     ? room.unreadMessageCount
                     : room.unreadMessageCount + 1,
                 };
