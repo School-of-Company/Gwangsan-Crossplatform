@@ -6,7 +6,7 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
 
-const registerForPushNotificationsAsync = async (): Promise<string> => {
+const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
