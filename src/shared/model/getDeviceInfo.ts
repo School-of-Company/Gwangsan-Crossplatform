@@ -67,6 +67,10 @@ const registerForPushNotificationsAsync = async (): Promise<string> => {
       );
     }
 
+    if (!Device.isDevice) {
+      return 'simulator-mock-token';
+    }
+
     const pushToken = await Promise.race([
       Notifications.getExpoPushTokenAsync({ projectId: projectId || undefined }),
       new Promise<never>((_, reject) =>
