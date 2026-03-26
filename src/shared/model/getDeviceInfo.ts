@@ -127,6 +127,10 @@ export const getDeviceInfo = async () => {
   const deviceId = await generateDeviceId();
   const deviceToken = await registerForPushNotificationsAsync();
 
+  if (!deviceToken) {
+    throw new Error('푸시 알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.');
+  }
+
   return {
     osType: osType as 'IOS' | 'ANDROID',
     deviceToken,
