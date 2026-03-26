@@ -5,6 +5,7 @@ import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
+import { chatMessageKeys } from './chatQueryKeys';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -25,7 +26,9 @@ export const useMessageSync = ({
       .then((id) => {
         userIdRef.current = id;
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error(error);
+      });
   }, []);
 
   const handleConnect = useCallback(() => {
@@ -152,50 +155,31 @@ export const useMessageSync = ({
     async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
 
-      const messages = queryClient.getQueryData(chatMessageQueryKey || ['chatMessages', roomId]) as
-        | ChatMessageResponse[]
-        | undefined;
+      const resetUnreadCount = () => {
+        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((room) =>
+            room.roomId === roomId ? { ...room, unreadMessageCount: 0 } : room
+          );
+        });
+      };
+
+      const messages = queryClient.getQueryData(
+        chatMessageQueryKey ?? chatMessageKeys.room(roomId)
+      ) as ChatMessageResponse[] | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
 
       if (!lastMessage) {
-        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-          if (!oldData) return oldData;
-
-          return oldData.map((room) => {
-            if (room.roomId === roomId) {
-              return { ...room, unreadMessageCount: 0 };
-            }
-            return room;
-          });
-        });
+        resetUnreadCount();
         return;
       }
 
       try {
         await markChatAsRead(roomId, lastMessage.messageId);
-
-        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-          if (!oldData) return oldData;
-
-          return oldData.map((room) => {
-            if (room.roomId === roomId) {
-              return { ...room, unreadMessageCount: 0 };
-            }
-            return room;
-          });
-        });
       } catch (error) {
         console.error(error);
-        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-          if (!oldData) return oldData;
-
-          return oldData.map((room) => {
-            if (room.roomId === roomId) {
-              return { ...room, unreadMessageCount: 0 };
-            }
-            return room;
-          });
-        });
+      } finally {
+        resetUnreadCount();
       }
     },
     [queryClient, chatRoomQueryKey, chatMessageQueryKey]

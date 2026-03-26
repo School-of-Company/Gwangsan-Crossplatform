@@ -56,5 +56,5 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
 
 export const getChatMessages = async (roomId: RoomId): Promise<ChatMessageResponse[]> => {
   const data = await getChatRoomData(roomId);
-  return Array.isArray(data.messages) ? [...data.messages] : [];
+  return [...data.messages];
 };

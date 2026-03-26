@@ -4,12 +4,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { getChatMessages } from '../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatApiError } from './chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import { chatMessageKeys } from './chatQueryKeys';
 
-export const chatMessageKeys = {
-  all: ['chatMessages'] as const,
-  room: (roomId: RoomId) => [...chatMessageKeys.all, roomId] as const,
-} as const;
+export { chatMessageKeys };
 
 interface UseChatMessagesOptions {
   enabled?: boolean;
