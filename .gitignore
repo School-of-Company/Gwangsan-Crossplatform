@@ -31,3 +31,5 @@ DerivedData/
 .metro-health-check*google-services.json
 /google-services.json
 .env.local
+
+artifacts/
