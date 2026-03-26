@@ -1,9 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
+import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
+import { chatMessageKeys } from './chatQueryKeys';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -17,6 +19,17 @@ export const useMessageSync = ({
   chatMessageQueryKey,
 }: UseMessageSyncProps) => {
   const queryClient = useQueryClient();
+  const userIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    getCurrentUserId()
+      .then((id) => {
+        userIdRef.current = id;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
 
   const handleConnect = useCallback(() => {
     if (chatRoomQueryKey) {
@@ -29,16 +42,24 @@ export const useMessageSync = ({
       try {
         if (!message || typeof message !== 'object') return;
 
-        if (currentRoomId && message.roomId === currentRoomId && chatMessageQueryKey) {
+        const userId = userIdRef.current;
+        if (!userId) return;
+
+        const correctedMessage = {
+          ...message,
+          isMine: message.senderId === userId,
+        };
+
+        if (currentRoomId && correctedMessage.roomId === currentRoomId && chatMessageQueryKey) {
           queryClient.setQueryData(
             chatMessageQueryKey,
             (oldData: ChatMessageResponse[] | undefined) => {
-              if (!oldData) return [message];
+              if (!oldData) return [correctedMessage];
 
-              const exists = oldData.some((msg) => msg.messageId === message.messageId);
+              const exists = oldData.some((msg) => msg.messageId === correctedMessage.messageId);
               if (exists) return oldData;
 
-              return [...oldData, message].sort(
+              return [...oldData, correctedMessage].sort(
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
               );
             }
@@ -46,17 +67,23 @@ export const useMessageSync = ({
 
           const queueState = useChatQueueStore.getState();
           const matchingTemp = queueState.pendingMessages.find((msg) => {
-            if (msg.roomId !== message.roomId || msg.messageType !== message.messageType) {
+            if (
+              msg.roomId !== correctedMessage.roomId ||
+              msg.messageType !== correctedMessage.messageType
+            ) {
               return false;
             }
             if (msg.messageType === 'IMAGE') {
-              if (!message.images || message.images.length !== msg.imageIds.length) {
+              if (
+                !correctedMessage.images ||
+                correctedMessage.images.length !== msg.imageIds.length
+              ) {
                 return false;
               }
-              const receivedImageIds = new Set(message.images.map((img) => img.imageId));
+              const receivedImageIds = new Set(correctedMessage.images.map((img) => img.imageId));
               return msg.imageIds.every((id) => receivedImageIds.has(id));
             }
-            return msg.content === message.content;
+            return msg.content === correctedMessage.content;
           });
           if (matchingTemp) {
             queueState.removeMessage(matchingTemp.tempId);
@@ -68,13 +95,13 @@ export const useMessageSync = ({
             if (!oldData) return oldData;
 
             return oldData.map((room) => {
-              if (room.roomId === message.roomId) {
+              if (room.roomId === correctedMessage.roomId) {
                 return {
                   ...room,
-                  lastMessage: message.content || '(사진)',
-                  lastMessageType: message.messageType,
-                  lastMessageTime: message.createdAt,
-                  unreadMessageCount: message.isMine
+                  lastMessage: correctedMessage.content || '(사진)',
+                  lastMessageType: correctedMessage.messageType,
+                  lastMessageTime: correctedMessage.createdAt,
+                  unreadMessageCount: correctedMessage.isMine
                     ? room.unreadMessageCount
                     : room.unreadMessageCount + 1,
                 };
@@ -128,50 +155,31 @@ export const useMessageSync = ({
     async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
 
-      const messages = queryClient.getQueryData(chatMessageQueryKey || ['chatMessages', roomId]) as
-        | ChatMessageResponse[]
-        | undefined;
+      const resetUnreadCount = () => {
+        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((room) =>
+            room.roomId === roomId ? { ...room, unreadMessageCount: 0 } : room
+          );
+        });
+      };
+
+      const messages = queryClient.getQueryData(
+        chatMessageQueryKey ?? chatMessageKeys.room(roomId)
+      ) as ChatMessageResponse[] | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
 
       if (!lastMessage) {
-        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-          if (!oldData) return oldData;
-
-          return oldData.map((room) => {
-            if (room.roomId === roomId) {
-              return { ...room, unreadMessageCount: 0 };
-            }
-            return room;
-          });
-        });
+        resetUnreadCount();
         return;
       }
 
       try {
         await markChatAsRead(roomId, lastMessage.messageId);
-
-        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-          if (!oldData) return oldData;
-
-          return oldData.map((room) => {
-            if (room.roomId === roomId) {
-              return { ...room, unreadMessageCount: 0 };
-            }
-            return room;
-          });
-        });
       } catch (error) {
         console.error(error);
-        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-          if (!oldData) return oldData;
-
-          return oldData.map((room) => {
-            if (room.roomId === roomId) {
-              return { ...room, unreadMessageCount: 0 };
-            }
-            return room;
-          });
-        });
+      } finally {
+        resetUnreadCount();
       }
     },
     [queryClient, chatRoomQueryKey, chatMessageQueryKey]
