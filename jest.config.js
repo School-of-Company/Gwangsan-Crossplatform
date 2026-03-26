@@ -6,6 +6,7 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
+    '^~/test-utils$': '<rootDir>/src/test-utils/index.ts',
     '^~/(.*)$': '<rootDir>/src/$1',
     '^@/app/(.*)$': '<rootDir>/src/app/$1',
     '^@/shared/(.*)$': '<rootDir>/src/shared/$1',

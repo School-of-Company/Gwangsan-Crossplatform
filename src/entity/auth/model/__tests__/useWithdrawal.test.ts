@@ -1,6 +1,5 @@
-import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createQueryWrapper } from '~/test-utils';
 import { useRouter } from 'expo-router';
 import { withdrawal } from '../../api/withdrawal';
 import { removeData } from '~/shared/lib/removeData';
@@ -35,17 +34,6 @@ const mockRemoveData = removeData as jest.Mock;
 const mockClearAuthTokens = clearAuthTokens as jest.Mock;
 const mockClearCurrentUserId = clearCurrentUserId as jest.Mock;
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      mutations: { retry: false },
-    },
-  });
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(QueryClientProvider, { client: queryClient }, children);
-  };
-}
-
 describe('useWithdrawal', () => {
   const mockReplace = jest.fn();
 
@@ -58,7 +46,7 @@ describe('useWithdrawal', () => {
 
   it('초기 상태가 올바르다', () => {
     const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryWrapper(),
     });
 
     expect(typeof result.current.withdrawal).toBe('function');
@@ -70,7 +58,7 @@ describe('useWithdrawal', () => {
     mockWithdrawal.mockResolvedValue({ message: 'success' });
 
     const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryWrapper(),
     });
 
     act(() => {
@@ -103,7 +91,7 @@ describe('useWithdrawal', () => {
     });
 
     const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryWrapper(),
     });
 
     act(() => {
@@ -128,7 +116,7 @@ describe('useWithdrawal', () => {
     );
 
     const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryWrapper(),
     });
 
     act(() => {
@@ -152,7 +140,7 @@ describe('useWithdrawal', () => {
     mockWithdrawal.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryWrapper(),
     });
 
     act(() => {
@@ -171,7 +159,7 @@ describe('useWithdrawal', () => {
     mockWithdrawal.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryWrapper(),
     });
 
     act(() => {
