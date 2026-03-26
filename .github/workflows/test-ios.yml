@@ -4,12 +4,20 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      coverage:
+        description: 'Run with E2E coverage'
+        type: boolean
+        default: false
 
 jobs:
   test-ios:
     name: iOS E2E Test (Detox)
     runs-on: macos-latest
     timeout-minutes: 120
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -99,10 +107,34 @@ jobs:
           echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
 
       - name: Build app for Detox
-        run: npm run e2e:build:ios:release
+        run: |
+          if [ "${{ github.event.inputs.coverage }}" = "true" ]; then
+            E2E_COVERAGE=true npm run e2e:build:ios:coverage
+          else
+            npm run e2e:build:ios:release
+          fi
 
       - name: Run Detox E2E tests
-        run: npm run e2e:test:ios:release
+        run: |
+          if [ "${{ github.event.inputs.coverage }}" = "true" ]; then
+            npm run e2e:test:ios:coverage
+          else
+            npm run e2e:test:ios:release
+          fi
+
+      - name: Generate E2E coverage report
+        if: github.event.inputs.coverage == 'true'
+        run: |
+          mkdir -p .nyc_output
+          cp coverage/e2e-coverage.json .nyc_output/
+          npx nyc report 2>&1 | tee coverage/e2e-summary.txt
+
+      - name: Post E2E coverage comment
+        if: github.event.inputs.coverage == 'true' && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: e2e-coverage
+          path: coverage/e2e-summary.txt
 
       - name: Upload test artifacts to GitHub
         if: failure()

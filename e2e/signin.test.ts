@@ -1,6 +1,9 @@
 import { device, expect, element, by, waitFor } from 'detox';
+import { collectCoverage } from './coverage';
 
 describe('로그인', () => {
+  afterAll(collectCoverage);
+
   beforeAll(async () => {
     await device.launchApp({
       newInstance: true,

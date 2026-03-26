@@ -1,0 +1,366 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Header 스냅샷 - connectionState connected 1`] = `
+<View
+  className="flex-row items-center justify-between px-3 py-6"
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      testID="icon-chevron-back"
+    />
+  </View>
+  <View
+    className="flex-1 flex-row items-center justify-center"
+  >
+    <View
+      className="flex-1 flex-row items-center justify-center gap-2"
+    >
+      <Text
+        className="text-center text-body1 text-black"
+      >
+        채팅방
+      </Text>
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#22C55E",
+          }
+        }
+      />
+    </View>
+  </View>
+  <View
+    className="size-6"
+  />
+</View>
+`;
+
+exports[`Header 스냅샷 - connectionState connecting 1`] = `
+<View
+  className="flex-row items-center justify-between px-3 py-6"
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      testID="icon-chevron-back"
+    />
+  </View>
+  <View
+    className="flex-1 flex-row items-center justify-center"
+  >
+    <View
+      className="flex-1 flex-row items-center justify-center gap-2"
+    >
+      <Text
+        className="text-center text-body1 text-black"
+      >
+        채팅방
+      </Text>
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#F59E0B",
+          }
+        }
+      />
+    </View>
+  </View>
+  <View
+    className="size-6"
+  />
+</View>
+`;
+
+exports[`Header 스냅샷 - connectionState disconnected 1`] = `
+<View
+  className="flex-row items-center justify-between px-3 py-6"
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      testID="icon-chevron-back"
+    />
+  </View>
+  <View
+    className="flex-1 flex-row items-center justify-center"
+  >
+    <View
+      className="flex-1 flex-row items-center justify-center gap-2"
+    >
+      <Text
+        className="text-center text-body1 text-black"
+      >
+        채팅방
+      </Text>
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#EF4444",
+          }
+        }
+      />
+    </View>
+  </View>
+  <View
+    className="size-6"
+  />
+</View>
+`;
+
+exports[`Header 스냅샷 - 기본 상태 1`] = `
+<View
+  className="flex-row items-center justify-between px-3 py-6"
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      testID="icon-chevron-back"
+    />
+  </View>
+  <View
+    className="flex-1 flex-row items-center justify-center"
+  >
+    <View
+      className="flex-1 flex-row items-center justify-center gap-2"
+    >
+      <Text
+        className="text-center text-body1 text-black"
+      >
+        광산구
+      </Text>
+    </View>
+  </View>
+  <View
+    className="size-6"
+  />
+</View>
+`;
+
+exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
+<View
+  className="flex-row items-center justify-between px-3 py-6"
+>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      testID="icon-chevron-back"
+    />
+  </View>
+  <View
+    className="flex-1 flex-row items-center justify-center"
+  >
+    <View
+      className="flex-1 flex-row items-center justify-center gap-2"
+    >
+      <Text
+        className="text-center text-body1 text-black"
+      >
+        채팅방
+      </Text>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={false}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+          "right": 0,
+        }
+      }
+    >
+      <View
+        testID="icon-ellipsis-vertical"
+      />
+    </View>
+  </View>
+</View>
+`;

@@ -1,7 +1,10 @@
 import { device, expect, element, by, waitFor } from 'detox';
+import { collectCoverage } from './coverage';
 
 // TODO: CI 환경에서 로그인 API 호출 후 네비게이션 완료 감지 불안정으로 인해 임시 비활성화
 describe.skip('프로필', () => {
+  afterAll(collectCoverage);
+
   beforeAll(async () => {
     await device.launchApp({
       newInstance: true,

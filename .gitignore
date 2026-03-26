@@ -33,3 +33,4 @@ DerivedData/
 .env.local
 
 artifacts/
+coverage/

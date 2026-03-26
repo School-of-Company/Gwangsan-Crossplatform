@@ -1,5 +1,7 @@
 import { Stack } from 'expo-router';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
+import { useEffect } from 'react';
+import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
 import Toast from 'react-native-toast-message';
@@ -12,6 +14,13 @@ import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background') saveE2ECoverage();
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!fontsLoaded) return null;
   return (

@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Card 스냅샷 - custom className 1`] = `
+<View
+  className="rounded-xl border bg-white border-[#CDCDCF] p-4 mt-4"
+>
+  <Text>
+    내용
+  </Text>
+</View>
+`;
+
+exports[`Card 스냅샷 - default variant (기본값) 1`] = `
+<View
+  className="rounded-xl border bg-white border-[#CDCDCF] p-4"
+>
+  <Text>
+    내용
+  </Text>
+</View>
+`;
+
+exports[`Card 스냅샷 - padding lg 1`] = `
+<View
+  className="rounded-xl border bg-white border-[#CDCDCF] p-6"
+>
+  <Text>
+    내용
+  </Text>
+</View>
+`;
+
+exports[`Card 스냅샷 - padding none 1`] = `
+<View
+  className="rounded-xl border bg-white border-[#CDCDCF]"
+>
+  <Text>
+    내용
+  </Text>
+</View>
+`;
+
+exports[`Card 스냅샷 - padding sm 1`] = `
+<View
+  className="rounded-xl border bg-white border-[#CDCDCF] p-3"
+>
+  <Text>
+    내용
+  </Text>
+</View>
+`;
+
+exports[`Card 스냅샷 - primary variant 1`] = `
+<View
+  className="rounded-xl border bg-white border-[#8FC31D] bg-green-50 p-4"
+>
+  <Text>
+    내용
+  </Text>
+</View>
+`;
