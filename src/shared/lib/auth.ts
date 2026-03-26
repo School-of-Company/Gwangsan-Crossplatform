@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { getData } from './getData';
+import { removeData } from './removeData';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -29,4 +30,8 @@ export const getAccessToken = async (): Promise<string | null> => {
 
 export const getRefreshToken = async (): Promise<string | null> => {
   return await getData('refreshToken');
+};
+
+export const clearAuthTokens = async (): Promise<void> => {
+  await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
 };

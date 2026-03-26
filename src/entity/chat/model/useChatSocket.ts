@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect, useRef } from 'react';
 import { createChatSocketManager } from '@/shared/lib/socket';
 import { createChatSocketService } from '../lib/socketService';
 import { useSocketConnection } from './useSocketConnection';
@@ -29,18 +29,50 @@ export const useChatSocket = ({
     autoConnect,
   });
 
-  const messageSync = useMessageSync({
+  const {
+    handleConnect: handleMessageSyncConnect,
+    handleReceiveMessage,
+    handleUpdateRoomList,
+    markRoomAsRead,
+  } = useMessageSync({
     currentRoomId,
     chatRoomQueryKey,
     chatMessageQueryKey,
   });
 
+  const joinedRoomRef = useRef<RoomId | null>(null);
+
+  const joinCurrentRoom = useCallback(() => {
+    if (currentRoomId && chatSocketService.isConnected) {
+      chatSocketService.joinRoom(currentRoomId);
+      joinedRoomRef.current = currentRoomId;
+    }
+  }, [currentRoomId, chatSocketService]);
+
+  const handleConnect = useCallback(() => {
+    handleMessageSyncConnect();
+    joinCurrentRoom();
+  }, [handleMessageSyncConnect, joinCurrentRoom]);
+
   useSocketEventHandlers({
     socketService: chatSocketService,
-    onConnect: messageSync.handleConnect,
-    onReceiveMessage: messageSync.handleReceiveMessage,
-    onUpdateRoomList: messageSync.handleUpdateRoomList,
+    onConnect: handleConnect,
+    onReceiveMessage: handleReceiveMessage,
+    onUpdateRoomList: handleUpdateRoomList,
   });
+
+  useEffect(() => {
+    if (!currentRoomId) return;
+
+    joinCurrentRoom();
+
+    return () => {
+      if (joinedRoomRef.current !== null && chatSocketService.isConnected) {
+        chatSocketService.leaveRoom(joinedRoomRef.current);
+        joinedRoomRef.current = null;
+      }
+    };
+  }, [currentRoomId, chatSocketService, joinCurrentRoom]);
 
   const sendMessage = useCallback(
     async (
@@ -63,7 +95,7 @@ export const useChatSocket = ({
     isConnected: connection.isConnected,
     connectionState: connection.connectionState,
     sendMessage,
-    markRoomAsRead: messageSync.markRoomAsRead,
+    markRoomAsRead,
     connect: connection.connect,
     disconnect: connection.disconnect,
   };

@@ -1,4 +1,4 @@
-import type { ISocketManager, BaseSocketMessage } from '@/shared/types/chatType';
+import type { ISocketManager, BaseSocketMessage, RoomId } from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 
 export interface ChatSocketEvents {
@@ -25,6 +25,8 @@ export interface IChatSocketService {
   connect(): Promise<void>;
   disconnect(): void;
   sendMessage(payload: ChatSendMessagePayload): void;
+  joinRoom(roomId: RoomId): void;
+  leaveRoom(roomId: RoomId): void;
 
   on<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
   off<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
@@ -108,6 +110,18 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     }
   };
 
+  const joinRoom = (roomId: RoomId): void => {
+    if (!socketManager.isConnected) {
+      throw new Error('Socket not connected');
+    }
+    socketManager.emit('joinRoom', roomId);
+  };
+
+  const leaveRoom = (roomId: RoomId): void => {
+    if (!socketManager.isConnected) return;
+    socketManager.emit('leaveRoom', roomId);
+  };
+
   return {
     get isConnected() {
       return socketManager.isConnected;
@@ -118,6 +132,8 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     connect,
     disconnect,
     sendMessage,
+    joinRoom,
+    leaveRoom,
     on,
     off,
   };

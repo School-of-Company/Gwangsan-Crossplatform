@@ -97,9 +97,12 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
             resizeMode="contain"
           />
           <View className="flex-row items-center gap-4">
-            <Text className="text-body1">{name ?? '사용자'}</Text>
+            <Text testID="Information-nickname" className="text-body1">
+              {name ?? '사용자'}
+            </Text>
             {isMe && (
               <TouchableOpacity
+                testID="Information-logout-button"
                 onPress={handleLogoutIconPress}
                 className="flex flex-row items-center gap-3"
                 disabled={isSignoutLoading || isWithdrawalLoading}>

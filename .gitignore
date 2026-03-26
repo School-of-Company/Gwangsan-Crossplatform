@@ -13,9 +13,14 @@ web-build/
 
 .env
 
-ios
 android
-
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+**/*.xcuserdatad/
+**/*.xcuserstate
+DerivedData/
 # macOS
 .DS_Store
 
@@ -26,3 +31,6 @@ android
 .metro-health-check*google-services.json
 /google-services.json
 .env.local
+
+artifacts/
+coverage/

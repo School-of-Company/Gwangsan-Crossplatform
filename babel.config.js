@@ -1,8 +1,19 @@
 module.exports = function (api) {
-  api.cache(true);
+  api.cache.using(() => process.env.NODE_ENV);
+  const isTest = api.env('test');
+  const isE2ECoverage = process.env.E2E_COVERAGE === 'true';
 
   return {
-    presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
+    presets: [
+      [
+        'babel-preset-expo',
+        {
+          jsxImportSource: isTest ? undefined : 'nativewind',
+          reanimated: isTest ? false : undefined,
+        },
+      ],
+      ...(isTest ? [] : ['nativewind/babel']),
+    ],
     plugins: [
       [
         'module-resolver',
@@ -30,6 +41,16 @@ module.exports = function (api) {
           allowUndefined: true,
         },
       ],
+      ...(isE2ECoverage
+        ? [
+            [
+              'istanbul',
+              {
+                exclude: ['e2e/**', '**/__tests__/**'],
+              },
+            ],
+          ]
+        : []),
     ],
   };
 };

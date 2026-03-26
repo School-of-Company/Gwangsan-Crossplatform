@@ -30,6 +30,25 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+  unit-coverage:
+    name: Unit Test Coverage
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Report unit test coverage
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-script: npm run test:coverage
+          package-manager: npm
+
   expo-check:
     name: Expo Configuration Check
     runs-on: ubuntu-latest

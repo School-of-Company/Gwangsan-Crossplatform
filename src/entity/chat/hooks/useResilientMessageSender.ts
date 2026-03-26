@@ -3,6 +3,18 @@ import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueSt
 import type { RoomId, MessageType } from '~/shared/types/chatType';
 import Toast from 'react-native-toast-message';
 
+const SEND_TIMEOUT_MS = 10000;
+
+const showSendFailedToast = (onRetry: () => void) => {
+  Toast.show({
+    type: 'error',
+    text1: '메시지 전송 실패',
+    text2: '다시 시도하려면 탭하세요',
+    onPress: onRetry,
+    visibilityTime: 4000,
+  });
+};
+
 interface ResilientSenderProps {
   roomId: RoomId;
   isSocketConnected: boolean;
@@ -23,12 +35,16 @@ export const useResilientMessageSender = ({
 
   const addMessage = useChatQueueStore((state) => state.addMessage);
   const setStatus = useChatQueueStore((state) => state.setStatus);
-  const removeMessage = useChatQueueStore((state) => state.removeMessage);
   const getRetryable = useChatQueueStore((state) => state.getRetryable);
   const retry = useChatQueueStore((state) => state.retry);
 
   const attemptSend = useCallback(
-    (tempId: string, content: string | null, messageType: MessageType, imageIds: number[]) => {
+    async (
+      tempId: string,
+      content: string | null,
+      messageType: MessageType,
+      imageIds: number[]
+    ) => {
       try {
         if (!isSocketConnected) {
           setStatus(tempId, MESSAGE_STATUS.PENDING);
@@ -37,32 +53,29 @@ export const useResilientMessageSender = ({
 
         setStatus(tempId, MESSAGE_STATUS.SENDING);
 
-        socketSendMessage(
+        await socketSendMessage(
           roomId,
           content || (messageType === 'IMAGE' ? ' ' : ''),
           messageType,
           imageIds
         );
 
-        setStatus(tempId, MESSAGE_STATUS.SENT);
-
-        setTimeout(() => removeMessage(tempId), 2000);
+        setTimeout(() => {
+          const currentMsg = useChatQueueStore
+            .getState()
+            .pendingMessages.find((m) => m.tempId === tempId);
+          if (currentMsg && currentMsg.status === MESSAGE_STATUS.SENDING) {
+            setStatus(tempId, MESSAGE_STATUS.FAILED);
+            showSendFailedToast(() => retry(tempId));
+          }
+        }, SEND_TIMEOUT_MS);
       } catch (error) {
         console.error(error);
         setStatus(tempId, MESSAGE_STATUS.FAILED);
-        Toast.show({
-          type: 'error',
-          text1: '메시지 전송 실패',
-          text2: '다시 시도하려면 탭하세요',
-          onPress: () => {
-            retry(tempId);
-            attemptSend(tempId, content, messageType, imageIds);
-          },
-          visibilityTime: 4000,
-        });
+        showSendFailedToast(() => retry(tempId));
       }
     },
-    [isSocketConnected, socketSendMessage, roomId, setStatus, removeMessage, retry]
+    [isSocketConnected, socketSendMessage, roomId, setStatus, retry]
   );
 
   const sendMessage = useCallback(
@@ -79,6 +92,7 @@ export const useResilientMessageSender = ({
     [roomId, addMessage, attemptSend]
   );
 
+  // Reconnect: retry pending/failed messages
   useEffect(() => {
     const previouslyConnected = wasConnectedRef.current;
     if (!previouslyConnected && isSocketConnected) {
@@ -92,12 +106,25 @@ export const useResilientMessageSender = ({
         });
         retryableMessages.forEach((msg) => {
           retry(msg.tempId);
-          attemptSend(msg.tempId, msg.content, msg.messageType, msg.imageIds);
         });
       }
     }
     wasConnectedRef.current = isSocketConnected;
   }, [isSocketConnected, roomId, getRetryable, retry, attemptSend]);
+
+  useEffect(() => {
+    const unsubscribe = useChatQueueStore.subscribe((state) => {
+      if (!isSocketConnected) return;
+      state.pendingMessages
+        .filter(
+          (m) => m.roomId === roomId && m.status === MESSAGE_STATUS.PENDING && m.retryCount > 0
+        )
+        .forEach((msg) => {
+          attemptSend(msg.tempId, msg.content, msg.messageType, msg.imageIds);
+        });
+    });
+    return unsubscribe;
+  }, [isSocketConnected, roomId, attemptSend]);
 
   return {
     sendMessage,
