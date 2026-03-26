@@ -1,6 +1,5 @@
 import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
-import { getCurrentUserId } from '@/shared/lib/getCurrentUserId';
 import type {
   ChatMessageResponse,
   ChatApiError,
@@ -18,10 +17,7 @@ interface ChatRoomApiResponse {
 
 export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProduct> => {
   try {
-    const [response, userId] = await Promise.all([
-      instance.get(`/chat/${roomId}`),
-      getCurrentUserId(),
-    ]);
+    const response = await instance.get(`/chat/${roomId}`);
 
     let messages: readonly ChatMessageResponse[] = [];
     let product: TradeProduct | null = null;
@@ -35,14 +31,9 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
       product = serverProduct && isTradeProduct(serverProduct) ? serverProduct : null;
     }
 
-    const correctedMessages = messages.map((msg) => ({
-      ...msg,
-      isMine: msg.senderId === userId,
-    })) as ChatMessageResponse[];
-
     return {
       product,
-      messages: correctedMessages,
+      messages: messages,
     };
   } catch (e) {
     const error = e as ChatApiError;
@@ -57,11 +48,6 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
 };
 
 export const getChatMessages = async (roomId: RoomId): Promise<ChatMessageResponse[]> => {
-  try {
-    const data = await getChatRoomData(roomId);
-    return Array.isArray(data.messages) ? [...data.messages] : [];
-  } catch (error) {
-    console.error('getChatMessages error:', error);
-    return [];
-  }
+  const data = await getChatRoomData(roomId);
+  return Array.isArray(data.messages) ? [...data.messages] : [];
 };
