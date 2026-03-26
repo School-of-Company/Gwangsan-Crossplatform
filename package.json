@@ -105,5 +105,8 @@
     "**/*.{js,jsx,ts,tsx,json}": "prettier --write"
   },
   "main": "expo-router/entry",
-  "private": true
+  "private": true,
+  "overrides": {
+    "react-native-worklets": "0.7.x"
+  }
 }
