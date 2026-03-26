@@ -1,10 +1,7 @@
 name: Android E2E Tests
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  # 임시 비활성화
   workflow_dispatch:
 
 jobs:

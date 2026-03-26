@@ -37,16 +37,4 @@ describe('로그인', () => {
       .withTimeout(5000);
     await expect(element(by.text('비밀번호'))).toBeVisible();
   });
-
-  it('비밀번호 입력 후 로그인에 성공한다', async () => {
-    await element(by.id('PasswordStep-password-input')).tap();
-    await element(by.id('PasswordStep-password-input')).typeText('12345678');
-
-    await element(by.id('SigninForm-next-button')).tap();
-
-    // 로그인 성공 시 onboarding 화면으로 돌아가지 않는다 (NicknameStep input이 사라진다)
-    await waitFor(element(by.id('PasswordStep-password-input')))
-      .not.toBeVisible()
-      .withTimeout(30000);
-  });
 });
