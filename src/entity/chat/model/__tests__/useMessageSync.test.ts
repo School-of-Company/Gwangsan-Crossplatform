@@ -70,9 +70,9 @@ describe('useMessageSync', () => {
     mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
   });
 
-  const renderSync = (queryClient?: QueryClient) => {
+  const renderSync = async (queryClient?: QueryClient) => {
     const options = queryClient ? { queryClient } : {};
-    return renderHookWithProviders(
+    const rendered = renderHookWithProviders(
       () =>
         useMessageSync({
           currentRoomId: ROOM_ID,
@@ -81,11 +81,54 @@ describe('useMessageSync', () => {
         }),
       options
     );
+    await act(async () => {});
+    return rendered;
   };
 
+  describe('userId 초기화', () => {
+    it('마운트 시 getCurrentUserId를 한 번만 호출한다', async () => {
+      await renderSync();
+
+      expect(mockGetCurrentUserId).toHaveBeenCalledTimes(1);
+    });
+
+    it('userId가 초기화되기 전에는 메시지를 처리하지 않는다', () => {
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({
+          currentRoomId: ROOM_ID,
+          chatRoomQueryKey: CHAT_ROOM_KEY,
+          chatMessageQueryKey: CHAT_MSG_KEY,
+        })
+      );
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        rendered.result.current.handleReceiveMessage(makeMessage());
+      });
+
+      const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cached).toHaveLength(0);
+    });
+
+    it('getCurrentUserId 실패 시 메시지를 처리하지 않는다', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetCurrentUserId.mockRejectedValue(new Error('Auth error'));
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage());
+      });
+
+      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cached).toHaveLength(0);
+    });
+  });
+
   describe('handleConnect', () => {
-    it('chatRoomQueryKey를 invalidate한다', () => {
-      const { result, queryClient } = renderSync();
+    it('chatRoomQueryKey를 invalidate한다', async () => {
+      const { result, queryClient } = await renderSync();
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
       act(() => {
@@ -95,14 +138,13 @@ describe('useMessageSync', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
     });
 
-    it('chatRoomQueryKey가 없으면 invalidate하지 않는다', () => {
-      const { result, queryClient } = renderHookWithProviders(() =>
-        useMessageSync({ currentRoomId: ROOM_ID })
-      );
-      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    it('chatRoomQueryKey가 없으면 invalidate하지 않는다', async () => {
+      const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
+      await act(async () => {});
+      const invalidateSpy = jest.spyOn(rendered.queryClient, 'invalidateQueries');
 
       act(() => {
-        result.current.handleConnect();
+        rendered.result.current.handleConnect();
       });
 
       expect(invalidateSpy).not.toHaveBeenCalled();
@@ -111,13 +153,11 @@ describe('useMessageSync', () => {
 
   describe('handleReceiveMessage', () => {
     it('현재 roomId의 메시지를 캐시에 추가한다', async () => {
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
-      const msg = makeMessage();
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage());
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -126,14 +166,11 @@ describe('useMessageSync', () => {
     });
 
     it('senderId가 내 userId와 같으면 isMine을 true로 교정한다', async () => {
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
-      // 백엔드가 isMine: false로 내려줘도 senderId 기반으로 재계산
-      const msg = makeMessage({ senderId: MY_USER_ID, isMine: false });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID, isMine: false }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -141,13 +178,11 @@ describe('useMessageSync', () => {
     });
 
     it('senderId가 다른 사용자이면 isMine을 false로 교정한다', async () => {
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
-      const msg = makeMessage({ senderId: OTHER_USER_ID, isMine: true });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID, isMine: true }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -155,12 +190,12 @@ describe('useMessageSync', () => {
     });
 
     it('같은 messageId가 이미 있으면 중복 추가하지 않는다', async () => {
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       const msg = makeMessage({ messageId: 1 });
       queryClient.setQueryData(CHAT_MSG_KEY, [msg]);
 
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(msg);
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -168,13 +203,13 @@ describe('useMessageSync', () => {
     });
 
     it('메시지가 createdAt 기준으로 정렬된다', async () => {
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       const later = makeMessage({ messageId: 1, createdAt: '2024-01-01T12:00:00Z' });
       const earlier = makeMessage({ messageId: 2, createdAt: '2024-01-01T09:00:00Z' });
       queryClient.setQueryData(CHAT_MSG_KEY, [later]);
 
-      await act(async () => {
-        await result.current.handleReceiveMessage(earlier);
+      act(() => {
+        result.current.handleReceiveMessage(earlier);
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -183,13 +218,11 @@ describe('useMessageSync', () => {
     });
 
     it('다른 roomId 메시지는 채팅 메시지 캐시에 추가하지 않는다', async () => {
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
-      const msg = makeMessage({ roomId: 999 });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ roomId: 999 }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -197,15 +230,11 @@ describe('useMessageSync', () => {
     });
 
     it('상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
-      const { result, queryClient } = renderSync();
-      const room = makeRoomListItem({ unreadMessageCount: 2 });
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
 
-      // senderId가 OTHER_USER_ID → isMine: false → unreadCount++
-      const msg = makeMessage({ senderId: OTHER_USER_ID });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID }));
       });
 
       await waitFor(() => {
@@ -215,15 +244,11 @@ describe('useMessageSync', () => {
     });
 
     it('내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
-      const { result, queryClient } = renderSync();
-      const room = makeRoomListItem({ unreadMessageCount: 2 });
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
 
-      // senderId가 MY_USER_ID → isMine: true → unreadCount 유지
-      const msg = makeMessage({ senderId: MY_USER_ID });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID }));
       });
 
       await waitFor(() => {
@@ -233,14 +258,13 @@ describe('useMessageSync', () => {
     });
 
     it('방 목록의 lastMessage와 lastMessageTime을 업데이트한다', async () => {
-      const { result, queryClient } = renderSync();
-      const room = makeRoomListItem();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
 
-      const msg = makeMessage({ content: '새 메시지', createdAt: '2024-01-02T00:00:00Z' });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ content: '새 메시지', createdAt: '2024-01-02T00:00:00Z' })
+        );
       });
 
       await waitFor(() => {
@@ -251,14 +275,11 @@ describe('useMessageSync', () => {
     });
 
     it('이미지 메시지 수신 시 lastMessage를 "(사진)"으로 표시한다', async () => {
-      const { result, queryClient } = renderSync();
-      const room = makeRoomListItem();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
 
-      const msg = makeMessage({ content: null, messageType: 'IMAGE' });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ content: null, messageType: 'IMAGE' }));
       });
 
       await waitFor(() => {
@@ -271,65 +292,43 @@ describe('useMessageSync', () => {
       const removeMessage = jest.fn();
       mockGetState.mockReturnValue({
         pendingMessages: [
-          {
-            tempId: 'temp-1',
-            roomId: ROOM_ID,
-            messageType: 'TEXT',
-            content: '안녕',
-            imageIds: [],
-          },
+          { tempId: 'temp-1', roomId: ROOM_ID, messageType: 'TEXT', content: '안녕', imageIds: [] },
         ],
         removeMessage,
       });
 
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
-      const msg = makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' });
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(msg);
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' })
+        );
       });
 
       expect(removeMessage).toHaveBeenCalledWith('temp-1');
     });
 
-    it('getCurrentUserId 실패 시 메시지를 처리하지 않는다', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockGetCurrentUserId.mockRejectedValue(new Error('Auth error'));
-
-      const { result, queryClient } = renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
-
-      await act(async () => {
-        await result.current.handleReceiveMessage(makeMessage());
-      });
-
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
-      expect(cached).toHaveLength(0);
-    });
-
     it('유효하지 않은 메시지 객체를 무시한다', async () => {
-      const { result } = renderSync();
+      const { result } = await renderSync();
 
-      await expect(
-        act(async () => {
-          await result.current.handleReceiveMessage(null as unknown as ChatMessageResponse);
-        })
-      ).resolves.not.toThrow();
+      expect(() => {
+        act(() => {
+          result.current.handleReceiveMessage(null as unknown as ChatMessageResponse);
+        });
+      }).not.toThrow();
     });
   });
 
   describe('markRoomAsRead', () => {
     it('마지막 메시지로 markChatAsRead를 호출한다', async () => {
       mockMarkChatAsRead.mockResolvedValue(undefined);
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
 
-      const messages = [
+      queryClient.setQueryData(CHAT_MSG_KEY, [
         makeMessage({ messageId: 1, createdAt: '2024-01-01T09:00:00Z' }),
         makeMessage({ messageId: 2, createdAt: '2024-01-01T12:00:00Z' }),
-      ];
-      queryClient.setQueryData(CHAT_MSG_KEY, messages);
+      ]);
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -340,10 +339,9 @@ describe('useMessageSync', () => {
 
     it('성공 시 unreadMessageCount를 0으로 설정한다', async () => {
       mockMarkChatAsRead.mockResolvedValue(undefined);
-      const { result, queryClient } = renderSync();
+      const { result, queryClient } = await renderSync();
 
-      const room = makeRoomListItem({ unreadMessageCount: 5 });
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 5 })]);
       queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage()]);
 
       await act(async () => {
@@ -358,9 +356,8 @@ describe('useMessageSync', () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       mockMarkChatAsRead.mockRejectedValue(new Error('API error'));
 
-      const { result, queryClient } = renderSync();
-      const room = makeRoomListItem({ unreadMessageCount: 3 });
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 3 })]);
       queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage()]);
 
       await act(async () => {
@@ -372,9 +369,8 @@ describe('useMessageSync', () => {
     });
 
     it('메시지가 없으면 API를 호출하지 않고 unreadCount만 0으로 설정한다', async () => {
-      const { result, queryClient } = renderSync();
-      const room = makeRoomListItem({ unreadMessageCount: 2 });
-      queryClient.setQueryData(CHAT_ROOM_KEY, [room]);
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
       await act(async () => {

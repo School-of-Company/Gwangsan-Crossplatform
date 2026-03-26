@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
@@ -18,6 +18,15 @@ export const useMessageSync = ({
   chatMessageQueryKey,
 }: UseMessageSyncProps) => {
   const queryClient = useQueryClient();
+  const userIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    getCurrentUserId()
+      .then((id) => {
+        userIdRef.current = id;
+      })
+      .catch(() => {});
+  }, []);
 
   const handleConnect = useCallback(() => {
     if (chatRoomQueryKey) {
@@ -26,11 +35,11 @@ export const useMessageSync = ({
   }, [queryClient, chatRoomQueryKey]);
 
   const handleReceiveMessage = useCallback(
-    async (message: ChatMessageResponse) => {
+    (message: ChatMessageResponse) => {
       try {
         if (!message || typeof message !== 'object') return;
 
-        const userId = await getCurrentUserId();
+        const userId = userIdRef.current;
         if (!userId) return;
 
         const correctedMessage = {
