@@ -47,6 +47,7 @@ export const useChatSocket = ({
   const handleConnect = useCallback(() => {
     messageSync.handleConnect();
     joinCurrentRoom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageSync.handleConnect, joinCurrentRoom]);
 
   useSocketEventHandlers({

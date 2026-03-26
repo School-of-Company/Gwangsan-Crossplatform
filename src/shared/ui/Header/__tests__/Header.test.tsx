@@ -6,7 +6,9 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('react-native-vector-icons/Ionicons', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   return function MockIcon(props: any) {
     return React.createElement(View, { testID: `icon-${props.name}` });
