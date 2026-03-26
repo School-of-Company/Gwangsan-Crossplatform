@@ -65,7 +65,9 @@ jobs:
         id: cache-pods
         uses: actions/cache@v4
         with:
-          path: ios/Pods
+          path: |
+            ios/Pods
+            ios/app.xcworkspace
           key: pods-${{ hashFiles('ios/Podfile.lock') }}
 
       - name: Install CocoaPods dependencies
