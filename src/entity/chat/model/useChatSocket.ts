@@ -29,7 +29,12 @@ export const useChatSocket = ({
     autoConnect,
   });
 
-  const messageSync = useMessageSync({
+  const {
+    handleConnect: handleMessageSyncConnect,
+    handleReceiveMessage,
+    handleUpdateRoomList,
+    markRoomAsRead,
+  } = useMessageSync({
     currentRoomId,
     chatRoomQueryKey,
     chatMessageQueryKey,
@@ -45,15 +50,15 @@ export const useChatSocket = ({
   }, [currentRoomId, chatSocketService]);
 
   const handleConnect = useCallback(() => {
-    messageSync.handleConnect();
+    handleMessageSyncConnect();
     joinCurrentRoom();
-  }, [messageSync.handleConnect, joinCurrentRoom]);
+  }, [handleMessageSyncConnect, joinCurrentRoom]);
 
   useSocketEventHandlers({
     socketService: chatSocketService,
     onConnect: handleConnect,
-    onReceiveMessage: messageSync.handleReceiveMessage,
-    onUpdateRoomList: messageSync.handleUpdateRoomList,
+    onReceiveMessage: handleReceiveMessage,
+    onUpdateRoomList: handleUpdateRoomList,
   });
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export const useChatSocket = ({
     isConnected: connection.isConnected,
     connectionState: connection.connectionState,
     sendMessage,
-    markRoomAsRead: messageSync.markRoomAsRead,
+    markRoomAsRead,
     connect: connection.connect,
     disconnect: connection.disconnect,
   };
