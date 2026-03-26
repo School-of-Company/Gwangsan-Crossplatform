@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { withdrawal } from '../api/withdrawal';
 import { removeData } from '~/shared/lib/removeData';
+import { clearAuthTokens } from '~/shared/lib/auth';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import Toast from 'react-native-toast-message';
 
@@ -13,8 +14,7 @@ export const useWithdrawal = () => {
   const withdrawalMutation = useMutation({
     mutationFn: withdrawal,
     onSuccess: () => {
-      removeData('accessToken');
-      removeData('refreshToken');
+      clearAuthTokens();
       removeData('memberId');
       clearCurrentUserId();
       queryClient.clear();

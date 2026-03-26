@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { removeData } from '~/shared/lib/removeData';
+import { clearAuthTokens } from '~/shared/lib/auth';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export interface SignoutResponse {
@@ -10,11 +10,11 @@ export const signout = async (): Promise<SignoutResponse> => {
   try {
     const response = await instance.delete<SignoutResponse>('/auth/signout');
 
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+    await clearAuthTokens();
 
     return response.data;
   } catch (error) {
-    await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+    await clearAuthTokens();
 
     throw new Error(getErrorMessage(error));
   }
