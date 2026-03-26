@@ -78,12 +78,19 @@ jobs:
         if: steps.cache-detox-framework.outputs.cache-hit != 'true'
         run: ./node_modules/.bin/detox clean-framework-cache && ./node_modules/.bin/detox build-framework-cache
 
-      - name: Cache Xcode build
+      - name: Cache compiled Pods (native layer)
         uses: actions/cache@v4
         with:
-          path: ios/build
-          key: xcode-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json', 'src/**') }}-release
-          restore-keys: xcode-build-
+          path: ios/build/Build/Products
+          key: pods-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}-release
+          restore-keys: pods-build-
+
+      - name: Cache Xcode intermediates
+        uses: actions/cache@v4
+        with:
+          path: ios/build/Build/Intermediates.noindex
+          key: xcode-intermediates-${{ hashFiles('ios/Podfile.lock', 'package-lock.json', 'ios/**') }}-release
+          restore-keys: xcode-intermediates-
 
       - name: Boot iOS Simulator
         run: |
