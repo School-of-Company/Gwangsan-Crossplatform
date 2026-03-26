@@ -35,7 +35,6 @@ export const useResilientMessageSender = ({
 
   const addMessage = useChatQueueStore((state) => state.addMessage);
   const setStatus = useChatQueueStore((state) => state.setStatus);
-  const _removeMessage = useChatQueueStore((state) => state.removeMessage);
   const getRetryable = useChatQueueStore((state) => state.getRetryable);
   const retry = useChatQueueStore((state) => state.retry);
 
