@@ -1,9 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { removeData } from './removeData';
 import { setData } from './setData';
-import { getAccessToken, getRefreshToken } from './auth';
+import { getAccessToken, getRefreshToken, clearAuthTokens } from './auth';
 import { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 
@@ -97,7 +96,7 @@ instance.interceptors.response.use(undefined, async (error: AxiosError) => {
         },
       });
 
-      await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+      await clearAuthTokens();
 
       if (queryClientInstance) {
         queryClientInstance.clear();

@@ -94,8 +94,10 @@ const generateDeviceId = async (): Promise<string> => {
 
 export const getDeviceInfo = async () => {
   const osType = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
-  const deviceId = await generateDeviceId();
-  const deviceToken = await registerForPushNotificationsAsync();
+  const [deviceId, deviceToken] = await Promise.all([
+    generateDeviceId(),
+    registerForPushNotificationsAsync(),
+  ]);
 
   if (!deviceToken) {
     throw new Error('푸시 알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.');
