@@ -1,5 +1,5 @@
-import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { createQueryWrapper } from '~/test-utils';
+import { act, waitFor } from '@testing-library/react-native';
+import { renderHookWithProviders } from '~/test-utils';
 import { useRouter } from 'expo-router';
 import { withdrawal } from '../../api/withdrawal';
 import { removeData } from '~/shared/lib/removeData';
@@ -45,9 +45,7 @@ describe('useWithdrawal', () => {
   });
 
   it('초기 상태가 올바르다', () => {
-    const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createQueryWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useWithdrawal());
 
     expect(typeof result.current.withdrawal).toBe('function');
     expect(result.current.isLoading).toBe(false);
@@ -57,9 +55,7 @@ describe('useWithdrawal', () => {
   it('회원탈퇴 성공 시 토큰 삭제 후 온보딩으로 이동한다', async () => {
     mockWithdrawal.mockResolvedValue({ message: 'success' });
 
-    const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createQueryWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useWithdrawal());
 
     act(() => {
       result.current.withdrawal();
@@ -90,9 +86,7 @@ describe('useWithdrawal', () => {
       callOrder.push('replace');
     });
 
-    const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createQueryWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useWithdrawal());
 
     act(() => {
       result.current.withdrawal();
@@ -115,9 +109,7 @@ describe('useWithdrawal', () => {
         })
     );
 
-    const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createQueryWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useWithdrawal());
 
     act(() => {
       result.current.withdrawal();
@@ -139,9 +131,7 @@ describe('useWithdrawal', () => {
   it('회원탈퇴 실패 시 에러 토스트를 표시한다', async () => {
     mockWithdrawal.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createQueryWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useWithdrawal());
 
     act(() => {
       result.current.withdrawal();
@@ -158,9 +148,7 @@ describe('useWithdrawal', () => {
   it('회원탈퇴 실패 시 토큰을 삭제하지 않는다', async () => {
     mockWithdrawal.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useWithdrawal(), {
-      wrapper: createQueryWrapper(),
-    });
+    const { result } = renderHookWithProviders(() => useWithdrawal());
 
     act(() => {
       result.current.withdrawal();
