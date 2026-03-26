@@ -6,7 +6,11 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
 
-const registerForPushNotificationsAsync = async (): Promise<string> => {
+const registerForPushNotificationsAsync = async (): Promise<string | null> => {
+  if (!Device.isDevice) {
+    return 'simulator-mock-token';
+  }
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -37,9 +41,13 @@ const registerForPushNotificationsAsync = async (): Promise<string> => {
   }
 
   try {
-    const pushToken = await Notifications.getExpoPushTokenAsync({
-      projectId: projectId || undefined,
-    });
+    const pushToken = await Promise.race([
+      Notifications.getExpoPushTokenAsync({ projectId: projectId || undefined }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('getExpoPushTokenAsync timeout')), 5000)
+      ),
+    ]);
+
     return pushToken.data;
   } catch (error) {
     Sentry.captureException(error, {
@@ -88,6 +96,10 @@ export const getDeviceInfo = async () => {
   const osType = Platform.OS === 'ios' ? 'IOS' : 'ANDROID';
   const deviceId = await generateDeviceId();
   const deviceToken = await registerForPushNotificationsAsync();
+
+  if (!deviceToken) {
+    throw new Error('푸시 알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.');
+  }
 
   return {
     osType: osType as 'IOS' | 'ANDROID',

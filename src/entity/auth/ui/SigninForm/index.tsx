@@ -60,7 +60,7 @@ function SigninForm({
             <View className="mt-8 flex-1">{children}</View>
 
             <View className="mb-8 mt-auto">
-              <Button onPress={onNext} disabled={isNextDisabled}>
+              <Button testID="SigninForm-next-button" onPress={onNext} disabled={isNextDisabled}>
                 {nextButtonText}
               </Button>
             </View>

@@ -1,0 +1,150 @@
+name: iOS E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-ios:
+    name: iOS E2E Test (Detox)
+    runs-on: macos-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cache applesimutils
+        id: cache-applesimutils
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/Cellar/applesimutils
+          key: applesimutils-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Install applesimutils
+        if: steps.cache-applesimutils.outputs.cache-hit != 'true'
+        run: |
+          brew tap wix/brew
+          brew install applesimutils
+
+      - name: Link applesimutils (cache restored)
+        if: steps.cache-applesimutils.outputs.cache-hit == 'true'
+        run: brew link applesimutils 2>/dev/null || true
+
+      - name: Cache CocoaPods
+        id: cache-pods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+
+      - name: Install CocoaPods dependencies
+        if: steps.cache-pods.outputs.cache-hit != 'true'
+        working-directory: ios
+        run: pod install --repo-update
+
+      - name: Cache Detox framework
+        id: cache-detox-framework
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Detox/ios
+          key: detox-framework-${{ hashFiles('package-lock.json') }}
+
+      - name: Build Detox framework cache
+        if: steps.cache-detox-framework.outputs.cache-hit != 'true'
+        run: ./node_modules/.bin/detox clean-framework-cache && ./node_modules/.bin/detox build-framework-cache
+
+      - name: Cache compiled Pods (native layer)
+        uses: actions/cache@v4
+        with:
+          path: ios/build/Build/Products
+          key: pods-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}-release
+          restore-keys: pods-build-
+
+      - name: Cache Xcode intermediates
+        uses: actions/cache@v4
+        with:
+          path: ios/build/Build/Intermediates.noindex
+          key: xcode-intermediates-${{ hashFiles('ios/Podfile.lock', 'package-lock.json', 'ios/**') }}-release
+          restore-keys: xcode-intermediates-
+
+      - name: Boot iOS Simulator
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' | tail -1)
+          SIM_ID=$(xcrun simctl create "CI-iPhone-16" "iPhone 16" "$RUNTIME")
+          xcrun simctl boot "$SIM_ID"
+          xcrun simctl bootstatus "$SIM_ID" -b
+          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+
+      - name: Build app for Detox
+        run: npm run e2e:build:ios:release
+
+      - name: Run Detox E2E tests
+        run: npm run e2e:test:ios:release
+
+      - name: Upload test artifacts to GitHub
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detox-artifacts-ios
+          path: artifacts/
+          retention-days: 7
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook URL not set, skipping"
+            exit 0
+          fi
+
+          if [ "$JOB_STATUS" == "success" ]; then
+            curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "{\"embeds\":[{\"title\":\"✅ Detox iOS E2E 성공\",\"color\":3066993,\"fields\":[{\"name\":\"워크플로우\",\"value\":\"[보기]($RUN_URL)\"}]}]}"
+          else
+            SCREENSHOTS=$(find artifacts -name "*.png" 2>/dev/null | head -10)
+
+            if [ -z "$SCREENSHOTS" ]; then
+              curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+                -H "Content-Type: application/json" \
+                -d "{\"embeds\":[{\"title\":\"❌ Detox iOS E2E 실패\",\"color\":15158332,\"fields\":[{\"name\":\"워크플로우\",\"value\":\"[보기]($RUN_URL)\"}]}]}"
+            else
+              CURL_ARGS=(-s -X POST "$DISCORD_WEBHOOK_URL")
+              CURL_ARGS+=(-F "payload_json={\"embeds\":[{\"title\":\"❌ Detox iOS E2E 실패\",\"color\":15158332,\"fields\":[{\"name\":\"워크플로우\",\"value\":\"[보기]($RUN_URL)\"}]}]}")
+
+              i=1
+              while IFS= read -r screenshot; do
+                CURL_ARGS+=(-F "file${i}=@${screenshot}")
+                ((i++))
+              done <<< "$SCREENSHOTS"
+
+              curl "${CURL_ARGS[@]}"
+            fi
+          fi
