@@ -31,6 +31,10 @@ describe('useCustomInput', () => {
 
     it('100ms 후 focus를 시도한다', () => {
       const { result } = renderHook(() => useCustomInput());
+      const mockFocus = jest.fn();
+      (result.current.customInputRef as unknown as { current: { focus: jest.Mock } }).current = {
+        focus: mockFocus,
+      };
 
       act(() => {
         result.current.activateCustomInput();
@@ -39,6 +43,8 @@ describe('useCustomInput', () => {
       act(() => {
         jest.advanceTimersByTime(100);
       });
+
+      expect(mockFocus).toHaveBeenCalledTimes(1);
     });
   });
 
