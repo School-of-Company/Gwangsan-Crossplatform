@@ -95,54 +95,52 @@ describe('useSignout', () => {
     });
   });
 
-  it('로그아웃 실패 시에도 memberId 삭제 + userId 초기화 + 온보딩으로 이동한다', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockSignout.mockRejectedValue(new Error('서버 오류'));
+  describe('로그아웃 실패', () => {
+    let rejectSpy: jest.SpyInstance;
 
-    const origReject = Promise.reject.bind(Promise);
-    const rejectSpy = jest.spyOn(Promise, 'reject').mockImplementation((r?: unknown) => {
-      const p = origReject(r);
-      p.catch(() => {});
-      return p;
+    beforeEach(() => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      const origReject = Promise.reject.bind(Promise);
+      rejectSpy = jest.spyOn(Promise, 'reject').mockImplementation((r?: unknown) => {
+        const p = origReject(r);
+        p.catch(() => {});
+        return p;
+      });
     });
 
-    const { result } = renderHookWithProviders(() => useSignout());
-
-    act(() => {
-      result.current.signout();
+    afterEach(() => {
+      rejectSpy.mockRestore();
     });
 
-    await waitFor(() => {
-      expect(mockRemoveData).toHaveBeenCalledWith('memberId');
-      expect(mockClearCurrentUserId).toHaveBeenCalled();
-      expect(mockReplace).toHaveBeenCalledWith('/onboarding');
+    it('memberId 삭제 + userId 초기화 + 온보딩으로 이동한다', async () => {
+      mockSignout.mockRejectedValue(new Error('서버 오류'));
+
+      const { result } = renderHookWithProviders(() => useSignout());
+
+      act(() => {
+        result.current.signout();
+      });
+
+      await waitFor(() => {
+        expect(mockRemoveData).toHaveBeenCalledWith('memberId');
+        expect(mockClearCurrentUserId).toHaveBeenCalled();
+        expect(mockReplace).toHaveBeenCalledWith('/onboarding');
+      });
     });
 
-    rejectSpy.mockRestore();
-  });
+    it('queryClient를 초기화한다', async () => {
+      mockSignout.mockRejectedValue(new Error('fail'));
 
-  it('로그아웃 실패 시에도 queryClient를 초기화한다', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockSignout.mockRejectedValue(new Error('fail'));
+      const { result, queryClient } = renderHookWithProviders(() => useSignout());
+      jest.spyOn(queryClient, 'clear');
 
-    const origReject = Promise.reject.bind(Promise);
-    const rejectSpy = jest.spyOn(Promise, 'reject').mockImplementation((r?: unknown) => {
-      const p = origReject(r);
-      p.catch(() => {});
-      return p;
+      act(() => {
+        result.current.signout();
+      });
+
+      await waitFor(() => {
+        expect(queryClient.clear).toHaveBeenCalled();
+      });
     });
-
-    const { result, queryClient } = renderHookWithProviders(() => useSignout());
-    jest.spyOn(queryClient, 'clear');
-
-    act(() => {
-      result.current.signout();
-    });
-
-    await waitFor(() => {
-      expect(queryClient.clear).toHaveBeenCalled();
-    });
-
-    rejectSpy.mockRestore();
   });
 });
