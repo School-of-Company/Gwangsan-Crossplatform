@@ -28,9 +28,9 @@ jest.mock('@/shared/store/useResetPasswordStore', () => ({
   useResetPasswordStore: jest.fn(),
 }));
 
-const mockUseSignupStore = useSignupStore as jest.Mock;
-const mockUseSigninStore = useSigninStore as jest.Mock;
-const mockUseResetPasswordStore = useResetPasswordStore as jest.Mock;
+const mockUseSignupStore = useSignupStore as unknown as jest.Mock;
+const mockUseSigninStore = useSigninStore as unknown as jest.Mock;
+const mockUseResetPasswordStore = useResetPasswordStore as unknown as jest.Mock;
 
 const mockSignupState: SignupState = {
   currentStep: 'terms',

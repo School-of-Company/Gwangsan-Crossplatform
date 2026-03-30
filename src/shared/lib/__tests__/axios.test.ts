@@ -26,7 +26,7 @@ jest.mock('../setData', () => ({
   setData: jest.fn(),
 }));
 
-const mockRouter = router as { replace: jest.Mock };
+const mockRouter = router as unknown as { replace: jest.Mock };
 const mockGetAccessToken = getAccessToken as jest.MockedFunction<typeof getAccessToken>;
 const mockGetRefreshToken = getRefreshToken as jest.MockedFunction<typeof getRefreshToken>;
 const mockClearAuthTokens = clearAuthTokens as jest.MockedFunction<typeof clearAuthTokens>;
