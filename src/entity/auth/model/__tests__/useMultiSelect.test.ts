@@ -1,4 +1,4 @@
-import { act , renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { useMultiSelect } from '../useMultiSelect';
 
 const ITEMS = ['운동', '독서', '요리', '여행'];

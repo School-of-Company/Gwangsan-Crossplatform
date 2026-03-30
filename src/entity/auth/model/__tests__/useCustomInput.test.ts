@@ -1,4 +1,4 @@
-import { act , renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { useCustomInput } from '../useCustomInput';
 
 beforeEach(() => {

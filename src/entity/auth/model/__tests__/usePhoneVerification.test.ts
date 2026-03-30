@@ -1,4 +1,4 @@
-import { act, waitFor , renderHook } from '@testing-library/react-native';
+import { act, waitFor, renderHook } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import { usePhoneVerification } from '../usePhoneVerification';
 
