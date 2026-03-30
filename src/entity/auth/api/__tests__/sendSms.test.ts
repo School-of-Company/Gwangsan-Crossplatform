@@ -1,19 +1,10 @@
+import { mockFetch } from '~/test-utils';
 import { sendSms } from '../sendSms';
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
-
-function mockFetch(body: object | string, status = 200, statusText = '') {
-  const text = typeof body === 'string' ? body : JSON.stringify(body);
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    statusText,
-    text: () => Promise.resolve(text),
-  });
-}
 
 describe('sendSms', () => {
   it('정상적인 전화번호로 SMS 전송에 성공한다', async () => {

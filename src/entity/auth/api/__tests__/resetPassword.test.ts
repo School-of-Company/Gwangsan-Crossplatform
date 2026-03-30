@@ -1,19 +1,10 @@
+import { mockFetch } from '~/test-utils';
 import { resetPassword } from '../resetPassword';
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
-
-function mockFetch(body: object | string, status = 200, statusText = '') {
-  const text = typeof body === 'string' ? body : JSON.stringify(body);
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    statusText,
-    text: () => Promise.resolve(text),
-  });
-}
 
 describe('resetPassword', () => {
   it('비밀번호 재설정 성공 시 응답 데이터를 반환한다', async () => {

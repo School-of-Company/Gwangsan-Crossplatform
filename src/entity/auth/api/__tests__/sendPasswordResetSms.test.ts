@@ -1,19 +1,10 @@
+import { mockFetch } from '~/test-utils';
 import { sendPasswordResetSms } from '../sendPasswordResetSms';
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
-
-function mockFetch(body: object | string, status = 200, statusText = '') {
-  const text = typeof body === 'string' ? body : JSON.stringify(body);
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    statusText,
-    text: () => Promise.resolve(text),
-  });
-}
 
 describe('sendPasswordResetSms', () => {
   it('비밀번호 재설정 SMS 전송 성공 시 응답 데이터를 반환한다', async () => {
