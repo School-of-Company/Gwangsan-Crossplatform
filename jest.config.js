@@ -2,11 +2,14 @@ module.exports = {
   preset: 'jest-expo',
   setupFiles: ['./jest.setup.js'],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind|@sentry/react-native|react-native-toast-message|react-native-keychain|react-native-modal|react-native-reanimated)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind|@sentry/react-native|react-native-toast-message|react-native-keychain|react-native-modal|react-native-reanimated|msw|@mswjs|until-async)',
   ],
   moduleNameMapper: {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
     '^~/test-utils$': '<rootDir>/src/test-utils/index.ts',
+    '^@env$': '<rootDir>/src/mocks/env.ts',
+    '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
+    '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
     '^~/(.*)$': '<rootDir>/src/$1',
     '^@/app/(.*)$': '<rootDir>/src/app/$1',
     '^@/shared/(.*)$': '<rootDir>/src/shared/$1',

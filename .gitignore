@@ -18,6 +18,7 @@ android
 ios/Pods/
 ios/build/
 ios/*.xcworkspace
+ios/**/GoogleService-Info.plist
 **/*.xcuserdatad/
 **/*.xcuserstate
 DerivedData/
@@ -34,3 +35,4 @@ DerivedData/
 
 artifacts/
 coverage/
+coverage-auth/

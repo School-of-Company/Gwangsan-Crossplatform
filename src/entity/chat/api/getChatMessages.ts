@@ -9,6 +9,7 @@ import type {
 import { isTradeProduct } from '../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 
 interface ChatRoomApiResponse {
   readonly product?: TradeProduct;
@@ -17,7 +18,10 @@ interface ChatRoomApiResponse {
 
 export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProduct> => {
   try {
-    const response = await instance.get(`/chat/${roomId}`);
+    const [response, userId] = await Promise.all([
+      instance.get(`/chat/${roomId}`),
+      getCurrentUserId(),
+    ]);
 
     let messages: readonly ChatMessageResponse[] = [];
     let product: TradeProduct | null = null;
@@ -33,7 +37,10 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
 
     return {
       product,
-      messages: messages,
+      messages: messages.map((msg) => ({
+        ...msg,
+        isMine: msg.senderId === userId,
+      })),
     };
   } catch (e) {
     const error = e as ChatApiError;
@@ -49,5 +56,5 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
 
 export const getChatMessages = async (roomId: RoomId): Promise<ChatMessageResponse[]> => {
   const data = await getChatRoomData(roomId);
-  return Array.isArray(data.messages) ? [...data.messages] : [];
+  return [...data.messages];
 };
