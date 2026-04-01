@@ -62,7 +62,6 @@ module.exports = {
         'CODE_SIGNING_ALLOWED=NO',
         'COMPILER_INDEX_STORE_ENABLE=NO',
         'GCC_GENERATE_DEBUGGING_SYMBOLS=NO',
-        '-quiet',
         'build',
       ].join(' '),
     },
