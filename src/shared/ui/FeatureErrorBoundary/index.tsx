@@ -23,13 +23,10 @@ export class FeatureErrorBoundary extends React.Component<Props, State> {
 
   private getScreenName(): string {
     if (!React.isValidElement(this.props.children)) return 'unknown';
-    const type = this.props.children.type;
-    if (typeof type === 'function') {
-      return (
-        (type as React.ComponentType).displayName ?? (type as React.ComponentType).name ?? 'unknown'
-      );
-    }
-    return 'unknown';
+    const { type } = this.props.children;
+    if (typeof type !== 'function') return 'unknown';
+    const component = type as React.ComponentType;
+    return component.displayName ?? component.name ?? 'unknown';
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
