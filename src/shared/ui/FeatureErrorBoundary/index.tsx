@@ -49,6 +49,9 @@ export class FeatureErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
+        if (typeof this.props.fallback === 'function') {
+          return this.props.fallback({ reset: this.reset });
+        }
         return this.props.fallback;
       }
       return (

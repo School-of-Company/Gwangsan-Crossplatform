@@ -1,0 +1,70 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FeatureErrorBoundary - 스냅샷 에러 상태 기본 fallback 스냅샷 1`] = `
+<View
+  className="flex-1 items-center justify-center gap-4 bg-white px-6"
+>
+  <Text
+    className="text-center text-lg font-semibold text-gray-800"
+  >
+    오류가 발생했습니다
+  </Text>
+  <Text
+    className="text-center text-sm text-gray-500"
+  >
+    잠시 후 다시 시도해 주세요.
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <Text
+      className="font-semibold text-white"
+    >
+      다시 시도
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`FeatureErrorBoundary - 스냅샷 에러 상태 커스텀 fallback 스냅샷 1`] = `
+<Text>
+  커스텀 fallback
+</Text>
+`;
+
+exports[`FeatureErrorBoundary - 스냅샷 정상 상태 스냅샷 1`] = `
+<Text>
+  정상 화면
+</Text>
+`;
