@@ -4,7 +4,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
+  fallback?: React.ReactNode | ((props: { reset: () => void }) => React.ReactNode);
 }
 
 interface State {
