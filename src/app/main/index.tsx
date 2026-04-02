@@ -1,5 +1,10 @@
+import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
 import MainPageView from '~/view/main/ui/MainPage';
 
 export default function Main() {
-  return <MainPageView />;
+  return (
+    <FeatureErrorBoundary>
+      <MainPageView />
+    </FeatureErrorBoundary>
+  );
 }
