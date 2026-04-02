@@ -21,8 +21,28 @@ export class FeatureErrorBoundary extends React.Component<Props, State> {
     return { hasError: true };
   }
 
+  private getScreenName(): string {
+    if (!React.isValidElement(this.props.children)) return 'unknown';
+    const type = this.props.children.type;
+    if (typeof type === 'function') {
+      return (
+        (type as React.ComponentType).displayName ?? (type as React.ComponentType).name ?? 'unknown'
+      );
+    }
+    return 'unknown';
+  }
+
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
+    const screenName = this.getScreenName();
+    Sentry.addBreadcrumb({
+      category: 'ui.error',
+      message: `Render error in ${screenName}`,
+      level: 'error',
+    });
+    Sentry.captureException(error, {
+      extra: { componentStack: info.componentStack },
+      tags: { screen: screenName },
+    });
   }
 
   reset = () => {

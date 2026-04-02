@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signout } from '../api/signout';
 import { removeData } from '~/shared/lib/removeData';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
+import * as Sentry from '@sentry/react-native';
 
 export const useSignout = () => {
   const router = useRouter();
@@ -14,12 +15,14 @@ export const useSignout = () => {
     onSuccess: () => {
       removeData('memberId');
       clearCurrentUserId();
+      Sentry.setUser(null);
       queryClient.clear();
       router.replace('/onboarding');
     },
     onError: (error) => {
       removeData('memberId');
       clearCurrentUserId();
+      Sentry.setUser(null);
       queryClient.clear();
       router.replace('/onboarding');
       throw error;
