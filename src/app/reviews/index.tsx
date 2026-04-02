@@ -1,5 +1,10 @@
+import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
 import ReviewsPageView from '~/view/reviews/ui/PostsPage';
 
 export default function PostPage() {
-  return <ReviewsPageView />;
+  return (
+    <FeatureErrorBoundary>
+      <ReviewsPageView />
+    </FeatureErrorBoundary>
+  );
 }
