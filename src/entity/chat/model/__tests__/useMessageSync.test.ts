@@ -320,6 +320,78 @@ describe('useMessageSync', () => {
     });
   });
 
+  describe('handleUpdateRoomList', () => {
+    it('매칭되는 roomId의 lastMessage, lastMessageType, lastMessageTime을 업데이트한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+
+      act(() => {
+        result.current.handleUpdateRoomList({
+          roomId: ROOM_ID,
+          lastMessage: '새 메시지',
+          lastMessageType: 'TEXT',
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        });
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[0].lastMessage).toBe('새 메시지');
+      expect(rooms?.[0].lastMessageType).toBe('TEXT');
+      expect(rooms?.[0].lastMessageTime).toBe('2024-01-02T00:00:00Z');
+    });
+
+    it('매칭되지 않는 roomId는 업데이트하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+
+      act(() => {
+        result.current.handleUpdateRoomList({
+          roomId: 999,
+          lastMessage: '다른 방 메시지',
+          lastMessageType: 'TEXT',
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        });
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[0].lastMessage).toBe('이전 메시지');
+    });
+
+    it('chatRoomQueryKey가 없으면 캐시를 변경하지 않는다', async () => {
+      const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
+      await act(async () => {});
+      rendered.queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+
+      act(() => {
+        rendered.result.current.handleUpdateRoomList({
+          roomId: ROOM_ID,
+          lastMessage: '새 메시지',
+          lastMessageType: 'TEXT',
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        });
+      });
+
+      const rooms = rendered.queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[0].lastMessage).toBe('이전 메시지');
+    });
+
+    it('캐시 데이터가 없으면 undefined를 반환한다', async () => {
+      const { result, queryClient } = await renderSync();
+
+      act(() => {
+        result.current.handleUpdateRoomList({
+          roomId: ROOM_ID,
+          lastMessage: '새 메시지',
+          lastMessageType: 'TEXT',
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        });
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms).toBeUndefined();
+    });
+  });
+
   describe('markRoomAsRead', () => {
     it('마지막 메시지로 markChatAsRead를 호출한다', async () => {
       mockMarkChatAsRead.mockResolvedValue(undefined);
@@ -366,6 +438,17 @@ describe('useMessageSync', () => {
 
       const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
       expect(rooms?.[0].unreadMessageCount).toBe(0);
+    });
+
+    it('chatRoomQueryKey가 없으면 아무것도 하지 않는다', async () => {
+      const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
+      await act(async () => {});
+
+      await act(async () => {
+        await rendered.result.current.markRoomAsRead(ROOM_ID);
+      });
+
+      expect(mockMarkChatAsRead).not.toHaveBeenCalled();
     });
 
     it('메시지가 없으면 API를 호출하지 않고 unreadCount만 0으로 설정한다', async () => {
