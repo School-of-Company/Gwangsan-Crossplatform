@@ -31,6 +31,7 @@ npm run e2e:test:android       # Run Android E2E tests
 ```
 
 To run a single Jest test file:
+
 ```bash
 npx jest src/path/to/file.test.ts
 ```
@@ -91,6 +92,7 @@ TypeScript and Metro are configured with path aliases — use `@/` to import fro
 ## Environment Variables
 
 Required in `.env`:
+
 ```
 API_URL=https://api.gwangsan.io.kr/api
 EXPO_PUBLIC_SENTRY_DSN=...
@@ -102,6 +104,7 @@ SENTRY_AUTH_TOKEN=...
 ## CI/CD
 
 GitHub Actions workflows:
+
 - **ci.yml** — lint, type-check, unit tests on push/PR to `main`/`develop`
 - **test-ios.yml** / **test-android.yml** — E2E tests (triggered by PR, manual dispatch, or `/run-e2e` comment)
 - **ios_cd.yml** / **android_cd.yml** — EAS cloud builds for deployment
