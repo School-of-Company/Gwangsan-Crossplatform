@@ -4,8 +4,8 @@ import { getData } from './getData';
 import Toast from 'react-native-toast-message';
 import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
 
-const _socketBase = (Constants.expoConfig?.extra?.apiUrl ?? process.env.API_URL ?? '').replace(
-  /\/api$/,
+const _socketBase = (Constants.expoConfig?.extra?.apiUrl ?? process.env.EXPO_PUBLIC_API_URL ?? process.env.API_URL ?? '').replace(
+  /\/api\/?$/,
   ''
 );
 const SOCKET_URL = _socketBase + '/chat';
