@@ -29,7 +29,7 @@ export default function NicknameStep() {
         resetStore();
         router.replace('/main');
       } catch (e) {
-        if (isMounted) console.error(e);
+        console.error(e);
       }
     };
 
