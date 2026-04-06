@@ -44,7 +44,7 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
     const pushToken = await Promise.race([
       Notifications.getExpoPushTokenAsync({ projectId: projectId || undefined }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('getExpoPushTokenAsync timeout')), 5000)
+        setTimeout(() => reject(new Error('getExpoPushTokenAsync timeout')), 15000)
       ),
     ]);
 
