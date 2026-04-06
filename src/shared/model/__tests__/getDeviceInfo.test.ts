@@ -155,7 +155,8 @@ describe('getDeviceInfo', () => {
     );
 
     // Attach rejection handler before advancing timers to prevent unhandled rejection
-    const assertion = expect(getDeviceInfo()).rejects.toThrow('getExpoPushTokenAsync timeout');
+    const assertion =
+      expect(getDeviceInfo()).rejects.toThrow('푸시 토큰 발급 시간이 초과되었습니다.');
     await jest.runAllTimersAsync();
     await assertion;
 
