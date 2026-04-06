@@ -1,9 +1,14 @@
 import { io, Socket } from 'socket.io-client';
+import Constants from 'expo-constants';
 import { getData } from './getData';
 import Toast from 'react-native-toast-message';
 import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
 
-const SOCKET_URL = process.env.API_URL + '/chat';
+const _socketBase = (Constants.expoConfig?.extra?.apiUrl ?? process.env.API_URL ?? '').replace(
+  /\/api$/,
+  ''
+);
+const SOCKET_URL = _socketBase + '/chat';
 
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
