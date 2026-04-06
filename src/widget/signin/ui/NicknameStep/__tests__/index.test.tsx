@@ -80,6 +80,8 @@ beforeEach(() => {
   mockUseSigninStepNavigation.mockReturnValue({
     nextStep: mockNextStep,
     resetStore: mockResetStore,
+    prevStep: jest.fn(),
+    goToStep: jest.fn(),
   });
   mockGetCredentials.mockResolvedValue(null);
 });
