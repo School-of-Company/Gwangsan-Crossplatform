@@ -1,5 +1,10 @@
+import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
 import { SigninPage } from '@/view/signin';
 
 export default function Signin() {
-  return <SigninPage />;
+  return (
+    <FeatureErrorBoundary>
+      <SigninPage />
+    </FeatureErrorBoundary>
+  );
 }

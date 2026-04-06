@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import * as Sentry from '@sentry/react-native';
 
 export default function PasswordStep() {
   const { value: initialPassword, updateField } = useSigninFormField('password');
@@ -32,6 +33,7 @@ export default function PasswordStep() {
 
       await signinWithDeviceInfo({ nickname: trimmedNickname, password: trimmedPassword });
       saveCredentialsForBiometric(trimmedNickname, trimmedPassword).catch(console.error);
+      Sentry.setUser({ username: trimmedNickname });
 
       resetStore();
       router.replace('/main');
