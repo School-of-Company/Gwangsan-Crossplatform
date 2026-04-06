@@ -4,7 +4,7 @@ import { getData } from './getData';
 import Toast from 'react-native-toast-message';
 import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
 
-const SOCKET_URL = (Constants.expoConfig?.extra?.apiUrl as string) + '/chat';
+const SOCKET_URL = (Constants.expoConfig?.extra?.apiUrl ?? process.env.API_URL ?? '') + '/chat';
 
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
