@@ -41,10 +41,17 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   }
 
   try {
+    let timeoutId: ReturnType<typeof setTimeout>;
     const pushToken = await Promise.race([
-      Notifications.getExpoPushTokenAsync({ projectId: projectId || undefined }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('푸시 토큰 발급 시간이 초과되었습니다.')), 15000)
+      Notifications.getExpoPushTokenAsync({ projectId: projectId || undefined }).finally(() =>
+        clearTimeout(timeoutId)
+      ),
+      new Promise<never>(
+        (_, reject) =>
+          (timeoutId = setTimeout(
+            () => reject(new Error('푸시 토큰 발급 시간이 초과되었습니다.')),
+            15000
+          ))
       ),
     ]);
 
