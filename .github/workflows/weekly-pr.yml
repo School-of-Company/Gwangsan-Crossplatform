@@ -2,7 +2,7 @@ name: Weekly PR to Main
 
 on:
   schedule:
-    - cron: '0 0 * * 1' # 매주 월요일 오전 9시 (KST = UTC+9)
+    - cron: '0 7 * * 5' # 매주 금요일 오후 4시 (KST = UTC+9)
   workflow_dispatch:
 
 jobs:
@@ -38,10 +38,16 @@ jobs:
             exit 0
           fi
 
+          cat > /tmp/pr-body.md << 'PREOF'
+          ## 주간 정기 릴리즈
+
+          develop → main 정기 PR입니다.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          PREOF
+
           gh pr create \
             --base main \
             --head develop \
             --title "chore: weekly release $TODAY" \
-            --body "$(cat <<'EOF'
-
-## 주간 정기 릴리즈
+            --body-file /tmp/pr-body.md
