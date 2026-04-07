@@ -91,6 +91,7 @@ jobs:
           path: |
             ios/Pods
             ios/app.xcworkspace
+            ios/build/generated
           key: pods-${{ hashFiles('ios/Podfile.lock') }}
 
       - name: Install CocoaPods dependencies
