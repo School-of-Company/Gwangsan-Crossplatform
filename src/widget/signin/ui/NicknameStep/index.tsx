@@ -16,12 +16,16 @@ export default function NicknameStep() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const tryBiometricLogin = async () => {
       try {
         const savedCredentials = await getCredentialsForBiometric();
-        if (!savedCredentials) return;
+        if (!savedCredentials || !isMounted) return;
 
         await signinWithDeviceInfo(savedCredentials);
+        if (!isMounted) return;
+
         resetStore();
         router.replace('/main');
       } catch (e) {
@@ -30,6 +34,10 @@ export default function NicknameStep() {
     };
 
     tryBiometricLogin();
+
+    return () => {
+      isMounted = false;
+    };
   }, [resetStore]);
 
   const handleBack = () => {

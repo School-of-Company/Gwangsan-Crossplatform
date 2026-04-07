@@ -1,9 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
+import { baseURL } from './axios';
 import Toast from 'react-native-toast-message';
 import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
 
-const SOCKET_URL = process.env.API_URL + '/chat';
+const SOCKET_URL = (baseURL ?? '').replace(/\/api\/?$/, '') + '/chat';
 
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
