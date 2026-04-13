@@ -15,10 +15,10 @@ If there are fixable issues, run `npm run format` and re-check.
 ### 2. TypeScript
 
 ```bash
-npx tsc --noEmit --skipLibCheck 2>&1 | head -30
+npx tsc --noEmit --skipLibCheck 2>&1
 ```
 
-Show the first 30 lines of output. List each error file + message.
+List each error file + message. If there are more than 30 errors, show the first 30 and report the total count.
 
 ### 3. Unit tests
 

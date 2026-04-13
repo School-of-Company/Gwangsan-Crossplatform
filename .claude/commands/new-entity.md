@@ -82,4 +82,4 @@ export type { <Domain>Response } from './api/<domain>Api';
 4. **After creating**, summarize the 4 file paths created and remind the user to:
    - Add real fields to `<Domain>Response`
    - Update the API endpoint path
-   - Run `npx jest src/entity/<domain> --passWithNoTests` to confirm no type errors
+   - Run `npx tsc --noEmit` to confirm no type errors
