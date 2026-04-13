@@ -4,9 +4,9 @@ Write unit tests for the specified file or feature: $ARGUMENTS
 
 - **Framework**: Jest + React Testing Library
 - **API mocking**: MSW (mocks in `src/mocks/`)
-- **Test helpers**: `src/test-utils/`
+- **Test helpers**: `src/test-utils/` — import via `@/test-utils` (`renderWithProviders`, `renderHookWithProviders`, `createQueryWrapper`)
 - **Path alias**: `@/` maps to `src/`
-- **Run tests**: `npx jest src/path/to/file.test.ts`
+- **Run tests**: `npx jest src/path/to/file.test.ts --no-coverage`
 
 ## Instructions
 
@@ -34,7 +34,15 @@ Write unit tests for the specified file or feature: $ARGUMENTS
    - Third-party library internals
    - Trivial pass-through code
 
-8. After writing, run the tests to confirm they pass:
+8. **Zustand stores**: Test state transitions using `act`:
+   ```ts
+   import { act } from '@testing-library/react-native';
+   const { setField } = useXxxStore.getState();
+   act(() => setField('value'));
+   expect(useXxxStore.getState().field).toBe('value');
+   ```
+
+9. After writing, run the tests to confirm they pass:
    ```bash
    npx jest <test-file-path> --no-coverage
    ```
