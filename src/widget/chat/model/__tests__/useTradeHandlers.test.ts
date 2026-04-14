@@ -243,5 +243,64 @@ describe('useTradeHandlers', () => {
 
       expect(mockCancelReservation).not.toHaveBeenCalled();
     });
+
+    it('non-Error 실패 시 알 수 없는 오류 메시지를 표시한다', async () => {
+      mockCancelReservation.mockRejectedValue('string error');
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+      );
+
+      await act(async () => {
+        await result.current.handleCancelReservation();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text2: '알 수 없는 오류가 발생했습니다.',
+        })
+      );
+    });
+  });
+
+  describe('non-Error 거부 메시지', () => {
+    it('handleTradeAccept non-Error 실패 시 알 수 없는 오류 메시지를 표시한다', async () => {
+      mockRequestTrade.mockRejectedValue('string error');
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text2: '알 수 없는 오류가 발생했습니다.',
+        })
+      );
+    });
+
+    it('handleReservation non-Error 실패 시 알 수 없는 오류 메시지를 표시한다', async () => {
+      mockMakeReservation.mockRejectedValue('string error');
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+      );
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text2: '알 수 없는 오류가 발생했습니다.',
+        })
+      );
+    });
   });
 });
