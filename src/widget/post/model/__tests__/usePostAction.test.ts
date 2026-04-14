@@ -128,6 +128,22 @@ describe('usePostAction', () => {
 
       expect(result.current.computedValues.canTrade).toBe(false);
     });
+
+    it('isCompletable=false이면 canTrade가 false이다', async () => {
+      setupMocks({ mode: 'RECEIVER', isCompletable: false, isCompleted: false });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.canTrade).toBe(false);
+    });
+
+    it('mode=GIVER이면 canTrade가 false이다', async () => {
+      setupMocks({ mode: 'GIVER', isCompletable: true, isCompleted: false });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.canTrade).toBe(false);
+    });
   });
 
   describe('modalHandlers', () => {
@@ -139,6 +155,16 @@ describe('usePostAction', () => {
 
       act(() => result.current.modalHandlers.closeReportModal());
       expect(result.current.isReportModalVisible).toBe(false);
+    });
+
+    it('openReviewModal / closeReviewModal이 isReviewModalVisible을 토글한다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.modalHandlers.openReviewModal());
+      expect(result.current.isReviewModalVisible).toBe(true);
+
+      act(() => result.current.modalHandlers.closeReviewModal());
+      expect(result.current.isReviewModalVisible).toBe(false);
     });
 
     it('review prop이 있으면 isReviewModalVisible 초기값이 true이다', () => {
@@ -189,6 +215,78 @@ describe('usePostAction', () => {
       act(() => result.current.reviewHandlers.onContentsChange('리뷰 내용'));
       expect(result.current.reviewContents).toBe('리뷰 내용');
     });
+
+    it('onAnimationComplete이 reviewLight를 60으로, reviewContents를 빈 문자열로 초기화한다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.reviewHandlers.onLightChange(90));
+      act(() => result.current.reviewHandlers.onContentsChange('내용'));
+      act(() => result.current.reviewHandlers.onAnimationComplete());
+
+      expect(result.current.reviewLight).toBe(60);
+      expect(result.current.reviewContents).toBe('');
+    });
+  });
+
+  describe('navigationHandlers', () => {
+    it('goToEdit를 호출해도 오류가 발생하지 않는다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.navigationHandlers.goToEdit());
+    });
+
+    it('goToChat이 navigateToChat을 data.id로 호출한다', async () => {
+      const mockNavigateToChat = jest.fn().mockResolvedValue({});
+      mockUseChatEntry.mockReturnValue({ navigateToChat: mockNavigateToChat, isLoading: false });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      await act(async () => {
+        await result.current.navigationHandlers.goToChat();
+      });
+
+      expect(mockNavigateToChat).toHaveBeenCalledWith(1);
+    });
+
+    it('goToChat이 data가 없으면 navigateToChat을 호출하지 않는다', async () => {
+      const mockNavigateToChat = jest.fn();
+      mockUseChatEntry.mockReturnValue({ navigateToChat: mockNavigateToChat, isLoading: false });
+      mockUseGetItem.mockReturnValue({
+        data: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      await act(async () => {
+        await result.current.navigationHandlers.goToChat();
+      });
+
+      expect(mockNavigateToChat).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('actionHandlers.onDelete', () => {
+    it('data가 있으면 onDelete 호출 시 오류가 없다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+    });
+
+    it('data가 없으면 아무것도 하지 않는다', () => {
+      mockUseGetItem.mockReturnValue({
+        data: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+    });
   });
 
   describe('actionHandlers.onRefresh', () => {
@@ -208,6 +306,28 @@ describe('usePostAction', () => {
       });
 
       expect(mockRefetch).toHaveBeenCalled();
+      expect(result.current.refreshing).toBe(false);
+    });
+
+    it('refetch가 실패해도 finally에서 refreshing이 false로 리셋된다', async () => {
+      const mockRefetch = jest.fn().mockRejectedValue(new Error('network error'));
+      mockUseGetItem.mockReturnValue({
+        data: makePostData(),
+        isLoading: false,
+        error: null,
+        refetch: mockRefetch,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      await act(async () => {
+        try {
+          await result.current.actionHandlers.onRefresh();
+        } catch {
+          // expected
+        }
+      });
+
       expect(result.current.refreshing).toBe(false);
     });
   });
