@@ -1,4 +1,4 @@
-import { renderHookWithProviders } from '~/test-utils';
+import { renderHookWithProviders, createQueryClient } from '~/test-utils';
 import { useChatMessages } from '../useChatMessages';
 
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
@@ -86,6 +86,26 @@ describe('useChatMessages', () => {
 
       expect(result.current.otherUserInfo).toEqual({ nickname: '광산주민', id: 42 });
     });
+
+    it('캐시에 해당 room이 있으면 member 정보를 우선 사용한다', () => {
+      const preloadedClient = createQueryClient();
+      preloadedClient.setQueryData(
+        ['chatRooms', 'list'],
+        [
+          {
+            roomId: 'room-1',
+            member: { nickname: '캐시닉네임', memberId: 99 },
+          },
+        ]
+      );
+
+      const { result } = renderHookWithProviders(
+        () => useChatMessages({ roomId: 'room-1' as any }),
+        { queryClient: preloadedClient }
+      );
+
+      expect(result.current.otherUserInfo).toEqual({ nickname: '캐시닉네임', id: 99 });
+    });
   });
 
   describe('connectionState', () => {
@@ -156,6 +176,51 @@ describe('useChatMessages', () => {
       result.current.messageHandlers.sendMessage(null, []);
 
       expect(mockResilientSend).not.toHaveBeenCalled();
+    });
+
+    it('content가 빈 문자열이고 imageIds도 없으면 resilientSendMessage를 호출하지 않는다', () => {
+      const mockResilientSend = jest.fn();
+      mockUseResilientMessageSender.mockReturnValue({ sendMessage: mockResilientSend });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+
+      result.current.messageHandlers.sendMessage('', []);
+
+      expect(mockResilientSend).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('messageHandlers.renderMessage', () => {
+    it('renderMessage는 항상 null을 반환한다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+
+      const output = result.current.messageHandlers.renderMessage({
+        item: { id: 1, content: '테스트' } as any,
+      });
+
+      expect(output).toBeNull();
+    });
+  });
+
+  describe('scrollToEnd', () => {
+    it('scrollToEnd 함수를 반환한다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+
+      expect(typeof result.current.scrollToEnd).toBe('function');
+    });
+
+    it('flatListRef가 없어도 scrollToEnd 호출 시 오류가 없다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+
+      result.current.scrollToEnd(false);
     });
   });
 
