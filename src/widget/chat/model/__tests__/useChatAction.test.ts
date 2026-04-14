@@ -55,7 +55,7 @@ describe('useChatAction', () => {
         { createdAt: '2026-01-02T15:30:00Z' },
       ];
 
-      const formatted = result.current.formatLastMessageDate(messages as never[]);
+      const formatted = result.current.formatLastMessageDate(messages as any[]);
 
       expect(typeof formatted).toBe('string');
       expect(formatted.length).toBeGreaterThan(0);
