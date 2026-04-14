@@ -1,4 +1,3 @@
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { act } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatInput } from '../useChatInput';
