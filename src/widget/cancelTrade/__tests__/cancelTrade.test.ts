@@ -71,6 +71,22 @@ describe('useCancelTrade', () => {
     expect(result.current.canSubmit).toBe(false);
   });
 
+  it('reason이 공백만 있고 productId가 있으면 canSubmit이 false이다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
+
+    act(() => {
+      result.current.setReason('   ');
+    });
+
+    expect(result.current.canSubmit).toBe(false);
+  });
+
+  it('productId가 없고 reason도 비어있으면 canSubmit이 true이다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: undefined }));
+
+    expect(result.current.canSubmit).toBe(true);
+  });
+
   it('reason이 있으면 canSubmit이 true이다', () => {
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
 
@@ -123,6 +139,30 @@ describe('useCancelTrade', () => {
     );
   });
 
+  it('handleSubmit non-Error 실패 시 기본 오류 메시지 Toast를 표시한다', async () => {
+    mockCancelTrade.mockRejectedValue('string error');
+
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 5 }));
+
+    act(() => {
+      result.current.setReason('사유');
+    });
+
+    await act(async () => {
+      result.current.handleSubmit('사유');
+    });
+
+    await waitFor(() =>
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '거래철회 실패',
+          text2: '거래철회 처리 중 오류가 발생했습니다.',
+        })
+      )
+    );
+  });
+
   it('resetForm으로 상태를 초기화한다', () => {
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
 
@@ -152,6 +192,111 @@ describe('useCancelTrade', () => {
 
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text1: '거래철회 실패' })
+    );
+  });
+
+  it('setImageUploadState로 imageUploadState를 업데이트한다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
+
+    act(() => {
+      result.current.setImageUploadState({
+        totalImages: 0,
+        uploadingCount: 0,
+        uploadedCount: 0,
+        hasUploadingImages: false,
+        hasFailedImages: false,
+      });
+    });
+
+    expect(result.current.imageUploadState).toEqual({
+      totalImages: 0,
+      uploadingCount: 0,
+      uploadedCount: 0,
+      hasUploadingImages: false,
+      hasFailedImages: false,
+    });
+  });
+
+  it('imageUploadState.hasUploadingImages=true이면 canSubmit이 false이다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
+
+    act(() => {
+      result.current.setReason('사유');
+      result.current.setImageUploadState({
+        totalImages: 1,
+        uploadingCount: 1,
+        uploadedCount: 0,
+        hasUploadingImages: true,
+        hasFailedImages: false,
+      });
+    });
+
+    expect(result.current.canSubmit).toBe(false);
+  });
+
+  it('imageUploadState.hasFailedImages=true이면 canSubmit이 false이다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
+
+    act(() => {
+      result.current.setReason('사유');
+      result.current.setImageUploadState({
+        totalImages: 1,
+        uploadingCount: 0,
+        uploadedCount: 0,
+        hasUploadingImages: false,
+        hasFailedImages: true,
+      });
+    });
+
+    expect(result.current.canSubmit).toBe(false);
+  });
+
+  it('이미지 업로드 중이면 handleSubmit 시 대기 Toast를 표시한다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
+
+    act(() => {
+      result.current.setReason('사유');
+      result.current.setImageUploadState({
+        totalImages: 1,
+        uploadingCount: 1,
+        uploadedCount: 0,
+        hasUploadingImages: true,
+        hasFailedImages: false,
+      });
+    });
+
+    act(() => {
+      result.current.handleSubmit('사유');
+    });
+
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        text1: '이미지 업로드가 완료될 때까지 기다려주세요.',
+      })
+    );
+  });
+
+  it('이미지 업로드 실패 상태이면 handleSubmit 시 실패 Toast를 표시한다', () => {
+    const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
+
+    act(() => {
+      result.current.setReason('사유');
+      result.current.setImageUploadState({
+        totalImages: 1,
+        uploadingCount: 0,
+        uploadedCount: 0,
+        hasUploadingImages: false,
+        hasFailedImages: true,
+      });
+    });
+
+    act(() => {
+      result.current.handleSubmit('사유');
+    });
+
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: '이미지 업로드 실패' })
     );
   });
 });
