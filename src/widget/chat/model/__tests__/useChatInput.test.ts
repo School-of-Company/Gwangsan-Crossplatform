@@ -208,5 +208,41 @@ describe('useChatInput', () => {
       ]);
       expect(result.current.isUploading).toBe(false);
     });
+
+    it('이미지 선택 중 오류 시 selectedImages가 변하지 않고 isUploading이 false이다', async () => {
+      mockRequestPermission.mockResolvedValue({ granted: true });
+      mockLaunchImageLibrary.mockRejectedValue(new Error('picker error'));
+
+      const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
+
+      await act(async () => {
+        await result.current.handleImagePicker();
+      });
+
+      expect(result.current.selectedImages).toEqual([]);
+      expect(result.current.isUploading).toBe(false);
+    });
+
+    it('이미지 업로드 실패 시 selectedImages가 변하지 않고 isUploading이 false이다', async () => {
+      setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
+      mockRequestPermission.mockResolvedValue({ granted: true });
+      mockLaunchImageLibrary.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://photo.jpg' }],
+      });
+
+      const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
+
+      await act(async () => {
+        try {
+          await result.current.handleImagePicker();
+        } catch {
+          // uploadImage re-throws after showing Alert
+        }
+      });
+
+      expect(result.current.selectedImages).toEqual([]);
+      expect(result.current.isUploading).toBe(false);
+    });
   });
 });
