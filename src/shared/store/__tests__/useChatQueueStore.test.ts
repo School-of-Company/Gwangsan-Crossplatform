@@ -55,6 +55,26 @@ describe('addMessage', () => {
     const unique = new Set(ids);
     expect(unique.size).toBe(5);
   });
+
+  it('content가 null인 이미지 메시지를 추가할 수 있다', () => {
+    const tempId = useChatQueueStore.getState().addMessage({
+      ...BASE_MESSAGE,
+      content: null,
+      messageType: 'IMAGE' as any,
+      imageIds: [1, 2, 3],
+    });
+    const msg = useChatQueueStore.getState().pendingMessages[0];
+    expect(msg.tempId).toBe(tempId);
+    expect(msg.content).toBeNull();
+    expect(msg.imageIds).toEqual([1, 2, 3]);
+  });
+
+  it('추가된 메시지에 createdAt이 ISO 문자열로 설정된다', () => {
+    useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    const msg = useChatQueueStore.getState().pendingMessages[0];
+    expect(() => new Date(msg.createdAt)).not.toThrow();
+    expect(new Date(msg.createdAt).toISOString()).toBe(msg.createdAt);
+  });
 });
 
 describe('setStatus', () => {
@@ -90,6 +110,25 @@ describe('setStatus', () => {
     const msg = useChatQueueStore.getState().pendingMessages.find((m) => m.tempId === tempId);
     expect(msg?.status).toBe(MESSAGE_STATUS.FAILED);
   });
+
+  it('같은 메시지에 여러 번 setStatus를 호출하면 마지막 값으로 유지된다', () => {
+    const tempId = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.SENDING);
+    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.FAILED);
+    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.SENT);
+
+    const msg = useChatQueueStore.getState().pendingMessages.find((m) => m.tempId === tempId);
+    expect(msg?.status).toBe(MESSAGE_STATUS.SENT);
+  });
+
+  it('setStatus는 다른 필드(retryCount, content 등)를 변경하지 않는다', () => {
+    const tempId = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.SENDING);
+
+    const msg = useChatQueueStore.getState().pendingMessages.find((m) => m.tempId === tempId);
+    expect(msg?.retryCount).toBe(0);
+    expect(msg?.content).toBe(BASE_MESSAGE.content);
+  });
 });
 
 describe('removeMessage', () => {
@@ -115,6 +154,22 @@ describe('removeMessage', () => {
     useChatQueueStore.getState().removeMessage('non-existent');
 
     expect(useChatQueueStore.getState().pendingMessages).toHaveLength(1);
+  });
+
+  it('같은 tempId를 두 번 삭제해도 오류 없이 빈 배열을 유지한다', () => {
+    const tempId = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    useChatQueueStore.getState().removeMessage(tempId);
+    useChatQueueStore.getState().removeMessage(tempId);
+
+    expect(useChatQueueStore.getState().pendingMessages).toHaveLength(0);
+  });
+
+  it('FAILED 상태 메시지도 삭제된다', () => {
+    const tempId = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.FAILED);
+    useChatQueueStore.getState().removeMessage(tempId);
+
+    expect(useChatQueueStore.getState().pendingMessages).toHaveLength(0);
   });
 });
 
@@ -144,6 +199,22 @@ describe('retry', () => {
 
     const msg = useChatQueueStore.getState().pendingMessages.find((m) => m.tempId === tempId);
     expect(msg?.status).toBe(MESSAGE_STATUS.PENDING);
+  });
+
+  it('존재하지 않는 tempId로 retry해도 오류가 발생하지 않는다', () => {
+    useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    expect(() => useChatQueueStore.getState().retry('non-existent')).not.toThrow();
+    expect(useChatQueueStore.getState().pendingMessages[0].retryCount).toBe(0);
+  });
+
+  it('SENDING 상태에서 retry하면 PENDING으로 변경된다', () => {
+    const tempId = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.SENDING);
+    useChatQueueStore.getState().retry(tempId);
+
+    const msg = useChatQueueStore.getState().pendingMessages.find((m) => m.tempId === tempId);
+    expect(msg?.status).toBe(MESSAGE_STATUS.PENDING);
+    expect(msg?.retryCount).toBe(1);
   });
 });
 
