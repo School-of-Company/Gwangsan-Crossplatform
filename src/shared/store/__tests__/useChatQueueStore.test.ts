@@ -178,8 +178,10 @@ describe('getRetryable', () => {
   });
 
   it('SENDING, SENT 상태는 제외한다', () => {
-    const tempId = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
-    useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.SENDING);
+    const id1 = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    const id2 = useChatQueueStore.getState().addMessage(BASE_MESSAGE);
+    useChatQueueStore.getState().setStatus(id1, MESSAGE_STATUS.SENDING);
+    useChatQueueStore.getState().setStatus(id2, MESSAGE_STATUS.SENT);
 
     expect(useChatQueueStore.getState().getRetryable(ROOM_A)).toHaveLength(0);
   });
