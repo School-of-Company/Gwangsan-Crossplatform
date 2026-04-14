@@ -25,7 +25,7 @@ describe('초기 상태', () => {
 
   it('osType이 플랫폼에 따라 설정된다', () => {
     const { formData } = useSigninStore.getState();
-    expect(['IOS', 'ANDROID']).toContain(formData.osType);
+    expect(formData.osType).toBe('IOS');
   });
 });
 
