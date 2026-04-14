@@ -46,6 +46,26 @@ describe('setField', () => {
     expect(useResetPasswordStore.getState().formData.verificationCode).toBe('');
     expect(useResetPasswordStore.getState().formData.newPassword).toBe('');
   });
+
+  it('빈 문자열로 필드를 덮어쓸 수 있다', () => {
+    useResetPasswordStore.getState().setField('phoneNumber', '010-1234-5678');
+    useResetPasswordStore.getState().setField('phoneNumber', '');
+    expect(useResetPasswordStore.getState().formData.phoneNumber).toBe('');
+  });
+
+  it('특수문자가 포함된 newPassword를 설정할 수 있다', () => {
+    useResetPasswordStore.getState().setField('newPassword', 'P@ss!w0rd#$%^&*');
+    expect(useResetPasswordStore.getState().formData.newPassword).toBe('P@ss!w0rd#$%^&*');
+  });
+
+  it('newPassword와 newPasswordConfirm을 동일하게 설정할 수 있다', () => {
+    const pw = 'SamePass123!';
+    useResetPasswordStore.getState().setField('newPassword', pw);
+    useResetPasswordStore.getState().setField('newPasswordConfirm', pw);
+
+    const { formData } = useResetPasswordStore.getState();
+    expect(formData.newPassword).toBe(formData.newPasswordConfirm);
+  });
 });
 
 describe('nextStep', () => {
@@ -85,6 +105,14 @@ describe('goToStep', () => {
     useResetPasswordStore.getState().goToStep('phoneNumber');
     expect(useResetPasswordStore.getState().currentStep).toBe('phoneNumber');
   });
+
+  it('현재 스텝과 같은 스텝으로 이동해도 상태가 유지된다', () => {
+    useResetPasswordStore.getState().setField('phoneNumber', '010-1234-5678');
+    useResetPasswordStore.getState().goToStep('phoneNumber');
+
+    expect(useResetPasswordStore.getState().currentStep).toBe('phoneNumber');
+    expect(useResetPasswordStore.getState().formData.phoneNumber).toBe('010-1234-5678');
+  });
 });
 
 describe('resetStore', () => {
@@ -97,5 +125,19 @@ describe('resetStore', () => {
     expect(useResetPasswordStore.getState().currentStep).toBe(INITIAL_STEP);
     expect(useResetPasswordStore.getState().formData.phoneNumber).toBe('');
     expect(useResetPasswordStore.getState().formData.newPassword).toBe('');
+  });
+
+  it('모든 필드를 설정한 뒤 resetStore하면 전부 초기화된다', () => {
+    useResetPasswordStore.getState().setField('phoneNumber', '010-9999-8888');
+    useResetPasswordStore.getState().setField('verificationCode', '654321');
+    useResetPasswordStore.getState().setField('newPassword', 'New@Pass1');
+    useResetPasswordStore.getState().setField('newPasswordConfirm', 'New@Pass1');
+    useResetPasswordStore.getState().resetStore();
+
+    const { formData } = useResetPasswordStore.getState();
+    expect(formData.phoneNumber).toBe('');
+    expect(formData.verificationCode).toBe('');
+    expect(formData.newPassword).toBe('');
+    expect(formData.newPasswordConfirm).toBe('');
   });
 });
