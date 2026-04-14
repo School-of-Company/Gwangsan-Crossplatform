@@ -1,6 +1,8 @@
 import { uploadImage } from '../uploadImage';
 import { instance } from '~/shared/lib/axios';
 
+import * as FileSystem from 'expo-file-system';
+
 jest.mock('~/shared/lib/axios', () => ({
   instance: { post: jest.fn() },
 }));
@@ -14,6 +16,7 @@ jest.mock('expo-file-system', () => ({
 }));
 
 const mockPost = instance.post as jest.Mock;
+const mockGetInfoAsync = FileSystem.getInfoAsync as jest.Mock;
 
 describe('uploadImage', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -63,5 +66,50 @@ describe('uploadImage', () => {
     mockPost.mockRejectedValue(new Error('Upload failed'));
 
     await expect(uploadImage('file:///local/path/photo.jpg')).rejects.toThrow('Upload failed');
+  });
+
+  describe('Android 플랫폼', () => {
+    const platform = require('react-native').Platform;
+
+    beforeEach(() => {
+      platform.OS = 'android';
+    });
+
+    afterEach(() => {
+      platform.OS = 'ios';
+    });
+
+    // 확장자가 없는 URI: 파일명이 '.'으로 끝나면 fileType='' (falsy) → Android 분기 진입
+    it('Android에서 fileType이 빈 문자열인 URI + 파일 존재 시 getInfoAsync를 호출한다', async () => {
+      mockGetInfoAsync.mockResolvedValue({ exists: true });
+      mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+
+      await uploadImage('file:///local/path/photo.');
+
+      expect(mockGetInfoAsync).toHaveBeenCalledWith('file:///local/path/photo.');
+    });
+
+    it('Android에서 fileType이 빈 문자열인 URI + 파일 미존재 시 jpeg 기본 타입으로 요청한다', async () => {
+      mockGetInfoAsync.mockResolvedValue({ exists: false });
+      mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+
+      await uploadImage('file:///local/path/photo.');
+
+      expect(mockPost).toHaveBeenCalledWith(
+        '/image',
+        expect.any(Object),
+        expect.objectContaining({
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+      );
+    });
+
+    it('Android에서 확장자 있는 URI는 getInfoAsync를 호출하지 않는다', async () => {
+      mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+
+      await uploadImage('file:///local/path/photo.jpg');
+
+      expect(mockGetInfoAsync).not.toHaveBeenCalled();
+    });
   });
 });
