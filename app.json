@@ -3,7 +3,7 @@
     "jsEngine": "hermes",
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "scheme": "gwangsan",
     "web": {
       "favicon": "./src/app/favicon.ico"
