@@ -1,4 +1,13 @@
-import { View, TouchableOpacity, Image, Text, ActivityIndicator } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  Image,
+  Text,
+  ActivityIndicator,
+  ActionSheetIOS,
+  Alert,
+  Platform,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { memo, useState, useCallback, useMemo, useEffect } from 'react';
@@ -86,16 +95,49 @@ const ImageUploader = ({
     [images, imageStatuses, onImagesChange, onImageIdsChange]
   );
 
-  const pickImage = useCallback(async () => {
-    if (readonly || images.length >= maxImages) return;
+  const handleImageSelected = useCallback(
+    async (uri: string) => {
+      onImagesChange?.([...images, uri]);
 
+      const newStatus: ImageStatus = { uri, status: 'uploading' };
+      setImageStatuses((prev) => [...prev, newStatus]);
+
+      try {
+        const uploadedImage = await uploadImageMutation.mutateAsync(uri);
+        updateImageStatus(uri, { status: 'uploaded', imageData: uploadedImage });
+
+        const allUploadedStatuses = imageStatuses.filter(
+          (s) => s.status === 'uploaded' && s.imageData
+        );
+        const imageIds = [
+          ...allUploadedStatuses,
+          { ...newStatus, status: 'uploaded' as const, imageData: uploadedImage },
+        ].map((s) => s.imageData!.imageId);
+        onImageIdsChange?.(imageIds);
+      } catch (error) {
+        console.error(error);
+        updateImageStatus(uri, {
+          status: 'failed',
+          error: error instanceof Error ? error : new Error('업로드 실패'),
+        });
+        setTimeout(() => removeImageByUri(uri), 1500);
+      }
+    },
+    [
+      images,
+      onImagesChange,
+      imageStatuses,
+      uploadImageMutation,
+      updateImageStatus,
+      removeImageByUri,
+      onImageIdsChange,
+    ]
+  );
+
+  const pickFromGallery = useCallback(async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Toast.show({
-        type: 'error',
-        text1: '권한 필요',
-        text2: '차일 접근 권한이 필요합니다.',
-      });
+      Toast.show({ type: 'error', text1: '권한 필요', text2: '사진 접근 권한이 필요합니다.' });
       return;
     }
 
@@ -107,59 +149,53 @@ const ImageUploader = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const newImageUri = result.assets[0].uri;
-        const newImages = [...images, newImageUri];
-        onImagesChange?.(newImages);
-
-        const newStatus: ImageStatus = {
-          uri: newImageUri,
-          status: 'uploading',
-        };
-        setImageStatuses((prev) => [...prev, newStatus]);
-
-        try {
-          const uploadedImage = await uploadImageMutation.mutateAsync(newImageUri);
-
-          updateImageStatus(newImageUri, {
-            status: 'uploaded',
-            imageData: uploadedImage,
-          });
-
-          const allUploadedStatuses = imageStatuses.filter(
-            (s) => s.status === 'uploaded' && s.imageData
-          );
-          const updatedStatuses = [
-            ...allUploadedStatuses,
-            { ...newStatus, status: 'uploaded' as const, imageData: uploadedImage },
-          ];
-          const imageIds = updatedStatuses.map((status) => status.imageData!.imageId);
-          onImageIdsChange?.(imageIds);
-        } catch (error) {
-          console.error(error);
-          updateImageStatus(newImageUri, {
-            status: 'failed',
-            error: error instanceof Error ? error : new Error('업로드 실패'),
-          });
-
-          setTimeout(() => {
-            removeImageByUri(newImageUri);
-          }, 1500);
-        }
+        await handleImageSelected(result.assets[0].uri);
       }
     } catch (error) {
       console.error('이미지 선택 중 오류:', error);
     }
-  }, [
-    images,
-    maxImages,
-    readonly,
-    onImagesChange,
-    imageStatuses,
-    uploadImageMutation,
-    updateImageStatus,
-    removeImageByUri,
-    onImageIdsChange,
-  ]);
+  }, [handleImageSelected]);
+
+  const pickFromCamera = useCallback(async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      Toast.show({ type: 'error', text1: '권한 필요', text2: '카메라 접근 권한이 필요합니다.' });
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await handleImageSelected(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('카메라 촬영 중 오류:', error);
+    }
+  }, [handleImageSelected]);
+
+  const pickImage = useCallback(() => {
+    if (readonly || images.length >= maxImages) return;
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['취소', '갤러리에서 선택', '카메라로 촬영'], cancelButtonIndex: 0 },
+        (buttonIndex) => {
+          if (buttonIndex === 1) pickFromGallery();
+          if (buttonIndex === 2) pickFromCamera();
+        }
+      );
+    } else {
+      Alert.alert('사진 선택', undefined, [
+        { text: '취소', style: 'cancel' },
+        { text: '갤러리에서 선택', onPress: pickFromGallery },
+        { text: '카메라로 촬영', onPress: pickFromCamera },
+      ]);
+    }
+  }, [readonly, images.length, maxImages, pickFromGallery, pickFromCamera]);
 
   const removeImage = useCallback(
     (index: number) => {
