@@ -123,7 +123,7 @@ export default function FindNicknamePage() {
                       keyboardType="numeric"
                       maxLength={11}
                       returnKeyType="done"
-                      editable={!verificationState.isSendingCode}
+                      editable={!verificationState.isSendingCode && !isVerificationComplete}
                     />
                   </View>
                   <Button
