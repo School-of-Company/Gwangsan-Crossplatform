@@ -44,8 +44,9 @@ export default function FindNicknamePage() {
     try {
       const nickname = await findNickname(phoneNumber);
       setFoundNickname(nickname);
-    } catch {
-      Toast.show({ type: 'error', text1: '별칭 찾기 실패', text2: '별칭을 찾을 수 없습니다.' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '별칭을 찾을 수 없습니다.';
+      Toast.show({ type: 'error', text1: '별칭 찾기 실패', text2: message });
     } finally {
       setIsLoading(false);
     }
