@@ -11,7 +11,7 @@ import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import BackArrow from '@/shared/assets/svg/BackArrow';
-import { usePasswordResetPhoneVerification } from '~/entity/auth/model/usePasswordResetPhoneVerification';
+import { useFindNicknamePhoneVerification } from '~/entity/auth/model/useFindNicknamePhoneVerification';
 import { findNickname } from '~/entity/auth/api/findNickname';
 import { useState } from 'react';
 import { router } from 'expo-router';
@@ -37,7 +37,7 @@ export default function FindNicknamePage() {
     verifyButtonState,
     isVerificationComplete,
     verificationRef,
-  } = usePasswordResetPhoneVerification({});
+  } = useFindNicknamePhoneVerification();
 
   const handleFindNickname = async () => {
     setIsLoading(true);
