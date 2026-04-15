@@ -1,7 +1,9 @@
 import { waitFor } from '@testing-library/react-native';
-import { renderHookWithProviders } from '~/test-utils';
+import { renderHookWithProviders, createQueryClient } from '~/test-utils';
 import { useGetPosts } from '../useGetPosts';
 import { getPosts } from '../../api/getPosts';
+import type { ModeType } from '~/shared/types/mode';
+import type { ProductType } from '~/shared/types/type';
 
 jest.mock('../../api/getPosts', () => ({
   getPosts: jest.fn(),
@@ -41,9 +43,9 @@ describe('useGetPosts', () => {
   it('mode와 type을 getPosts에 전달한다', async () => {
     mockGetPosts.mockResolvedValue([]);
 
-    renderHookWithProviders(() => useGetPosts('NORMAL', 'SELL'));
+    renderHookWithProviders(() => useGetPosts('GIVER' as ModeType, 'OBJECT' as ProductType));
 
-    await waitFor(() => expect(mockGetPosts).toHaveBeenCalledWith('SELL', 'NORMAL'));
+    await waitFor(() => expect(mockGetPosts).toHaveBeenCalledWith('OBJECT', 'GIVER'));
   });
 
   it('파라미터 없이 호출하면 undefined로 전달한다', async () => {
@@ -57,18 +59,20 @@ describe('useGetPosts', () => {
   it('queryKey에 mode와 type이 포함된다', async () => {
     mockGetPosts.mockResolvedValue([]);
 
-    const { result } = renderHookWithProviders(() => useGetPosts('GWANGSAN', 'BUY'));
+    const { result } = renderHookWithProviders(() =>
+      useGetPosts('RECEIVER' as ModeType, 'SERVICE' as ProductType)
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockGetPosts).toHaveBeenCalledWith('BUY', 'GWANGSAN');
+    expect(mockGetPosts).toHaveBeenCalledWith('SERVICE', 'RECEIVER');
   });
 
   it('API 에러 발생 시 isError가 true이다', async () => {
     mockGetPosts.mockRejectedValue(new Error('서버 오류'));
 
     const { result } = renderHookWithProviders(() => useGetPosts(), {
-      queryClientOptions: { defaultOptions: { queries: { retry: false } } },
+      queryClient: createQueryClient(),
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));

@@ -30,7 +30,7 @@ describe('useNetworkStatus', () => {
   });
 
   it('네트워크 연결 해제 이벤트를 받으면 false로 변경된다', () => {
-    let capturedListener: ((state: { isConnected: boolean | null }) => void) | null = null;
+    let capturedListener: Parameters<typeof NetInfo.addEventListener>[0] | null = null;
     mockNetInfo.addEventListener.mockImplementation((listener) => {
       capturedListener = listener;
       return jest.fn();
@@ -39,14 +39,14 @@ describe('useNetworkStatus', () => {
     const { result } = renderHook(() => useNetworkStatus());
 
     act(() => {
-      capturedListener!({ isConnected: false });
+      capturedListener!({ isConnected: false } as any);
     });
 
     expect(result.current).toBe(false);
   });
 
   it('네트워크 재연결 이벤트를 받으면 true로 변경된다', () => {
-    let capturedListener: ((state: { isConnected: boolean | null }) => void) | null = null;
+    let capturedListener: Parameters<typeof NetInfo.addEventListener>[0] | null = null;
     mockNetInfo.addEventListener.mockImplementation((listener) => {
       capturedListener = listener;
       return jest.fn();
@@ -55,17 +55,17 @@ describe('useNetworkStatus', () => {
     const { result } = renderHook(() => useNetworkStatus());
 
     act(() => {
-      capturedListener!({ isConnected: false });
+      capturedListener!({ isConnected: false } as any);
     });
     act(() => {
-      capturedListener!({ isConnected: true });
+      capturedListener!({ isConnected: true } as any);
     });
 
     expect(result.current).toBe(true);
   });
 
   it('isConnected가 null이면 false로 처리된다', () => {
-    let capturedListener: ((state: { isConnected: boolean | null }) => void) | null = null;
+    let capturedListener: Parameters<typeof NetInfo.addEventListener>[0] | null = null;
     mockNetInfo.addEventListener.mockImplementation((listener) => {
       capturedListener = listener;
       return jest.fn();
@@ -74,7 +74,7 @@ describe('useNetworkStatus', () => {
     const { result } = renderHook(() => useNetworkStatus());
 
     act(() => {
-      capturedListener!({ isConnected: null });
+      capturedListener!({ isConnected: null } as any);
     });
 
     expect(result.current).toBe(false);
