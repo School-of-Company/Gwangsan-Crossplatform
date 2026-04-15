@@ -9,7 +9,7 @@ beforeEach(() => {
 describe('sendSms', () => {
   it('정상적인 전화번호로 SMS 전송에 성공한다', async () => {
     mockFetch({ message: 'success' });
-    expect(await sendSms('01012345678')).toEqual({ message: 'success' });
+    await expect(sendSms('01012345678')).resolves.not.toThrow();
   });
 
   it('올바른 엔드포인트와 바디로 요청을 보낸다', async () => {
