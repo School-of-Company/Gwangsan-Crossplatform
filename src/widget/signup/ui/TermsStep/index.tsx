@@ -38,7 +38,7 @@ function TermsStep() {
           activeOpacity={0.7}>
           <View
             className={`h-6 w-6 items-center justify-center rounded border-2 ${
-              agreed ? 'border-primary-500 bg-primary-500' : 'border-gray-300 bg-white'
+              agreed ? 'border-main-500 bg-main-500' : 'border-gray-300 bg-white'
             }`}>
             {agreed && <CheckIcon color="#ffffff" width={14} height={14} />}
           </View>
