@@ -5,6 +5,9 @@ import { memo, useState, useCallback, useMemo, useEffect } from 'react';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 import { ImageType } from '@/shared/types/imageType';
 import Toast from 'react-native-toast-message';
+import { logger } from '@/shared/lib/logger';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export interface ImageUploadState {
   readonly totalImages: number;
@@ -107,7 +110,18 @@ const ImageUploader = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const newImageUri = result.assets[0].uri;
+        const asset = result.assets[0];
+
+        if (asset.fileSize !== undefined && asset.fileSize > MAX_FILE_SIZE) {
+          Toast.show({
+            type: 'error',
+            text1: '파일 크기 초과',
+            text2: '10MB 이하의 이미지만 업로드할 수 있습니다.',
+          });
+          return;
+        }
+
+        const newImageUri = asset.uri;
         const newImages = [...images, newImageUri];
         onImagesChange?.(newImages);
 
@@ -135,7 +149,7 @@ const ImageUploader = ({
           const imageIds = updatedStatuses.map((status) => status.imageData!.imageId);
           onImageIdsChange?.(imageIds);
         } catch (error) {
-          console.error(error);
+          logger.error('Image upload failed', error);
           updateImageStatus(newImageUri, {
             status: 'failed',
             error: error instanceof Error ? error : new Error('업로드 실패'),
@@ -147,7 +161,7 @@ const ImageUploader = ({
         }
       }
     } catch (error) {
-      console.error('이미지 선택 중 오류:', error);
+      logger.error('이미지 선택 중 오류', error);
     }
   }, [
     images,

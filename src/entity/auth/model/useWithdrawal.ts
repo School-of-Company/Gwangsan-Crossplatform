@@ -6,6 +6,7 @@ import { removeData } from '~/shared/lib/removeData';
 import { clearAuthTokens } from '~/shared/lib/auth';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import Toast from 'react-native-toast-message';
+import { logger } from '~/shared/lib/logger';
 
 export const useWithdrawal = () => {
   const router = useRouter();
@@ -20,7 +21,7 @@ export const useWithdrawal = () => {
       router.replace('/onboarding');
     },
     onError: (error) => {
-      console.error(error);
+      logger.error('withdrawal failed', error);
       Toast.show({
         type: 'error',
         text1: '회원탈퇴 실패',
