@@ -8,8 +8,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const uploadImage = async (uri: string): Promise<ImageType> => {
   try {
-    const fileInfo = await FileSystem.getInfoAsync(uri);
-    if (fileInfo.exists && fileInfo.size !== undefined && fileInfo.size > MAX_FILE_SIZE) {
+    const file = new FileSystem.File(uri);
+    if (file.exists && file.size > MAX_FILE_SIZE) {
       throw new Error('파일 크기가 10MB를 초과합니다');
     }
 
@@ -17,9 +17,7 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
 
     let fileType = filename.split('.').pop()?.toLowerCase();
     if (Platform.OS === 'android' && !fileType) {
-      if (fileInfo.exists) {
-        fileType = uri.match(/\.(jpeg|jpg|png|gif|webp)$/i)?.[1] || 'jpeg';
-      }
+      fileType = uri.match(/\.(jpeg|jpg|png|gif|webp)$/i)?.[1] || 'jpeg';
     }
 
     const type = `image/${fileType || 'jpeg'}`;
