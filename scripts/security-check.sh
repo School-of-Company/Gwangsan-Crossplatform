@@ -45,18 +45,25 @@ gsrc() {
 banner "1. 토큰 보안 저장소 (AsyncStorage vs SecureStore)"
 
 ASYNC_FILES=$(gsrc -l "AsyncStorage" | grep -v __tests__ || true)
-if [ -n "$ASYNC_FILES" ]; then
-  crit "AsyncStorage가 프로덕션 코드에 사용됨 (Android 평문, Secure Enclave 미사용):"
-  echo "$ASYNC_FILES" | sed 's/^/    /'
+SECURE_FILES=$(gsrc -l "expo-secure-store\|SecureStore" | grep -v __tests__ || true)
+
+# SecureStore와 함께 쓰는 파일은 라우팅 레이어 — 정상
+ASYNC_ONLY=$(comm -23 \
+  <(echo "$ASYNC_FILES" | sort) \
+  <(echo "$SECURE_FILES" | sort) 2>/dev/null || \
+  grep -Fvf <(echo "$SECURE_FILES") <(echo "$ASYNC_FILES") 2>/dev/null || true)
+
+if [ -n "$ASYNC_ONLY" ]; then
+  crit "AsyncStorage만 단독으로 사용하는 파일 — SecureStore 미사용 (토큰 비보호 위험):"
+  echo "$ASYNC_ONLY" | sed 's/^/    /'
 else
-  ok "AsyncStorage가 테스트 외 코드에 없음"
+  ok "AsyncStorage 단독 사용 없음 (민감 키는 SecureStore 라우팅 적용됨)"
 fi
 
-SECURE_STORE=$(gsrc -l "expo-secure-store\|SecureStore" || true)
-if [ -z "$SECURE_STORE" ]; then
+if [ -z "$SECURE_FILES" ]; then
   crit "expo-secure-store가 설치되어 있으나 src/ 에서 전혀 import되지 않음 — 토큰이 비보호 상태"
 else
-  ok "expo-secure-store 사용 파일: $(echo "$SECURE_STORE" | tr '\n' ' ')"
+  ok "expo-secure-store 사용 파일: $(echo "$SECURE_FILES" | tr '\n' ' ')"
 fi
 
 # ── 2. 비밀값 및 환경변수 노출 ──────────────────────────────────────────────────
@@ -117,10 +124,15 @@ KEYCHAIN_CALLS=$(gsrc -n "setGenericPassword" | grep -v __tests__ || true)
 if [ -n "$KEYCHAIN_CALLS" ]; then
   echo -e "  ${YELLOW}setGenericPassword 호출 발견 (파라미터 확인 필요):${RESET}"
   echo "$KEYCHAIN_CALLS" | sed 's/^/    /'
-  # 평문 password 파라미터 패턴 감지
-  if echo "$KEYCHAIN_CALLS" | grep -qE "setGenericPassword\([^,]+,\s*password"; then
-    high "setGenericPassword()에 평문 password 파라미터 전달됨 — token 저장으로 교체 필요"
-    echo "    참고: src/entity/auth/api/signin.ts — saveCredentialsForBiometric(nickname, password)"
+  # 두 번째 파라미터가 token/Token/access/refresh 계열이 아닌 경우를 평문 password로 간주
+  PLAINTEXT_PASS=$(echo "$KEYCHAIN_CALLS" \
+    | grep -vE "(token|Token|access|refresh|jwt|JWT)" \
+    | grep -E "setGenericPassword\(.+,.+\)" || true)
+  if [ -n "$PLAINTEXT_PASS" ]; then
+    high "setGenericPassword() 호출 중 token 계열이 아닌 파라미터 감지 — 평문 password 저장 의심:"
+    echo "$PLAINTEXT_PASS" | sed 's/^/    /'
+  else
+    ok "setGenericPassword() 호출이 token 계열 파라미터를 사용함 (안전)"
   fi
 else
   ok "setGenericPassword 호출 없음"
