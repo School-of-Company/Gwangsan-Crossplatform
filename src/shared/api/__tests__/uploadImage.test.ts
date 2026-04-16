@@ -22,7 +22,7 @@ jest.mock('expo-file-system', () => ({
 }));
 
 const mockPost = instance.post as jest.Mock;
-const MockFile = FileSystem.File as jest.Mock;
+const MockFile = FileSystem.File as unknown as jest.Mock;
 
 describe('uploadImage', () => {
   beforeEach(() => {
