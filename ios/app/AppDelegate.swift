@@ -13,6 +13,29 @@ public class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    #if !DEBUG
+    // Certificate Pinning — TrustKit
+    // Pins: Let's Encrypt R13 중간 CA (주 핀) + 리프 인증서 (백업 핀)
+    // 핀 갱신 명령: openssl s_client -connect api.gwangsan.io.kr:443 2>/dev/null \
+    //   | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
+    //   | openssl dgst -sha256 -binary | base64
+    let trustKitConfig: [String: Any] = [
+      kTSKSwizzleNetworkDelegates: true,
+      kTSKPinnedDomains: [
+        "gwangsan.io.kr": [
+          kTSKIncludeSubdomains: true,
+          kTSKEnforcePinning: true,
+          kTSKDisableDefaultReportUri: true,
+          kTSKPublicKeyHashes: [
+            "AlSQhgtJirc8ahLyekmtX+Iw+v46yPYRLJt9Cq1GlB0=",  // Let's Encrypt R13 중간 CA
+            "p50MoRVG3nfXUrJGJrfLe5fP+kwk3vgJ/l++gKla2d4=",  // 리프 인증서 (백업)
+          ],
+        ]
+      ]
+    ]
+    TrustKit.initSharedInstance(withConfiguration: trustKitConfig)
+    #endif
+
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
