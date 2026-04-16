@@ -1,6 +1,6 @@
-import { ConfigPlugin, withAndroidManifest, withDangerousMod } from '@expo/config-plugins';
-import * as fs from 'fs';
-import * as path from 'path';
+const { withAndroidManifest, withDangerousMod } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Android Network Security Config 설정 플러그인
@@ -40,7 +40,8 @@ const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
 </network-security-config>
 `;
 
-const withNetworkSecurityConfig: ConfigPlugin = (config) => {
+/** @type {import('@expo/config-plugins').ConfigPlugin} */
+const withNetworkSecurityConfig = (config) => {
   // Step 1: NSC XML 파일 생성
   config = withDangerousMod(config, [
     'android',
@@ -73,4 +74,4 @@ const withNetworkSecurityConfig: ConfigPlugin = (config) => {
   return config;
 };
 
-export default withNetworkSecurityConfig;
+module.exports = withNetworkSecurityConfig;
