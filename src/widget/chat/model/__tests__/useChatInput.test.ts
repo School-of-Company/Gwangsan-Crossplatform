@@ -1,4 +1,5 @@
 import { act } from '@testing-library/react-native';
+import { ActionSheetIOS } from 'react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatInput } from '../useChatInput';
 
@@ -26,6 +27,11 @@ const setupUploadMock = (mutateAsync = jest.fn()) => {
 beforeEach(() => {
   jest.clearAllMocks();
   setupUploadMock();
+  jest
+    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .mockImplementation((_options, callback) => {
+      callback(1); // '갤러리에서 선택' 시뮬레이션
+    });
 });
 
 describe('useChatInput', () => {
