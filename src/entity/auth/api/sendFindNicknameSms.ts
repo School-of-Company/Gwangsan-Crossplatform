@@ -1,9 +1,9 @@
 import { API_URL } from '@env';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 
-export const sendSms = async (phoneNumber: string) => {
+export const sendFindNicknameSms = async (phoneNumber: string) => {
   try {
-    const response = await fetch(`${API_URL}/sms`, {
+    const response = await fetch(`${API_URL}/sms/nickname`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
