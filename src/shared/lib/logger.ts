@@ -11,6 +11,11 @@ export const logger = {
   warn: (message: string, data?: unknown): void => {
     if (__DEV__) {
       console.warn(message, data);
+    } else {
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        extra: { data },
+      });
     }
   },
 };

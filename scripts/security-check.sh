@@ -92,7 +92,7 @@ else
   ok ".env가 git 히스토리에 없음"
 fi
 
-HARDCODED=$(gsrc -E "(sntrys_[A-Za-z0-9_]{20,}|api[_-]?key\s*[:=]\s*['\"][A-Za-z0-9]{16,})" || true)
+HARDCODED=$(gsrc -Ei "(sntrys_[A-Za-z0-9_]{20,}|api[_-]?key\s*[:=]\s*['\"][A-Za-z0-9]{16,})" || true)
 if [ -n "$HARDCODED" ]; then
   crit "소스 코드에 하드코딩된 비밀값 패턴:"
   echo "$HARDCODED" | sed 's/^/    /'
@@ -127,7 +127,7 @@ if [ -n "$KEYCHAIN_CALLS" ]; then
   # 두 번째 파라미터가 token/Token/access/refresh 계열이 아닌 경우를 평문 password로 간주
   PLAINTEXT_PASS=$(echo "$KEYCHAIN_CALLS" \
     | grep -vE "(token|Token|access|refresh|jwt|JWT)" \
-    | grep -E "setGenericPassword\(.+,.+\)" || true)
+    | grep -iE "setGenericPassword\([^,]+,\s*[^,)]*(password|pw|pass|secret)" || true)
   if [ -n "$PLAINTEXT_PASS" ]; then
     high "setGenericPassword() 호출 중 token 계열이 아닌 파라미터 감지 — 평문 password 저장 의심:"
     echo "$PLAINTEXT_PASS" | sed 's/^/    /'
