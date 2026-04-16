@@ -8,7 +8,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const uploadImage = async (uri: string): Promise<ImageType> => {
   try {
-    const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+    const fileInfo = await FileSystem.getInfoAsync(uri);
     if (fileInfo.exists && fileInfo.size !== undefined && fileInfo.size > MAX_FILE_SIZE) {
       throw new Error('파일 크기가 10MB를 초과합니다');
     }
