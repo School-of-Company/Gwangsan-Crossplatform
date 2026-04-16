@@ -70,6 +70,13 @@ const ImageUploader = ({
     onUploadStateChange?.(uploadState);
   }, [uploadState, onUploadStateChange]);
 
+  useEffect(() => {
+    const uploadedIds = imageStatuses
+      .filter((s) => s.status === 'uploaded' && s.imageData)
+      .map((s) => s.imageData!.imageId);
+    onImageIdsChange?.(uploadedIds);
+  }, [imageStatuses, onImageIdsChange]);
+
   const updateImageStatus = useCallback((uri: string, status: Partial<ImageStatus>) => {
     setImageStatuses((prev) =>
       prev.map((item) => (item.uri === uri ? { ...item, ...status } : item))
@@ -85,14 +92,8 @@ const ImageUploader = ({
       onImagesChange?.(newImages);
 
       setImageStatuses((prev) => prev.filter((item) => item.uri !== uri));
-
-      const uploadedStatuses = imageStatuses.filter(
-        (status) => status.uri !== uri && status.status === 'uploaded' && status.imageData
-      );
-      const imageIds = uploadedStatuses.map((status) => status.imageData!.imageId);
-      onImageIdsChange?.(imageIds);
     },
-    [images, imageStatuses, onImagesChange, onImageIdsChange]
+    [images, onImagesChange]
   );
 
   const handleImageSelected = useCallback(
@@ -105,15 +106,6 @@ const ImageUploader = ({
       try {
         const uploadedImage = await uploadImageMutation.mutateAsync(uri);
         updateImageStatus(uri, { status: 'uploaded', imageData: uploadedImage });
-
-        const allUploadedStatuses = imageStatuses.filter(
-          (s) => s.status === 'uploaded' && s.imageData
-        );
-        const imageIds = [
-          ...allUploadedStatuses,
-          { ...newStatus, status: 'uploaded' as const, imageData: uploadedImage },
-        ].map((s) => s.imageData!.imageId);
-        onImageIdsChange?.(imageIds);
       } catch (error) {
         console.error(error);
         updateImageStatus(uri, {
@@ -123,15 +115,7 @@ const ImageUploader = ({
         setTimeout(() => removeImageByUri(uri), 1500);
       }
     },
-    [
-      images,
-      onImagesChange,
-      imageStatuses,
-      uploadImageMutation,
-      updateImageStatus,
-      removeImageByUri,
-      onImageIdsChange,
-    ]
+    [images, onImagesChange, uploadImageMutation, updateImageStatus, removeImageByUri]
   );
 
   const pickFromGallery = useCallback(async () => {
