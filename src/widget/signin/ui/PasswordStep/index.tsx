@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { logger } from '~/shared/lib/logger';
 
 export default function PasswordStep() {
   const { value: initialPassword, updateField } = useSigninFormField('password');
@@ -30,13 +31,18 @@ export default function PasswordStep() {
       updateField(trimmedPassword);
       setIsLoading(true);
 
-      await signinWithDeviceInfo({ nickname: trimmedNickname, password: trimmedPassword });
-      saveCredentialsForBiometric(trimmedNickname, trimmedPassword).catch(console.error);
+      const authResponse = await signinWithDeviceInfo({
+        nickname: trimmedNickname,
+        password: trimmedPassword,
+      });
+      saveCredentialsForBiometric(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
+        logger.error('saveCredentialsForBiometric failed', e)
+      );
 
       resetStore();
       router.replace('/main');
     } catch (err) {
-      console.error(err);
+      logger.error('PasswordStep login failed', err);
 
       if (err instanceof ZodError) {
         setError(err.errors[0].message);

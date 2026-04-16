@@ -2,14 +2,21 @@ import { instance } from '../lib/axios';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { ImageType } from '../types/imageType';
+import { logger } from '../lib/logger';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const uploadImage = async (uri: string): Promise<ImageType> => {
   try {
+    const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+    if (fileInfo.exists && fileInfo.size !== undefined && fileInfo.size > MAX_FILE_SIZE) {
+      throw new Error('파일 크기가 10MB를 초과합니다');
+    }
+
     const filename = uri.split('/').pop() || 'image.jpg';
 
     let fileType = filename.split('.').pop()?.toLowerCase();
     if (Platform.OS === 'android' && !fileType) {
-      const fileInfo = await FileSystem.getInfoAsync(uri);
       if (fileInfo.exists) {
         fileType = uri.match(/\.(jpeg|jpg|png|gif|webp)$/i)?.[1] || 'jpeg';
       }
@@ -34,7 +41,7 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
 
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error('uploadImage failed', error);
     throw error;
   }
 };

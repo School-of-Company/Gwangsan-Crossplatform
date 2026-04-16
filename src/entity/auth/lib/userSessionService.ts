@@ -1,5 +1,6 @@
 import { getData } from '@/shared/lib/getData';
 import { instance } from '@/shared/lib/axios';
+import { logger } from '@/shared/lib/logger';
 
 export interface UserSession {
   readonly memberId: number;
@@ -42,7 +43,7 @@ export const createUserSessionService = (): IUserSessionService => {
 
       throw new Error('No valid session found');
     } catch (error) {
-      console.error(error);
+      logger.error('Failed to load user session', error);
       clearSession();
       throw new Error('Authentication required');
     }
