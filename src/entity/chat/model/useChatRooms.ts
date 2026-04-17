@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { getChatRooms } from '../api/getChatRooms';
 import { markChatAsRead } from '../api/markChatAsRead';
 import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chatTypes';
+import { logger } from '~/shared/lib/logger';
 
 export const chatRoomKeys = {
   all: ['chatRooms'] as const,
@@ -81,7 +82,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
           unreadMessageCount: 0,
         }));
       } catch (error) {
-        console.error(error);
+        logger.error('markRoomAsRead failed', error);
         updateChatRoom(roomId, (room) => ({
           ...room,
           unreadMessageCount: 0,

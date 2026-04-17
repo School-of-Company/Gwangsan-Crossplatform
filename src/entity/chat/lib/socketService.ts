@@ -1,5 +1,6 @@
 import type { ISocketManager, BaseSocketMessage, RoomId } from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
+import { logger } from '@/shared/lib/logger';
 
 export interface ChatSocketEvents {
   connect: () => void;
@@ -42,7 +43,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
         try {
           handler(...args);
         } catch (error) {
-          console.error(`Error in ${event} handler:`, error);
+          logger.error(`Error in ${event} handler`, error);
         }
       });
     }

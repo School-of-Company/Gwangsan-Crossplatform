@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { logger } from '~/shared/lib/logger';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
@@ -76,7 +77,7 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     if (roomId) {
-      markRoomAsRead(roomId).catch(console.error);
+      markRoomAsRead(roomId).catch((e) => logger.error('markRoomAsRead failed', e));
     }
   }, [roomId, markRoomAsRead]);
 
@@ -101,7 +102,7 @@ export default function ChatRoomPage() {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
     } catch (error) {
-      console.error(error);
+      logger.error('handleTradeRequest failed', error);
     }
   }, [executeTradeRequest]);
 
@@ -119,7 +120,7 @@ export default function ChatRoomPage() {
         setReviewLight(60);
         setReviewContents('');
       } catch (error) {
-        console.error('리뷰 작성 실패:', error);
+        logger.error('리뷰 작성 실패', error);
       }
     },
     [roomData?.product?.id]

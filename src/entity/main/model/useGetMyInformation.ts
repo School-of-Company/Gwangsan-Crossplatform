@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getMyInformation } from '../../../view/main/api/getMyInformation';
 import { ProfileType } from '~/shared/types/profileType';
 import { setData } from '~/shared/lib/setData';
+import * as Sentry from '@sentry/react-native';
 
 export const useGetMyInformation = () => {
   return useQuery<ProfileType>({
@@ -10,6 +11,7 @@ export const useGetMyInformation = () => {
       const data = await getMyInformation();
       if (data && data.memberId) {
         await setData('memberId', data.memberId.toString());
+        Sentry.setUser({ id: data.memberId.toString() });
       }
       return data;
     },

@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { IChatSocketService } from '../lib/socketService';
+import { logger } from '@/shared/lib/logger';
 
 interface UseSocketConnectionProps {
   socketService: IChatSocketService;
@@ -35,7 +36,7 @@ export const useSocketConnection = ({
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
         if (autoConnect && !socketService.isConnected) {
-          socketService.connect().catch(console.error);
+          socketService.connect().catch((e) => logger.error('Socket connect failed', e));
         }
       }
       appStateRef.current = nextAppState;
@@ -48,14 +49,14 @@ export const useSocketConnection = ({
   useFocusEffect(
     useCallback(() => {
       if (autoConnect && !socketService.isConnected) {
-        socketService.connect().catch(console.error);
+        socketService.connect().catch((e) => logger.error('Socket connect failed', e));
       }
     }, [autoConnect, socketService])
   );
 
   useEffect(() => {
     if (autoConnect && !socketService.isConnected) {
-      socketService.connect().catch(console.error);
+      socketService.connect().catch((e) => logger.error('Socket connect failed', e));
     }
   }, [autoConnect, socketService]);
 

@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { AppState, View } from 'react-native';
 import { useEffect } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
@@ -14,13 +14,27 @@ import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
+  const pathname = usePathname();
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'background') saveE2ECoverage();
+      SentryRN.addBreadcrumb({
+        category: 'app.lifecycle',
+        message: `App state changed to ${state}`,
+        level: 'info',
+      });
     });
     return () => sub.remove();
   }, []);
+
+  useEffect(() => {
+    SentryRN.addBreadcrumb({
+      category: 'navigation',
+      message: `Navigated to ${pathname}`,
+      level: 'info',
+    });
+  }, [pathname]);
 
   if (!fontsLoaded) return null;
   return (
