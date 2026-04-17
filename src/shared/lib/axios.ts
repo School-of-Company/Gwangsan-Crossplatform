@@ -61,8 +61,10 @@ instance.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    const startTime = (originalRequest as any).__sentryStartTime;
+    const originalRequest = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
+    const startTime = (originalRequest as any)?.__sentryStartTime;
     const duration = startTime ? Date.now() - startTime : undefined;
 
     Sentry.addBreadcrumb({
@@ -76,10 +78,15 @@ instance.interceptors.response.use(
     });
 
     const isAuthRequest =
-      originalRequest.url?.includes('/auth/signin') ||
-      originalRequest.url?.includes('/auth/reissue');
+      originalRequest?.url?.includes('/auth/signin') ||
+      originalRequest?.url?.includes('/auth/reissue');
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
+    if (
+      originalRequest &&
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthRequest
+    ) {
       originalRequest._retry = true;
 
       if (refreshPromise) {
