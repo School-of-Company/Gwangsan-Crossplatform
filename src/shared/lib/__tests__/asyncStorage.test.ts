@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
 import { getData } from '../getData';
 import { setData } from '../setData';
@@ -10,11 +11,18 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
+}));
+
 jest.mock('react-native-toast-message', () => ({
   show: jest.fn(),
 }));
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+const mockSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
 const mockToast = Toast as jest.Mocked<typeof Toast>;
 
 beforeEach(() => {
@@ -22,7 +30,7 @@ beforeEach(() => {
 });
 
 describe('getData', () => {
-  it('저장된 값을 반환한다', async () => {
+  it('일반 키는 AsyncStorage에서 값을 반환한다', async () => {
     mockAsyncStorage.getItem.mockResolvedValue('stored-value');
 
     const result = await getData('myKey');
@@ -39,6 +47,25 @@ describe('getData', () => {
     expect(result).toBeNull();
   });
 
+  it('accessToken은 SecureStore에서 값을 반환한다', async () => {
+    mockSecureStore.getItemAsync.mockResolvedValue('secure-token');
+
+    const result = await getData('accessToken');
+
+    expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith('accessToken');
+    expect(mockAsyncStorage.getItem).not.toHaveBeenCalled();
+    expect(result).toBe('secure-token');
+  });
+
+  it('refreshToken은 SecureStore에서 값을 반환한다', async () => {
+    mockSecureStore.getItemAsync.mockResolvedValue('secure-refresh');
+
+    const result = await getData('refreshToken');
+
+    expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith('refreshToken');
+    expect(result).toBe('secure-refresh');
+  });
+
   it('AsyncStorage가 throw하면 Toast 에러를 표시하고 에러를 전파한다', async () => {
     const storageError = new Error('Storage read failed');
     mockAsyncStorage.getItem.mockRejectedValue(storageError);
@@ -49,12 +76,31 @@ describe('getData', () => {
 });
 
 describe('setData', () => {
-  it('주어진 key-value를 AsyncStorage에 저장한다', async () => {
+  it('일반 키는 AsyncStorage에 저장한다', async () => {
     mockAsyncStorage.setItem.mockResolvedValue();
+
+    await setData('memberId', '42');
+
+    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('memberId', '42');
+    expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+  });
+
+  it('accessToken은 SecureStore에 저장한다', async () => {
+    mockSecureStore.setItemAsync.mockResolvedValue();
 
     await setData('accessToken', 'abc123');
 
-    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith('accessToken', 'abc123');
+    expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith('accessToken', 'abc123');
+    expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
+  });
+
+  it('refreshToken은 SecureStore에 저장한다', async () => {
+    mockSecureStore.setItemAsync.mockResolvedValue();
+
+    await setData('refreshToken', 'ref456');
+
+    expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith('refreshToken', 'ref456');
+    expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
   });
 
   it('AsyncStorage가 throw하면 Toast 에러를 표시하고 에러를 전파한다', async () => {
@@ -67,12 +113,31 @@ describe('setData', () => {
 });
 
 describe('removeData', () => {
-  it('주어진 key를 AsyncStorage에서 삭제한다', async () => {
+  it('일반 키는 AsyncStorage에서 삭제한다', async () => {
     mockAsyncStorage.removeItem.mockResolvedValue();
+
+    await removeData('memberId');
+
+    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('memberId');
+    expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
+  });
+
+  it('accessToken은 SecureStore에서 삭제한다', async () => {
+    mockSecureStore.deleteItemAsync.mockResolvedValue();
 
     await removeData('accessToken');
 
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('accessToken');
+    expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('accessToken');
+    expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it('refreshToken은 SecureStore에서 삭제한다', async () => {
+    mockSecureStore.deleteItemAsync.mockResolvedValue();
+
+    await removeData('refreshToken');
+
+    expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith('refreshToken');
+    expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
   });
 
   it('AsyncStorage가 throw하면 Toast 에러를 표시하고 에러를 전파한다', async () => {

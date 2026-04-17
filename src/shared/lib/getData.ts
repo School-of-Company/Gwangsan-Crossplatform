@@ -1,8 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
 
-export const getData = async (name: string) => {
+const SECURE_KEYS = new Set(['accessToken', 'refreshToken']);
+
+export const getData = async (name: string): Promise<string | null> => {
   try {
+    if (SECURE_KEYS.has(name)) {
+      return await SecureStore.getItemAsync(name);
+    }
     return await AsyncStorage.getItem(name);
   } catch (e) {
     Toast.show({

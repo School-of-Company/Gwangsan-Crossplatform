@@ -18,6 +18,7 @@ export default ({ config }: { config: ExpoConfig }) => {
           disableAutoUpload: true,
         },
       ],
+      './plugins/withNetworkSecurityConfig',
     ],
     extra: {
       ...config.extra,
