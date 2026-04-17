@@ -32,7 +32,7 @@ instance.interceptors.request.use(
     } else {
       Sentry.addBreadcrumb({
         category: 'auth',
-        message: `No accessToken in AsyncStorage when requesting ${config.url}`,
+        message: `No accessToken found when requesting ${config.url}`,
         level: 'warning',
       });
     }

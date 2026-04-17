@@ -16,6 +16,8 @@ install! 'cocoapods',
 prepare_react_native_project!
 
 target 'app' do
+  pod 'TrustKit', '~> 2.0'
+
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'

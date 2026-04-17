@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { getCredentialsForBiometric, signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
+import { setData } from '~/shared/lib/setData';
 import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import NicknameStep from '../index';
 
@@ -11,7 +12,14 @@ jest.mock('expo-router', () => ({
 
 jest.mock('~/entity/auth/api/signin', () => ({
   getCredentialsForBiometric: jest.fn(),
-  signinWithDeviceInfo: jest.fn(),
+}));
+
+jest.mock('~/shared/lib/setData', () => ({
+  setData: jest.fn(),
+}));
+
+jest.mock('~/shared/lib/logger', () => ({
+  logger: { error: jest.fn(), warn: jest.fn() },
 }));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
@@ -64,7 +72,7 @@ jest.mock('~/entity/auth/ui/SigninForm', () => {
 });
 
 const mockGetCredentials = jest.mocked(getCredentialsForBiometric);
-const mockSigninWithDevice = jest.mocked(signinWithDeviceInfo);
+const mockSetData = jest.mocked(setData);
 const mockUseSigninFormField = jest.mocked(useSigninFormField);
 const mockUseSigninStepNavigation = jest.mocked(useSigninStepNavigation);
 const mockRouterReplace = jest.mocked(router.replace);
@@ -84,46 +92,43 @@ beforeEach(() => {
     goToStep: jest.fn(),
   });
   mockGetCredentials.mockResolvedValue(null);
+  mockSetData.mockResolvedValue();
 });
 
 describe('NicknameStep — 생체인증 자동 로그인', () => {
-  it('저장된 인증정보가 없으면 자동 로그인을 시도하지 않는다', async () => {
+  it('저장된 토큰이 없으면 자동 로그인을 시도하지 않는다', async () => {
     mockGetCredentials.mockResolvedValue(null);
 
     render(<NicknameStep />);
 
     await waitFor(() => {
-      expect(mockSigninWithDevice).not.toHaveBeenCalled();
+      expect(mockSetData).not.toHaveBeenCalled();
       expect(mockRouterReplace).not.toHaveBeenCalled();
     });
   });
 
-  it('저장된 인증정보가 있으면 signinWithDeviceInfo를 호출하고 /main으로 이동한다', async () => {
-    mockGetCredentials.mockResolvedValue({ nickname: 'user', password: 'pass1!' });
-    mockSigninWithDevice.mockResolvedValue({} as any);
+  it('저장된 토큰이 있으면 SecureStore에 저장하고 /main으로 이동한다', async () => {
+    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
 
     render(<NicknameStep />);
 
     await waitFor(() => {
-      expect(mockSigninWithDevice).toHaveBeenCalledWith({ nickname: 'user', password: 'pass1!' });
+      expect(mockSetData).toHaveBeenCalledWith('accessToken', 'acc-token');
+      expect(mockSetData).toHaveBeenCalledWith('refreshToken', 'ref-token');
       expect(mockResetStore).toHaveBeenCalled();
       expect(mockRouterReplace).toHaveBeenCalledWith('/main');
     });
   });
 
-  it('signinWithDeviceInfo 실패 시 console.error를 호출하고 /main으로 이동하지 않는다', async () => {
-    mockGetCredentials.mockResolvedValue({ nickname: 'user', password: 'pass1!' });
-    mockSigninWithDevice.mockRejectedValue(new Error('auth failed'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('토큰 저장 실패 시 /main으로 이동하지 않는다', async () => {
+    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
+    mockSetData.mockRejectedValue(new Error('storage failed'));
 
     render(<NicknameStep />);
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalled();
-      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockRouterReplace).not.toHaveBeenCalledWith('/main');
     });
-
-    consoleSpy.mockRestore();
   });
 
   it('컴포넌트 언마운트 후에는 resetStore와 router.replace를 호출하지 않는다', async () => {
@@ -138,32 +143,31 @@ describe('NicknameStep — 생체인증 자동 로그인', () => {
 
     unmount();
 
-    // resolve after unmount
     await act(async () => {
-      resolveCredentials({ nickname: 'user', password: 'pass' });
+      resolveCredentials({ accessToken: 'acc', refreshToken: 'ref' });
     });
 
-    expect(mockSigninWithDevice).not.toHaveBeenCalled();
+    expect(mockSetData).not.toHaveBeenCalled();
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('signinWithDeviceInfo 완료 후 언마운트 상태면 resetStore와 router를 호출하지 않는다', async () => {
-    let resolveSignin!: (v: any) => void;
-    mockGetCredentials.mockResolvedValue({ nickname: 'user', password: 'pass' });
-    mockSigninWithDevice.mockReturnValue(
+  it('setData 완료 후 언마운트 상태면 resetStore와 router를 호출하지 않는다', async () => {
+    let resolveSetData!: () => void;
+    mockGetCredentials.mockResolvedValue({ accessToken: 'acc', refreshToken: 'ref' });
+    mockSetData.mockReturnValue(
       new Promise((res) => {
-        resolveSignin = res;
+        resolveSetData = res;
       })
     );
 
     const { unmount } = render(<NicknameStep />);
 
-    await waitFor(() => expect(mockSigninWithDevice).toHaveBeenCalled());
+    await waitFor(() => expect(mockSetData).toHaveBeenCalled());
 
     unmount();
 
     await act(async () => {
-      resolveSignin({});
+      resolveSetData();
     });
 
     expect(mockResetStore).not.toHaveBeenCalled();
@@ -208,11 +212,9 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
   it('닉네임 변경 시 기존 에러가 초기화된다', async () => {
     const { getByTestId, queryByTestId } = render(<NicknameStep />);
 
-    // trigger error
     fireEvent.press(getByTestId('next-button'));
     await waitFor(() => expect(getByTestId('error-message')).toBeTruthy());
 
-    // fix input — error should clear
     fireEvent.changeText(getByTestId('NicknameStep-nickname-input'), '홍길동');
     expect(queryByTestId('error-message')).toBeNull();
   });

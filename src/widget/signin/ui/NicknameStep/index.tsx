@@ -7,7 +7,9 @@ import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
-import { getCredentialsForBiometric, signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
+import { setData } from '~/shared/lib/setData';
+import { logger } from '~/shared/lib/logger';
 
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSigninFormField('nickname');
@@ -20,16 +22,19 @@ export default function NicknameStep() {
 
     const tryBiometricLogin = async () => {
       try {
-        const savedCredentials = await getCredentialsForBiometric();
-        if (!savedCredentials || !isMounted) return;
+        const savedTokens = await getCredentialsForBiometric();
+        if (!savedTokens || !isMounted) return;
 
-        await signinWithDeviceInfo(savedCredentials);
+        await Promise.all([
+          setData('accessToken', savedTokens.accessToken),
+          setData('refreshToken', savedTokens.refreshToken),
+        ]);
         if (!isMounted) return;
 
         resetStore();
         router.replace('/main');
       } catch (e) {
-        console.error(e);
+        logger.error('Biometric login failed', e);
       }
     };
 

@@ -1,5 +1,6 @@
 import { API_URL } from '@env';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { logger } from '~/shared/lib/logger';
 
 export const verifySms = async (phoneNumber: string, code: string) => {
   try {
@@ -21,13 +22,13 @@ export const verifySms = async (phoneNumber: string, code: string) => {
     try {
       data = JSON.parse(responseText);
     } catch {
-      console.warn(responseText);
+      logger.warn('verifySms: non-JSON response');
       data = {};
     }
 
     return data;
   } catch (error) {
-    console.error(error);
+    logger.error('verifySms failed', error);
     throw new Error(getErrorMessage(error));
   }
 };
