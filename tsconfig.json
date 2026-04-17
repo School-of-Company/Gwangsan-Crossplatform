@@ -4,15 +4,13 @@
     "strict": true,
     "jsx": "react-jsx",
     "types": ["jest", "node"],
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"],
-      "@/app/*": ["src/app/*"],
-      "@/shared/*": ["src/shared/*"],
-      "@/entity/*": ["src/entity/*"],
-      "@/view/*": ["src/view/*"],
-      "@/widget/*": ["src/widget/*"]
+      "~/*": ["./src/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/entity/*": ["./src/entity/*"],
+      "@/view/*": ["./src/view/*"],
+      "@/widget/*": ["./src/widget/*"]
     }
   }
 }
