@@ -6,6 +6,7 @@ import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { chatMessageKeys } from './chatQueryKeys';
+import { logger } from '~/shared/lib/logger';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -27,7 +28,7 @@ export const useMessageSync = ({
         userIdRef.current = id;
       })
       .catch((error) => {
-        console.error(error);
+        logger.error('Failed to get current user ID', error);
       });
   }, []);
 
@@ -111,7 +112,7 @@ export const useMessageSync = ({
           });
         }
       } catch (error) {
-        console.error(error);
+        logger.error('handleReceiveMessage error', error);
       }
     },
     [queryClient, currentRoomId, chatRoomQueryKey, chatMessageQueryKey]
@@ -177,7 +178,7 @@ export const useMessageSync = ({
       try {
         await markChatAsRead(roomId, lastMessage.messageId);
       } catch (error) {
-        console.error(error);
+        logger.error('markRoomAsRead failed', error);
       } finally {
         resetUnreadCount();
       }

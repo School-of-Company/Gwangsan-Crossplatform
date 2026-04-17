@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '../api/requestTrade';
 import { useChatEntry } from '~/shared/lib/useChatEntry';
+import { logger } from '~/shared/lib/logger';
 
 interface UseTradeRequestOptions {
   readonly productId: number;
@@ -46,7 +47,7 @@ export const useTradeRequest = ({
           await navigateToChat(productId);
         }
       } catch (navigationError) {
-        console.error(navigationError);
+        logger.error('Chat navigation failed', navigationError);
         Toast.show({
           type: 'info',
           text1: '채팅방 이동 중 오류가 발생했습니다',

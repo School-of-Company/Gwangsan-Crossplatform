@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { logger } from '@/shared/lib/logger';
 import { Header } from '@/shared/ui';
 import {
   ItemFormProgressBar,
@@ -136,7 +137,7 @@ const ItemFormPage = () => {
         pathname: '/main',
       });
     } catch (error) {
-      console.error(error);
+      logger.error('ItemForm submit failed', error);
     } finally {
       setIsSubmitting(false);
     }

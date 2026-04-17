@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { RoomId, MessageType } from '~/shared/types/chatType';
 import Toast from 'react-native-toast-message';
+import { logger } from '~/shared/lib/logger';
 
 const SEND_TIMEOUT_MS = 10000;
 
@@ -70,7 +71,7 @@ export const useResilientMessageSender = ({
           }
         }, SEND_TIMEOUT_MS);
       } catch (error) {
-        console.error(error);
+        logger.error('Message send failed', error);
         setStatus(tempId, MESSAGE_STATUS.FAILED);
         showSendFailedToast(() => retry(tempId));
       }

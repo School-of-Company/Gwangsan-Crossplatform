@@ -5,6 +5,7 @@ import { setData } from '../lib/setData';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
+import { logger } from '../lib/logger';
 
 const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   if (!Device.isDevice) {
@@ -35,7 +36,7 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
   if (!projectId) {
-    console.warn(
+    logger.warn(
       'Project ID를 찾을 수 없어 default 설정을 시도합니다. app.json 설정을 확인해 주세요.'
     );
   }
@@ -92,7 +93,7 @@ const generateDeviceId = async (): Promise<string> => {
 
     return deviceId;
   } catch (error) {
-    console.error(error);
+    logger.error('generateDeviceId failed', error);
     const randomId = Math.random().toString(36).substring(2, 18);
     await setData('deviceId', randomId);
     return randomId;
