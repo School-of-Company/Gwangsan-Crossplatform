@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useUploadImage } from '@/shared/model/useUploadImage';
+import { logger } from '@/shared/lib/logger';
 
 export interface ImagePreview {
   imageId: number;
@@ -56,7 +57,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       }
       return null;
     } catch (error) {
-      console.error(error);
+      logger.error('useChatInput error', error);
       Alert.alert('오류', '이미지 선택 중 오류가 발생했습니다.');
       return null;
     }
@@ -67,7 +68,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       try {
         return await uploadImageMutation.mutateAsync(imageUri);
       } catch (error) {
-        console.error(error);
+        logger.error('useChatInput error', error);
         Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
         throw error;
       }
