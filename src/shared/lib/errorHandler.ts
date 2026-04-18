@@ -39,3 +39,12 @@ export const getErrorMessage = (error: unknown): string => {
 
   return '알 수 없는 오류가 발생했습니다.';
 };
+
+export const toAppError = (error: unknown): Error => {
+  const message = getErrorMessage(error);
+  if (error instanceof Error) {
+    error.message = message;
+    return error;
+  }
+  return new Error(message);
+};
