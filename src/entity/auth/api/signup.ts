@@ -1,7 +1,7 @@
 import { instance } from '@/shared/lib/axios';
 import { SignupFormData } from '~/entity/auth/model/authState';
 import { clearAuthTokens } from '@/shared/lib/auth';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export const signup = async (formData: SignupFormData) => {
   try {
@@ -10,6 +10,6 @@ export const signup = async (formData: SignupFormData) => {
 
     return (await instance.post('/auth/signup', signupData)).data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

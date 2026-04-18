@@ -1,14 +1,9 @@
+import { AxiosError } from 'axios';
 import { getPosts } from '../getPosts';
 import { instance } from '~/shared/lib/axios';
-import Toast from 'react-native-toast-message';
 
 jest.mock('~/shared/lib/axios', () => ({
   instance: { get: jest.fn() },
-}));
-
-jest.mock('react-native-toast-message', () => ({
-  __esModule: true,
-  default: { show: jest.fn() },
 }));
 
 const mockGet = instance.get as jest.Mock;
@@ -87,25 +82,31 @@ describe('getPosts', () => {
   });
 
   describe('에러 케이스', () => {
-    it('API 실패 시 Toast 에러를 표시하고 빈 배열을 반환한다', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('Error 인스턴스는 메시지가 가공된 상태로 re-throw된다', async () => {
       mockGet.mockRejectedValue(new Error('Network error'));
 
-      const result = await getPosts();
-
-      expect(result).toEqual([]);
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '게시물 불러오기 실패' })
-      );
+      await expect(getPosts()).rejects.toThrow('Network error');
     });
 
-    it('Error 인스턴스가 아닌 예외는 Toast를 표시하지 않고 빈 배열을 반환한다', async () => {
+    it('AxiosError는 instanceof와 status 정보가 보존된다', async () => {
+      const axiosError = new AxiosError('Request failed', 'ERR_BAD_RESPONSE', undefined, null, {
+        status: 500,
+        statusText: 'Internal Server Error',
+        headers: {},
+        config: {} as never,
+        data: { message: '서버 오류' },
+      });
+      mockGet.mockRejectedValue(axiosError);
+
+      await expect(getPosts()).rejects.toBeInstanceOf(AxiosError);
+      await expect(getPosts()).rejects.toMatchObject({ response: { status: 500 } });
+    });
+
+    it('Error 인스턴스가 아닌 예외는 새 Error로 감싸 throw된다', async () => {
       mockGet.mockRejectedValue('string error');
 
-      const result = await getPosts();
-
-      expect(result).toEqual([]);
-      expect(Toast.show).not.toHaveBeenCalled();
+      await expect(getPosts()).rejects.toBeInstanceOf(Error);
+      await expect(getPosts()).rejects.toThrow('string error');
     });
   });
 });

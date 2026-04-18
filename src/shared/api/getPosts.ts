@@ -1,5 +1,5 @@
 import { instance } from '../lib/axios';
-import { getErrorMessage } from '../lib/errorHandler';
+import { toAppError } from '../lib/errorHandler';
 import { PostType } from '../types/postType';
 import { ProductType } from '../types/type';
 import { ModeType } from '../types/mode';
@@ -25,6 +25,6 @@ export const getPosts = async (type?: ProductType, mode?: ModeType): Promise<Pos
 
     return transformedData;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
