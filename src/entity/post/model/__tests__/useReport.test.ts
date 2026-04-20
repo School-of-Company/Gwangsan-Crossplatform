@@ -127,7 +127,13 @@ describe('useReport', () => {
       act(() => {
         result.current.setReportType('ETC');
         result.current.setContents('내용');
-        result.current.setImageUploadState({ hasUploadingImages: true, hasFailedImages: false, totalImages: 1, uploadingCount: 1, uploadedCount: 0 });
+        result.current.setImageUploadState({
+          hasUploadingImages: true,
+          hasFailedImages: false,
+          totalImages: 1,
+          uploadingCount: 1,
+          uploadedCount: 0,
+        });
       });
 
       expect(result.current.canSubmit).toBe(false);
@@ -139,7 +145,13 @@ describe('useReport', () => {
       act(() => {
         result.current.setReportType('ETC');
         result.current.setContents('내용');
-        result.current.setImageUploadState({ hasUploadingImages: false, hasFailedImages: true, totalImages: 1, uploadingCount: 0, uploadedCount: 0 });
+        result.current.setImageUploadState({
+          hasUploadingImages: false,
+          hasFailedImages: true,
+          totalImages: 1,
+          uploadingCount: 0,
+          uploadedCount: 0,
+        });
       });
 
       expect(result.current.canSubmit).toBe(false);
@@ -252,7 +264,13 @@ describe('useReport', () => {
       const { result } = renderHookWithProviders(() => useReport({ memberId: 42 }));
 
       act(() =>
-        result.current.setImageUploadState({ hasUploadingImages: true, hasFailedImages: false, totalImages: 1, uploadingCount: 1, uploadedCount: 0 })
+        result.current.setImageUploadState({
+          hasUploadingImages: true,
+          hasFailedImages: false,
+          totalImages: 1,
+          uploadingCount: 1,
+          uploadedCount: 0,
+        })
       );
       await act(async () => {
         await result.current.handleSubmit('ETC', '내용');
@@ -265,7 +283,13 @@ describe('useReport', () => {
       const { result } = renderHookWithProviders(() => useReport({ memberId: 42 }));
 
       act(() =>
-        result.current.setImageUploadState({ hasUploadingImages: false, hasFailedImages: true, totalImages: 1, uploadingCount: 0, uploadedCount: 0 })
+        result.current.setImageUploadState({
+          hasUploadingImages: false,
+          hasFailedImages: true,
+          totalImages: 1,
+          uploadingCount: 0,
+          uploadedCount: 0,
+        })
       );
       await act(async () => {
         await result.current.handleSubmit('ETC', '내용');
