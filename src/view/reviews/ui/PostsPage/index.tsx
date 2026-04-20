@@ -6,6 +6,7 @@ import { Header } from '~/shared/ui';
 import { getReceiveReview, getTossReview } from '../../api/getReviews';
 import { ReviewPostType } from '../../model/reviewPostType';
 import { ReviewPost } from '~/entity/reviews/ui';
+import { logger } from '~/shared/lib/logger';
 
 export default function ReviewsPageView() {
   const rawParams = useLocalSearchParams();
@@ -23,7 +24,7 @@ export default function ReviewsPageView() {
           setPosts(res.data);
         }
       } catch (error) {
-        console.error(error);
+        logger.error('getReviews failed', error);
         setPosts([]);
       }
     };

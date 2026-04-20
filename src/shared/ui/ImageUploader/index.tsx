@@ -1,10 +1,22 @@
-import { View, TouchableOpacity, Image, Text, ActivityIndicator } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  Image,
+  Text,
+  ActivityIndicator,
+  ActionSheetIOS,
+  Alert,
+  Platform,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { memo, useState, useCallback, useMemo, useEffect } from 'react';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 import { ImageType } from '@/shared/types/imageType';
 import Toast from 'react-native-toast-message';
+import { logger } from '@/shared/lib/logger';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export interface ImageUploadState {
   readonly totalImages: number;
@@ -61,6 +73,13 @@ const ImageUploader = ({
     onUploadStateChange?.(uploadState);
   }, [uploadState, onUploadStateChange]);
 
+  useEffect(() => {
+    const uploadedIds = imageStatuses
+      .filter((s) => s.status === 'uploaded' && s.imageData)
+      .map((s) => s.imageData!.imageId);
+    onImageIdsChange?.(uploadedIds);
+  }, [imageStatuses, onImageIdsChange]);
+
   const updateImageStatus = useCallback((uri: string, status: Partial<ImageStatus>) => {
     setImageStatuses((prev) =>
       prev.map((item) => (item.uri === uri ? { ...item, ...status } : item))
@@ -76,26 +95,36 @@ const ImageUploader = ({
       onImagesChange?.(newImages);
 
       setImageStatuses((prev) => prev.filter((item) => item.uri !== uri));
-
-      const uploadedStatuses = imageStatuses.filter(
-        (status) => status.uri !== uri && status.status === 'uploaded' && status.imageData
-      );
-      const imageIds = uploadedStatuses.map((status) => status.imageData!.imageId);
-      onImageIdsChange?.(imageIds);
     },
-    [images, imageStatuses, onImagesChange, onImageIdsChange]
+    [images, onImagesChange]
   );
 
-  const pickImage = useCallback(async () => {
-    if (readonly || images.length >= maxImages) return;
+  const handleImageSelected = useCallback(
+    async (uri: string) => {
+      onImagesChange?.([...images, uri]);
 
+      const newStatus: ImageStatus = { uri, status: 'uploading' };
+      setImageStatuses((prev) => [...prev, newStatus]);
+
+      try {
+        const uploadedImage = await uploadImageMutation.mutateAsync(uri);
+        updateImageStatus(uri, { status: 'uploaded', imageData: uploadedImage });
+      } catch (error) {
+        logger.error('Image upload failed', error);
+        updateImageStatus(uri, {
+          status: 'failed',
+          error: error instanceof Error ? error : new Error('업로드 실패'),
+        });
+        setTimeout(() => removeImageByUri(uri), 1500);
+      }
+    },
+    [images, onImagesChange, uploadImageMutation, updateImageStatus, removeImageByUri]
+  );
+
+  const pickFromGallery = useCallback(async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Toast.show({
-        type: 'error',
-        text1: '권한 필요',
-        text2: '차일 접근 권한이 필요합니다.',
-      });
+      Toast.show({ type: 'error', text1: '권한 필요', text2: '사진 접근 권한이 필요합니다.' });
       return;
     }
 
@@ -107,59 +136,64 @@ const ImageUploader = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const newImageUri = result.assets[0].uri;
-        const newImages = [...images, newImageUri];
-        onImagesChange?.(newImages);
+        const asset = result.assets[0];
 
-        const newStatus: ImageStatus = {
-          uri: newImageUri,
-          status: 'uploading',
-        };
-        setImageStatuses((prev) => [...prev, newStatus]);
-
-        try {
-          const uploadedImage = await uploadImageMutation.mutateAsync(newImageUri);
-
-          updateImageStatus(newImageUri, {
-            status: 'uploaded',
-            imageData: uploadedImage,
+        if (asset.fileSize !== undefined && asset.fileSize > MAX_FILE_SIZE) {
+          Toast.show({
+            type: 'error',
+            text1: '파일 크기 초과',
+            text2: '10MB 이하의 이미지만 업로드할 수 있습니다.',
           });
-
-          const allUploadedStatuses = imageStatuses.filter(
-            (s) => s.status === 'uploaded' && s.imageData
-          );
-          const updatedStatuses = [
-            ...allUploadedStatuses,
-            { ...newStatus, status: 'uploaded' as const, imageData: uploadedImage },
-          ];
-          const imageIds = updatedStatuses.map((status) => status.imageData!.imageId);
-          onImageIdsChange?.(imageIds);
-        } catch (error) {
-          console.error(error);
-          updateImageStatus(newImageUri, {
-            status: 'failed',
-            error: error instanceof Error ? error : new Error('업로드 실패'),
-          });
-
-          setTimeout(() => {
-            removeImageByUri(newImageUri);
-          }, 1500);
+          return;
         }
+
+        await handleImageSelected(asset.uri);
       }
     } catch (error) {
-      console.error('이미지 선택 중 오류:', error);
+      logger.error('이미지 선택 중 오류', error);
     }
-  }, [
-    images,
-    maxImages,
-    readonly,
-    onImagesChange,
-    imageStatuses,
-    uploadImageMutation,
-    updateImageStatus,
-    removeImageByUri,
-    onImageIdsChange,
-  ]);
+  }, [handleImageSelected]);
+
+  const pickFromCamera = useCallback(async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      Toast.show({ type: 'error', text1: '권한 필요', text2: '카메라 접근 권한이 필요합니다.' });
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await handleImageSelected(result.assets[0].uri);
+      }
+    } catch (error) {
+      logger.error('카메라 촬영 중 오류', error);
+    }
+  }, [handleImageSelected]);
+
+  const pickImage = useCallback(() => {
+    if (readonly || images.length >= maxImages) return;
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['취소', '갤러리에서 선택', '카메라로 촬영'], cancelButtonIndex: 0 },
+        (buttonIndex) => {
+          if (buttonIndex === 1) pickFromGallery();
+          if (buttonIndex === 2) pickFromCamera();
+        }
+      );
+    } else {
+      Alert.alert('사진 선택', undefined, [
+        { text: '취소', style: 'cancel' },
+        { text: '갤러리에서 선택', onPress: pickFromGallery },
+        { text: '카메라로 촬영', onPress: pickFromCamera },
+      ]);
+    }
+  }, [readonly, images.length, maxImages, pickFromGallery, pickFromCamera]);
 
   const removeImage = useCallback(
     (index: number) => {

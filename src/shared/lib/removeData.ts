@@ -1,8 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
 
-export const removeData = async (name: string) => {
+const SECURE_KEYS = new Set(['accessToken', 'refreshToken']);
+
+export const removeData = async (name: string): Promise<void> => {
   try {
+    if (SECURE_KEYS.has(name)) {
+      await SecureStore.deleteItemAsync(name);
+      return;
+    }
     await AsyncStorage.removeItem(name);
   } catch (e) {
     Toast.show({

@@ -1,5 +1,6 @@
 import { API_URL } from '@env';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { logger } from '~/shared/lib/logger';
 
 export const sendSms = async (phoneNumber: string) => {
   try {
@@ -21,7 +22,7 @@ export const sendSms = async (phoneNumber: string) => {
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error(error);
+    logger.error('sendSms failed', error);
     throw new Error(getErrorMessage(error));
   }
 };

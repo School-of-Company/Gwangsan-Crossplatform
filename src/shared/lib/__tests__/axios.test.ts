@@ -224,7 +224,7 @@ describe('response interceptor', () => {
 
     await expect(instance.get('/nav-fail')).rejects.toThrow();
 
-    expect(warnSpy).toHaveBeenCalledWith('Router navigation failed:', expect.any(Error));
+    expect(warnSpy).toHaveBeenCalledWith('Router navigation failed', expect.any(Error));
   });
 
   it('동시에 401이 발생해도 토큰 갱신은 한 번만 수행한다', async () => {

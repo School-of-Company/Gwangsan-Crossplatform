@@ -2,6 +2,7 @@ import React, { memo, useCallback, useState } from 'react';
 import { View, Text, Image, ActivityIndicator } from 'react-native';
 import { Card, Button } from '~/shared/ui';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
+import { logger } from '~/shared/lib/logger';
 
 export interface TradeEmbedProps {
   readonly product: TradeProduct;
@@ -38,7 +39,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
       setLocalLoading(true);
       await onTradeAccept();
     } catch (error) {
-      console.error(error);
+      logger.error('TradeEmbed action failed', error);
     } finally {
       setLocalLoading(false);
     }
@@ -52,7 +53,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
       await onReservation();
       setIsReserved(true);
     } catch (error) {
-      console.error(error);
+      logger.error('TradeEmbed action failed', error);
     } finally {
       setLocalLoading(false);
     }
@@ -66,7 +67,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
       await onCancelReservation();
       setIsReserved(false);
     } catch (error) {
-      console.error(error);
+      logger.error('TradeEmbed action failed', error);
     } finally {
       setLocalLoading(false);
     }

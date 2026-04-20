@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { Alert, ActionSheetIOS, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useUploadImage } from '@/shared/model/useUploadImage';
+import { logger } from '@/shared/lib/logger';
 
 export interface ImagePreview {
   imageId: number;
@@ -32,42 +33,12 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     setTextMessage(text);
   }, []);
 
-  const requestPermission = useCallback(async (): Promise<boolean> => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('권한 필요', '사진첨부를 위해 사진첩 접근 권한이 필요합니다.');
-      return false;
-    }
-    return true;
-  }, []);
-
-  const selectImage = useCallback(async (): Promise<ImagePicker.ImagePickerAsset | null> => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: false,
-        quality: 0.8,
-        allowsEditing: true,
-        aspect: [1, 1],
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        return result.assets[0];
-      }
-      return null;
-    } catch (error) {
-      console.error(error);
-      Alert.alert('오류', '이미지 선택 중 오류가 발생했습니다.');
-      return null;
-    }
-  }, []);
-
   const uploadImage = useCallback(
     async (imageUri: string) => {
       try {
         return await uploadImageMutation.mutateAsync(imageUri);
       } catch (error) {
-        console.error(error);
+        logger.error('useChatInput error', error);
         Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
         throw error;
       }
@@ -75,31 +46,80 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     [uploadImageMutation]
   );
 
-  const handleImagePicker = useCallback(async () => {
+  const pickAndUpload = useCallback(
+    async (launchFn: () => Promise<ImagePicker.ImagePickerResult>) => {
+      setIsUploading(true);
+      try {
+        const result = await launchFn();
+        if (result.canceled || !result.assets?.length) return;
+
+        const asset = result.assets[0];
+        const uploadedImage = await uploadImage(asset.uri);
+        setSelectedImages((prev) => [
+          ...prev,
+          { imageId: uploadedImage.imageId, imageUrl: uploadedImage.imageUrl, localUri: asset.uri },
+        ]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [uploadImage]
+  );
+
+  const pickFromGallery = useCallback(async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('권한 필요', '사진첨부를 위해 사진첩 접근 권한이 필요합니다.');
+      return;
+    }
+    await pickAndUpload(() =>
+      ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: false,
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+      })
+    );
+  }, [pickAndUpload]);
+
+  const pickFromCamera = useCallback(async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('권한 필요', '카메라 사용을 위해 카메라 접근 권한이 필요합니다.');
+      return;
+    }
+    await pickAndUpload(() =>
+      ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [1, 1],
+      })
+    );
+  }, [pickAndUpload]);
+
+  const handleImagePicker = useCallback(() => {
     if (disabled || isUploading || selectedImages.length >= 5) return;
 
-    setIsUploading(true);
-
-    try {
-      const hasPermission = await requestPermission();
-      if (!hasPermission) return;
-
-      const selectedImage = await selectImage();
-      if (!selectedImage) return;
-
-      const uploadedImage = await uploadImage(selectedImage.uri);
-
-      const newImagePreview: ImagePreview = {
-        imageId: uploadedImage.imageId,
-        imageUrl: uploadedImage.imageUrl,
-        localUri: selectedImage.uri,
-      };
-
-      setSelectedImages((prev) => [...prev, newImagePreview]);
-    } finally {
-      setIsUploading(false);
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['취소', '갤러리에서 선택', '카메라로 촬영'], cancelButtonIndex: 0 },
+        (buttonIndex) => {
+          if (buttonIndex === 1) pickFromGallery();
+          if (buttonIndex === 2) pickFromCamera();
+        }
+      );
+    } else {
+      Alert.alert('사진 선택', undefined, [
+        { text: '취소', style: 'cancel' },
+        { text: '갤러리에서 선택', onPress: pickFromGallery },
+        { text: '카메라로 촬영', onPress: pickFromCamera },
+      ]);
     }
-  }, [disabled, isUploading, selectedImages.length, requestPermission, selectImage, uploadImage]);
+  }, [disabled, isUploading, selectedImages.length, pickFromGallery, pickFromCamera]);
 
   const removeImage = useCallback((imageId: number) => {
     setSelectedImages((prev) => prev.filter((img) => img.imageId !== imageId));
