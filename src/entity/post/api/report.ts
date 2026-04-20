@@ -41,7 +41,7 @@ interface ReportApiPayload {
 export const report = async (data: ReportRequest): Promise<void> => {
   try {
     const payload: ReportApiPayload = {
-      sourceId: data.memberId,
+      sourceId: data.targetType === 'PRODUCT' ? data.productId : data.memberId,
       reportType: data.reason,
       content: data.content,
       imageIds: data.imageIds,
