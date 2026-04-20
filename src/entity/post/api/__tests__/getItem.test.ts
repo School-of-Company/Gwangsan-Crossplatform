@@ -82,7 +82,7 @@ describe('getItem', () => {
     it('에러 메시지가 getErrorMessage를 통해 래핑된다', async () => {
       mockGet.mockRejectedValue(new Error('Server error'));
 
-      await expect(getItem('1')).rejects.toThrow(Error);
+      await expect(getItem('1')).rejects.toThrow('Server error');
     });
 
     it('네트워크 에러 시 에러를 throw한다', async () => {
