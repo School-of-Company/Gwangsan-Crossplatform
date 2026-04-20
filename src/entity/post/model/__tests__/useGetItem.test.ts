@@ -65,9 +65,7 @@ describe('useGetItem', () => {
 
       const { queryClient } = renderHookWithProviders(() => useGetItem('5'));
 
-      await waitFor(() =>
-        expect(queryClient.getQueryState(['post', '5'])).toBeDefined()
-      );
+      await waitFor(() => expect(queryClient.getQueryState(['post', '5'])).toBeDefined());
     });
 
     it('다른 postId에 대해 별도 캐시 항목을 생성한다', async () => {
@@ -75,9 +73,7 @@ describe('useGetItem', () => {
 
       const { queryClient } = renderHookWithProviders(() => useGetItem('10'));
 
-      await waitFor(() =>
-        expect(queryClient.getQueryState(['post', '10'])).toBeDefined()
-      );
+      await waitFor(() => expect(queryClient.getQueryState(['post', '10'])).toBeDefined());
       expect(queryClient.getQueryState(['post', '5'])).toBeUndefined();
     });
   });

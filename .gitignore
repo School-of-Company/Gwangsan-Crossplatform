@@ -36,3 +36,5 @@ DerivedData/
 artifacts/
 coverage/
 coverage-auth/
+# Claude Code worktrees
+.claude/worktrees/
