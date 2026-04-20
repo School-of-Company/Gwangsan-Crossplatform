@@ -103,24 +103,15 @@ describe('ReviewsModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('내용을 입력하면 로컬 상태가 업데이트된다', () => {
-    const { getByTestId } = render(<ReviewsModal {...defaultProps} contents="" />);
-
-    fireEvent.changeText(getByTestId('review-text-field'), '정말 좋았어요');
-
-    // 입력 후 submit이 호출되는지 확인
+  it('내용을 입력하고 제출하면 입력한 내용이 onSubmit에 전달된다', () => {
     const onSubmit = jest.fn();
     const onClose = jest.fn();
-    const { getByTestId: getByTestId2 } = render(
-      <ReviewsModal
-        {...defaultProps}
-        contents=""
-        onSubmit={onSubmit}
-        onClose={onClose}
-      />
+    const { getByTestId } = render(
+      <ReviewsModal {...defaultProps} contents="" onSubmit={onSubmit} onClose={onClose} />
     );
-    fireEvent.changeText(getByTestId2('review-text-field'), '정말 좋았어요');
-    fireEvent.press(getByTestId2('submit-button'));
+
+    fireEvent.changeText(getByTestId('review-text-field'), '정말 좋았어요');
+    fireEvent.press(getByTestId('submit-button'));
 
     expect(onSubmit).toHaveBeenCalledWith(60, '정말 좋았어요');
   });

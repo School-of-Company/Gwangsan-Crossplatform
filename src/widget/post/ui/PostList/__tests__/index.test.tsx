@@ -89,9 +89,10 @@ describe('PostList', () => {
     const refreshControl = UNSAFE_getByType(RefreshControl);
 
     await act(async () => {
-      refreshControl.props.onRefresh();
+      await refreshControl.props.onRefresh();
     });
 
     expect(mockRefetch).toHaveBeenCalled();
+    expect(refreshControl.props.refreshing).toBe(false);
   });
 });
