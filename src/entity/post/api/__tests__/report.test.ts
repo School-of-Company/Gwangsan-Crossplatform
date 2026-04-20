@@ -86,7 +86,10 @@ describe('report', () => {
         imageIds: [],
       });
 
-      expect(mockPost).toHaveBeenCalledWith('/report', expect.objectContaining({ reportType: reason }));
+      expect(mockPost).toHaveBeenCalledWith(
+        '/report',
+        expect.objectContaining({ reportType: reason })
+      );
     });
   });
 
