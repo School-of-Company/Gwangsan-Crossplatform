@@ -26,7 +26,7 @@ describe('report', () => {
       await report(productReportData);
 
       expect(mockPost).toHaveBeenCalledWith('/report', {
-        sourceId: 42,
+        sourceId: 5,
         reportType: 'SPAM_AD',
         content: '스팸 게시글입니다.',
         imageIds: [1, 2],
