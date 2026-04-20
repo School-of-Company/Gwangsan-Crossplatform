@@ -61,7 +61,8 @@
         "backgroundColor": "#ffffff"
       },
       "package": "gwangsan.io.kr",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 10
     },
     "extra": {
       "eas": {
