@@ -141,7 +141,14 @@ describe('PostPageView', () => {
 
     it('Header에 computedValues.headerTitle을 표시한다', () => {
       mockUsePostAction.mockReturnValue(
-        makeUsePostActionReturn({ computedValues: { headerTitle: '필요해요', canTrade: false, isTradeButtonDisabled: true, tradeButtonText: '거래 불가' } })
+        makeUsePostActionReturn({
+          computedValues: {
+            headerTitle: '필요해요',
+            canTrade: false,
+            isTradeButtonDisabled: true,
+            tradeButtonText: '거래 불가',
+          },
+        })
       );
 
       const { getByTestId } = render(<PostPageView />);

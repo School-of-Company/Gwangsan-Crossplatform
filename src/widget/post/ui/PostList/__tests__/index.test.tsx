@@ -11,9 +11,7 @@ jest.mock('scrolloop/native', () => ({
   VirtualList: ({ count, renderItem, refreshControl }: any) => {
     const { View } = require('react-native');
     const { cloneElement } = require('react');
-    const items = Array.from({ length: count }, (_, i) =>
-      cloneElement(renderItem(i), { key: i })
-    );
+    const items = Array.from({ length: count }, (_, i) => cloneElement(renderItem(i), { key: i }));
     return (
       <View>
         {refreshControl}
