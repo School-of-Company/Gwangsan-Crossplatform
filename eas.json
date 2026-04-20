@@ -42,7 +42,6 @@
     },
     "production": {
       "environment": "production",
-      "autoIncrement": true,
       "env": {
         "NODE_ENV": "production",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
