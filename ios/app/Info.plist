@@ -55,6 +55,10 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>거래 게시글 업로드 및 채팅에 사용할 이미지 업로드를 위해 저장공간에 접근합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>거래 게시글 업로드 및 채팅에 사용할 사진을 촬영하기 위해 카메라를 사용합니다.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>생체 인증을 통해 안전하게 로그인하기 위해 Face ID를 사용합니다.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
