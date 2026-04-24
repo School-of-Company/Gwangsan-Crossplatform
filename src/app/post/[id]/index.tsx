@@ -3,7 +3,7 @@ import PostPageView from '~/view/post/ui/PostPage';
 
 export default function PostPage() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="PostDetail">
       <PostPageView />
     </FeatureErrorBoundary>
   );

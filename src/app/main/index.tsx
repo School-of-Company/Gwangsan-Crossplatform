@@ -3,7 +3,7 @@ import MainPageView from '~/view/main/ui/MainPage';
 
 export default function Main() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="Main">
       <MainPageView />
     </FeatureErrorBoundary>
   );

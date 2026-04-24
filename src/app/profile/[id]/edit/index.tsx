@@ -3,7 +3,7 @@ import ProfileEditPageView from '~/view/profile/ui/ProfileEditPage';
 
 export default function ProfileEditPage() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="ProfileEdit">
       <ProfileEditPageView />
     </FeatureErrorBoundary>
   );

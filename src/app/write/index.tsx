@@ -3,7 +3,7 @@ import ItemFormPage from '~/view/write/itemForm/ui/ItemFormPage';
 
 export default function Write() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="Write">
       <ItemFormPage />
     </FeatureErrorBoundary>
   );

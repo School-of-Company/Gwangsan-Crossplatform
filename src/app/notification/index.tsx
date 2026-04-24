@@ -3,7 +3,7 @@ import { NotificationPage } from '~/view/notification';
 
 export default function Notification() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="Notification">
       <NotificationPage />
     </FeatureErrorBoundary>
   );

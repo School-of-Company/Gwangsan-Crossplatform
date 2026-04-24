@@ -3,7 +3,7 @@ import { OnboardingPage } from '~/view/onboarding';
 
 export default function Onboarding() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="Onboarding">
       <OnboardingPage />
     </FeatureErrorBoundary>
   );

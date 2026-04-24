@@ -1,48 +1,46 @@
 import * as Sentry from '@sentry/react-native';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import React from 'react';
 import { ErrorFallback } from '../ErrorFallback';
 
-interface Props {
+type FallbackRender = (props: { reset: () => void }) => React.ReactNode;
+
+interface FeatureErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode | ((props: { reset: () => void }) => React.ReactNode);
+  featureName: string;
+  fallback?: React.ReactNode | FallbackRender;
 }
 
-interface State {
+interface InnerProps extends FeatureErrorBoundaryProps {
+  onReset: () => void;
+}
+
+interface InnerState {
   hasError: boolean;
 }
 
-export class FeatureErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false };
-  }
+class FeatureErrorBoundaryInner extends React.Component<InnerProps, InnerState> {
+  state: InnerState = { hasError: false };
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): InnerState {
     return { hasError: true };
   }
 
-  private getScreenName(): string {
-    if (!React.isValidElement(this.props.children)) return 'unknown';
-    const { type } = this.props.children;
-    if (typeof type !== 'function') return 'unknown';
-    const component = type as React.ComponentType;
-    return component.displayName ?? component.name ?? 'unknown';
-  }
-
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    const screenName = this.getScreenName();
+    const { featureName } = this.props;
     Sentry.addBreadcrumb({
       category: 'ui.error',
-      message: `Render error in ${screenName}`,
+      message: `Render error in ${featureName}`,
       level: 'error',
     });
     Sentry.captureException(error, {
       extra: { componentStack: info.componentStack },
-      tags: { screen: screenName },
+      tags: { feature: featureName },
     });
   }
 
   reset = () => {
+    this.props.onReset();
     this.setState({ hasError: false });
   };
 
@@ -59,4 +57,20 @@ export class FeatureErrorBoundary extends React.Component<Props, State> {
 
     return this.props.children;
   }
+}
+
+export function FeatureErrorBoundary({
+  children,
+  featureName,
+  fallback,
+}: FeatureErrorBoundaryProps) {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <FeatureErrorBoundaryInner onReset={reset} featureName={featureName} fallback={fallback}>
+          {children}
+        </FeatureErrorBoundaryInner>
+      )}
+    </QueryErrorResetBoundary>
+  );
 }

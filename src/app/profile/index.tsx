@@ -3,7 +3,7 @@ import ProfilePageView from '~/view/profile/ui/ProfilePage';
 
 export default function ProfilePage() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="Profile">
       <ProfilePageView />
     </FeatureErrorBoundary>
   );

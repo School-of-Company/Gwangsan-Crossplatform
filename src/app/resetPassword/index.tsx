@@ -3,7 +3,7 @@ import { ResetPasswordPage } from '~/view/resetPassword';
 
 export default function ResetPasswordScreen() {
   return (
-    <FeatureErrorBoundary>
+    <FeatureErrorBoundary featureName="ResetPassword">
       <ResetPasswordPage />
     </FeatureErrorBoundary>
   );
