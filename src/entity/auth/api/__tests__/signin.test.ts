@@ -128,15 +128,15 @@ describe('signinWithDeviceInfo', () => {
 });
 
 describe('saveCredentialsForBiometric', () => {
-  it('생체인증이 지원되면 키체인에 저장한다', async () => {
+  it('생체인증이 지원되면 accessToken과 refreshToken을 키체인에 저장한다', async () => {
     mockKeychain.getSupportedBiometryType.mockResolvedValue('FaceID' as never);
     mockKeychain.setGenericPassword.mockResolvedValue(true as never);
 
-    await saveCredentialsForBiometric('nick', 'pass1234!');
+    await saveCredentialsForBiometric('access-token', 'refresh-token');
 
     expect(mockKeychain.setGenericPassword).toHaveBeenCalledWith(
-      'nick',
-      'pass1234!',
+      'access-token',
+      'refresh-token',
       expect.objectContaining({ accessControl: 'BiometryAny' })
     );
   });
@@ -144,7 +144,7 @@ describe('saveCredentialsForBiometric', () => {
   it('생체인증이 지원되지 않으면 저장하지 않는다', async () => {
     mockKeychain.getSupportedBiometryType.mockResolvedValue(null as never);
 
-    await saveCredentialsForBiometric('nick', 'pass');
+    await saveCredentialsForBiometric('access-token', 'refresh-token');
 
     expect(mockKeychain.setGenericPassword).not.toHaveBeenCalled();
   });
@@ -154,26 +154,31 @@ describe('saveCredentialsForBiometric', () => {
     mockKeychain.setGenericPassword.mockRejectedValue(new Error('Keychain error'));
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    await expect(saveCredentialsForBiometric('nick', 'pass')).resolves.toBeUndefined();
+    await expect(
+      saveCredentialsForBiometric('access-token', 'refresh-token')
+    ).resolves.toBeUndefined();
     expect(errorSpy).toHaveBeenCalled();
   });
 });
 
 describe('getCredentialsForBiometric', () => {
-  it('저장된 인증정보가 있으면 nickname과 password를 반환한다', async () => {
+  it('저장된 토큰이 있으면 accessToken과 refreshToken을 반환한다', async () => {
     mockKeychain.getGenericPassword.mockResolvedValue({
-      username: 'saved-nick',
-      password: 'saved-pass',
+      username: 'saved-access-token',
+      password: 'saved-refresh-token',
       service: '',
       storage: '',
     } as never);
 
     const result = await getCredentialsForBiometric();
 
-    expect(result).toEqual({ nickname: 'saved-nick', password: 'saved-pass' });
+    expect(result).toEqual({
+      accessToken: 'saved-access-token',
+      refreshToken: 'saved-refresh-token',
+    });
   });
 
-  it('저장된 인증정보가 없으면 null을 반환한다', async () => {
+  it('저장된 토큰이 없으면 null을 반환한다', async () => {
     mockKeychain.getGenericPassword.mockResolvedValue(false as never);
 
     const result = await getCredentialsForBiometric();

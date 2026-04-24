@@ -1,5 +1,6 @@
 import { API_URL } from '@env';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { logger } from '~/shared/lib/logger';
 
 export const sendPasswordResetSms = async (phoneNumber: string) => {
   try {
@@ -17,7 +18,7 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error(parseError, responseText);
+      logger.error('sendPasswordResetSms: JSON parse failed', parseError);
       throw new Error(responseText.substring(0, 100));
     }
 
@@ -28,7 +29,7 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
 
     return data;
   } catch (error) {
-    console.error(error);
+    logger.error('sendPasswordResetSms failed', error);
     throw new Error(getErrorMessage(error));
   }
 };

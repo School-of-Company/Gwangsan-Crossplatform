@@ -1,4 +1,5 @@
 import { API_URL } from '@env';
+import { logger } from '~/shared/lib/logger';
 
 export interface VerifyPasswordResetSmsRequest {
   phoneNumber: string;
@@ -26,7 +27,7 @@ export const verifyPasswordResetSms = async (
   try {
     data = JSON.parse(responseText);
   } catch {
-    console.warn(responseText);
+    logger.warn('verifyPasswordResetSms: non-JSON response');
     data = {};
   }
 

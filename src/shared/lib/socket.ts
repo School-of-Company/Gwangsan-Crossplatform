@@ -1,9 +1,11 @@
 import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
+import { baseURL } from './axios';
 import Toast from 'react-native-toast-message';
 import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
+import { logger } from './logger';
 
-const SOCKET_URL = process.env.API_URL + '/chat';
+const SOCKET_URL = (baseURL ?? '').replace(/\/$/, '') + '/chat';
 
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
@@ -84,7 +86,7 @@ class SocketManager implements ISocketManager {
       });
     } catch (error) {
       this.isConnecting = false;
-      console.error('Socket connection error:', error);
+      logger.error('Socket connection error', error);
       throw error;
     }
   }
@@ -110,7 +112,7 @@ class SocketManager implements ISocketManager {
   }
 
   private handleConnectionError(error: Error): void {
-    console.error('Socket connection error:', error);
+    logger.error('Socket connection error', error);
     this.emit('connect_error', error);
 
     let errorMessage = error.message;
@@ -148,7 +150,7 @@ class SocketManager implements ISocketManager {
         try {
           handler(...args);
         } catch (error) {
-          console.error(`Error in ${event} handler:`, error);
+          logger.error(`Error in ${event} handler`, error);
         }
       });
     }

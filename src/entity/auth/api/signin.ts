@@ -4,6 +4,7 @@ import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
 import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { logger } from '~/shared/lib/logger';
 import * as Keychain from 'react-native-keychain';
 
 const auth = axios.create({
@@ -34,22 +35,28 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   }
 };
 
-export const saveCredentialsForBiometric = async (nickname: string, password: string) => {
+export const saveCredentialsForBiometric = async (
+  accessToken: string,
+  refreshToken: string
+): Promise<void> => {
   try {
     const supportedBiometry = await Keychain.getSupportedBiometryType();
     if (!supportedBiometry) return;
 
-    await Keychain.setGenericPassword(nickname, password, {
+    await Keychain.setGenericPassword(accessToken, refreshToken, {
       accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
       accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
       authenticationPrompt: { title: '생체 인증으로 로그인' },
     });
   } catch (error) {
-    console.error('Failed to save credentials for biometric auth:', error);
+    logger.error('Failed to save tokens for biometric auth', error);
   }
 };
 
-export const getCredentialsForBiometric = async () => {
+export const getCredentialsForBiometric = async (): Promise<{
+  accessToken: string;
+  refreshToken: string;
+} | null> => {
   try {
     const result = await Keychain.getGenericPassword({
       authenticationPrompt: {
@@ -60,9 +67,9 @@ export const getCredentialsForBiometric = async () => {
 
     if (!result) return null;
 
-    return { nickname: result.username, password: result.password };
+    return { accessToken: result.username, refreshToken: result.password };
   } catch (error) {
-    console.error('Biometric auth failed:', error);
+    logger.error('Biometric auth failed', error);
     return null;
   }
 };
@@ -81,7 +88,7 @@ export const signinWithDeviceInfo = async (credentials: {
 
     return await signin(formData);
   } catch (error) {
-    console.error(error);
+    logger.error('signinWithDeviceInfo failed', error);
     throw new Error(getErrorMessage(error));
   }
 };

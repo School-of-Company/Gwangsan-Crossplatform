@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git stash*)",
+      "Bash(npm run lint*)",
+      "Bash(npm run format*)",
+      "Bash(npm test*)",
+      "Bash(npx jest*)",
+      "Bash(npx tsc*)",
+      "Bash(npx eslint*)",
+      "Bash(npx prettier*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.command // empty'); echo \"$cmd\" | grep -qE 'git push.*(--force|-f\\b)|git reset --hard|rm -rf (src|android|ios|node_modules|\\.\\b)|npm publish|eas (submit|deploy|build --auto-submit)' && { echo \"BLOCKED: '$(echo \"$cmd\" | head -c 80)' — confirm with user first\"; exit 2; } || exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path // empty'); [[ \"$file\" =~ \\.(ts|tsx)$ ]] && [[ -f \"$file\" ]] && out=$(npx eslint --fix \"$file\" 2>&1); errs=$(echo \"$out\" | grep -cE '[[:space:]]error[[:space:]]' || true); [[ \"$errs\" -gt 0 ]] && echo \"ESLint: $errs error(s) remaining in $(basename \"$file\")\" && echo \"$out\" | grep -E '[[:space:]]error[[:space:]]' | tail -5; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

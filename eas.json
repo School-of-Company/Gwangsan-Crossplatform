@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 16.13.3",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -42,7 +42,6 @@
     },
     "production": {
       "environment": "production",
-      "autoIncrement": true,
       "env": {
         "NODE_ENV": "production",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
@@ -52,7 +51,8 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6758655368"
+        "ascAppId": "6758655368",
+        "appleTeamId": "UB2797YAAH"
       }
     }
   }

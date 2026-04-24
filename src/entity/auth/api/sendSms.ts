@@ -1,5 +1,6 @@
 import { API_URL } from '@env';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { logger } from '~/shared/lib/logger';
 
 export const sendSms = async (phoneNumber: string) => {
   try {
@@ -11,24 +12,17 @@ export const sendSms = async (phoneNumber: string) => {
       body: JSON.stringify({ phoneNumber }),
     });
 
-    const responseText = await response.text();
-
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error(parseError, responseText);
-      throw new Error(responseText.substring(0, 100));
-    }
-
     if (!response.ok) {
-      const errorMessage = data.message || `HTTP ${response.status}: ${response.statusText}`;
+      const responseText = await response.text();
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const data = JSON.parse(responseText);
+        if (data.message) errorMessage = data.message;
+      } catch {}
       throw new Error(errorMessage);
     }
-
-    return data;
   } catch (error) {
-    console.error(error);
+    logger.error('sendSms failed', error);
     throw new Error(getErrorMessage(error));
   }
 };

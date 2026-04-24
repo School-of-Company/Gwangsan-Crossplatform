@@ -1,4 +1,5 @@
 import { API_URL } from '@env';
+import { logger } from '~/shared/lib/logger';
 export interface ResetPasswordRequest {
   phoneNumber: string;
   newPassword: string;
@@ -23,7 +24,7 @@ export const resetPassword = async (request: ResetPasswordRequest): Promise<Resp
   try {
     data = JSON.parse(responseText);
   } catch {
-    console.warn(responseText);
+    logger.warn('resetPassword: non-JSON response');
     data = {};
   }
 

@@ -84,17 +84,7 @@ jobs:
         if: steps.cache-applesimutils.outputs.cache-hit == 'true'
         run: brew link applesimutils 2>/dev/null || true
 
-      - name: Cache CocoaPods
-        id: cache-pods
-        uses: actions/cache@v4
-        with:
-          path: |
-            ios/Pods
-            ios/app.xcworkspace
-          key: pods-${{ hashFiles('ios/Podfile.lock') }}
-
       - name: Install CocoaPods dependencies
-        if: steps.cache-pods.outputs.cache-hit != 'true'
         working-directory: ios
         run: pod install --repo-update
 
@@ -132,19 +122,6 @@ jobs:
         if: steps.cache-detox-framework.outputs.cache-hit != 'true'
         run: ./node_modules/.bin/detox clean-framework-cache && ./node_modules/.bin/detox build-framework-cache
 
-      - name: Cache compiled Pods (native layer)
-        uses: actions/cache@v4
-        with:
-          path: ios/build/Build/Products
-          key: pods-build-${{ hashFiles('ios/Podfile.lock', 'package-lock.json') }}-release
-          restore-keys: pods-build-
-
-      - name: Cache Xcode intermediates
-        uses: actions/cache@v4
-        with:
-          path: ios/build/Build/Intermediates.noindex
-          key: xcode-intermediates-${{ hashFiles('ios/Podfile.lock', 'package-lock.json', 'ios/**') }}-release
-          restore-keys: xcode-intermediates-
 
       - name: Boot iOS Simulator
         run: |
