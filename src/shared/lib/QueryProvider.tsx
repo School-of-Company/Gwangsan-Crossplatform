@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@ta
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { AxiosError } from 'axios';
 import { setQueryClientInstance } from './axios';
 import * as Sentry from '@sentry/react-native';
 
@@ -31,6 +32,13 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
+      throwOnError: (error) => {
+        if (error instanceof AxiosError) {
+          const status = error.response?.status;
+          return status !== undefined && status >= 500;
+        }
+        return false;
+      },
     },
   },
 });

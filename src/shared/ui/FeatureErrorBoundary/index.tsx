@@ -1,69 +1,76 @@
 import * as Sentry from '@sentry/react-native';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ErrorFallback } from '../ErrorFallback';
 
-interface Props {
+type FallbackRender = (props: { reset: () => void }) => React.ReactNode;
+
+interface FeatureErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
+  featureName: string;
+  fallback?: React.ReactNode | FallbackRender;
 }
 
-interface State {
+interface InnerProps extends FeatureErrorBoundaryProps {
+  onReset: () => void;
+}
+
+interface InnerState {
   hasError: boolean;
 }
 
-export class FeatureErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false };
-  }
+class FeatureErrorBoundaryInner extends React.Component<InnerProps, InnerState> {
+  state: InnerState = { hasError: false };
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): InnerState {
     return { hasError: true };
   }
 
-  private getScreenName(): string {
-    if (!React.isValidElement(this.props.children)) return 'unknown';
-    const { type } = this.props.children;
-    if (typeof type !== 'function') return 'unknown';
-    const component = type as React.ComponentType;
-    return component.displayName ?? component.name ?? 'unknown';
-  }
-
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    const screenName = this.getScreenName();
+    const { featureName } = this.props;
     Sentry.addBreadcrumb({
       category: 'ui.error',
-      message: `Render error in ${screenName}`,
+      message: `Render error in ${featureName}`,
       level: 'error',
     });
     Sentry.captureException(error, {
       extra: { componentStack: info.componentStack },
-      tags: { screen: screenName },
+      tags: { feature: featureName },
     });
   }
 
   reset = () => {
+    this.props.onReset();
     this.setState({ hasError: false });
   };
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
+        if (typeof this.props.fallback === 'function') {
+          return this.props.fallback({ reset: this.reset });
+        }
         return this.props.fallback;
       }
-      return (
-        <View className="flex-1 items-center justify-center gap-4 bg-white px-6">
-          <Text className="text-center text-lg font-semibold text-gray-800">
-            오류가 발생했습니다
-          </Text>
-          <Text className="text-center text-sm text-gray-500">잠시 후 다시 시도해 주세요.</Text>
-          <TouchableOpacity className="rounded-xl bg-main-500 px-8 py-3" onPress={this.reset}>
-            <Text className="font-semibold text-white">다시 시도</Text>
-          </TouchableOpacity>
-        </View>
-      );
+      return <ErrorFallback onRetry={this.reset} />;
     }
 
     return this.props.children;
   }
+}
+
+export function FeatureErrorBoundary({
+  children,
+  featureName,
+  fallback,
+}: FeatureErrorBoundaryProps) {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <FeatureErrorBoundaryInner onReset={reset} featureName={featureName} fallback={fallback}>
+          {children}
+        </FeatureErrorBoundaryInner>
+      )}
+    </QueryErrorResetBoundary>
+  );
 }

@@ -1,6 +1,6 @@
 import { instance } from '~/shared/lib/axios';
 import { clearAuthTokens } from '~/shared/lib/auth';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export interface SignoutResponse {
   message: string;
@@ -16,6 +16,6 @@ export const signout = async (): Promise<SignoutResponse> => {
   } catch (error) {
     await clearAuthTokens();
 
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
