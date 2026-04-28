@@ -37,7 +37,7 @@
     "@sentry/react-native": "~7.2.0",
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-query-devtools": "^5.81.5",
-    "axios": "^1.10.0",
+    "axios": "^1.15.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "clsx": "^2.1.1",
     "expo": "~54.0.29",
