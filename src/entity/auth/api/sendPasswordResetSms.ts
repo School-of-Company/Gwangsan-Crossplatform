@@ -30,8 +30,6 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
         (data.message as string) || `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(errorMessage);
     }
-
-    return data;
   } catch (error) {
     logger.error('sendPasswordResetSms failed', error);
     throw new Error(getErrorMessage(error));
