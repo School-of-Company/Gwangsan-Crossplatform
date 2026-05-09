@@ -1,4 +1,5 @@
 import { API_URL } from '@env';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
 export interface VerifyPasswordResetSmsRequest {
@@ -9,27 +10,37 @@ export interface VerifyPasswordResetSmsRequest {
 export const verifyPasswordResetSms = async (
   request: VerifyPasswordResetSmsRequest
 ): Promise<Response> => {
-  const response = await fetch(`${API_URL}/sms/password/verify`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request),
-  });
-
-  const responseText = await response.text();
-
-  if (!response.ok) {
-    throw new Error(response.status.toString());
-  }
-
-  let data;
   try {
-    data = JSON.parse(responseText);
-  } catch {
-    logger.warn('verifyPasswordResetSms: non-JSON response');
-    data = {};
-  }
+    const response = await fetch(`${API_URL}/sms/password/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
 
-  return data;
+    const responseText = await response.text();
+
+    let data: Record<string, unknown> = {};
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        if (!response.ok) {
+          throw new Error(responseText.substring(0, 100));
+        }
+      }
+    }
+
+    if (!response.ok) {
+      const errorMessage =
+        (data.message as string) || `HTTP ${response.status}: ${response.statusText}`;
+      throw new Error(errorMessage);
+    }
+
+    return data as unknown as Response;
+  } catch (error) {
+    logger.error('verifyPasswordResetSms failed', error);
+    throw new Error(getErrorMessage(error));
+  }
 };
