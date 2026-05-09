@@ -26,10 +26,12 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
     }
 
     if (!response.ok) {
-      const errorMessage =
-        (data.message as string) || `HTTP ${response.status}: ${response.statusText}`;
+      const serverMessage = data && typeof data === 'object' ? (data.message as string) : undefined;
+      const errorMessage = serverMessage || `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(errorMessage);
     }
+
+    return data;
   } catch (error) {
     logger.error('sendPasswordResetSms failed', error);
     throw new Error(getErrorMessage(error));

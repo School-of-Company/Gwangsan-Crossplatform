@@ -14,7 +14,7 @@ interface VerificationState {
 export interface UsePhoneVerificationProps {
   initialPhoneNumber?: string;
   initialVerificationCode?: string;
-  sendSmsApi: (phoneNumber: string) => Promise<void>;
+  sendSmsApi: (phoneNumber: string) => Promise<unknown>;
   verifySmsApi: (phoneNumber: string, code: string) => Promise<unknown>;
 }
 
