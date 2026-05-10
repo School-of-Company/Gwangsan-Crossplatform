@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
-import { MODE } from '~/widget/write/model/mode';
 import type { RoomId } from '~/shared/types/chatType';
 
 interface UseChatUIStateParams {
@@ -28,8 +26,6 @@ interface UseChatUIStateReturn {
   };
   readonly menuConfig: {
     readonly shouldShowMenuButton: boolean;
-    readonly isProductLoading: boolean;
-    readonly isGiverMode: boolean;
   };
   readonly tradeRequestInfo: {
     readonly productId?: number;
@@ -54,11 +50,8 @@ export const useChatUIState = ({
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
 
-  const productId = roomData?.product?.id?.toString();
-  const { data: productDetail, isLoading: isProductLoading } = useGetItem(productId);
-
-  const isGiverMode = productDetail?.mode === MODE.GIVER;
-  const shouldShowMenuButton = !isProductLoading && isGiverMode;
+  const product = roomData?.product;
+  const shouldShowMenuButton = !!product && product.createdAt === null && !product.isCompleted;
 
   const tradeEmbedConfig = useMemo(
     () => ({
@@ -86,10 +79,8 @@ export const useChatUIState = ({
   const menuConfig = useMemo(
     () => ({
       shouldShowMenuButton,
-      isProductLoading,
-      isGiverMode,
     }),
-    [shouldShowMenuButton, isProductLoading, isGiverMode]
+    [shouldShowMenuButton]
   );
 
   const tradeRequestInfo = useMemo(

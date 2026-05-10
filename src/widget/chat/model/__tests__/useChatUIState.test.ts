@@ -2,32 +2,21 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useChatUIState } from '../useChatUIState';
 
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 
 jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
 
-jest.mock('~/entity/post/model/useGetItem', () => ({
-  useGetItem: jest.fn(),
-}));
-
 jest.mock('~/entity/main/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 
-jest.mock('~/widget/write/model/mode', () => ({
-  MODE: { GIVER: 'GIVER', RECEIVER: 'RECEIVER' },
-}));
-
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
-const mockUseGetItem = useGetItem as jest.Mock;
 const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
 
-const setupMocks = (overrides: { roomData?: any; productDetail?: any; myInfo?: any } = {}) => {
+const setupMocks = (overrides: { roomData?: any; myInfo?: any } = {}) => {
   mockUseChatRoomData.mockReturnValue({ data: overrides.roomData ?? null });
-  mockUseGetItem.mockReturnValue({ data: overrides.productDetail ?? null, isLoading: false });
   mockUseGetMyInformation.mockReturnValue({ data: overrides.myInfo ?? { nickname: '내닉네임' } });
 };
 
@@ -78,25 +67,37 @@ describe('useChatUIState', () => {
   });
 
   describe('menuConfig', () => {
-    it('productDetail.mode가 GIVER이면 isGiverMode가 true이다', () => {
-      setupMocks({ productDetail: { mode: 'GIVER' } });
+    it('거래 요청이 없고 완료되지 않은 product가 있으면 shouldShowMenuButton이 true이다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, createdAt: null, isCompleted: false } },
+      });
 
       const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
 
-      expect(result.current.menuConfig.isGiverMode).toBe(true);
       expect(result.current.menuConfig.shouldShowMenuButton).toBe(true);
     });
 
-    it('productDetail.mode가 RECEIVER이면 isGiverMode가 false이다', () => {
-      setupMocks({ productDetail: { mode: 'RECEIVER' } });
+    it('거래 요청이 있으면(createdAt !== null) shouldShowMenuButton이 false이다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, createdAt: '2026-01-01T00:00:00Z', isCompleted: false } },
+      });
 
       const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
 
-      expect(result.current.menuConfig.isGiverMode).toBe(false);
       expect(result.current.menuConfig.shouldShowMenuButton).toBe(false);
     });
 
-    it('productDetail이 없으면 shouldShowMenuButton이 false이다', () => {
+    it('거래가 완료되면 shouldShowMenuButton이 false이다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, createdAt: null, isCompleted: true } },
+      });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.menuConfig.shouldShowMenuButton).toBe(false);
+    });
+
+    it('product가 없으면 shouldShowMenuButton이 false이다', () => {
       const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
 
       expect(result.current.menuConfig.shouldShowMenuButton).toBe(false);
