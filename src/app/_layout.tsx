@@ -34,7 +34,7 @@ export default function RootLayout() {
         alertType?: AlertType;
         sourceId?: number;
       };
-      if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId) {
+      if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
         router.push(`/chatting/${data.sourceId}`);
       }
     });
