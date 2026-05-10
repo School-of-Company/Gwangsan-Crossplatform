@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
@@ -38,6 +39,8 @@ export default function ChatRoomPage() {
     scrollToEnd,
     markRoomAsRead,
   } = useChatMessages({ roomId });
+
+  const queryClient = useQueryClient();
 
   const { navigationHandlers, formatLastMessageDate } = useChatAction({
     otherUserInfo,
@@ -102,10 +105,11 @@ export default function ChatRoomPage() {
     try {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
     } catch (error) {
       logger.error('handleTradeRequest failed', error);
     }
-  }, [executeTradeRequest]);
+  }, [executeTradeRequest, queryClient, roomId]);
 
   const handleReviewSubmit = useCallback(
     async (light: number, contents: string) => {
