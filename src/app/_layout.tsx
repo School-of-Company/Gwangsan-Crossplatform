@@ -1,4 +1,4 @@
-import { Stack, usePathname } from 'expo-router';
+import { Stack, usePathname, router } from 'expo-router';
 import { AppState, View } from 'react-native';
 import { useEffect } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
@@ -10,11 +10,36 @@ import '@/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
 import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
+import * as Notifications from 'expo-notifications';
+import { AlertType } from '@/entity/notification';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as {
+        alertType?: AlertType;
+        sourceId?: number;
+      };
+      if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId) {
+        router.push(`/chatting/${data.sourceId}`);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
