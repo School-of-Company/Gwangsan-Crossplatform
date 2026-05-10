@@ -6,12 +6,13 @@ import type { RoomId } from '@/shared/types/chatType';
 
 interface ChatRoomItemProps {
   room: ChatRoomListItem;
-  onPress: (roomId: RoomId) => void;
+  onPress: (roomId: RoomId, productId?: number) => void;
 }
 
 const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
   const handlePress = () => {
-    onPress(room.roomId);
+    const productId = room.product?.productId ? Number(room.product.productId) : undefined;
+    onPress(room.roomId, productId);
   };
 
   const renderUnreadBadge = () => {

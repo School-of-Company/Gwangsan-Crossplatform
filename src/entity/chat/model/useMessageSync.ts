@@ -188,10 +188,19 @@ export const useMessageSync = ({
     [queryClient, chatRoomQueryKey, chatMessageQueryKey]
   );
 
+  const handleTradeStatusUpdated = useCallback(
+    (data: { roomId: number }) => {
+      if (!data?.roomId) return;
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', data.roomId] });
+    },
+    [queryClient]
+  );
+
   return {
     handleConnect,
     handleReceiveMessage,
     handleUpdateRoomList,
+    handleTradeStatusUpdated,
     markRoomAsRead,
   };
 };

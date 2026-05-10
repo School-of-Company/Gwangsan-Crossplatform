@@ -42,7 +42,7 @@ export const useTradeRequest = ({
 
       try {
         if (response.roomId) {
-          router.push(`/chatting/${response.roomId}`);
+          router.push(`/chatting/${response.roomId}?productId=${productId}`);
         } else {
           await navigateToChat(productId);
         }

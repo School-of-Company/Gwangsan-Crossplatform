@@ -13,6 +13,7 @@ export interface ChatSocketEvents {
     lastMessageType: string;
     lastMessageTime: string;
   }) => void;
+  tradeStatusUpdated: (data: { roomId: number }) => void;
 }
 
 export interface ChatSendMessagePayload extends BaseSocketMessage {
@@ -68,6 +69,10 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
 
     socketManager.on('updateRoomList', (data: any) => {
       emit('updateRoomList', data);
+    });
+
+    socketManager.on('tradeStatusUpdated', (data: any) => {
+      emit('tradeStatusUpdated', data);
     });
   };
 

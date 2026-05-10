@@ -12,6 +12,7 @@ interface UseSocketEventHandlersProps {
     lastMessageType: string;
     lastMessageTime: string;
   }) => void;
+  onTradeStatusUpdated?: (data: { roomId: number }) => void;
 }
 
 export const useSocketEventHandlers = ({
@@ -19,6 +20,7 @@ export const useSocketEventHandlers = ({
   onConnect,
   onReceiveMessage,
   onUpdateRoomList,
+  onTradeStatusUpdated,
 }: UseSocketEventHandlersProps) => {
   useEffect(() => {
     if (onConnect) {
@@ -33,6 +35,10 @@ export const useSocketEventHandlers = ({
       socketService.on('updateRoomList', onUpdateRoomList);
     }
 
+    if (onTradeStatusUpdated) {
+      socketService.on('tradeStatusUpdated', onTradeStatusUpdated);
+    }
+
     return () => {
       if (onConnect) {
         socketService.off('connect', onConnect);
@@ -45,6 +51,10 @@ export const useSocketEventHandlers = ({
       if (onUpdateRoomList) {
         socketService.off('updateRoomList', onUpdateRoomList);
       }
+
+      if (onTradeStatusUpdated) {
+        socketService.off('tradeStatusUpdated', onTradeStatusUpdated);
+      }
     };
-  }, [socketService, onConnect, onReceiveMessage, onUpdateRoomList]);
+  }, [socketService, onConnect, onReceiveMessage, onUpdateRoomList, onTradeStatusUpdated]);
 };

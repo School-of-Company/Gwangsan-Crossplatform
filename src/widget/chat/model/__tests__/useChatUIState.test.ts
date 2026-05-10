@@ -64,6 +64,14 @@ describe('useChatUIState', () => {
 
       expect(result.current.tradeRequestInfo.productId).toBeUndefined();
     });
+
+    it('product가 없어도 fallbackProductId가 있으면 productId로 사용한다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, fallbackProductId: 99 })
+      );
+
+      expect(result.current.tradeRequestInfo.productId).toBe(99);
+    });
   });
 
   describe('menuConfig', () => {
@@ -99,6 +107,22 @@ describe('useChatUIState', () => {
 
     it('product가 없으면 shouldShowMenuButton이 false이다', () => {
       const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.menuConfig.shouldShowMenuButton).toBe(false);
+    });
+
+    it('product가 없어도 fallbackProductId가 있고 거래 요청이 없으면 shouldShowMenuButton이 true이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, hasTradeRequest: false, fallbackProductId: 99 })
+      );
+
+      expect(result.current.menuConfig.shouldShowMenuButton).toBe(true);
+    });
+
+    it('product가 없고 fallbackProductId가 있어도 hasTradeRequest가 true이면 shouldShowMenuButton이 false이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, hasTradeRequest: true, fallbackProductId: 99 })
+      );
 
       expect(result.current.menuConfig.shouldShowMenuButton).toBe(false);
     });

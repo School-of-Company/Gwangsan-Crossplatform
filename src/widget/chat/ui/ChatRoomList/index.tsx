@@ -15,8 +15,9 @@ export function ChatRoomList() {
   });
 
   const handleChatRoomPress = useCallback(
-    (roomId: RoomId) => {
-      router.push(`/chatting/${roomId}`);
+    (roomId: RoomId, productId?: number) => {
+      const url = productId ? `/chatting/${roomId}?productId=${productId}` : `/chatting/${roomId}`;
+      router.push(url);
     },
     [router]
   );

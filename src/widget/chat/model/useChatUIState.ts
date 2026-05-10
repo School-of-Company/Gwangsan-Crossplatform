@@ -11,6 +11,7 @@ interface UseChatUIStateParams {
   readonly handleTradeAccept: () => Promise<void>;
   readonly handleReservation: () => Promise<void>;
   readonly handleCancelReservation: () => Promise<void>;
+  readonly fallbackProductId?: number;
 }
 
 interface UseChatUIStateReturn {
@@ -46,12 +47,15 @@ export const useChatUIState = ({
   handleTradeAccept,
   handleReservation,
   handleCancelReservation,
+  fallbackProductId,
 }: UseChatUIStateParams): UseChatUIStateReturn => {
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
 
   const product = roomData?.product;
-  const shouldShowMenuButton = !!product && product.createdAt === null && !product.isCompleted;
+  const shouldShowMenuButton = product
+    ? product.createdAt === null && !product.isCompleted
+    : !!fallbackProductId && !hasTradeRequest;
 
   const tradeEmbedConfig = useMemo(
     () => ({
@@ -85,10 +89,10 @@ export const useChatUIState = ({
 
   const tradeRequestInfo = useMemo(
     () => ({
-      productId: roomData?.product?.id,
+      productId: roomData?.product?.id ?? fallbackProductId,
       sellerId: otherUserInfo.id,
     }),
-    [roomData?.product?.id, otherUserInfo.id]
+    [roomData?.product?.id, fallbackProductId, otherUserInfo.id]
   );
 
   const componentState = useMemo(

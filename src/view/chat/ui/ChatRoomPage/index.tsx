@@ -20,8 +20,12 @@ import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 
 export default function ChatRoomPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, productId: productIdParam } = useLocalSearchParams<{
+    id: string;
+    productId?: string;
+  }>();
   const roomId = Number(id) as RoomId;
+  const fallbackProductId = productIdParam ? Number(productIdParam) : undefined;
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
@@ -68,6 +72,7 @@ export default function ChatRoomPage() {
     handleTradeAccept,
     handleReservation,
     handleCancelReservation,
+    fallbackProductId,
   });
 
   const updatedComponentState = useMemo(

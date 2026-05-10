@@ -14,12 +14,12 @@ export const useChatEntry = () => {
 
       try {
         const room = await findChatRoom(productId);
-        router.push(`/chatting/${room.roomId}`);
+        router.push(`/chatting/${room.roomId}?productId=${productId}`);
       } catch (error: any) {
         if (error.message === '해당하는 채팅방을 찾을 수 없습니다.') {
           try {
             const newRoom = await createChatRoom(productId);
-            router.push(`/chatting/${newRoom.roomId}`);
+            router.push(`/chatting/${newRoom.roomId}?productId=${productId}`);
           } catch (error: any) {
             Toast.show({
               type: 'create error',
