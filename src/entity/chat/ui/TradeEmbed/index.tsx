@@ -81,12 +81,18 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
     <View className={`mb-4 ${alignmentClass}`}>
       <Card variant="default" padding="none" className="overflow-hidden">
         <View className="p-4">
-          <View className="mb-3 h-20 w-20 overflow-hidden rounded-lg">
-            <Image
-              source={{ uri: productImage.imageUrl }}
-              className="h-full w-full"
-              resizeMode="cover"
-            />
+          <View className="mb-3 h-20 w-20 overflow-hidden rounded-lg bg-gray-200">
+            {productImage ? (
+              <Image
+                source={{ uri: productImage.imageUrl }}
+                className="h-full w-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="h-full w-full items-center justify-center">
+                <Text className="text-xs text-gray-400">이미지 없음</Text>
+              </View>
+            )}
             {product.images.length > 1 && (
               <View className="absolute -bottom-1 -right-1 h-5 w-5 items-center justify-center rounded-full bg-black bg-opacity-60">
                 <Text className="text-xs font-bold text-white">+{product.images.length - 1}</Text>

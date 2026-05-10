@@ -5,6 +5,7 @@ import { requestTrade } from '~/entity/post/api/requestTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
 import Toast from 'react-native-toast-message';
+import type { RoomId } from '~/shared/types/chatType';
 
 jest.mock('~/entity/post/api/requestTrade', () => ({ requestTrade: jest.fn() }));
 jest.mock('~/entity/post/api/makeReservation', () => ({ makeReservation: jest.fn() }));
@@ -19,6 +20,8 @@ const mockMakeReservation = makeReservation as jest.Mock;
 const mockCancelReservation = cancelReservation as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
+
+const ROOM_ID = 1 as RoomId;
 
 const makeRoomData = (overrides: Record<string, any> = {}) => ({
   product: {
@@ -35,7 +38,7 @@ describe('useTradeHandlers', () => {
   describe('hasTradeRequest', () => {
     it('product.createdAt이 있으면 hasTradeRequest가 true이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       expect(result.current.hasTradeRequest).toBe(true);
@@ -43,7 +46,11 @@ describe('useTradeHandlers', () => {
 
     it('product.createdAt이 null이면 hasTradeRequest가 false이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData({ createdAt: null }), otherUserInfo })
+        useTradeHandlers({
+          roomId: ROOM_ID,
+          roomData: makeRoomData({ createdAt: null }),
+          otherUserInfo,
+        })
       );
 
       expect(result.current.hasTradeRequest).toBe(false);
@@ -51,7 +58,7 @@ describe('useTradeHandlers', () => {
 
     it('product가 null이면 hasTradeRequest가 false이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: { product: null }, otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: { product: null }, otherUserInfo })
       );
 
       expect(result.current.hasTradeRequest).toBe(false);
@@ -59,7 +66,7 @@ describe('useTradeHandlers', () => {
 
     it('roomData가 null이면 hasTradeRequest가 false이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: null, otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: null, otherUserInfo })
       );
 
       expect(result.current.hasTradeRequest).toBe(false);
@@ -69,7 +76,11 @@ describe('useTradeHandlers', () => {
   describe('shouldShowButtons', () => {
     it('hasTradeRequest=true, isCompletable=true이면 shouldShowButtons가 true이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData({ isCompletable: true }), otherUserInfo })
+        useTradeHandlers({
+          roomId: ROOM_ID,
+          roomData: makeRoomData({ isCompletable: true }),
+          otherUserInfo,
+        })
       );
 
       expect(result.current.shouldShowButtons).toBe(true);
@@ -77,7 +88,11 @@ describe('useTradeHandlers', () => {
 
     it('isCompletable=false이면 shouldShowButtons가 false이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData({ isCompletable: false }), otherUserInfo })
+        useTradeHandlers({
+          roomId: ROOM_ID,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo,
+        })
       );
 
       expect(result.current.shouldShowButtons).toBe(false);
@@ -85,7 +100,11 @@ describe('useTradeHandlers', () => {
 
     it('createdAt이 null이면 shouldShowButtons가 false이다', () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData({ createdAt: null }), otherUserInfo })
+        useTradeHandlers({
+          roomId: ROOM_ID,
+          roomData: makeRoomData({ createdAt: null }),
+          otherUserInfo,
+        })
       );
 
       expect(result.current.shouldShowButtons).toBe(false);
@@ -97,7 +116,7 @@ describe('useTradeHandlers', () => {
       mockRequestTrade.mockResolvedValue({});
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -114,7 +133,7 @@ describe('useTradeHandlers', () => {
       mockRequestTrade.mockRejectedValue(new Error('수락 실패'));
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -128,7 +147,11 @@ describe('useTradeHandlers', () => {
 
     it('otherUserInfo.id가 없으면 requestTrade를 호출하지 않는다', async () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo: { nickname: '상대방' } })
+        useTradeHandlers({
+          roomId: ROOM_ID,
+          roomData: makeRoomData(),
+          otherUserInfo: { nickname: '상대방' },
+        })
       );
 
       await act(async () => {
@@ -140,7 +163,7 @@ describe('useTradeHandlers', () => {
 
     it('productId가 없으면 requestTrade를 호출하지 않는다', async () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: { product: null }, otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: { product: null }, otherUserInfo })
       );
 
       await act(async () => {
@@ -156,7 +179,7 @@ describe('useTradeHandlers', () => {
       mockMakeReservation.mockResolvedValue({});
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -173,7 +196,7 @@ describe('useTradeHandlers', () => {
       mockMakeReservation.mockRejectedValue(new Error('예약 실패'));
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -187,7 +210,7 @@ describe('useTradeHandlers', () => {
 
     it('productId가 없으면 makeReservation을 호출하지 않는다', async () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: { product: null }, otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: { product: null }, otherUserInfo })
       );
 
       await act(async () => {
@@ -203,7 +226,7 @@ describe('useTradeHandlers', () => {
       mockCancelReservation.mockResolvedValue({});
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -220,7 +243,7 @@ describe('useTradeHandlers', () => {
       mockCancelReservation.mockRejectedValue(new Error('취소 실패'));
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -234,7 +257,7 @@ describe('useTradeHandlers', () => {
 
     it('productId가 없으면 cancelReservation을 호출하지 않는다', async () => {
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: { product: null }, otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: { product: null }, otherUserInfo })
       );
 
       await act(async () => {
@@ -248,7 +271,7 @@ describe('useTradeHandlers', () => {
       mockCancelReservation.mockRejectedValue('string error');
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -269,7 +292,7 @@ describe('useTradeHandlers', () => {
       mockRequestTrade.mockRejectedValue('string error');
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
@@ -288,7 +311,7 @@ describe('useTradeHandlers', () => {
       mockMakeReservation.mockRejectedValue('string error');
 
       const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomData: makeRoomData(), otherUserInfo })
+        useTradeHandlers({ roomId: ROOM_ID, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {

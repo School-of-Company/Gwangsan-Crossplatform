@@ -66,6 +66,8 @@ export const useMessageSync = ({
             }
           );
 
+          queryClient.invalidateQueries({ queryKey: ['chatRoomData', currentRoomId] });
+
           const queueState = useChatQueueStore.getState();
           const matchingTemp = queueState.pendingMessages.find((msg) => {
             if (

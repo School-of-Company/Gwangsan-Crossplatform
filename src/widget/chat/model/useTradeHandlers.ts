@@ -1,10 +1,13 @@
 import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
+import type { RoomId } from '~/shared/types/chatType';
 
 interface UseTradeHandlersParams {
+  readonly roomId: RoomId;
   readonly roomData: {
     readonly product?: {
       readonly id: number;
@@ -24,9 +27,12 @@ interface UseTradeHandlersReturn {
 }
 
 export const useTradeHandlers = ({
+  roomId,
   roomData,
   otherUserInfo,
 }: UseTradeHandlersParams): UseTradeHandlersReturn => {
+  const queryClient = useQueryClient();
+
   const hasTradeRequest =
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
 
@@ -41,6 +47,8 @@ export const useTradeHandlers = ({
         otherMemberId: otherUserInfo.id,
       });
 
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
+
       Toast.show({
         type: 'success',
         text1: '거래가 수락되었습니다!',
@@ -52,13 +60,15 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData?.product?.id, otherUserInfo.id]);
+  }, [queryClient, roomId, roomData?.product?.id, otherUserInfo.id]);
 
   const handleReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
 
     try {
       await makeReservation({ productId: roomData.product.id });
+
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
 
       Toast.show({
         type: 'success',
@@ -71,13 +81,15 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData?.product?.id]);
+  }, [queryClient, roomId, roomData?.product?.id]);
 
   const handleCancelReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
 
     try {
       await cancelReservation({ productId: roomData.product.id });
+
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
 
       Toast.show({
         type: 'success',
@@ -90,7 +102,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData?.product?.id]);
+  }, [queryClient, roomId, roomData?.product?.id]);
 
   return {
     handleTradeAccept,

@@ -52,6 +52,7 @@ export default function ChatRoomPage() {
     hasTradeRequest,
     shouldShowButtons,
   } = useTradeHandlers({
+    roomId,
     roomData: roomData || null,
     otherUserInfo,
   });
