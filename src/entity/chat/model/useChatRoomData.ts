@@ -13,7 +13,6 @@ export const useChatRoomData = ({ roomId, enabled = true }: UseChatRoomDataOptio
     queryKey: ['chatRoomData', roomId],
     queryFn: () => getChatRoomData(roomId),
     enabled: enabled && !!roomId,
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
   });
 };
