@@ -8,7 +8,7 @@ import type {
 } from '../model/chatTypes';
 import { isTradeProduct } from '../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 
 interface ChatRoomApiResponse {
@@ -50,7 +50,7 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
       text1: error?.message || '채팅방 데이터를 불러올 수 없습니다',
     });
 
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
 

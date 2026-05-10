@@ -10,21 +10,19 @@ export const useSignout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const cleanup = () => {
+    removeData('memberId');
+    clearCurrentUserId();
+    Sentry.setUser(null);
+    queryClient.clear();
+    router.replace('/onboarding');
+  };
+
   const signoutMutation = useMutation({
     mutationFn: signout,
-    onSuccess: () => {
-      Sentry.setUser(null);
-      removeData('memberId');
-      clearCurrentUserId();
-      queryClient.clear();
-      router.replace('/onboarding');
-    },
+    onSuccess: cleanup,
     onError: (error) => {
-      Sentry.setUser(null);
-      removeData('memberId');
-      clearCurrentUserId();
-      queryClient.clear();
-      router.replace('/onboarding');
+      cleanup();
       throw error;
     },
   });

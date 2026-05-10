@@ -3,7 +3,7 @@ import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
 import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 import * as Keychain from 'react-native-keychain';
 
@@ -31,7 +31,7 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
 
     return response.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
 
@@ -89,6 +89,6 @@ export const signinWithDeviceInfo = async (credentials: {
     return await signin(formData);
   } catch (error) {
     logger.error('signinWithDeviceInfo failed', error);
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

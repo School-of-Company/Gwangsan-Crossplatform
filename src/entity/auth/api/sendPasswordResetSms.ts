@@ -1,5 +1,5 @@
 import { API_URL } from '@env';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
 export const sendPasswordResetSms = async (phoneNumber: string) => {
@@ -30,6 +30,6 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
     return data;
   } catch (error) {
     logger.error('sendPasswordResetSms failed', error);
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

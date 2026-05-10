@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import * as Sentry from '@sentry/react-native';
 import { logger } from '~/shared/lib/logger';
 
 export default function PasswordStep() {
@@ -38,6 +39,7 @@ export default function PasswordStep() {
       saveCredentialsForBiometric(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
         logger.error('saveCredentialsForBiometric failed', e)
       );
+      Sentry.setUser({ username: trimmedNickname });
 
       resetStore();
       router.replace('/main');
