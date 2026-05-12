@@ -18,10 +18,9 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
     if (responseText.trim()) {
       try {
         data = JSON.parse(responseText);
-      } catch {
-        if (!response.ok) {
-          throw new Error(responseText.substring(0, 100));
-        }
+      } catch (parseError) {
+        logger.error('sendPasswordResetSms: JSON parse failed', parseError);
+        throw new Error(responseText.substring(0, 100));
       }
     }
 
