@@ -7,7 +7,7 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
-export const resetPassword = async (request: ResetPasswordRequest): Promise<Response> => {
+export const resetPassword = async (request: ResetPasswordRequest): Promise<void> => {
   try {
     const response = await fetch(`${API_URL}/auth/password`, {
       method: 'PATCH',
@@ -35,8 +35,6 @@ export const resetPassword = async (request: ResetPasswordRequest): Promise<Resp
       const errorMessage = serverMessage || `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(errorMessage);
     }
-
-    return data as unknown as Response;
   } catch (error) {
     logger.error('resetPassword failed', error);
     throw new Error(getErrorMessage(error));

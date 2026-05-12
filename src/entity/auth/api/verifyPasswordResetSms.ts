@@ -9,7 +9,7 @@ export interface VerifyPasswordResetSmsRequest {
 
 export const verifyPasswordResetSms = async (
   request: VerifyPasswordResetSmsRequest
-): Promise<Response> => {
+): Promise<void> => {
   try {
     const response = await fetch(`${API_URL}/sms/password/verify`, {
       method: 'POST',
@@ -18,7 +18,6 @@ export const verifyPasswordResetSms = async (
       },
       body: JSON.stringify(request),
     });
-
     const responseText = await response.text();
 
     let data: Record<string, unknown> = {};
@@ -37,8 +36,6 @@ export const verifyPasswordResetSms = async (
       const errorMessage = serverMessage || `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(errorMessage);
     }
-
-    return data as unknown as Response;
   } catch (error) {
     logger.error('verifyPasswordResetSms failed', error);
     throw new Error(getErrorMessage(error));
