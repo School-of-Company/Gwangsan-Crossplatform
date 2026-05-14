@@ -14,16 +14,19 @@ export const sendPasswordResetSms = async (phoneNumber: string) => {
 
     const responseText = await response.text();
 
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      logger.error('sendPasswordResetSms: JSON parse failed', parseError);
-      throw new Error(responseText.substring(0, 100));
+    let data: Record<string, unknown> = {};
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        logger.error('sendPasswordResetSms: JSON parse failed', parseError);
+        throw new Error(responseText.substring(0, 100));
+      }
     }
 
     if (!response.ok) {
-      const errorMessage = data.message || `HTTP ${response.status}: ${response.statusText}`;
+      const serverMessage = data && typeof data === 'object' ? (data.message as string) : undefined;
+      const errorMessage = serverMessage || `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(errorMessage);
     }
 

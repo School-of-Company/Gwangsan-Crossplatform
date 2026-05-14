@@ -7,11 +7,11 @@ beforeEach(() => {
 });
 
 describe('verifyPasswordResetSms', () => {
-  it('인증 성공 시 응답 데이터를 반환한다', async () => {
+  it('인증 성공 시 에러 없이 완료된다', async () => {
     mockFetch({ verified: true });
-    expect(await verifyPasswordResetSms({ phoneNumber: '01012345678', code: '112233' })).toEqual({
-      verified: true,
-    });
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '112233' })
+    ).resolves.toBeUndefined();
   });
 
   it('올바른 바디로 요청을 보낸다', async () => {
@@ -28,12 +28,11 @@ describe('verifyPasswordResetSms', () => {
     ).rejects.toThrow('400');
   });
 
-  it('성공 응답이 JSON이 아니면 빈 객체를 반환한다', async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  it('성공 응답이 JSON이 아니면 에러 없이 완료된다', async () => {
     mockFetch('VERIFIED');
-    expect(await verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })).toEqual(
-      {}
-    );
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
+    ).resolves.toBeUndefined();
   });
 
   it('네트워크 에러 시 에러를 throw한다', async () => {
