@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { signout } from '../api/signout';
+import { clearCredentialsForBiometric } from '../api/signin';
 import { removeData } from '~/shared/lib/removeData';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import * as Sentry from '@sentry/react-native';
@@ -11,6 +12,7 @@ export const useSignout = () => {
   const queryClient = useQueryClient();
 
   const cleanup = () => {
+    clearCredentialsForBiometric();
     removeData('memberId');
     clearCurrentUserId();
     Sentry.setUser(null);
