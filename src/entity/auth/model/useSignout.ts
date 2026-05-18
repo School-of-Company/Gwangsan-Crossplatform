@@ -11,9 +11,8 @@ export const useSignout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const cleanup = () => {
-    clearCredentialsForBiometric();
-    removeData('memberId');
+  const cleanup = async () => {
+    await Promise.allSettled([clearCredentialsForBiometric(), removeData('memberId')]);
     clearCurrentUserId();
     Sentry.setUser(null);
     queryClient.clear();
@@ -23,8 +22,8 @@ export const useSignout = () => {
   const signoutMutation = useMutation({
     mutationFn: signout,
     onSuccess: cleanup,
-    onError: (error) => {
-      cleanup();
+    onError: async (error) => {
+      await cleanup();
       throw error;
     },
   });
