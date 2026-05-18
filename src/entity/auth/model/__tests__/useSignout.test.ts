@@ -12,6 +12,9 @@ jest.mock('expo-router', () => ({
 jest.mock('../../api/signout', () => ({
   signout: jest.fn(),
 }));
+jest.mock('../../api/signin', () => ({
+  clearCredentialsForBiometric: jest.fn(),
+}));
 jest.mock('~/shared/lib/removeData', () => ({
   removeData: jest.fn(),
 }));
