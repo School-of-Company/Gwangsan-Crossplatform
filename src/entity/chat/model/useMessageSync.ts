@@ -96,18 +96,26 @@ export const useMessageSync = ({
             if (!oldData) return oldData;
 
             return oldData.map((room) => {
-              if (room.roomId === correctedMessage.roomId) {
-                return {
-                  ...room,
-                  lastMessage: correctedMessage.content || '(사진)',
-                  lastMessageType: correctedMessage.messageType,
-                  lastMessageTime: correctedMessage.createdAt,
-                  unreadMessageCount: correctedMessage.isMine
-                    ? room.unreadMessageCount
-                    : room.unreadMessageCount + 1,
-                };
-              }
-              return room;
+              if (room.roomId !== correctedMessage.roomId) return room;
+
+              const isDuplicate = room.messageId === correctedMessage.messageId;
+              const isMine = correctedMessage.senderId === userId;
+              const isActiveRoom = room.roomId === currentRoomId;
+
+              const nextUnreadCount = (() => {
+                if (isActiveRoom) return 0;
+                if (isDuplicate || isMine) return room.unreadMessageCount;
+                return room.unreadMessageCount + 1;
+              })();
+
+              return {
+                ...room,
+                messageId: correctedMessage.messageId,
+                lastMessage: correctedMessage.content || '(사진)',
+                lastMessageType: correctedMessage.messageType,
+                lastMessageTime: correctedMessage.createdAt,
+                unreadMessageCount: nextUnreadCount,
+              };
             });
           });
         }

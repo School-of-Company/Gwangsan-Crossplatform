@@ -230,12 +230,17 @@ describe('useMessageSync', () => {
       expect(cached).toHaveLength(0);
     });
 
-    it('상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
+    it('비활성 방의 상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
+      const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
 
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID }));
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: OTHER_USER_ID })
+        );
       });
 
       await waitFor(() => {
@@ -244,17 +249,76 @@ describe('useMessageSync', () => {
       });
     });
 
-    it('내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
+    it('비활성 방의 내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
 
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID }));
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: MY_USER_ID })
+        );
       });
 
       await waitFor(() => {
         const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
         expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
+    it('현재 활성화된 방의 메시지 수신 시 unreadMessageCount를 0으로 설정한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ messageId: 1, unreadMessageCount: 5 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ messageId: 2, senderId: OTHER_USER_ID }));
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].unreadMessageCount).toBe(0);
+      });
+    });
+
+    it('동일 messageId의 중복 메시지 수신 시 unreadMessageCount를 증가시키지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 7, unreadMessageCount: 2 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 7, roomId: OTHER_ROOM_ID, senderId: OTHER_USER_ID })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
+    it('메시지 수신 시 room의 messageId를 최신값으로 업데이트한다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 42, roomId: OTHER_ROOM_ID, senderId: OTHER_USER_ID })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].messageId).toBe(42);
       });
     });
 
