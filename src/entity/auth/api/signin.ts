@@ -74,6 +74,14 @@ export const getCredentialsForBiometric = async (): Promise<{
   }
 };
 
+export const clearCredentialsForBiometric = async (): Promise<void> => {
+  try {
+    await Keychain.resetGenericPassword();
+  } catch (error) {
+    logger.error('Failed to clear biometric credentials', error);
+  }
+};
+
 export const signinWithDeviceInfo = async (credentials: {
   nickname: string;
   password: string;
