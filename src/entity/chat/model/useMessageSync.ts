@@ -102,9 +102,10 @@ export const useMessageSync = ({
                   lastMessage: correctedMessage.content || '(사진)',
                   lastMessageType: correctedMessage.messageType,
                   lastMessageTime: correctedMessage.createdAt,
-                  unreadMessageCount: correctedMessage.isMine
-                    ? room.unreadMessageCount
-                    : room.unreadMessageCount + 1,
+                  unreadMessageCount:
+                    correctedMessage.senderId === userId
+                      ? room.unreadMessageCount
+                      : room.unreadMessageCount + 1,
                 };
               }
               return room;
