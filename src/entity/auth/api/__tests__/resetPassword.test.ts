@@ -7,11 +7,11 @@ beforeEach(() => {
 });
 
 describe('resetPassword', () => {
-  it('비밀번호 재설정 성공 시 응답 데이터를 반환한다', async () => {
+  it('비밀번호 재설정 성공 시 에러 없이 완료된다', async () => {
     mockFetch({ message: 'changed' });
-    expect(await resetPassword({ phoneNumber: '01012345678', newPassword: 'NewPass1!' })).toEqual({
-      message: 'changed',
-    });
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'NewPass1!' })
+    ).resolves.toBeUndefined();
   });
 
   it('올바른 바디로 PATCH 요청을 보낸다', async () => {
@@ -32,9 +32,11 @@ describe('resetPassword', () => {
     ).rejects.toThrow('404');
   });
 
-  it('성공 응답이 JSON이 아니면 빈 객체를 반환한다', async () => {
+  it('성공 응답이 JSON이 아니면 에러 없이 완료된다', async () => {
     mockFetch('OK');
-    expect(await resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })).toEqual({});
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
+    ).resolves.toBeUndefined();
   });
 
   it('네트워크 에러 시 에러를 throw한다', async () => {
