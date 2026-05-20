@@ -303,6 +303,67 @@ describe('useMessageSync', () => {
       });
     });
 
+    it('과거 메시지(lastMessageTime보다 이전) 수신 시 unreadMessageCount를 증가시키지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          roomId: OTHER_ROOM_ID,
+          messageId: 10,
+          unreadMessageCount: 2,
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 5,
+            roomId: OTHER_ROOM_ID,
+            senderId: OTHER_USER_ID,
+            createdAt: '2024-01-01T00:00:00Z',
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
+    it('과거 메시지 수신 시 lastMessage/messageId를 과거 값으로 덮어쓰지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          roomId: OTHER_ROOM_ID,
+          messageId: 10,
+          lastMessage: '최신 메시지',
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 5,
+            roomId: OTHER_ROOM_ID,
+            content: '과거 메시지',
+            senderId: OTHER_USER_ID,
+            createdAt: '2024-01-01T00:00:00Z',
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].lastMessage).toBe('최신 메시지');
+        expect(rooms?.[0].messageId).toBe(10);
+        expect(rooms?.[0].lastMessageTime).toBe('2024-01-02T00:00:00Z');
+      });
+    });
+
     it('메시지 수신 시 room의 messageId를 최신값으로 업데이트한다', async () => {
       const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();

@@ -98,13 +98,17 @@ export const useMessageSync = ({
             return oldData.map((room) => {
               if (room.roomId !== correctedMessage.roomId) return room;
 
+              const incomingTime = new Date(correctedMessage.createdAt).getTime();
+              const lastTime = new Date(room.lastMessageTime).getTime();
+              const isStale = Number.isFinite(lastTime) && incomingTime < lastTime;
+              if (isStale) return room;
+
               const isDuplicate = room.messageId === correctedMessage.messageId;
-              const isMine = correctedMessage.senderId === userId;
               const isActiveRoom = room.roomId === currentRoomId;
 
               const nextUnreadCount = (() => {
                 if (isActiveRoom) return 0;
-                if (isDuplicate || isMine) return room.unreadMessageCount;
+                if (isDuplicate || correctedMessage.isMine) return room.unreadMessageCount;
                 return room.unreadMessageCount + 1;
               })();
 
