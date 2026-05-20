@@ -399,11 +399,11 @@ describe('useMessageSync', () => {
 
     it('방 목록의 lastMessage와 lastMessageTime을 업데이트한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 1 })]);
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ content: '새 메시지', createdAt: '2024-01-02T00:00:00Z' })
+          makeMessage({ messageId: 2, content: '새 메시지', createdAt: '2024-01-02T00:00:00Z' })
         );
       });
 
@@ -416,10 +416,17 @@ describe('useMessageSync', () => {
 
     it('이미지 메시지 수신 시 lastMessage를 "(사진)"으로 표시한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 1 })]);
 
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ content: null, messageType: 'IMAGE' }));
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 2,
+            content: null,
+            messageType: 'IMAGE',
+            createdAt: '2024-01-02T00:00:00Z',
+          })
+        );
       });
 
       await waitFor(() => {
@@ -487,11 +494,18 @@ describe('useMessageSync', () => {
     it('다른 roomId 메시지도 room list는 업데이트한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
-      queryClient.setQueryData(CHAT_ROOM_KEY, [{ ...makeRoomListItem(), roomId: 999 }]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        { ...makeRoomListItem(), roomId: 999, messageId: 1 },
+      ]);
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ roomId: 999, content: '다른 방 메시지', createdAt: '2024-01-02T00:00:00Z' })
+          makeMessage({
+            messageId: 2,
+            roomId: 999,
+            content: '다른 방 메시지',
+            createdAt: '2024-01-02T00:00:00Z',
+          })
         );
       });
 
