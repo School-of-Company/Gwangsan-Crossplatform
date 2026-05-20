@@ -230,12 +230,17 @@ describe('useMessageSync', () => {
       expect(cached).toHaveLength(0);
     });
 
-    it('상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
+    it('비활성 방의 상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
+      const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
 
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID }));
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: OTHER_USER_ID })
+        );
       });
 
       await waitFor(() => {
@@ -244,12 +249,17 @@ describe('useMessageSync', () => {
       });
     });
 
-    it('내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
+    it('비활성 방의 내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
 
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID }));
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: MY_USER_ID })
+        );
       });
 
       await waitFor(() => {
@@ -258,13 +268,142 @@ describe('useMessageSync', () => {
       });
     });
 
-    it('방 목록의 lastMessage와 lastMessageTime을 업데이트한다', async () => {
+    it('현재 활성화된 방의 메시지 수신 시 unreadMessageCount를 0으로 설정한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ messageId: 1, unreadMessageCount: 5 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(makeMessage({ messageId: 2, senderId: OTHER_USER_ID }));
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].unreadMessageCount).toBe(0);
+      });
+    });
+
+    it('동일 messageId의 중복 메시지 수신 시 room 정보를 변경하지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          roomId: OTHER_ROOM_ID,
+          messageId: 7,
+          unreadMessageCount: 2,
+          lastMessage: '원본 메시지',
+          lastMessageTime: '2024-01-01T09:00:00Z',
+        }),
+      ]);
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ content: '새 메시지', createdAt: '2024-01-02T00:00:00Z' })
+          makeMessage({
+            messageId: 7,
+            roomId: OTHER_ROOM_ID,
+            senderId: OTHER_USER_ID,
+            content: '다른 내용',
+            createdAt: '2024-01-02T00:00:00Z',
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+        expect(rooms?.[0].lastMessage).toBe('원본 메시지');
+        expect(rooms?.[0].lastMessageTime).toBe('2024-01-01T09:00:00Z');
+      });
+    });
+
+    it('과거 메시지(lastMessageTime보다 이전) 수신 시 unreadMessageCount를 증가시키지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          roomId: OTHER_ROOM_ID,
+          messageId: 10,
+          unreadMessageCount: 2,
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 5,
+            roomId: OTHER_ROOM_ID,
+            senderId: OTHER_USER_ID,
+            createdAt: '2024-01-01T00:00:00Z',
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
+    it('과거 메시지 수신 시 lastMessage/messageId를 과거 값으로 덮어쓰지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          roomId: OTHER_ROOM_ID,
+          messageId: 10,
+          lastMessage: '최신 메시지',
+          lastMessageTime: '2024-01-02T00:00:00Z',
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 5,
+            roomId: OTHER_ROOM_ID,
+            content: '과거 메시지',
+            senderId: OTHER_USER_ID,
+            createdAt: '2024-01-01T00:00:00Z',
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].lastMessage).toBe('최신 메시지');
+        expect(rooms?.[0].messageId).toBe(10);
+        expect(rooms?.[0].lastMessageTime).toBe('2024-01-02T00:00:00Z');
+      });
+    });
+
+    it('메시지 수신 시 room의 messageId를 최신값으로 업데이트한다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 42, roomId: OTHER_ROOM_ID, senderId: OTHER_USER_ID })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].messageId).toBe(42);
+      });
+    });
+
+    it('방 목록의 lastMessage와 lastMessageTime을 업데이트한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 1 })]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 2, content: '새 메시지', createdAt: '2024-01-02T00:00:00Z' })
         );
       });
 
@@ -277,10 +416,17 @@ describe('useMessageSync', () => {
 
     it('이미지 메시지 수신 시 lastMessage를 "(사진)"으로 표시한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 1 })]);
 
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ content: null, messageType: 'IMAGE' }));
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 2,
+            content: null,
+            messageType: 'IMAGE',
+            createdAt: '2024-01-02T00:00:00Z',
+          })
+        );
       });
 
       await waitFor(() => {
@@ -348,11 +494,18 @@ describe('useMessageSync', () => {
     it('다른 roomId 메시지도 room list는 업데이트한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
-      queryClient.setQueryData(CHAT_ROOM_KEY, [{ ...makeRoomListItem(), roomId: 999 }]);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        { ...makeRoomListItem(), roomId: 999, messageId: 1 },
+      ]);
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ roomId: 999, content: '다른 방 메시지', createdAt: '2024-01-02T00:00:00Z' })
+          makeMessage({
+            messageId: 2,
+            roomId: 999,
+            content: '다른 방 메시지',
+            createdAt: '2024-01-02T00:00:00Z',
+          })
         );
       });
 
