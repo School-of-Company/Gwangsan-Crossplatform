@@ -3,8 +3,7 @@ import { View, Text, FlatList, type ListRenderItem } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { MyMessage, OtherMessage } from '~/widget/chat';
 import { TradeEmbed } from '~/entity/chat';
-import type { TradeProduct } from '~/entity/chat';
-import type { EnhancedChatMessage } from '~/entity/chat/model/useChatMessages';
+import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
 interface TradeEmbedConfig {
   readonly shouldShow: boolean;
@@ -22,18 +21,8 @@ type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
 };
 
 type ChatListItem =
-  | {
-      readonly type: 'message';
-      readonly key: string;
-      readonly timestamp: string;
-      readonly data: EnhancedChatMessage;
-    }
-  | {
-      readonly type: 'trade';
-      readonly key: string;
-      readonly timestamp: string;
-      readonly data: ResolvedTradeEmbed;
-    };
+  | { readonly type: 'message'; readonly timestamp: string; readonly data: EnhancedChatMessage }
+  | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed };
 
 interface ChatRoomContentProps {
   readonly messages: readonly EnhancedChatMessage[];
@@ -47,7 +36,8 @@ interface ChatRoomContentProps {
   readonly showReviewButton?: boolean;
 }
 
-const keyExtractor = (item: ChatListItem) => item.key;
+const keyExtractor = (item: ChatListItem): string =>
+  item.type === 'message' ? `m-${item.data.messageId}` : `t-${item.data.product.id}`;
 
 export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   messages,
@@ -60,35 +50,25 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onReviewButtonPress,
   showReviewButton,
 }) => {
-  const tradeProductId = tradeEmbedConfig?.product?.id;
-  const tradeTimestamp = tradeEmbedConfig?.shouldShow
-    ? (tradeEmbedConfig.product?.createdAt ?? null)
-    : null;
-
   const combinedData = useMemo<ChatListItem[]>(() => {
     const items: ChatListItem[] = messages.map((message) => ({
       type: 'message',
-      key: `m-${message.messageId}`,
       timestamp: message.createdAt,
       data: message,
     }));
 
-    if (!tradeEmbedConfig?.shouldShow || !tradeTimestamp || !tradeEmbedConfig.product) {
+    if (!tradeEmbedConfig?.shouldShow || !tradeEmbedConfig.product?.createdAt) {
       return items;
     }
 
-    const resolved: ResolvedTradeEmbed = {
-      ...tradeEmbedConfig,
-      product: tradeEmbedConfig.product,
-    };
+    const tradeTimestamp = tradeEmbedConfig.product.createdAt;
+    const tradeTime = new Date(tradeTimestamp).getTime();
     const tradeItem: ChatListItem = {
       type: 'trade',
-      key: `t-${tradeProductId ?? 'embed'}`,
       timestamp: tradeTimestamp,
-      data: resolved,
+      data: tradeEmbedConfig as ResolvedTradeEmbed,
     };
 
-    const tradeTime = new Date(tradeTimestamp).getTime();
     const insertAt = items.findIndex((item) => new Date(item.timestamp).getTime() > tradeTime);
     if (insertAt < 0) {
       items.push(tradeItem);
@@ -96,7 +76,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       items.splice(insertAt, 0, tradeItem);
     }
     return items;
-  }, [messages, tradeEmbedConfig, tradeTimestamp, tradeProductId]);
+  }, [messages, tradeEmbedConfig]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
     ({ item }) => {
