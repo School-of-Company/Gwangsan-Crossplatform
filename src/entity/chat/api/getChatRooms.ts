@@ -1,7 +1,7 @@
 import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import type { ChatRoomListItem, ChatApiError } from '../model/chatTypes';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export const getChatRooms = async (): Promise<ChatRoomListItem[]> => {
   try {
@@ -17,6 +17,6 @@ export const getChatRooms = async (): Promise<ChatRoomListItem[]> => {
       visibilityTime: 3000,
     });
 
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

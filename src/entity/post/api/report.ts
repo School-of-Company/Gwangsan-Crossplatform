@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export type ReportReason =
   | 'SEXUAL'
@@ -49,6 +49,6 @@ export const report = async (data: ReportRequest): Promise<void> => {
 
     await instance.post('/report', payload);
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

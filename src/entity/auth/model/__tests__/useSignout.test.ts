@@ -1,6 +1,7 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import { signout } from '../../api/signout';
+import { clearCredentialsForBiometric } from '../../api/signin';
 import { removeData } from '~/shared/lib/removeData';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { renderHookWithProviders } from '~/test-utils';
@@ -12,6 +13,9 @@ jest.mock('expo-router', () => ({
 jest.mock('../../api/signout', () => ({
   signout: jest.fn(),
 }));
+jest.mock('../../api/signin', () => ({
+  clearCredentialsForBiometric: jest.fn(),
+}));
 jest.mock('~/shared/lib/removeData', () => ({
   removeData: jest.fn(),
 }));
@@ -21,6 +25,7 @@ jest.mock('~/shared/lib/getCurrentUserId', () => ({
 
 const mockUseRouter = useRouter as jest.Mock;
 const mockSignout = signout as jest.Mock;
+const mockClearCredentialsForBiometric = clearCredentialsForBiometric as jest.Mock;
 const mockRemoveData = removeData as jest.Mock;
 const mockClearCurrentUserId = clearCurrentUserId as jest.Mock;
 
@@ -30,6 +35,7 @@ describe('useSignout', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRouter.mockReturnValue({ replace: mockReplace });
+    mockClearCredentialsForBiometric.mockResolvedValue(undefined);
     mockRemoveData.mockResolvedValue(undefined);
   });
 
@@ -51,6 +57,7 @@ describe('useSignout', () => {
     });
 
     await waitFor(() => {
+      expect(mockClearCredentialsForBiometric).toHaveBeenCalled();
       expect(mockRemoveData).toHaveBeenCalledWith('memberId');
       expect(mockClearCurrentUserId).toHaveBeenCalled();
       expect(mockReplace).toHaveBeenCalledWith('/onboarding');
@@ -122,6 +129,7 @@ describe('useSignout', () => {
       });
 
       await waitFor(() => {
+        expect(mockClearCredentialsForBiometric).toHaveBeenCalled();
         expect(mockRemoveData).toHaveBeenCalledWith('memberId');
         expect(mockClearCurrentUserId).toHaveBeenCalled();
         expect(mockReplace).toHaveBeenCalledWith('/onboarding');

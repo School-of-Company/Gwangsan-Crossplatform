@@ -1,5 +1,5 @@
-import Toast from 'react-native-toast-message';
 import { instance } from '../lib/axios';
+import { toAppError } from '../lib/errorHandler';
 import { PostType } from '../types/postType';
 import { ProductType } from '../types/type';
 import { ModeType } from '../types/mode';
@@ -25,13 +25,6 @@ export const getPosts = async (type?: ProductType, mode?: ModeType): Promise<Pos
 
     return transformedData;
   } catch (error) {
-    if (error instanceof Error) {
-      Toast.show({
-        type: 'error',
-        text1: '게시물 불러오기 실패',
-        text2: error.message,
-      });
-    }
-    return [];
+    throw toAppError(error);
   }
 };

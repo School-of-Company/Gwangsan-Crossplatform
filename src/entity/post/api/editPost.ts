@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 interface EditPostRequest {
   type: string;
@@ -15,6 +15,6 @@ export const editPost = async (id: string, data: EditPostRequest) => {
     const response = await instance.patch(`/post/${id}`, data);
     return response.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

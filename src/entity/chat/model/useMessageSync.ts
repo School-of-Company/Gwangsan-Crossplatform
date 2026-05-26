@@ -96,18 +96,29 @@ export const useMessageSync = ({
             if (!oldData) return oldData;
 
             return oldData.map((room) => {
-              if (room.roomId === correctedMessage.roomId) {
-                return {
-                  ...room,
-                  lastMessage: correctedMessage.content || '(사진)',
-                  lastMessageType: correctedMessage.messageType,
-                  lastMessageTime: correctedMessage.createdAt,
-                  unreadMessageCount: correctedMessage.isMine
-                    ? room.unreadMessageCount
-                    : room.unreadMessageCount + 1,
-                };
-              }
-              return room;
+              if (room.roomId !== correctedMessage.roomId) return room;
+              if (room.messageId === correctedMessage.messageId) return room;
+
+              const incomingTime = new Date(correctedMessage.createdAt).getTime();
+              const lastTime = new Date(room.lastMessageTime).getTime();
+              const isStale = Number.isFinite(lastTime) && incomingTime < lastTime;
+              if (isStale) return room;
+
+              const isActiveRoom = room.roomId === currentRoomId;
+              const nextUnreadCount = isActiveRoom
+                ? 0
+                : correctedMessage.isMine
+                  ? room.unreadMessageCount
+                  : room.unreadMessageCount + 1;
+
+              return {
+                ...room,
+                messageId: correctedMessage.messageId,
+                lastMessage: correctedMessage.content || '(사진)',
+                lastMessageType: correctedMessage.messageType,
+                lastMessageTime: correctedMessage.createdAt,
+                unreadMessageCount: nextUnreadCount,
+              };
             });
           });
         }
