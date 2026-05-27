@@ -62,14 +62,13 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     }
 
     const tradeTimestamp = tradeEmbedConfig.product.createdAt;
-    const tradeTime = new Date(tradeTimestamp).getTime();
     const tradeItem: ChatListItem = {
       type: 'trade',
       timestamp: tradeTimestamp,
       data: tradeEmbedConfig as ResolvedTradeEmbed,
     };
 
-    const insertAt = items.findIndex((item) => new Date(item.timestamp).getTime() > tradeTime);
+    const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
     if (insertAt < 0) {
       items.push(tradeItem);
     } else {
