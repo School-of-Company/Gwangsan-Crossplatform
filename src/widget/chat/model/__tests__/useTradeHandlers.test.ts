@@ -118,6 +118,52 @@ describe('useTradeHandlers', () => {
       );
     });
 
+    it('성공 시 chatRoomData 캐시를 isCompleted=true, isCompletable=false로 즉시 업데이트한다', async () => {
+      mockRequestTrade.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isCompleted: false, isCompletable: true },
+      });
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isCompleted).toBe(true);
+      expect(cached?.product.isCompletable).toBe(false);
+    });
+
+    it('실패 시 캐시를 변경하지 않는다', async () => {
+      mockRequestTrade.mockRejectedValue(new Error('수락 실패'));
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isCompleted: false, isCompletable: true },
+      });
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isCompleted).toBe(false);
+      expect(cached?.product.isCompletable).toBe(true);
+    });
+
     it('실패 시 에러 Toast를 표시한다', async () => {
       mockRequestTrade.mockRejectedValue(new Error('수락 실패'));
 
