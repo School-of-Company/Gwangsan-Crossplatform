@@ -177,6 +177,7 @@ export const useMessageSync = ({
             product: {
               ...old.product,
               isCompleted: data.isCompleted,
+              isCompletable: data.isCompleted ? false : old.product.isCompletable,
               ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
             },
           };

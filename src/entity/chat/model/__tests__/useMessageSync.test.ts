@@ -672,6 +672,44 @@ describe('useMessageSync', () => {
       expect(cached?.product.createdAt).toBe('2024-06-01T00:00:00Z');
     });
 
+    it('isCompleted=true이면 isCompletable을 false로 업데이트한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isCompletable: true },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.isCompletable).toBe(false);
+    });
+
+    it('isCompleted=false이면 기존 isCompletable을 유지한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isCompletable: true },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.isCompletable).toBe(true);
+    });
+
     it('기존 createdAt이 이미 있으면 payload의 createdAt으로 덮어쓰지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
