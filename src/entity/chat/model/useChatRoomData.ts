@@ -14,7 +14,7 @@ export const useChatRoomData = ({ roomId, enabled = true }: UseChatRoomDataOptio
     queryFn: () => getChatRoomData(roomId),
     enabled: enabled && !!roomId,
     staleTime: 30 * 1000,
-    refetchInterval: 10 * 1000,
+    refetchInterval: 30 * 1000,
     refetchOnWindowFocus: false,
   });
 };
