@@ -87,13 +87,13 @@ describe('useChatUIState', () => {
       expect(result.current.menuConfig.shouldShowMenuButton).toBe(true);
     });
 
-    it('productDetail.mode가 RECEIVER이면 isGiverMode가 false이다', () => {
+    it('productDetail.mode가 RECEIVER이면 isGiverMode가 false이고 shouldShowMenuButton이 true이다', () => {
       setupMocks({ productDetail: { mode: 'RECEIVER' } });
 
       const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
 
       expect(result.current.menuConfig.isGiverMode).toBe(false);
-      expect(result.current.menuConfig.shouldShowMenuButton).toBe(false);
+      expect(result.current.menuConfig.shouldShowMenuButton).toBe(true);
     });
 
     it('productDetail이 없으면 shouldShowMenuButton이 false이다', () => {

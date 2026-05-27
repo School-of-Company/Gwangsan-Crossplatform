@@ -33,6 +33,7 @@ export const useChatSocket = ({
     handleConnect: handleMessageSyncConnect,
     handleReceiveMessage,
     handleUpdateRoomList,
+    handleTransactionStateChanged,
     markRoomAsRead,
   } = useMessageSync({
     currentRoomId,
@@ -59,6 +60,7 @@ export const useChatSocket = ({
     onConnect: handleConnect,
     onReceiveMessage: handleReceiveMessage,
     onUpdateRoomList: handleUpdateRoomList,
+    onTransactionStateChanged: handleTransactionStateChanged,
   });
 
   useEffect(() => {

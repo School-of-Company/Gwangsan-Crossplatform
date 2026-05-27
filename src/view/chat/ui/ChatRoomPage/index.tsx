@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
@@ -21,6 +22,7 @@ import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
+  const queryClient = useQueryClient();
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
@@ -52,6 +54,7 @@ export default function ChatRoomPage() {
     hasTradeRequest,
     shouldShowButtons,
   } = useTradeHandlers({
+    roomId,
     roomData: roomData || null,
     otherUserInfo,
   });
@@ -101,10 +104,11 @@ export default function ChatRoomPage() {
     try {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
     } catch (error) {
       logger.error('handleTradeRequest failed', error);
     }
-  }, [executeTradeRequest]);
+  }, [executeTradeRequest, queryClient, roomId]);
 
   const handleReviewSubmit = useCallback(
     async (light: number, contents: string) => {
