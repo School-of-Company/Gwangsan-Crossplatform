@@ -7,6 +7,7 @@ import type { RoomId } from '@/shared/types/chatType';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { chatMessageKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
+import type { TransactionStateChangedPayload } from '../lib/socketService';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -163,6 +164,29 @@ export const useMessageSync = ({
     [queryClient, chatRoomQueryKey]
   );
 
+  const handleTransactionStateChanged = useCallback(
+    (data: TransactionStateChangedPayload) => {
+      if (!currentRoomId || data.roomId !== currentRoomId) return;
+
+      queryClient.setQueryData<{ product: Record<string, unknown> | null }>(
+        ['chatRoomData', currentRoomId],
+        (old) => {
+          if (!old?.product) return old;
+          return {
+            ...old,
+            product: {
+              ...old.product,
+              isCompleted: data.isCompleted,
+              isCompletable: data.isCompleted ? false : old.product.isCompletable,
+              ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
+            },
+          };
+        }
+      );
+    },
+    [queryClient, currentRoomId]
+  );
+
   const markRoomAsRead = useCallback(
     async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
@@ -201,6 +225,7 @@ export const useMessageSync = ({
     handleConnect,
     handleReceiveMessage,
     handleUpdateRoomList,
+    handleTransactionStateChanged,
     markRoomAsRead,
   };
 };

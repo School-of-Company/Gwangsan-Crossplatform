@@ -2,6 +2,14 @@ import type { ISocketManager, BaseSocketMessage, RoomId } from '@/shared/types/c
 import type { ChatMessageResponse } from '../model/chatTypes';
 import { logger } from '@/shared/lib/logger';
 
+export interface TransactionStateChangedPayload {
+  roomId: number;
+  targetMemberId?: number;
+  productId: number;
+  isCompleted: boolean;
+  createdAt: string;
+}
+
 export interface ChatSocketEvents {
   connect: () => void;
   disconnect: (reason: string) => void;
@@ -13,6 +21,7 @@ export interface ChatSocketEvents {
     lastMessageType: string;
     lastMessageTime: string;
   }) => void;
+  transactionStateChanged: (data: TransactionStateChangedPayload) => void;
 }
 
 export interface ChatSendMessagePayload extends BaseSocketMessage {
@@ -68,6 +77,10 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
 
     socketManager.on('updateRoomList', (data: any) => {
       emit('updateRoomList', data);
+    });
+
+    socketManager.on('transactionStateChanged', (data: any) => {
+      emit('transactionStateChanged', data);
     });
   };
 

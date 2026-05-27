@@ -109,6 +109,10 @@ class SocketManager implements ISocketManager {
     this.socket.on('updateRoomList', (...args) => {
       this.emit('updateRoomList', ...args);
     });
+
+    this.socket.on('transactionStateChanged', (...args) => {
+      this.emit('transactionStateChanged', ...args);
+    });
   }
 
   private handleConnectionError(error: Error): void {
@@ -137,6 +141,7 @@ class SocketManager implements ISocketManager {
     'disconnect',
     'receiveMessage',
     'updateRoomList',
+    'transactionStateChanged',
   ]);
 
   emit(event: string, ...args: any[]): void {
