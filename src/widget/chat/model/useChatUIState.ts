@@ -58,7 +58,8 @@ export const useChatUIState = ({
   const { data: productDetail, isLoading: isProductLoading } = useGetItem(productId);
 
   const isGiverMode = productDetail?.mode === MODE.GIVER;
-  const shouldShowMenuButton = !isProductLoading && isGiverMode;
+  const isReceiverMode = productDetail?.mode === MODE.RECEIVER;
+  const shouldShowMenuButton = !isProductLoading && (isGiverMode || isReceiverMode);
 
   const tradeEmbedConfig = useMemo(
     () => ({

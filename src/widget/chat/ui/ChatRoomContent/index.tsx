@@ -1,30 +1,43 @@
-import React from 'react';
-import { View, Text, FlatList } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { View, Text, FlatList, type ListRenderItem } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { MyMessage, OtherMessage } from '~/widget/chat';
 import { TradeEmbed } from '~/entity/chat';
-import type { ChatMessageResponse, TradeProduct } from '~/entity/chat';
+import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+
+interface TradeEmbedConfig {
+  readonly shouldShow: boolean;
+  readonly product?: TradeProduct | null;
+  readonly onTradeAccept?: () => Promise<void>;
+  readonly onReservation?: () => void;
+  readonly onCancelReservation?: () => void;
+  readonly showButtons: boolean;
+  readonly isLoading: boolean;
+  readonly requestorNickname: string;
+}
+
+type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
+  readonly product: TradeProduct;
+};
+
+type ChatListItem =
+  | { readonly type: 'message'; readonly timestamp: string; readonly data: EnhancedChatMessage }
+  | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed };
 
 interface ChatRoomContentProps {
-  readonly messages: readonly ChatMessageResponse[];
+  readonly messages: readonly EnhancedChatMessage[];
   readonly hasMessages: boolean;
-  readonly flatListRef: React.RefObject<FlatList | null>;
+  readonly flatListRef: React.RefObject<FlatList<ChatListItem> | null>;
   readonly renderHeader: () => React.JSX.Element;
   readonly onProfilePress: (userId: number) => void;
   readonly onScrollToEnd: () => void;
-  readonly tradeEmbedConfig?: {
-    readonly shouldShow: boolean;
-    readonly product?: TradeProduct | null;
-    readonly onTradeAccept?: () => Promise<void>;
-    readonly onReservation?: () => void;
-    readonly onCancelReservation?: () => void;
-    readonly showButtons: boolean;
-    readonly isLoading: boolean;
-    readonly requestorNickname: string;
-  };
+  readonly tradeEmbedConfig?: TradeEmbedConfig;
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
 }
+
+const keyExtractor = (item: ChatListItem): string =>
+  item.type === 'message' ? `m-${item.data.messageId}` : `t-${item.data.product.id}`;
 
 export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   messages,
@@ -37,39 +50,43 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onReviewButtonPress,
   showReviewButton,
 }) => {
-  const getCombinedData = () => {
-    const combinedData: { type: 'message' | 'trade'; data: any; timestamp: string }[] = [];
+  const combinedData = useMemo<ChatListItem[]>(() => {
+    const items: ChatListItem[] = messages.map((message) => ({
+      type: 'message',
+      timestamp: message.createdAt,
+      data: message,
+    }));
 
-    messages.forEach((message) => {
-      combinedData.push({
-        type: 'message',
-        data: message,
-        timestamp: message.createdAt,
-      });
-    });
-
-    if (tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product?.createdAt) {
-      combinedData.push({
-        type: 'trade',
-        data: tradeEmbedConfig,
-        timestamp: tradeEmbedConfig.product.createdAt,
-      });
+    if (!tradeEmbedConfig?.shouldShow || !tradeEmbedConfig.product?.createdAt) {
+      return items;
     }
 
-    return combinedData.sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-  };
+    const tradeTimestamp = tradeEmbedConfig.product.createdAt;
+    const tradeItem: ChatListItem = {
+      type: 'trade',
+      timestamp: tradeTimestamp,
+      data: tradeEmbedConfig as ResolvedTradeEmbed,
+    };
 
-  const renderItem = ({ item }: { item: { type: 'message' | 'trade'; data: any } }) => {
-    if (item.type === 'message') {
-      const message = item.data as ChatMessageResponse;
-      if (message.isMine) {
-        return <MyMessage message={message} />;
-      } else {
-        return <OtherMessage message={message} onProfilePress={onProfilePress} />;
+    const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
+    if (insertAt < 0) {
+      items.push(tradeItem);
+    } else {
+      items.splice(insertAt, 0, tradeItem);
+    }
+    return items;
+  }, [messages, tradeEmbedConfig]);
+
+  const renderItem = useCallback<ListRenderItem<ChatListItem>>(
+    ({ item }) => {
+      if (item.type === 'message') {
+        return item.data.isMine ? (
+          <MyMessage message={item.data} />
+        ) : (
+          <OtherMessage message={item.data} onProfilePress={onProfilePress} />
+        );
       }
-    } else if (item.type === 'trade') {
+
       const config = item.data;
       return (
         <TradeEmbed
@@ -85,36 +102,39 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           showReviewButton={showReviewButton}
         />
       );
-    }
-    return null;
-  };
+    },
+    [onProfilePress, onReviewButtonPress, showReviewButton]
+  );
 
-  const combinedData = getCombinedData();
+  const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);
 
-  if (hasMessages || (tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product)) {
+  if (!hasMessages && !hasTradeEmbed) {
     return (
-      <FlatList
-        ref={flatListRef}
-        data={combinedData}
-        keyExtractor={(item, index) =>
-          item.type === 'message' ? item.data.messageId.toString() : `trade-${index}`
-        }
-        renderItem={renderItem}
-        ListHeaderComponent={renderHeader}
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={onScrollToEnd}
-        contentContainerStyle={{ paddingBottom: 10 }}
-      />
+      <View className="flex-1 items-center justify-center px-4">
+        <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
+        <Text className="mt-4 text-center text-gray-500">
+          아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
+        </Text>
+      </View>
     );
   }
 
   return (
-    <View className="flex-1 items-center justify-center px-4">
-      <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
-      <Text className="mt-4 text-center text-gray-500">
-        아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
-      </Text>
-    </View>
+    <FlatList
+      ref={flatListRef}
+      data={combinedData}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      ListHeaderComponent={renderHeader}
+      className="flex-1 px-4"
+      showsVerticalScrollIndicator={false}
+      onContentSizeChange={onScrollToEnd}
+      contentContainerStyle={{ paddingBottom: 10 }}
+      initialNumToRender={15}
+      maxToRenderPerBatch={10}
+      windowSize={11}
+      updateCellsBatchingPeriod={50}
+      removeClippedSubviews
+    />
   );
 };

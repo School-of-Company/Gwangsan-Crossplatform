@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
-import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
+import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { chatMessageKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
+import type { TransactionStateChangedPayload } from '../lib/socketService';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -163,6 +164,26 @@ export const useMessageSync = ({
     [queryClient, chatRoomQueryKey]
   );
 
+  const handleTransactionStateChanged = useCallback(
+    (data: TransactionStateChangedPayload) => {
+      if (!currentRoomId || data.roomId !== currentRoomId) return;
+
+      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', currentRoomId], (old) => {
+        if (!old?.product) return old;
+        return {
+          ...old,
+          product: {
+            ...old.product,
+            isCompleted: data.isCompleted,
+            isCompletable: data.isCompleted ? false : old.product.isCompletable,
+            ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
+          },
+        };
+      });
+    },
+    [queryClient, currentRoomId]
+  );
+
   const markRoomAsRead = useCallback(
     async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
@@ -201,6 +222,7 @@ export const useMessageSync = ({
     handleConnect,
     handleReceiveMessage,
     handleUpdateRoomList,
+    handleTransactionStateChanged,
     markRoomAsRead,
   };
 };
