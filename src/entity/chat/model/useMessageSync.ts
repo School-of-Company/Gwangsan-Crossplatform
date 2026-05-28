@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
-import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
+import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { chatMessageKeys } from './chatQueryKeys';
@@ -168,21 +168,18 @@ export const useMessageSync = ({
     (data: TransactionStateChangedPayload) => {
       if (!currentRoomId || data.roomId !== currentRoomId) return;
 
-      queryClient.setQueryData<{ product: Record<string, unknown> | null }>(
-        ['chatRoomData', currentRoomId],
-        (old) => {
-          if (!old?.product) return old;
-          return {
-            ...old,
-            product: {
-              ...old.product,
-              isCompleted: data.isCompleted,
-              isCompletable: data.isCompleted ? false : old.product.isCompletable,
-              ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
-            },
-          };
-        }
-      );
+      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', currentRoomId], (old) => {
+        if (!old?.product) return old;
+        return {
+          ...old,
+          product: {
+            ...old.product,
+            isCompleted: data.isCompleted,
+            isCompletable: data.isCompleted ? false : old.product.isCompletable,
+            ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
+          },
+        };
+      });
     },
     [queryClient, currentRoomId]
   );
