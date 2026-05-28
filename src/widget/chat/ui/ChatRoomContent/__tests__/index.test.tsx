@@ -2,6 +2,8 @@ import React from 'react';
 import { FlatList, Text } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { ChatRoomContent } from '../index';
+import { MESSAGE_TYPE } from '~/shared/types/chatType';
+import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
 jest.mock('react-native-vector-icons/Ionicons', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -34,11 +36,11 @@ jest.mock('~/entity/chat', () => {
   };
 });
 
-const createMessage = (overrides: Record<string, unknown> = {}) => ({
+const createMessage = (overrides: Partial<EnhancedChatMessage> = {}): EnhancedChatMessage => ({
   messageId: 1,
   roomId: 1,
   content: '메시지',
-  messageType: 'TEXT',
+  messageType: MESSAGE_TYPE.TEXT,
   createdAt: '2026-05-28T01:00:00.000Z',
   images: [],
   senderNickname: '상대방',
@@ -48,7 +50,7 @@ const createMessage = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const createProduct = (overrides: Record<string, unknown> = {}) => ({
+const createProduct = (overrides: Partial<TradeProduct> = {}): TradeProduct => ({
   id: 100,
   title: '거래 상품',
   images: [{ imageId: 1, imageUrl: 'https://example.com/product.png' }],
