@@ -88,10 +88,10 @@ describe('auth utilities', () => {
       await expect(clearAuthTokens()).resolves.toBeUndefined();
     });
 
-    it('removeData가 실패하면 에러를 전파한다', async () => {
+    it('removeData가 실패해도 에러를 전파하지 않는다', async () => {
       mockRemoveData.mockRejectedValue(new Error('Storage error'));
 
-      await expect(clearAuthTokens()).rejects.toThrow('Storage error');
+      await expect(clearAuthTokens()).resolves.toBeUndefined();
     });
   });
 });
