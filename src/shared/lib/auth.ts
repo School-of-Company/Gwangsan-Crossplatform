@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import * as Keychain from 'react-native-keychain';
 import { getData } from './getData';
 import { removeData } from './removeData';
 
@@ -33,5 +34,9 @@ export const getRefreshToken = async (): Promise<string | null> => {
 };
 
 export const clearAuthTokens = async (): Promise<void> => {
-  await Promise.all([removeData('accessToken'), removeData('refreshToken')]);
+  await Promise.allSettled([
+    removeData('accessToken'),
+    removeData('refreshToken'),
+    Keychain.resetGenericPassword(),
+  ]);
 };
