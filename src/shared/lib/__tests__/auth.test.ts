@@ -1,6 +1,7 @@
 import { getData } from '../getData';
 import { removeData } from '../removeData';
 import { getAccessToken, getRefreshToken, clearAuthTokens } from '../auth';
+import * as Keychain from 'react-native-keychain';
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
@@ -14,8 +15,15 @@ jest.mock('../removeData', () => ({
   removeData: jest.fn(),
 }));
 
+jest.mock('react-native-keychain', () => ({
+  resetGenericPassword: jest.fn().mockResolvedValue(true),
+}));
+
 const mockGetData = getData as jest.MockedFunction<typeof getData>;
 const mockRemoveData = removeData as jest.MockedFunction<typeof removeData>;
+const mockResetGenericPassword = Keychain.resetGenericPassword as jest.MockedFunction<
+  typeof Keychain.resetGenericPassword
+>;
 
 describe('auth utilities', () => {
   beforeEach(() => {
@@ -61,14 +69,23 @@ describe('auth utilities', () => {
   });
 
   describe('clearAuthTokens', () => {
-    it('accessToken과 refreshToken을 병렬로 삭제한다', async () => {
+    it('accessToken, refreshToken, Keychain 자격증명을 병렬로 삭제한다', async () => {
       mockRemoveData.mockResolvedValue(undefined);
+      mockResetGenericPassword.mockResolvedValue(true);
 
       await clearAuthTokens();
 
       expect(mockRemoveData).toHaveBeenCalledTimes(2);
       expect(mockRemoveData).toHaveBeenCalledWith('accessToken');
       expect(mockRemoveData).toHaveBeenCalledWith('refreshToken');
+      expect(mockResetGenericPassword).toHaveBeenCalledTimes(1);
+    });
+
+    it('Keychain 삭제 실패 시에도 에러를 전파하지 않는다', async () => {
+      mockRemoveData.mockResolvedValue(undefined);
+      mockResetGenericPassword.mockRejectedValue(new Error('Keychain error'));
+
+      await expect(clearAuthTokens()).resolves.toBeUndefined();
     });
 
     it('removeData가 실패하면 에러를 전파한다', async () => {
