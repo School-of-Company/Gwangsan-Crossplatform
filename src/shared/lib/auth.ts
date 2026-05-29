@@ -34,9 +34,9 @@ export const getRefreshToken = async (): Promise<string | null> => {
 };
 
 export const clearAuthTokens = async (): Promise<void> => {
-  await Promise.all([
+  await Promise.allSettled([
     removeData('accessToken'),
     removeData('refreshToken'),
-    Keychain.resetGenericPassword().catch(() => {}),
+    Keychain.resetGenericPassword(),
   ]);
 };
