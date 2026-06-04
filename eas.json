@@ -45,6 +45,9 @@
       "env": {
         "NODE_ENV": "production",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      },
+      "ios": {
+        "autoIncrement": true
       }
     }
   },
@@ -52,8 +55,7 @@
     "production": {
       "ios": {
         "ascAppId": "6758655368",
-        "appleTeamId": "UB2797YAAH",
-        "autoIncrement": true
+        "appleTeamId": "UB2797YAAH"
       }
     }
   }
