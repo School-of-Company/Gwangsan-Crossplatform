@@ -52,7 +52,8 @@
     "production": {
       "ios": {
         "ascAppId": "6758655368",
-        "appleTeamId": "UB2797YAAH"
+        "appleTeamId": "UB2797YAAH",
+        "autoIncrement": true
       }
     }
   }
