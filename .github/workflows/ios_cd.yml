@@ -5,6 +5,10 @@ on:
   push:
     branches: ['main']
 
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,6 +27,9 @@ jobs:
 
       - name: Bump patch version
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase
           CURRENT=$(node -p "require('./app.json').expo.version")
           NEW=$(echo $CURRENT | awk -F. '{print $1"."$2"."$3+1}')
           node -e "
@@ -31,11 +38,13 @@ jobs:
             app.expo.version = '$NEW';
             fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
           "
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add app.json
           git commit -m "chore: bump version to $NEW [skip ci]"
-          git push
+          for i in 1 2 3; do
+            git push && break
+            echo "Push failed, retrying ($i/3)..."
+            git pull --rebase
+          done
 
       - name: Install dependencies
         run: |
