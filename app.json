@@ -63,7 +63,7 @@
       },
       "package": "gwangsan.io.kr",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 54
+      "versionCode": 55
     },
     "extra": {
       "eas": {
