@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 16.13.3",
-    "appVersionSource": "local"
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -47,6 +47,9 @@
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "ios": {
+        "autoIncrement": true
+      },
+      "android": {
         "autoIncrement": true
       }
     }
