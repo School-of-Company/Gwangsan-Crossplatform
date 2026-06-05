@@ -13,7 +13,6 @@
     },
     "plugins": [
       "expo-router",
-      "react-native-keyboard-controller",
       [
         "expo-local-authentication",
         {
