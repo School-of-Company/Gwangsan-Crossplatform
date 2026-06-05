@@ -5,10 +5,6 @@ on:
   push:
     branches: ['main']
 
-concurrency:
-  group: version-bump
-  cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,27 +20,6 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-
-      - name: Bump versionCode
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase
-          CURRENT=$(node -p "require('./app.json').expo.android?.versionCode ?? 0")
-          NEW=$((CURRENT + 1))
-          node -e "
-            const fs = require('fs');
-            const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
-            app.expo.android.versionCode = $NEW;
-            fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
-          "
-          git add app.json
-          git commit -m "chore: bump versionCode to $NEW [skip ci]"
-          for i in 1 2 3; do
-            git push && break
-            echo "Push failed, retrying ($i/3)..."
-            git pull --rebase
-          done
 
       - name: Install dependencies
         run: |
