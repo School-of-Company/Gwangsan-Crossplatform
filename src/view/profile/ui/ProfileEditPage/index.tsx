@@ -1,4 +1,4 @@
-import { View, ScrollView, ActivityIndicator } from 'react-native';
+import { View, ScrollView, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
@@ -64,40 +64,42 @@ export default function ProfileEditPageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="내 정보 수정" />
 
-      <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
-        <View className="gap-6">
-          <Input
-            label="별칭"
-            placeholder="별칭을 입력해주세요"
-            value={nickname}
-            onChangeText={setNickname}
-            maxLength={20}
-          />
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
+        <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
+          <View className="gap-6">
+            <Input
+              label="별칭"
+              placeholder="별칭을 입력해주세요"
+              value={nickname}
+              onChangeText={setNickname}
+              maxLength={20}
+            />
 
-          <SpecialtiesDropdown
-            label="특기"
-            items={SPECIALTIES}
-            placeholder="특기를 선택해주세요"
-            selectedItems={specialties}
-            onSelect={setSpecialties}
-            allowCustomInput={true}
-          />
+            <SpecialtiesDropdown
+              label="특기"
+              items={SPECIALTIES}
+              placeholder="특기를 선택해주세요"
+              selectedItems={specialties}
+              onSelect={setSpecialties}
+              allowCustomInput={true}
+            />
 
-          <TextField
-            label="자기소개"
-            placeholder="자신을 소개해주세요"
-            value={description}
-            onChangeText={setDescription}
-            maxLength={300}
-          />
+            <TextField
+              label="자기소개"
+              placeholder="자신을 소개해주세요"
+              value={description}
+              onChangeText={setDescription}
+              maxLength={300}
+            />
+          </View>
+        </ScrollView>
+
+        <View className="px-6 pb-6">
+          <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
+            {isSubmitting ? '수정 중...' : '수정'}
+          </Button>
         </View>
-      </ScrollView>
-
-      <View className="px-6 pb-6">
-        <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
-          {isSubmitting ? '수정 중...' : '수정'}
-        </Button>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
