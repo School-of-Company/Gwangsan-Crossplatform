@@ -1,4 +1,11 @@
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
@@ -77,7 +84,9 @@ export default function FindNicknamePage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView behavior="padding" className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
