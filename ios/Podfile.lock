@@ -2103,7 +2103,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-keyboard-controller (1.21.9):
+  - react-native-keyboard-controller (1.18.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2121,7 +2121,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-keyboard-controller/common (= 1.21.9)
+    - react-native-keyboard-controller/common (= 1.18.5)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2132,7 +2132,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-keyboard-controller/common (1.21.9):
+  - react-native-keyboard-controller/common (1.18.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -3681,7 +3681,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 017336879e2e0fb7537bbc08c24f34e2384c9260
   React-microtasksnativemodule: 63ee6730cec233feab9cdcc0c100dc28a12e4165
   react-native-image-picker: 6051cfd030121b880a58f1cc0e5e33e9887804e4
-  react-native-keyboard-controller: 5f328d63a149f6b89bf106ee755b64bf04d9d797
+  react-native-keyboard-controller: c4ca61f44d66c2f8987a7e67e9b78e80dc965c45
   react-native-netinfo: 9fad4eedfec9840a10e73ac4591ea1158523309b
   react-native-pager-view: 0e228ec2dfdd87807d125c7bbfb83299edede19c
   react-native-safe-area-context: 0a3b034bb63a5b684dd2f5fffd3c90ef6ed41ee8
