@@ -63,7 +63,8 @@
       },
       "package": "gwangsan.io.kr",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 60
+      "versionCode": 60,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "extra": {
       "eas": {
