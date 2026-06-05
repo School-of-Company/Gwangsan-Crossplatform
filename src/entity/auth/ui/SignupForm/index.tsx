@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
 import { useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
@@ -35,10 +28,7 @@ function SignupForm({
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-white"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+      <KeyboardAvoidingView behavior="padding" className="flex-1 bg-white">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
