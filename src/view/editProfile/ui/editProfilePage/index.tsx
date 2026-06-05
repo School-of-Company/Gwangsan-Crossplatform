@@ -1,4 +1,5 @@
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SpecialtiesDropdown } from '~/entity/auth';
 import { Button, Header, Input } from '~/shared/ui';
@@ -9,9 +10,7 @@ export default function EditProfilePageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="프로필 수정" />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1">
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingBottom: 24 }}>
           <View className="mt-3 flex gap-5">
             <Input label="별칭" />

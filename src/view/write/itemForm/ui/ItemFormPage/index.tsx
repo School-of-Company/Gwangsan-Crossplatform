@@ -1,12 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { logger } from '@/shared/lib/logger';
 import { Header } from '@/shared/ui';
 import {
@@ -161,9 +155,7 @@ const ItemFormPage = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 bg-white">
+      <KeyboardAvoidingView behavior="padding" className="flex-1 bg-white">
         <Header headerTitle="게시글" />
         <ItemFormProgressBar step={step} />
         <ScrollView

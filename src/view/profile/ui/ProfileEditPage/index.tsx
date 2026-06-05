@@ -1,4 +1,5 @@
-import { View, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
@@ -64,9 +65,7 @@ export default function ProfileEditPageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="내 정보 수정" />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1">
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
           <View className="gap-6">
             <Input

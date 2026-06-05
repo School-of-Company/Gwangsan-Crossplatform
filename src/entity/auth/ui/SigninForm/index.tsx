@@ -1,11 +1,5 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
 import { useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
@@ -35,9 +29,7 @@ function SigninForm({
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 bg-white">
+      <KeyboardAvoidingView behavior="padding" className="flex-1 bg-white">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}

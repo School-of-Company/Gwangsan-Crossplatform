@@ -1,5 +1,6 @@
 import { Stack, usePathname, router } from 'expo-router';
 import { AppState, View } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
@@ -63,21 +64,23 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
   return (
-    <View className="mb-6 flex-1 bg-white">
-      <QueryProvider>
-        <SentryRN.ErrorBoundary fallback={<></>}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              gestureEnabled: true,
-              gestureDirection: 'horizontal',
-            }}
-          />
-        </SentryRN.ErrorBoundary>
-        <Toast />
-        <NoNetworkOverlay visible={!isConnected} />
-      </QueryProvider>
-    </View>
+    <KeyboardProvider>
+      <View className="mb-6 flex-1 bg-white">
+        <QueryProvider>
+          <SentryRN.ErrorBoundary fallback={<></>}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                gestureEnabled: true,
+                gestureDirection: 'horizontal',
+              }}
+            />
+          </SentryRN.ErrorBoundary>
+          <Toast />
+          <NoNetworkOverlay visible={!isConnected} />
+        </QueryProvider>
+      </View>
+    </KeyboardProvider>
   );
 }
