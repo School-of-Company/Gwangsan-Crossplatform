@@ -3,7 +3,7 @@
     "jsEngine": "hermes",
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
-    "version": "1.0.15",
+    "version": "1.0.20",
     "scheme": "gwangsan",
     "web": {
       "favicon": "./src/app/favicon.ico"
@@ -48,7 +48,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "kr.hs.gsm.gwangsan",
-      "buildNumber": "54",
+      "buildNumber": "60",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "거래 게시글 업로드 및 채팅에 사용할 이미지 업로드를 위해 저장공간에 접근합니다.",
@@ -63,7 +63,7 @@
       },
       "package": "gwangsan.io.kr",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 54
+      "versionCode": 60
     },
     "extra": {
       "eas": {
