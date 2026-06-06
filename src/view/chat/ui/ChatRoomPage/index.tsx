@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, ActivityIndicator } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
@@ -168,10 +169,7 @@ export default function ChatRoomPage() {
         connectionState={connectionState}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        keyboardVerticalOffset={0}>
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ChatRoomContent
           messages={messages}
           hasMessages={updatedComponentState.hasMessages}

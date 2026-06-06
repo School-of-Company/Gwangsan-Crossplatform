@@ -2103,6 +2103,63 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-keyboard-controller (1.18.5):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - react-native-keyboard-controller/common (= 1.18.5)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - react-native-keyboard-controller/common (1.18.5):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-netinfo (12.0.1):
     - boost
     - DoubleConversion
@@ -3204,6 +3261,7 @@ PODS:
     - SDWebImage/Core (~> 5.17)
   - Sentry/HybridSDK (8.56.1)
   - SocketRocket (0.7.1)
+  - TrustKit (2.0.1)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -3273,6 +3331,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
+  - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -3316,12 +3375,11 @@ DEPENDENCIES:
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - SocketRocket (~> 0.7.1)
+  - TrustKit (~> 2.0)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
-    - Sentry
-  trunk:
     - libavif
     - libdav1d
     - libwebp
@@ -3329,7 +3387,9 @@ SPEC REPOS:
     - SDWebImageAVIFCoder
     - SDWebImageSVGCoder
     - SDWebImageWebPCoder
+    - Sentry
     - SocketRocket
+    - TrustKit
 
 EXTERNAL SOURCES:
   boost:
@@ -3463,6 +3523,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
+  react-native-keyboard-controller:
+    :path: "../node_modules/react-native-keyboard-controller"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
@@ -3619,6 +3681,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 017336879e2e0fb7537bbc08c24f34e2384c9260
   React-microtasksnativemodule: 63ee6730cec233feab9cdcc0c100dc28a12e4165
   react-native-image-picker: 6051cfd030121b880a58f1cc0e5e33e9887804e4
+  react-native-keyboard-controller: c4ca61f44d66c2f8987a7e67e9b78e80dc965c45
   react-native-netinfo: 9fad4eedfec9840a10e73ac4591ea1158523309b
   react-native-pager-view: 0e228ec2dfdd87807d125c7bbfb83299edede19c
   react-native-safe-area-context: 0a3b034bb63a5b684dd2f5fffd3c90ef6ed41ee8
@@ -3667,8 +3730,9 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Sentry: b3ec44d01708fce73f99b544beb57e890eca4406
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  TrustKit: dad4c3a08248c21fcb9a3b5be3c2e2b9d4f9b973
   Yoga: cc4a6600d61e4e9276e860d4d68eebb834a050ba
 
-PODFILE CHECKSUM: 14fe4127d13262e51b72b38b0a63ae5a608cd7f1
+PODFILE CHECKSUM: df585d6f81ac497e738b06d58b3f1151b7831e5b
 
 COCOAPODS: 1.16.2
