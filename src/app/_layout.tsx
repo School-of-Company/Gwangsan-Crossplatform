@@ -37,6 +37,10 @@ export default function RootLayout() {
       };
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
         router.push(`/chatting/${data.sourceId}`);
+      } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
+        router.push(`/post/${data.sourceId}?review=1`);
+      } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
+        router.push(`/cancelTrade/${data.sourceId}`);
       }
     });
     return () => sub.remove();
