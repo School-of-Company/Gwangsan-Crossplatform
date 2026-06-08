@@ -72,6 +72,10 @@ const NotificationItem = ({
       router.push(`/post/${sourceId}?review=1`);
       return;
     }
+    if (alertType === AlertType.REVIEW && sourceId) {
+      router.push(`/cancelTrade/${sourceId}`);
+      return;
+    }
   };
 
   const getButtonText = () => {
