@@ -7,7 +7,7 @@ import { BottomSheetModalWrapper, ProgressBar } from '~/shared/ui';
 interface ReviewsModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSubmit: (type: number, contents: string) => void;
+  onSubmit: (type: number, contents: string) => Promise<void>;
   light: number;
   setLight: (v: number) => void;
   contents: string;
@@ -38,13 +38,11 @@ const ReviewsModal = ({
 
   const isDisabled = useMemo(() => localContents.trim().length === 0, [localContents]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (localContents.trim()) {
-      setLight(localLight);
-      onSubmit(localLight, localContents.trim());
-      onClose();
+      await onSubmit(localLight, localContents.trim());
     }
-  }, [localContents, localLight, onSubmit, onClose, setLight]);
+  }, [localContents, localLight, onSubmit]);
 
   const handleLightChange = useCallback((value: number) => {
     setLocalLight(value);
