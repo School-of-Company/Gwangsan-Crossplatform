@@ -21,7 +21,7 @@ export default function Reviews() {
   }, []);
 
   const handleSubmitReport = useCallback(
-    (light: number, contents: string) => {
+    async (light: number, contents: string) => {
       console.log('=== 후기 제출 ===');
       console.log('밝기:', light);
       console.log('내용:', contents);
