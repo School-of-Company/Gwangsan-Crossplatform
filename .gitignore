@@ -41,3 +41,4 @@ coverage-auth/
 
 # EAS credentials (contains keystore passwords)
 credentials.json
+*.pem
