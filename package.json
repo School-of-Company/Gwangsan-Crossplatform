@@ -39,7 +39,7 @@
     "@tanstack/react-query-devtools": "^5.81.5",
     "axios": "^1.15.0",
     "babel-plugin-module-resolver": "^5.0.2",
-    "babel-preset-expo": "^56.0.15",
+    "babel-preset-expo": "~54.0.10",
     "clsx": "^2.1.1",
     "expo": "~54.0.35",
     "expo-constants": "~18.0.9",
