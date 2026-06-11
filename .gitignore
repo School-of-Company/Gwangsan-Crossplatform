@@ -38,3 +38,6 @@ coverage/
 coverage-auth/
 # Claude Code worktrees
 .claude/worktrees/
+
+# EAS credentials (contains keystore passwords)
+credentials.json
