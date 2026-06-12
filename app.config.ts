@@ -19,7 +19,6 @@ export default ({ config }: { config: ExpoConfig }) => {
         },
       ],
       './plugins/withNetworkSecurityConfig',
-      './plugins/withAndroidPushNotifications',
     ],
     extra: {
       ...config.extra,
