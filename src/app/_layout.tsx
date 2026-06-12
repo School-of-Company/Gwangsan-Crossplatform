@@ -1,7 +1,7 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { AppState, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
@@ -33,7 +33,17 @@ export default function RootLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const { navigateToChat } = useChatEntry();
+  const navigateToChatRef = useRef(navigateToChat);
+  const routerRef = useRef(router);
   useGlobalChatNotifications();
+
+  useEffect(() => {
+    navigateToChatRef.current = navigateToChat;
+  }, [navigateToChat]);
+
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
 
   useEffect(() => {
     registerChatBackgroundTask();
@@ -47,17 +57,17 @@ export default function RootLayout() {
         roomId?: number;
       };
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
-        navigateToChat(data.sourceId);
+        navigateToChatRef.current(data.sourceId);
       } else if (data?.roomId != null) {
-        router.push(`/chatting/${data.roomId}`);
+        routerRef.current.push(`/chatting/${data.roomId}`);
       } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
-        router.push(`/post/${data.sourceId}?review=1`);
+        routerRef.current.push(`/post/${data.sourceId}?review=1`);
       } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
-        router.push(`/cancelTrade/${data.sourceId}`);
+        routerRef.current.push(`/cancelTrade/${data.sourceId}`);
       }
     });
     return () => sub.remove();
-  }, [navigateToChat, router]);
+  }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
