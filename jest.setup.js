@@ -16,3 +16,19 @@ if (typeof ReadableStream !== 'undefined') {
     }
   };
 }
+
+// Expo installs a lazy `fetch` getter onto globalThis that loads
+// FetchResponse.ts at access time. FetchResponse extends the web Response
+// class, but under Jest + Babel the super-class resolves to something other
+// than a function, throwing "Super expression must either be null or a
+// function". Removing the getter forces axios to fall back to its Node.js
+// http adapter, which MSW continues to intercept normally.
+try {
+  delete globalThis.fetch;
+} catch {
+  Object.defineProperty(globalThis, 'fetch', {
+    configurable: true,
+    writable: true,
+    value: undefined,
+  });
+}
