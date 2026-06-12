@@ -5,7 +5,8 @@ import { SlideIndicator } from '../index';
 describe('SlideIndicator', () => {
   it('total 수만큼 점을 렌더링한다', () => {
     const { toJSON } = render(<SlideIndicator total={4} current={0} />);
-    expect(toJSON()!.children).toHaveLength(4);
+    const json = toJSON();
+    expect(Array.isArray(json) ? null : json!.children).toHaveLength(4);
   });
 
   it('onPress가 없으면 터치 가능한 요소를 렌더링하지 않는다', () => {
