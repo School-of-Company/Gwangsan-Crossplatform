@@ -8,19 +8,10 @@ import type { ChatMessageResponse } from '@/entity/chat/model/chatTypes';
 export const useGlobalChatNotifications = () => {
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
-  const userIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
-
-  useEffect(() => {
-    getCurrentUserId()
-      .then((id) => {
-        userIdRef.current = id;
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!chatSocket.isConnected) {
@@ -28,7 +19,7 @@ export const useGlobalChatNotifications = () => {
     }
 
     const handleReceiveMessage = async (message: ChatMessageResponse) => {
-      const userId = userIdRef.current;
+      const userId = await getCurrentUserId().catch(() => null);
       if (!userId || message.senderId === userId) return;
 
       if (pathnameRef.current.includes(`/chatting/${message.roomId}`)) return;

@@ -34,23 +34,30 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
     }
 
     const lastStateRaw = await AsyncStorage.getItem(LAST_UNREAD_KEY);
-    const lastState: Record<string, number> = lastStateRaw ? JSON.parse(lastStateRaw) : {};
+    let lastState: Record<string, number> = {};
+    try {
+      lastState = lastStateRaw ? JSON.parse(lastStateRaw) : {};
+    } catch {
+      // 파싱 실패 시 빈 상태로 처리 (모든 미읽음 방을 새 메시지로 간주)
+    }
 
     const newUnreadRooms = unreadRooms.filter((room) => {
       const prevCount = lastState[String(room.roomId)] ?? 0;
       return room.unreadMessageCount > prevCount;
     });
 
-    for (const room of newUnreadRooms) {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: room.member.nickname,
-          body: room.lastMessageType === 'IMAGE' ? '사진을 보냈습니다.' : room.lastMessage,
-          data: { roomId: room.roomId },
-        },
-        trigger: null,
-      });
-    }
+    await Promise.all(
+      newUnreadRooms.map((room) =>
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: room.member.nickname,
+            body: room.lastMessageType === 'IMAGE' ? '사진을 보냈습니다.' : room.lastMessage,
+            data: { roomId: room.roomId },
+          },
+          trigger: null,
+        })
+      )
+    );
 
     const newState: Record<string, number> = {};
     for (const room of rooms) {
