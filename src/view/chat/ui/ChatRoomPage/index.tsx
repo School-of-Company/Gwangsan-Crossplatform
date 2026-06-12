@@ -5,6 +5,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
+import Toast from 'react-native-toast-message';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
@@ -126,6 +127,11 @@ export default function ChatRoomPage() {
         setReviewContents('');
       } catch (error) {
         logger.error('리뷰 작성 실패', error);
+        Toast.show({
+          type: 'error',
+          text1: '리뷰 작성 실패',
+          text2: '잠시 후 다시 시도해주세요.',
+        });
       }
     },
     [roomData?.product?.id]

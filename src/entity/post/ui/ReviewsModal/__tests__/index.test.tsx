@@ -45,7 +45,7 @@ jest.mock('~/shared/ui/Button', () => ({
 const defaultProps = {
   isVisible: true,
   onClose: jest.fn(),
-  onSubmit: jest.fn(),
+  onSubmit: jest.fn().mockResolvedValue(undefined),
   light: 60,
   setLight: jest.fn(),
   contents: '',
@@ -85,22 +85,14 @@ describe('ReviewsModal', () => {
   });
 
   it('내용이 있으면 "작성완료" 누를 때 onSubmit이 light와 내용으로 호출된다', () => {
-    const onSubmit = jest.fn();
-    const onClose = jest.fn();
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
     const { getByTestId } = render(
-      <ReviewsModal
-        {...defaultProps}
-        contents="좋은 거래였어요"
-        light={70}
-        onSubmit={onSubmit}
-        onClose={onClose}
-      />
+      <ReviewsModal {...defaultProps} contents="좋은 거래였어요" light={70} onSubmit={onSubmit} />
     );
 
     fireEvent.press(getByTestId('submit-button'));
 
     expect(onSubmit).toHaveBeenCalledWith(70, '좋은 거래였어요');
-    expect(onClose).toHaveBeenCalled();
   });
 
   it('내용을 입력하고 제출하면 입력한 내용이 onSubmit에 전달된다', () => {

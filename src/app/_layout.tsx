@@ -50,6 +50,10 @@ export default function RootLayout() {
         navigateToChat(data.sourceId);
       } else if (data?.roomId != null) {
         router.push(`/chatting/${data.roomId}`);
+      } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
+        router.push(`/post/${data.sourceId}?review=1`);
+      } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
+        router.push(`/cancelTrade/${data.sourceId}`);
       }
     });
     return () => sub.remove();
