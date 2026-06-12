@@ -23,9 +23,9 @@ export default function ProfileEditPageView() {
     if (profileData) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setNickname(profileData.nickname || '');
-       
+
       setSpecialties(profileData.specialties || []);
-       
+
       setDescription(profileData.description || '');
     }
   }, [profileData]);
