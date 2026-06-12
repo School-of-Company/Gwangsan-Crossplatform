@@ -22,7 +22,7 @@ export const useGlobalChatNotifications = () => {
       const userId = await getCurrentUserId().catch(() => null);
       if (!userId || message.senderId === userId) return;
 
-      if (pathnameRef.current.includes(`/chatting/${message.roomId}`)) return;
+      if (pathnameRef.current === `/chatting/${message.roomId}`) return;
 
       await Notifications.scheduleNotificationAsync({
         content: {
