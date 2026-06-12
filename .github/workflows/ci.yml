@@ -60,6 +60,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-script: npm run test:coverage
           package-manager: npm
+          annotations: none
 
   expo-check:
     name: Expo Configuration Check
