@@ -66,6 +66,7 @@ export function BottomSheetModalWrapper({
     if (isVisible) {
       translateY.setValue(modalHeight);
       overlayOpacity.setValue(0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true);
       Animated.timing(overlayOpacity, {
         toValue: 1,

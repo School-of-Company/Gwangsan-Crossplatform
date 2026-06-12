@@ -29,10 +29,12 @@ const ReviewsModal = ({
   const [localContents, setLocalContents] = useState(contents);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalLight(light);
   }, [light]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalContents(contents);
   }, [contents]);
 

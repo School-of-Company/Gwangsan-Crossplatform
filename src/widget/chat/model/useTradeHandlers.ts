@@ -68,7 +68,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData?.product?.id, otherUserInfo.id, queryClient, roomId]);
+  }, [roomData, otherUserInfo.id, queryClient, roomId]);
 
   const handleReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
@@ -87,7 +87,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData?.product?.id]);
+  }, [roomData]);
 
   const handleCancelReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
@@ -106,7 +106,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData?.product?.id]);
+  }, [roomData]);
 
   return {
     handleTradeAccept,

@@ -85,7 +85,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
       if (data?.id) {
         await navigateToChat(data.id);
       }
-    }, [data?.id, navigateToChat]),
+    }, [data, navigateToChat]),
   };
 
   const actionHandlers = {
