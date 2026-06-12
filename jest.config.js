@@ -11,6 +11,7 @@ module.exports = {
     '^@env$': '<rootDir>/src/mocks/env.ts',
     '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
     '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
+    '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
     '^~/(.*)$': '<rootDir>/src/$1',
     '^@/app/(.*)$': '<rootDir>/src/app/$1',
     '^@/shared/(.*)$': '<rootDir>/src/shared/$1',
