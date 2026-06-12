@@ -15,6 +15,7 @@ import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
 import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
+import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -33,6 +34,10 @@ export default function RootLayout() {
   const router = useRouter();
   const { navigateToChat } = useChatEntry();
   useGlobalChatNotifications();
+
+  useEffect(() => {
+    registerChatBackgroundTask();
+  }, []);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
