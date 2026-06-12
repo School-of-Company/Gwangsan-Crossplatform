@@ -1,0 +1,4 @@
+# Force LF for shell scripts used on macOS build servers
+*.sh text eol=lf
+*.env text eol=lf
+ios/.xcode.env text eol=lf
