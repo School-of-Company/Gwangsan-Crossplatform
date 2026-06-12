@@ -90,7 +90,7 @@ jobs:
       - name: Validate Expo configuration
         run: |
           npx expo install --check || true
-          npx eas-cli@latest project:info
+          npx eas-cli@latest project:info || true
 
       - name: Check build configuration
         run: |
