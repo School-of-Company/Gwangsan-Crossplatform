@@ -1,4 +1,4 @@
-import { Stack, usePathname, router } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { AppState, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect } from 'react';
@@ -13,6 +13,8 @@ import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
+import { useChatEntry } from '@/shared/lib/useChatEntry';
+import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -28,19 +30,25 @@ export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
   const pathname = usePathname();
+  const router = useRouter();
+  const { navigateToChat } = useChatEntry();
+  useGlobalChatNotifications();
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as {
         alertType?: AlertType;
         sourceId?: number;
+        roomId?: number;
       };
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
-        router.push(`/chatting/${data.sourceId}`);
+        navigateToChat(data.sourceId);
+      } else if (data?.roomId != null) {
+        router.push(`/chatting/${data.roomId}`);
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [navigateToChat, router]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
