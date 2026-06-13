@@ -3089,7 +3089,7 @@ SPEC CHECKSUMS:
   react-native-keyboard-controller: 4b22b18601bd494114766a13946f8759f7d96d15
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: ac739914c8d6cfd77c251682495f1ff06c5b9a4f
-  react-native-safe-area-context: 01165438d8d2bc6bf418b5fdc8491d92bf59ceeb
+  react-native-safe-area-context: 4449252a9ff9d3ee5e9d2ff3a49ba5c229a513a0
   React-NativeModulesApple: cc6ec4767844d610e92cc358bd3ea34937438d56
   React-networking: 352c0aab2b520439ae8126455ad15f3f17e3820e
   React-oscompat: 64a0c7ef5441855dc6e2a6afe8ba8f92aa05075e
