@@ -1,6 +1,6 @@
-import Expo
-import React
-import ReactAppDependencyProvider
+internal import Expo
+internal import React
+internal import ReactAppDependencyProvider
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
