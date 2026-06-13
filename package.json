@@ -133,7 +133,6 @@
           "react-native-svg",
           "@react-native-async-storage/async-storage",
           "react-native-worklets",
-          "ExpoModulesCore",
           "expo-modules-core"
         ]
       }
