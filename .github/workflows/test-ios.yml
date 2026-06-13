@@ -86,7 +86,9 @@ jobs:
 
       - name: Install CocoaPods dependencies
         working-directory: ios
-        run: pod install --repo-update
+        run: |
+          rm -f Podfile.lock
+          pod install --repo-update
 
       - name: Create placeholder GoogleService-Info.plist
         run: |
