@@ -11,6 +11,7 @@ jobs:
   lint-and-test:
     name: Lint & Test
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,7 +36,7 @@ jobs:
 
   unit-coverage:
     name: Unit Test Coverage
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -65,6 +66,7 @@ jobs:
   expo-check:
     name: Expo Configuration Check
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
     needs: lint-and-test
     steps:
       - name: Checkout code
