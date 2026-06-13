@@ -7,7 +7,7 @@
     "version": "1.0.21",
     "scheme": "gwangsan",
     "web": {
-      "favicon": "./src/app/favicon.ico"
+      "favicon": "./src/app/favicon.png"
     },
     "experiments": {
       "tsconfigPaths": true

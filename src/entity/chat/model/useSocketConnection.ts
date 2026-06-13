@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import type { IChatSocketService } from '../lib/socketService';
 import { logger } from '@/shared/lib/logger';
 

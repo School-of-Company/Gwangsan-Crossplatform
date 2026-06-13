@@ -134,7 +134,7 @@ export default function ChatRoomPage() {
         });
       }
     },
-    [roomData?.product?.id]
+    [roomData]
   );
 
   const handleReviewButtonPress = useCallback(() => {

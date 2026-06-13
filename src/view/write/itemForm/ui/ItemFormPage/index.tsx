@@ -37,6 +37,7 @@ const ItemFormPage = () => {
 
   useEffect(() => {
     if (postData) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setType(postData.type as ProductType);
       setMode(postData.mode as ModeType);
       setTitle(postData.title);
@@ -49,6 +50,7 @@ const ItemFormPage = () => {
         setImages(imageUrls);
         setImageIds(existingImageIds);
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [postData]);
 
