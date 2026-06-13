@@ -1,12 +1,13 @@
 {
   "expo": {
     "jsEngine": "hermes",
+    "owner": "gsmstartup",
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
-    "version": "1.0.20",
+    "version": "1.0.21",
     "scheme": "gwangsan",
     "web": {
-      "favicon": "./src/app/favicon.ico"
+      "favicon": "./src/app/favicon.png"
     },
     "experiments": {
       "tsconfigPaths": true
@@ -53,7 +54,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "거래 게시글 업로드 및 채팅에 사용할 이미지 업로드를 위해 저장공간에 접근합니다.",
         "NSCameraUsageDescription": "거래 게시글 업로드 및 채팅에 사용할 사진을 즉시 촬영하기 위해 카메라에 접근합니다.",
-        "NSFaceIDUsageDescription": "생체 인증으로 로그인하기 위해 Face ID를 사용합니다."
+        "NSFaceIDUsageDescription": "생체 인증으로 로그인하기 위해 Face ID를 사용합니다.",
+        "UIBackgroundModes": ["fetch"]
       }
     },
     "android": {
@@ -62,12 +64,14 @@
         "backgroundColor": "#ffffff"
       },
       "package": "gwangsan.io.kr",
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile": "$GOOGLE_SERVICES_JSON",
       "versionCode": 60
     },
     "extra": {
+      "apiUrl": "https://api.gwangsan.io.kr/api",
+      "router": {},
       "eas": {
-        "projectId": "9d65e0fb-0ca0-4235-ba71-1e60a7843a0e"
+        "projectId": "6754f57f-871f-4ceb-994f-b62e7e8b9c4b"
       }
     }
   }

@@ -1,9 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, ActivityIndicator } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
+import Toast from 'react-native-toast-message';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
@@ -125,9 +127,14 @@ export default function ChatRoomPage() {
         setReviewContents('');
       } catch (error) {
         logger.error('리뷰 작성 실패', error);
+        Toast.show({
+          type: 'error',
+          text1: '리뷰 작성 실패',
+          text2: '잠시 후 다시 시도해주세요.',
+        });
       }
     },
-    [roomData?.product?.id]
+    [roomData]
   );
 
   const handleReviewButtonPress = useCallback(() => {
@@ -168,10 +175,7 @@ export default function ChatRoomPage() {
         connectionState={connectionState}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        keyboardVerticalOffset={0}>
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ChatRoomContent
           messages={messages}
           hasMessages={updatedComponentState.hasMessages}

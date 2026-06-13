@@ -7,7 +7,7 @@ import { BottomSheetModalWrapper, ProgressBar } from '~/shared/ui';
 interface ReviewsModalProps {
   isVisible: boolean;
   onClose: () => void;
-  onSubmit: (type: number, contents: string) => void;
+  onSubmit: (type: number, contents: string) => Promise<void>;
   light: number;
   setLight: (v: number) => void;
   contents: string;
@@ -29,22 +29,22 @@ const ReviewsModal = ({
   const [localContents, setLocalContents] = useState(contents);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalLight(light);
   }, [light]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalContents(contents);
   }, [contents]);
 
   const isDisabled = useMemo(() => localContents.trim().length === 0, [localContents]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (localContents.trim()) {
-      setLight(localLight);
-      onSubmit(localLight, localContents.trim());
-      onClose();
+      await onSubmit(localLight, localContents.trim());
     }
-  }, [localContents, localLight, onSubmit, onClose, setLight]);
+  }, [localContents, localLight, onSubmit]);
 
   const handleLightChange = useCallback((value: number) => {
     setLocalLight(value);

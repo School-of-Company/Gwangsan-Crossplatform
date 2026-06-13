@@ -1,12 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { logger } from '@/shared/lib/logger';
 import { Header } from '@/shared/ui';
 import {
@@ -43,6 +37,7 @@ const ItemFormPage = () => {
 
   useEffect(() => {
     if (postData) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setType(postData.type as ProductType);
       setMode(postData.mode as ModeType);
       setTitle(postData.title);
@@ -55,6 +50,7 @@ const ItemFormPage = () => {
         setImages(imageUrls);
         setImageIds(existingImageIds);
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [postData]);
 
@@ -161,9 +157,7 @@ const ItemFormPage = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-white">
+      <KeyboardAvoidingView behavior="padding" className="flex-1 bg-white">
         <Header headerTitle="게시글" />
         <ItemFormProgressBar step={step} />
         <ScrollView

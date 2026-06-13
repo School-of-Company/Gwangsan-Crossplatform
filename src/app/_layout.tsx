@@ -1,6 +1,7 @@
-import { Stack, usePathname, router } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { AppState, View } from 'react-native';
-import { useEffect } from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { useEffect, useRef } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
@@ -12,6 +13,9 @@ import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
+import { useChatEntry } from '@/shared/lib/useChatEntry';
+import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
+import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -27,15 +31,39 @@ export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
   const pathname = usePathname();
+  const router = useRouter();
+  const { navigateToChat } = useChatEntry();
+  const navigateToChatRef = useRef(navigateToChat);
+  const routerRef = useRef(router);
+  useGlobalChatNotifications();
+
+  useEffect(() => {
+    navigateToChatRef.current = navigateToChat;
+  }, [navigateToChat]);
+
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+
+  useEffect(() => {
+    registerChatBackgroundTask();
+  }, []);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as {
         alertType?: AlertType;
         sourceId?: number;
+        roomId?: number;
       };
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
-        router.push(`/chatting/${data.sourceId}`);
+        navigateToChatRef.current(data.sourceId);
+      } else if (data?.roomId != null) {
+        routerRef.current.push(`/chatting/${data.roomId}`);
+      } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
+        routerRef.current.push(`/post/${data.sourceId}?review=1`);
+      } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
+        routerRef.current.push(`/cancelTrade/${data.sourceId}`);
       }
     });
     return () => sub.remove();
@@ -63,21 +91,23 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
   return (
-    <View className="mb-6 flex-1 bg-white">
-      <QueryProvider>
-        <SentryRN.ErrorBoundary fallback={<></>}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              gestureEnabled: true,
-              gestureDirection: 'horizontal',
-            }}
-          />
-        </SentryRN.ErrorBoundary>
-        <Toast />
-        <NoNetworkOverlay visible={!isConnected} />
-      </QueryProvider>
-    </View>
+    <KeyboardProvider>
+      <View className="mb-6 flex-1 bg-white">
+        <QueryProvider>
+          <SentryRN.ErrorBoundary fallback={<></>}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                gestureEnabled: true,
+                gestureDirection: 'horizontal',
+              }}
+            />
+          </SentryRN.ErrorBoundary>
+          <Toast />
+          <NoNetworkOverlay visible={!isConnected} />
+        </QueryProvider>
+      </View>
+    </KeyboardProvider>
   );
 }

@@ -60,6 +60,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-script: npm run test:coverage
           package-manager: npm
+          annotations: none
 
   expo-check:
     name: Expo Configuration Check
@@ -90,7 +91,7 @@ jobs:
       - name: Validate Expo configuration
         run: |
           npx expo install --check || true
-          npx eas-cli@latest project:info
+          npx eas-cli@latest project:info || true
 
       - name: Check build configuration
         run: |

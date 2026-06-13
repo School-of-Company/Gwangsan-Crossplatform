@@ -23,6 +23,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
   onChangeRef.current = onChange;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalValue(value);
   }, [value]);
 
@@ -35,6 +36,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
       const clampedValue = Math.max(min, Math.min(max, steppedValue));
 
       setLocalValue(clampedValue);
+      onChangeRef.current(clampedValue);
     },
     [sliderWidth, min, max, step]
   );
