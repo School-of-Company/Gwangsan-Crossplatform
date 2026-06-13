@@ -101,6 +101,7 @@ jobs:
             git add ios/Podfile.lock
             git commit -m "chore: sync Podfile.lock [skip ci]"
             git fetch origin "$BRANCH"
+            git restore .
             git rebase "origin/$BRANCH"
             git push origin HEAD:"$BRANCH"
           fi
