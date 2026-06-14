@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-reanimated/lib/module/mappers.js b/node_modules/react-native-reanimated/lib/module/mappers.js
+index 0b90927..cca020d 100644
+--- a/node_modules/react-native-reanimated/lib/module/mappers.js
++++ b/node_modules/react-native-reanimated/lib/module/mappers.js
+@@ -80,6 +80,9 @@ function createMapperRegistry() {
+       for (const mapper of sortedMappers) {
+         if (mapper.dirty) {
+           mapper.dirty = false;
++          if (typeof mapper.worklet !== 'function') {
++            throw new Error('[MAPPER_DIAG] mapper.worklet type=' + typeof mapper.worklet + ' id=' + mapper.id);
++          }
+           mapper.worklet();
+         }
+       }
+diff --git a/node_modules/react-native-reanimated/src/mappers.ts b/node_modules/react-native-reanimated/src/mappers.ts
+index f68342b..ccf76e7 100644
+--- a/node_modules/react-native-reanimated/src/mappers.ts
++++ b/node_modules/react-native-reanimated/src/mappers.ts
+@@ -99,6 +99,9 @@ function createMapperRegistry() {
+       for (const mapper of sortedMappers) {
+         if (mapper.dirty) {
+           mapper.dirty = false;
++          if (typeof mapper.worklet !== 'function') {
++            throw new Error('[MAPPER_DIAG] mapper.worklet type=' + typeof mapper.worklet + ' id=' + mapper.id);
++          }
+           mapper.worklet();
+         }
+       }
