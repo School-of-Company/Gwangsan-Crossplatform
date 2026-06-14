@@ -7,7 +7,7 @@ const config = getSentryExpoConfig(__dirname);
 // scrolloop ships untranspiled CJS with private class fields (#x, #y, etc.)
 // that hermesc cannot compile — force Metro/Babel to transpile it
 config.transformer.transformIgnorePatterns = [
-  'node_modules/(?!(scrolloop|react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/.*|sentry-expo|native-base|react-native-svg)/)',
+  'node_modules/(?!(scrolloop|react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/.*|sentry-expo|native-base|react-native-svg|react-native-keyboard-controller)/)',
 ];
 
 config.resolver.unstable_enablePackageExports = true;
