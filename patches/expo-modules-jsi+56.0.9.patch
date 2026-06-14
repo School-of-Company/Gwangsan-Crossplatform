@@ -219,5 +219,33 @@ index 9fffe5e..8cc1f18 100644
 -  internal weak let runtime: JavaScriptRuntime?
 +  internal weak var runtime: JavaScriptRuntime?
    internal let pointee: facebook.jsi.WeakObject
- 
+
    /// Initializes a weak object with the underlying JSI weak object.
+diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
+index 0000000..0000000 100644
+--- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
++++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
+@@ -1,21 +1,14 @@
+ // swift-format-ignore-file: AlwaysUseLowerCamelCase
+
+ // `Task.immediate` is a pretty useful API that lets us immediately switch from synchronous to asynchronous context.
+-// Read the proposal for more: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0472-task-start-synchronously-on-caller-context.md
+-// Unfortunately, it is available only as of Apple OS 26.0 and there are no plans to backport it yet.
+-// Here we provide a runtime polyfill that uses the non-immediate Task instead (resulting in an initial delay).
++// This polyfill always uses the non-immediate Task for Swift 6.1 compatibility (Xcode 16.4).
+ extension Task where Failure == any Error {
+   @discardableResult
+   public static func immediate_polyfill(
+     name: String? = nil,
+     priority: TaskPriority? = nil,
+     @_inheritActorContext @_implicitSelfCapture operation: sending @escaping @isolated(any) () async throws -> Success
+   ) -> Task<Success, any Error> {
+-    if #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, *) {
+-      return Task.immediate(name: name, priority: priority, operation: operation)
+-    } else {
+-      // In the polyfill always use the highest priority and hope it executes earlier.
+-      return Task(name: name, priority: .high, operation: operation)
+-    }
++    return Task(name: name, priority: .high, operation: operation)
+   }
+ }
