@@ -1,0 +1,14 @@
+diff --git a/node_modules/react-native-css-interop/dist/runtime/native/render-component.js b/node_modules/react-native-css-interop/dist/runtime/native/render-component.js
+index eba25ec..3a1f64d 100644
+--- a/node_modules/react-native-css-interop/dist/runtime/native/render-component.js
++++ b/node_modules/react-native-css-interop/dist/runtime/native/render-component.js
+@@ -65,8 +65,7 @@ function renderComponent(baseComponent, state, props, possiblyAnimatedProps, var
+                 try {
+                     return flattenAnimatedProps(possiblyAnimatedProps.style) || {};
+                 }
+-                catch (error) {
+-                    console.log(`css-interop error: ${error.message}`);
++                catch (_error) {
+                     return {};
+                 }
+             }, [possiblyAnimatedProps.style]);
