@@ -1,3 +1,13 @@
+diff --git a/node_modules/expo-modules-jsi/apple/Package.swift b/node_modules/expo-modules-jsi/apple/Package.swift
+index ecd7ed6..d41ceba 100644
+--- a/node_modules/expo-modules-jsi/apple/Package.swift
++++ b/node_modules/expo-modules-jsi/apple/Package.swift
+@@ -1,4 +1,4 @@
+-// swift-tools-version: 6.2
++// swift-tools-version: 6.1
+ // The swift-tools-version declares the minimum version of Swift required to build this package.
+ 
+ import Foundation
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift
 index e7da903..721d574 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift
