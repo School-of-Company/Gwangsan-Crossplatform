@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js b/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js
-index cd3f692..c6abea2 100644
+index cd3f692..a62346e 100644
 --- a/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js
 +++ b/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js
 @@ -57,17 +57,6 @@ const KeyboardAvoidingView = /*#__PURE__*/(0, _react.forwardRef)(({
@@ -29,9 +29,9 @@ index cd3f692..c6abea2 100644
 -    const paddingBottom = interpolateToRelativeKeyboardHeight(padding.value);
 +    const keyboardY = screenHeight - keyboard.heightWhenOpened.value - keyboardVerticalOffset;
 +    const relKbHeight = Math.max(frame.value.y + frame.value.height - keyboardY, 0);
-+    const bottom = (0, _reactNativeReanimated.interpolate)(keyboard.progress.value, [0, 1], [0, relKbHeight]);
-+    const translateY = (0, _reactNativeReanimated.interpolate)(translate.value, [0, 1], [0, relKbHeight]);
-+    const paddingBottom = (0, _reactNativeReanimated.interpolate)(padding.value, [0, 1], [0, relKbHeight]);
++    const bottom = keyboard.progress.value * relKbHeight;
++    const translateY = translate.value * relKbHeight;
++    const paddingBottom = padding.value * relKbHeight;
      const height = frame.value.height - bottom;
      switch (behavior) {
        case "height":
