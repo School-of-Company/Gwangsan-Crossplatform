@@ -1,0 +1,46 @@
+diff --git a/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js b/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js
+index cd3f692..c6abea2 100644
+--- a/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js
++++ b/node_modules/react-native-keyboard-controller/lib/commonjs/components/KeyboardAvoidingView/index.js
+@@ -57,17 +57,6 @@ const KeyboardAvoidingView = /*#__PURE__*/(0, _react.forwardRef)(({
+   const {
+     height: screenHeight
+   } = (0, _hooks.useWindowDimensions)();
+-  const relativeKeyboardHeight = (0, _react.useCallback)(() => {
+-    "worklet";
+-
+-    const keyboardY = screenHeight - keyboard.heightWhenOpened.value - keyboardVerticalOffset;
+-    return Math.max(frame.value.y + frame.value.height - keyboardY, 0);
+-  }, [screenHeight, keyboardVerticalOffset]);
+-  const interpolateToRelativeKeyboardHeight = (0, _react.useCallback)(value => {
+-    "worklet";
+-
+-    return (0, _reactNativeReanimated.interpolate)(value, [0, 1], [0, relativeKeyboardHeight()]);
+-  }, [relativeKeyboardHeight]);
+   const onLayoutWorklet = (0, _react.useCallback)(layout => {
+     "worklet";
+ 
+@@ -103,9 +92,11 @@ const KeyboardAvoidingView = /*#__PURE__*/(0, _react.forwardRef)(({
+     if (!enabled) {
+       return {};
+     }
+-    const bottom = interpolateToRelativeKeyboardHeight(keyboard.progress.value);
+-    const translateY = interpolateToRelativeKeyboardHeight(translate.value);
+-    const paddingBottom = interpolateToRelativeKeyboardHeight(padding.value);
++    const keyboardY = screenHeight - keyboard.heightWhenOpened.value - keyboardVerticalOffset;
++    const relKbHeight = Math.max(frame.value.y + frame.value.height - keyboardY, 0);
++    const bottom = (0, _reactNativeReanimated.interpolate)(keyboard.progress.value, [0, 1], [0, relKbHeight]);
++    const translateY = (0, _reactNativeReanimated.interpolate)(translate.value, [0, 1], [0, relKbHeight]);
++    const paddingBottom = (0, _reactNativeReanimated.interpolate)(padding.value, [0, 1], [0, relKbHeight]);
+     const height = frame.value.height - bottom;
+     switch (behavior) {
+       case "height":
+@@ -134,7 +125,7 @@ const KeyboardAvoidingView = /*#__PURE__*/(0, _react.forwardRef)(({
+       default:
+         return {};
+     }
+-  }, [behavior, enabled, interpolateToRelativeKeyboardHeight]);
++  }, [behavior, enabled, screenHeight, keyboardVerticalOffset]);
+   const combinedRef = (0, _useCombinedRef.default)(internalRef, ref);
+   const isPositionBehavior = behavior === "position";
+   const containerStyle = isPositionBehavior ? contentContainerStyle : style;
