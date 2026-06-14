@@ -170,6 +170,11 @@ jobs:
             echo "ERROR: swift-tools-version patch was not applied (expected 6.1, got: $HEAD)"
             exit 1
           fi
+          if grep -q "Task\.immediate(" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift; then
+            echo "ERROR: Task.immediate call still present in Task+immediate.swift — patch not applied"
+            exit 1
+          fi
+          echo "All expo-modules-jsi patches verified OK"
 
       - name: Build app for Detox
         run: |
