@@ -69,7 +69,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.4'
+          xcode-version: '26'
 
       - name: Cache applesimutils
         id: cache-applesimutils
@@ -164,17 +164,11 @@ jobs:
 
       - name: Verify expo-modules-jsi patch applied
         run: |
-          HEAD=$(head -1 node_modules/expo-modules-jsi/apple/Package.swift)
-          echo "Package.swift first line: $HEAD"
-          if [[ "$HEAD" != *"6.1"* ]]; then
-            echo "ERROR: swift-tools-version patch was not applied (expected 6.1, got: $HEAD)"
+          if grep -q "weak let runtime" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift; then
+            echo "ERROR: weak let patch was not applied"
             exit 1
           fi
-          if grep -q "Task\.immediate(" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift; then
-            echo "ERROR: Task.immediate call still present in Task+immediate.swift — patch not applied"
-            exit 1
-          fi
-          echo "All expo-modules-jsi patches verified OK"
+          echo "expo-modules-jsi patch verified OK"
 
       - name: Build app for Detox
         run: |
