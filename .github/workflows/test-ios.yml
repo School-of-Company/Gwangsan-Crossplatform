@@ -15,7 +15,7 @@ on:
 jobs:
   test-ios:
     name: iOS E2E Test (Detox)
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 120
     concurrency:
       group: ios-e2e-${{ github.event.pull_request.number || github.ref }}
@@ -69,7 +69,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16'
+          xcode-version: '16.4'
 
       - name: Cache applesimutils
         id: cache-applesimutils
@@ -160,6 +160,15 @@ jobs:
             echo "enabled=true" >> $GITHUB_OUTPUT
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify expo-modules-jsi patch applied
+        run: |
+          HEAD=$(head -1 node_modules/expo-modules-jsi/apple/Package.swift)
+          echo "Package.swift first line: $HEAD"
+          if [[ "$HEAD" != *"6.1"* ]]; then
+            echo "ERROR: swift-tools-version patch was not applied (expected 6.1, got: $HEAD)"
+            exit 1
           fi
 
       - name: Build app for Detox
