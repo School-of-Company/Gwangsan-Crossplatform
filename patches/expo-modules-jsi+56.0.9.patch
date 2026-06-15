@@ -80,7 +80,7 @@ diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/
 index a0e3e24..c06fa0c 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
-@@ -200,7 +200,7 @@
+@@ -200,6 +200,6 @@
        for propertyName in propertyNames {
          let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
 -        vector.push_back(consuming: propNameId)
@@ -95,7 +95,7 @@ index a0e3e24..c06fa0c 100644
 -      _ arguments: consuming JavaScriptValuesBuffer,
 +      _ arguments: consuming JavaScriptValuesBuffer
      ) async throws -> JavaScriptValue
-
+ 
    /// Creates an asynchronous host function that runs given block when it's called.
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptArray.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptArray.swift
 index 049acbb..89ea289 100644
@@ -227,7 +227,7 @@ index 9fffe5e..8cc1f18 100644
 -  internal weak let runtime: JavaScriptRuntime?
 +  internal weak var runtime: JavaScriptRuntime?
    internal let pointee: facebook.jsi.WeakObject
-
+ 
    /// Initializes a weak object with the underlying JSI weak object.
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
 index aaaaaaa..bbbbbbb 100644
@@ -235,7 +235,7 @@ index aaaaaaa..bbbbbbb 100644
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
 @@ -1,21 +1,13 @@
  // swift-format-ignore-file: AlwaysUseLowerCamelCase
-
+ 
 -// `Task.immediate` is a pretty useful API that lets us immediately switch from synchronous to asynchronous context.
 -// Read the proposal for more: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0472-task-start-synchronously-on-caller-context.md
 -// Unfortunately, it is available only as of Apple OS 26.0 and there are no plans to backport it yet.
@@ -262,12 +262,12 @@ diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/incl
 index ccccccc..ddddddd 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
-@@ -51,11 +51,11 @@
+@@ -51,12 +51,12 @@
     */
 -  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
 +  RuntimeScheduler(void *scheduler, ScheduleFn fn) SWIFT_NAME(init(_:_:)) noexcept
        : nativeScheduler(scheduler), scheduleFn(fn) {}
-
+ 
    /**
     Constructs a no-op scheduler. Scheduled tasks run synchronously on the
     caller's thread — intended for standalone runtimes (e.g. tests) that have
@@ -275,29 +275,29 @@ index ccccccc..ddddddd 100644
     */
 -  RuntimeScheduler() {}
 +  RuntimeScheduler() SWIFT_NAME(init()) {}
-
+ 
    RuntimeScheduler(const RuntimeScheduler &) = delete;
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
 index eeeeeee..fffffff 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
-@@ -14,7 +14,7 @@
+@@ -14,6 +14,6 @@
  class NativeState final : public RetainedSwiftPointer, public facebook::jsi::NativeState {
  public:
 -  explicit NativeState(Context context, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator) {}
 +  explicit NativeState(Context context, Deallocator deallocator) SWIFT_NAME(init(_:_:)) : RetainedSwiftPointer(context, deallocator) {}
-
+ 
    virtual ~NativeState() {
      _deallocator(_context);
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
 index ggggggg..hhhhhhh 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
-@@ -14,7 +14,7 @@
+@@ -14,6 +14,6 @@
  public:
    using Closure = facebook::jsi::Value(Context context, const facebook::jsi::Value *_Nonnull thisValue, const facebook::jsi::Value *_Nonnull args, size_t count);
-
+ 
 -  explicit HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
 +  explicit HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) SWIFT_NAME(init(_:_:_:)) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
-
+ 
    virtual ~HostFunctionClosure() {
