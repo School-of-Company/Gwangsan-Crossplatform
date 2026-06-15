@@ -60,6 +60,10 @@
       "ios": {
         "ascAppId": "6758655368",
         "appleTeamId": "UB2797YAAH"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./service_account.json",
+        "track": "production"
       }
     }
   }
