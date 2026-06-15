@@ -265,7 +265,7 @@ index ccccccc..ddddddd 100644
 @@ -51,12 +51,12 @@
     */
 -  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
-+  RuntimeScheduler(void *scheduler, ScheduleFn fn) SWIFT_NAME(init(_:_:)) noexcept
++  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept SWIFT_NAME(init(_:_:))
        : nativeScheduler(scheduler), scheduleFn(fn) {}
  
    /**
