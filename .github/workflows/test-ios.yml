@@ -164,10 +164,20 @@ jobs:
 
       - name: Verify expo-modules-jsi patch applied
         run: |
+          FAIL=0
           if grep -q "weak let runtime" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift; then
-            echo "ERROR: weak let patch was not applied"
-            exit 1
+            echo "ERROR: weak let patch was not applied (HostFunctionContext.swift)"
+            FAIL=1
           fi
+          if grep -q "push_back(propNameId)" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift; then
+            echo "ERROR: consuming: push_back patch was incorrectly applied (JavaScriptRuntime.swift)"
+            FAIL=1
+          fi
+          if grep -q "swift-tools-version: 6.2" node_modules/expo-modules-jsi/apple/Package.swift; then
+            echo "ERROR: swift-tools-version patch was not applied (Package.swift)"
+            FAIL=1
+          fi
+          if [ $FAIL -eq 1 ]; then exit 1; fi
           echo "expo-modules-jsi patch verified OK"
 
       - name: Build app for Detox

@@ -80,14 +80,6 @@ diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/
 index a0e3e24..c06fa0c 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
-@@ -200,6 +200,6 @@
-       for propertyName in propertyNames {
-         let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
--        vector.push_back(consuming: propNameId)
-+        vector.push_back(propNameId)
-       }
-       return vector
-     }
 @@ -326,7 +326,7 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
    public typealias AsyncFunctionClosure =
      @JavaScriptActor (
