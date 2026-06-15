@@ -32,7 +32,7 @@ describe('로그인', () => {
     await waitFor(element(by.id('SigninForm-next-button')))
       .toBeVisible()
       .whileElement(by.id('SigninForm-scroll-view'))
-      .scroll(200, 'down');
+      .scroll(100, 'down');
     await element(by.id('SigninForm-next-button')).tap();
 
     // placeholder와 description이 동일하므로 input testID로 확인
