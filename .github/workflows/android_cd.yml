@@ -32,7 +32,12 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Create Google Play service account json
-        run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          if [ ! -s service_account.json ]; then
+            echo "SERVICE_ACCOUNT_JSON secret is empty or missing"
+            exit 1
+          fi
 
       - name: EAS Build (Android)
         run: |

@@ -219,5 +219,77 @@ index 9fffe5e..8cc1f18 100644
 -  internal weak let runtime: JavaScriptRuntime?
 +  internal weak var runtime: JavaScriptRuntime?
    internal let pointee: facebook.jsi.WeakObject
-
+ 
    /// Initializes a weak object with the underlying JSI weak object.
+diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
+index aaaaaaa..bbbbbbb 100644
+--- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
++++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Extensions/Task+immediate.swift
+@@ -1,21 +1,13 @@
+ // swift-format-ignore-file: AlwaysUseLowerCamelCase
+ 
+-// `Task.immediate` is a pretty useful API that lets us immediately switch from synchronous to asynchronous context.
+-// Read the proposal for more: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0472-task-start-synchronously-on-caller-context.md
+-// Unfortunately, it is available only as of Apple OS 26.0 and there are no plans to backport it yet.
+-// Here we provide a runtime polyfill that uses the non-immediate Task instead (resulting in an initial delay).
++// Polyfill for Task.immediate (SE-0472). Task.immediate requires iOS 26+/macOS 26+ SDK,
++// which is unavailable in Xcode 16.x (iOS 18.x SDK). Always fall back to a regular Task.
+ extension Task where Failure == any Error {
+   @discardableResult
+   public static func immediate_polyfill(
+-    name: String? = nil,
+     priority: TaskPriority? = nil,
+     @_inheritActorContext @_implicitSelfCapture operation: sending @escaping @isolated(any) () async throws -> Success
+   ) -> Task<Success, any Error> {
+-    if #available(macOS 26.0, iOS 26.0, watchOS 26.0, tvOS 26.0, *) {
+-      return Task.immediate(name: name, priority: priority, operation: operation)
+-    } else {
+-      // In the polyfill always use the highest priority and hope it executes earlier.
+-      return Task(name: name, priority: .high, operation: operation)
+-    }
++    Task(priority: priority, operation: operation)
+   }
+ }
+diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
+index ccccccc..ddddddd 100644
+--- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
++++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
+@@ -51,12 +51,12 @@
+    */
+-  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
++  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept SWIFT_NAME(init(_:_:))
+       : nativeScheduler(scheduler), scheduleFn(fn) {}
+ 
+   /**
+    Constructs a no-op scheduler. Scheduled tasks run synchronously on the
+    caller's thread — intended for standalone runtimes (e.g. tests) that have
+    no React scheduler.
+    */
+-  RuntimeScheduler() {}
++  RuntimeScheduler() SWIFT_NAME(init()) {}
+ 
+   RuntimeScheduler(const RuntimeScheduler &) = delete;
+diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
+index eeeeeee..fffffff 100644
+--- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
++++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
+@@ -14,6 +14,6 @@
+ class NativeState final : public RetainedSwiftPointer, public facebook::jsi::NativeState {
+ public:
+-  explicit NativeState(Context context, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator) {}
++  explicit NativeState(Context context, Deallocator deallocator) SWIFT_NAME(init(_:_:)) : RetainedSwiftPointer(context, deallocator) {}
+ 
+   virtual ~NativeState() {
+     _deallocator(_context);
+diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
+index ggggggg..hhhhhhh 100644
+--- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
++++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
+@@ -14,6 +14,6 @@
+ public:
+   using Closure = facebook::jsi::Value(Context context, const facebook::jsi::Value *_Nonnull thisValue, const facebook::jsi::Value *_Nonnull args, size_t count);
+ 
+-  explicit HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
++  explicit HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) SWIFT_NAME(init(_:_:_:)) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
+
+   virtual ~HostFunctionClosure() {

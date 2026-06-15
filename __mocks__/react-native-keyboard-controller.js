@@ -2,6 +2,7 @@ const React = require('react');
 const { View } = require('react-native');
 
 const KeyboardAvoidingView = ({ children, ...props }) => React.createElement(View, props, children);
+const KeyboardStickyView = ({ children, ...props }) => React.createElement(View, props, children);
 
 const KeyboardProvider = ({ children }) => children;
 
@@ -14,6 +15,7 @@ const useReanimatedKeyboardAnimation = () => ({
 
 module.exports = {
   KeyboardAvoidingView,
+  KeyboardStickyView,
   KeyboardProvider,
   useKeyboardHandler,
   useKeyboardContext,
