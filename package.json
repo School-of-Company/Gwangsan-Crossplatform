@@ -81,6 +81,7 @@
     "scrolloop": "^0.3.4",
     "socket.io-client": "^4.8.1",
     "whatwg-fetch": "^3.6.20",
+    "patch-package": "^8.0.1",
     "zod": "^3.25.72",
     "zustand": "^5.0.6"
   },
@@ -102,7 +103,6 @@
     "lint-staged": "^16.4.0",
     "msw": "^2.12.14",
     "nyc": "^18.0.0",
-    "patch-package": "^8.0.1",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "react-test-renderer": "^19.1.0",
