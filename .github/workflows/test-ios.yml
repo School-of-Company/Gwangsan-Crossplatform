@@ -169,8 +169,8 @@ jobs:
             echo "ERROR: weak let patch was not applied (HostFunctionContext.swift)"
             FAIL=1
           fi
-          if grep -q "push_back(propNameId)" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift; then
-            echo "ERROR: consuming: push_back patch was incorrectly applied (JavaScriptRuntime.swift)"
+          if ! grep -q "if swift(>=6.2)" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift; then
+            echo "ERROR: push_back swift version guard (#if swift(>=6.2)) not applied (JavaScriptRuntime.swift)"
             FAIL=1
           fi
           if grep -q "swift-tools-version: 6.2" node_modules/expo-modules-jsi/apple/Package.swift; then
