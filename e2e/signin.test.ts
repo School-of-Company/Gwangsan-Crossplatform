@@ -27,7 +27,7 @@ describe('로그인', () => {
 
   it('별칭 입력 후 비밀번호 화면으로 이동한다', async () => {
     await element(by.id('NicknameStep-nickname-input')).tap();
-    await element(by.id('NicknameStep-nickname-input')).typeText('테스트');
+    await element(by.id('NicknameStep-nickname-input')).replaceText('테스트');
     // returnKeyType="next" + onSubmitEditing으로 키보드를 닫으면서 다음 단계로 이동
     await element(by.id('NicknameStep-nickname-input')).tapReturnKey();
 
