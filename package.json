@@ -5,6 +5,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "start": "expo start",
+    "postinstall": "patch-package",
     "prebuild": "expo prebuild",
     "test": "jest --watchAll=false",
     "test:watch": "jest --watchAll",
@@ -71,7 +72,7 @@
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-pager-view": "8.0.1",
     "react-native-reanimated": "4.3.1",
-    "react-native-safe-area-context": "~5.7.0",
+    "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "4.25.2",
     "react-native-svg": "15.15.4",
     "react-native-toast-message": "^2.3.3",
@@ -101,6 +102,7 @@
     "lint-staged": "^16.4.0",
     "msw": "^2.12.14",
     "nyc": "^18.0.0",
+    "patch-package": "^8.0.1",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "react-test-renderer": "^19.1.0",
@@ -121,6 +123,19 @@
         "@react-native-community/netinfo",
         "react-native-worklets"
       ]
+    },
+    "autolinking": {
+      "ios": {
+        "buildFromSource": [
+          "react-native-safe-area-context",
+          "react-native-reanimated",
+          "react-native-screens",
+          "react-native-svg",
+          "@react-native-async-storage/async-storage",
+          "react-native-worklets",
+          "expo-modules-core"
+        ]
+      }
     }
   },
   "overrides": {}

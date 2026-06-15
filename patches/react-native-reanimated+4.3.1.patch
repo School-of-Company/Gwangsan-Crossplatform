@@ -1,0 +1,84 @@
+diff --git a/node_modules/react-native-reanimated/lib/module/mappers.js b/node_modules/react-native-reanimated/lib/module/mappers.js
+index 0b90927..e6bd9ee 100644
+--- a/node_modules/react-native-reanimated/lib/module/mappers.js
++++ b/node_modules/react-native-reanimated/lib/module/mappers.js
+@@ -80,6 +80,9 @@ function createMapperRegistry() {
+       for (const mapper of sortedMappers) {
+         if (mapper.dirty) {
+           mapper.dirty = false;
++          if (typeof mapper.worklet !== 'function') {
++            throw new Error('[MAPPER_DIAG] mapper.worklet type=' + typeof mapper.worklet + ' id=' + mapper.id);
++          }
+           mapper.worklet();
+         }
+       }
+@@ -149,10 +152,12 @@ function createMapperRegistry() {
+       mappers.set(mapper.id, mapper);
+       sortedMappers = [];
+       for (const sv of mapper.inputs) {
+-        sv.addListener(mapper.id, () => {
+-          mapper.dirty = true;
+-          maybeRequestUpdates();
+-        });
++        if (typeof sv.addListener === 'function') {
++          sv.addListener(mapper.id, () => {
++            mapper.dirty = true;
++            maybeRequestUpdates();
++          });
++        }
+       }
+       maybeRequestUpdates();
+     },
+@@ -162,7 +167,9 @@ function createMapperRegistry() {
+         mappers.delete(mapper.id);
+         sortedMappers = [];
+         for (const sv of mapper.inputs) {
+-          sv.removeListener(mapper.id);
++          if (typeof sv.removeListener === 'function') {
++            sv.removeListener(mapper.id);
++          }
+         }
+       }
+     }
+diff --git a/node_modules/react-native-reanimated/src/mappers.ts b/node_modules/react-native-reanimated/src/mappers.ts
+index f68342b..3029fb3 100644
+--- a/node_modules/react-native-reanimated/src/mappers.ts
++++ b/node_modules/react-native-reanimated/src/mappers.ts
+@@ -99,6 +99,9 @@ function createMapperRegistry() {
+       for (const mapper of sortedMappers) {
+         if (mapper.dirty) {
+           mapper.dirty = false;
++          if (typeof mapper.worklet !== 'function') {
++            throw new Error('[MAPPER_DIAG] mapper.worklet type=' + typeof mapper.worklet + ' id=' + mapper.id);
++          }
+           mapper.worklet();
+         }
+       }
+@@ -179,10 +182,12 @@ function createMapperRegistry() {
+       mappers.set(mapper.id, mapper);
+       sortedMappers = [];
+       for (const sv of mapper.inputs) {
+-        sv.addListener(mapper.id, () => {
+-          mapper.dirty = true;
+-          maybeRequestUpdates();
+-        });
++        if (typeof sv.addListener === 'function') {
++          sv.addListener(mapper.id, () => {
++            mapper.dirty = true;
++            maybeRequestUpdates();
++          });
++        }
+       }
+       maybeRequestUpdates();
+     },
+@@ -192,7 +197,9 @@ function createMapperRegistry() {
+         mappers.delete(mapper.id);
+         sortedMappers = [];
+         for (const sv of mapper.inputs) {
+-          sv.removeListener(mapper.id);
++          if (typeof sv.removeListener === 'function') {
++            sv.removeListener(mapper.id);
++          }
+         }
+       }
+     },

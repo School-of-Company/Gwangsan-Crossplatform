@@ -15,8 +15,11 @@ on:
 jobs:
   test-ios:
     name: iOS E2E Test (Detox)
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 120
+    concurrency:
+      group: ios-e2e-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
     if: |
       github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
@@ -57,7 +60,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ hashFiles('package-lock.json') }}-${{ hashFiles('patches/**') }}
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
@@ -66,7 +69,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16'
+          xcode-version: '26'
 
       - name: Cache applesimutils
         id: cache-applesimutils
@@ -99,7 +102,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add ios/Podfile.lock
-            git commit -m "chore: sync Podfile.lock [skip ci]"
+            git commit -m "chore: sync Podfile.lock [podlock-sync]"
             git fetch origin "$BRANCH"
             git restore .
             git rebase "origin/$BRANCH"
@@ -158,6 +161,14 @@ jobs:
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Verify expo-modules-jsi patch applied
+        run: |
+          if grep -q "weak let runtime" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift; then
+            echo "ERROR: weak let patch was not applied"
+            exit 1
+          fi
+          echo "expo-modules-jsi patch verified OK"
 
       - name: Build app for Detox
         run: |

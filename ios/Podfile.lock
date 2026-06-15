@@ -1777,7 +1777,7 @@ PODS:
     - ReactNativeDependencies
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
-  - react-native-safe-area-context (5.7.0):
+  - react-native-safe-area-context (5.6.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1789,8 +1789,8 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-safe-area-context/common (= 5.7.0)
-    - react-native-safe-area-context/fabric (= 5.7.0)
+    - react-native-safe-area-context/common (= 5.6.2)
+    - react-native-safe-area-context/fabric (= 5.6.2)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1801,7 +1801,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/common (5.7.0):
+  - react-native-safe-area-context/common (5.6.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1823,7 +1823,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/fabric (5.7.0):
+  - react-native-safe-area-context/fabric (5.6.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3089,7 +3089,7 @@ SPEC CHECKSUMS:
   react-native-keyboard-controller: 4b22b18601bd494114766a13946f8759f7d96d15
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: ac739914c8d6cfd77c251682495f1ff06c5b9a4f
-  react-native-safe-area-context: 01165438d8d2bc6bf418b5fdc8491d92bf59ceeb
+  react-native-safe-area-context: 4449252a9ff9d3ee5e9d2ff3a49ba5c229a513a0
   React-NativeModulesApple: cc6ec4767844d610e92cc358bd3ea34937438d56
   React-networking: 352c0aab2b520439ae8126455ad15f3f17e3820e
   React-oscompat: 64a0c7ef5441855dc6e2a6afe8ba8f92aa05075e
@@ -3144,6 +3144,6 @@ SPEC CHECKSUMS:
   UMAppLoader: 0fef21c4b19a111eb2912c46fbc7c6a04c242513
   Yoga: e240fec777ff1f21ef42ccebbb44b6d262125855
 
-PODFILE CHECKSUM: df585d6f81ac497e738b06d58b3f1151b7831e5b
+PODFILE CHECKSUM: 968417541140c9f516039245f4ec14e3c5cc151d
 
 COCOAPODS: 1.16.2
