@@ -311,7 +311,7 @@ index 9fffe5e..8cc1f18 100644
  
    /// Initializes a weak object with the underlying JSI weak object.
 diff --git a/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh b/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
-index 7c2587a..8718973 100644
+index 7c2587a..fc7f5da 100644
 --- a/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
 +++ b/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
 @@ -199,6 +199,9 @@ build_slice() {
@@ -319,7 +319,7 @@ index 7c2587a..8718973 100644
    fi
  
 +  local build_log
-+  build_log=$(mktemp /tmp/expo-modules-jsi-XXXXXXXXXX.log)
++  build_log=$(mktemp -t expo-modules-jsi)
 +  local xc_status=0
    (cd "$PACKAGE_DIR" && env -i "${env_args[@]}" \
      xcodebuild \
