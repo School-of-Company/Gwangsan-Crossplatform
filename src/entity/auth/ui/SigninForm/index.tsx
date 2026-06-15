@@ -31,7 +31,6 @@ function SigninForm({
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView behavior="padding" className="flex-1 bg-white">
         <ScrollView
-          testID="SigninForm-scroll-view"
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
