@@ -173,10 +173,14 @@ jobs:
       - name: Build app for Detox
         run: |
           if [ "${{ steps.coverage-flag.outputs.enabled }}" = "true" ]; then
-            E2E_COVERAGE=true npm run e2e:build:ios:coverage
+            E2E_COVERAGE=true npm run e2e:build:ios:coverage 2>&1 | tee /tmp/detox-build.log; exit ${PIPESTATUS[0]}
           else
-            npm run e2e:build:ios:release
+            npm run e2e:build:ios:release 2>&1 | tee /tmp/detox-build.log; exit ${PIPESTATUS[0]}
           fi
+
+      - name: Show build log on failure
+        if: failure()
+        run: cat /tmp/detox-build.log 2>/dev/null || echo "No build log found"
 
       - name: Run Detox E2E tests
         run: |
