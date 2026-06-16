@@ -173,8 +173,20 @@ jobs:
             echo "ERROR: push_back swift version guard (#if swift(>=6.2)) not applied (JavaScriptRuntime.swift)"
             FAIL=1
           fi
+          if ! grep -q "consume propNameId" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift; then
+            echo "ERROR: push_back consume fallback not applied (JavaScriptRuntime.swift)"
+            FAIL=1
+          fi
           if grep -q "swift-tools-version: 6.2" node_modules/expo-modules-jsi/apple/Package.swift; then
             echo "ERROR: swift-tools-version patch was not applied (Package.swift)"
+            FAIL=1
+          fi
+          if ! grep -q "SWIFT_NAME" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h; then
+            echo "ERROR: SWIFT_NAME not applied to NativeState.h"
+            FAIL=1
+          fi
+          if ! grep -q "SWIFT_NAME" node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h; then
+            echo "ERROR: SWIFT_NAME not applied to RuntimeScheduler.h"
             FAIL=1
           fi
           if [ $FAIL -eq 1 ]; then exit 1; fi

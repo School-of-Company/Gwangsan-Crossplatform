@@ -9,53 +9,53 @@ index ecd7ed6..d41ceba 100644
  
  import Foundation
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
-index ba2d6d4..eff1c9c 100644
+index ba2d6d4..de4edfb 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/HostFunctionClosure.h
-@@ -14,7 +14,7 @@ class HostFunctionClosure final : public RetainedSwiftPointer {
+@@ -14,7 +14,8 @@ class HostFunctionClosure final : public RetainedSwiftPointer {
  public:
    using Closure = facebook::jsi::Value(Context context, const facebook::jsi::Value *_Nonnull thisValue, const facebook::jsi::Value *_Nonnull args, size_t count);
  
 -  explicit HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
-+  explicit HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) SWIFT_NAME(init(_:_:_:)) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
++  SWIFT_NAME(init(_:_:_:))
++  HostFunctionClosure(Context context, Closure closure, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator), _closure(closure) {};
  
    virtual ~HostFunctionClosure() {
      _deallocator(_context);
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
-index fe4acda..4654de7 100644
+index fe4acda..96914d0 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/NativeState.h
-@@ -13,7 +13,7 @@ namespace expo {
+@@ -13,7 +13,8 @@ namespace expo {
   */
  class NativeState final : public RetainedSwiftPointer, public facebook::jsi::NativeState {
  public:
 -  explicit NativeState(Context context, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator) {}
-+  explicit NativeState(Context context, Deallocator deallocator) SWIFT_NAME(init(_:_:)) : RetainedSwiftPointer(context, deallocator) {}
++  SWIFT_NAME(init(_:_:))
++  NativeState(Context context, Deallocator deallocator) : RetainedSwiftPointer(context, deallocator) {}
  
    virtual ~NativeState() {
      _deallocator(_context);
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
-index 587e2be..58c7df3 100644
+index 587e2be..3e6fd98 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI-Cxx/include/RuntimeScheduler.h
-@@ -49,7 +49,7 @@ public:
+@@ -49,6 +49,7 @@ public:
     `scheduleTask` dispatches through `fn`, which the host implements against
     the real react::RuntimeScheduler.
     */
--  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
-+  RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept SWIFT_NAME(init(_:_:))
++  SWIFT_NAME(init(_:_:))
+   RuntimeScheduler(void *scheduler, ScheduleFn fn) noexcept
        : nativeScheduler(scheduler), scheduleFn(fn) {}
  
-   /**
-@@ -57,7 +57,7 @@ public:
+@@ -57,6 +58,7 @@ public:
     caller's thread — intended for standalone runtimes (e.g. tests) that have
     no React scheduler.
     */
--  RuntimeScheduler() {}
-+  RuntimeScheduler() SWIFT_NAME(init()) {}
++  SWIFT_NAME(init())
+   RuntimeScheduler() {}
  
    RuntimeScheduler(const RuntimeScheduler &) = delete;
- 
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift
 index e7da903..721d574 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Contexts/HostFunctionContext.swift
@@ -154,22 +154,24 @@ index ef4624d..e6821ae 100644
  
    /// Creates a PropNameID from existing `facebook.jsi.PropNameID`.
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
-index a0e3e24..26c4159 100644
+index a0e3e24..4bfc80d 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
-@@ -199,7 +199,11 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
+@@ -198,8 +198,13 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
+       vector.reserve(propertyNames.count)
  
        for propertyName in propertyNames {
-         let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
 +        #if swift(>=6.2)
+         let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
          vector.push_back(consuming: propNameId)
 +        #else
-+        vector.push_back(propNameId)
++        let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
++        vector.push_back(consume propNameId)
 +        #endif
        }
        return vector
      }
-@@ -326,7 +330,7 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
+@@ -326,7 +331,7 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
    public typealias AsyncFunctionClosure =
      @JavaScriptActor (
        _ this: JavaScriptValue,
