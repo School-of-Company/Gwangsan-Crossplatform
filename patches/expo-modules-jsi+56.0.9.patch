@@ -154,7 +154,7 @@ index ef4624d..e6821ae 100644
  
    /// Creates a PropNameID from existing `facebook.jsi.PropNameID`.
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
-index a0e3e24..9f14985 100644
+index a0e3e24..4bfc80d 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
 @@ -198,8 +198,13 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
@@ -165,7 +165,7 @@ index a0e3e24..9f14985 100644
          let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
          vector.push_back(consuming: propNameId)
 +        #else
-+        var propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
++        let propNameId = facebook.jsi.PropNameID.forUtf8(runtime.pointee, std.string(propertyName))
 +        vector.push_back(consume propNameId)
 +        #endif
        }
