@@ -82,6 +82,7 @@ jobs:
         if: steps.cache-applesimutils.outputs.cache-hit != 'true'
         run: |
           brew tap wix/brew
+          brew trust wix/brew
           brew install applesimutils
 
       - name: Link applesimutils (cache restored)
