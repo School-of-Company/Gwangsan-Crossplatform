@@ -52,7 +52,7 @@ function SigninForm({
       </ScrollView>
 
       <KeyboardStickyView>
-        <View className="mb-8 mt-4 px-6">
+        <View className="mb-2 mt-4 px-6">
           <Button testID="SigninForm-next-button" onPress={onNext} disabled={isNextDisabled}>
             {nextButtonText}
           </Button>
