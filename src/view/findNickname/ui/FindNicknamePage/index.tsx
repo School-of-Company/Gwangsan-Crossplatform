@@ -156,7 +156,7 @@ export default function FindNicknamePage() {
               )}
             </View>
 
-            <View className="mb-8 mt-auto">
+            <View className="mb-2 mt-auto">
               <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
                 {isLoading ? '찾는 중...' : '별칭 찾기'}
               </Button>

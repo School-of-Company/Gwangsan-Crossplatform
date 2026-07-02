@@ -50,7 +50,7 @@ function SignupForm({
 
             <View className="mt-8 flex-1">{children}</View>
 
-            <View className="mb-8 mt-auto">
+            <View className="mb-2 mt-auto">
               <Button onPress={onNext} disabled={isNextDisabled}>
                 {nextButtonText}
               </Button>
