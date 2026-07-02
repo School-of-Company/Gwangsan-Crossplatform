@@ -68,7 +68,7 @@ export default function FindNicknamePage() {
             <Text className="text-center text-sm text-gray-500">별칭</Text>
             <Text className="mt-2 text-center text-2xl font-bold">{foundNickname}</Text>
           </View>
-          <View className="mb-8 mt-auto">
+          <View className="mb-4 mt-auto">
             <Button onPress={() => router.replace('/signin')}>로그인하러 가기</Button>
           </View>
         </View>
@@ -156,7 +156,7 @@ export default function FindNicknamePage() {
               )}
             </View>
 
-            <View className="mb-2 mt-auto">
+            <View className="mb-4 mt-auto">
               <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
                 {isLoading ? '찾는 중...' : '별칭 찾기'}
               </Button>
