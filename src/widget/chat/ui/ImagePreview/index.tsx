@@ -1,6 +1,6 @@
 import { View, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { memo } from 'react';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import type { ImagePreview as ImagePreviewType } from '../../model/useChatInput';
 
 interface ImagePreviewProps {

@@ -1,5 +1,5 @@
 import CheckIcon from '@/shared/assets/svg/CheckIcon';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Text, TouchableOpacity, View, ScrollView, TextInput } from 'react-native';
 import { useMultiSelect } from '../../model/useMultiSelect';

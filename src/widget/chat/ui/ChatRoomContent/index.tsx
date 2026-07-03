@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, FlatList, type ListRenderItem } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import { MyMessage, OtherMessage } from '~/widget/chat';
 import { TradeEmbed } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';

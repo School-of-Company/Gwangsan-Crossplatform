@@ -1,6 +1,6 @@
 import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { memo, useMemo } from 'react';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import {
   useImageLoader,
   formatMessageTime,
