@@ -2512,28 +2512,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNVectorIcons (10.3.0):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - RNWorklets (0.8.3):
     - hermes-engine
     - RCTRequired
@@ -2744,7 +2722,6 @@ DEPENDENCIES:
   - RNScreens (from `../node_modules/react-native-screens`)
   - "RNSentry (from `../node_modules/@sentry/react-native`)"
   - RNSVG (from `../node_modules/react-native-svg`)
-  - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - TrustKit (~> 2.0)
   - UMAppLoader (from `../node_modules/unimodules-app-loader/ios`)
@@ -3005,8 +2982,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@sentry/react-native"
   RNSVG:
     :path: "../node_modules/react-native-svg"
-  RNVectorIcons:
-    :path: "../node_modules/react-native-vector-icons"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
   UMAppLoader:
@@ -3138,7 +3113,6 @@ SPEC CHECKSUMS:
   RNScreens: 1dd7dd33813caf67fec4b056d2e7d8313468c9b9
   RNSentry: dc6c9b74027566562ee165f742a99a97e93b725d
   RNSVG: 65bcda7fc55c8d61ac795acdc6794b75972e8cef
-  RNVectorIcons: d7dae55a6a2cfa1b0cf49f2788d2c30816762558
   RNWorklets: 32b9ca9e0588b838ce3202a9ea3971f553c9011c
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
