@@ -7,7 +7,11 @@ import { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
 
-export const baseURL = Constants.expoConfig?.extra?.apiUrl;
+// env(API_URL)가 빌드에 주입되지 않은 경우(예: EAS 빌드에 env 미등록)에도
+// 동작하도록 프로덕션 API 주소를 폴백으로 사용한다.
+const FALLBACK_API_URL = 'https://api.gwangsan.io.kr/api';
+
+export const baseURL: string = Constants.expoConfig?.extra?.apiUrl ?? FALLBACK_API_URL;
 
 let queryClientInstance: QueryClient | null = null;
 

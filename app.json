@@ -15,6 +15,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-splash-screen",
+        {
+          "image": "./src/shared/assets/png/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
         "expo-local-authentication",
         {
           "faceIDPermission": "$(PRODUCT_NAME)이(가) Face ID를 사용하도록 허용합니다."
