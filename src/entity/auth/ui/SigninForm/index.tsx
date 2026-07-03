@@ -4,7 +4,7 @@ import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
 import { useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import BackArrow from '@/shared/assets/svg/BackArrow';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SigninFormProps {
   title: string;
@@ -26,6 +26,7 @@ function SigninForm({
   isNextDisabled = false,
 }: SigninFormProps) {
   const { prevStep } = useSigninStepNavigation();
+  const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -51,8 +52,8 @@ function SigninForm({
         </View>
       </ScrollView>
 
-      <KeyboardStickyView>
-        <View className="mb-8 mt-4 px-6">
+      <KeyboardStickyView offset={{ opened: insets.bottom }}>
+        <View className="mb-1.5 mt-4 px-6">
           <Button testID="SigninForm-next-button" onPress={onNext} disabled={isNextDisabled}>
             {nextButtonText}
           </Button>

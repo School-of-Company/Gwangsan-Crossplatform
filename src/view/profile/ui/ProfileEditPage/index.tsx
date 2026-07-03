@@ -1,7 +1,7 @@
 import { View, ScrollView, ActivityIndicator } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
@@ -18,6 +18,7 @@ export default function ProfileEditPageView() {
 
   const { data: profileData, isLoading } = useGetMyProfile(true);
   const updateProfileMutation = useUpdateProfile();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (profileData) {
@@ -68,42 +69,42 @@ export default function ProfileEditPageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="내 정보 수정" />
 
-      <KeyboardAvoidingView behavior="padding" className="flex-1">
-        <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
-          <View className="gap-6">
-            <Input
-              label="별칭"
-              placeholder="별칭을 입력해주세요"
-              value={nickname}
-              onChangeText={setNickname}
-              maxLength={20}
-            />
+      <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
+        <View className="gap-6">
+          <Input
+            label="별칭"
+            placeholder="별칭을 입력해주세요"
+            value={nickname}
+            onChangeText={setNickname}
+            maxLength={20}
+          />
 
-            <SpecialtiesDropdown
-              label="특기"
-              items={SPECIALTIES}
-              placeholder="특기를 선택해주세요"
-              selectedItems={specialties}
-              onSelect={setSpecialties}
-              allowCustomInput={true}
-            />
+          <SpecialtiesDropdown
+            label="특기"
+            items={SPECIALTIES}
+            placeholder="특기를 선택해주세요"
+            selectedItems={specialties}
+            onSelect={setSpecialties}
+            allowCustomInput={true}
+          />
 
-            <TextField
-              label="자기소개"
-              placeholder="자신을 소개해주세요"
-              value={description}
-              onChangeText={setDescription}
-              maxLength={300}
-            />
-          </View>
-        </ScrollView>
+          <TextField
+            label="자기소개"
+            placeholder="자신을 소개해주세요"
+            value={description}
+            onChangeText={setDescription}
+            maxLength={300}
+          />
+        </View>
+      </ScrollView>
 
-        <View className="px-6 pb-6">
+      <KeyboardStickyView offset={{ opened: insets.bottom }}>
+        <View className="px-6 pb-[18px]">
           <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
             {isSubmitting ? '수정 중...' : '수정'}
           </Button>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardStickyView>
     </SafeAreaView>
   );
 }

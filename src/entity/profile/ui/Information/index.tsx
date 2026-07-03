@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useSignout, useWithdrawal } from '~/entity/auth';
 import { ReportModal } from '~/entity/post/ui';
 import { BottomSheetModalWrapper } from '~/shared/ui';

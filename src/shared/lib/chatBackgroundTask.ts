@@ -3,7 +3,7 @@ import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
+import { baseURL } from '@/shared/lib/axios';
 import type { ChatRoomListItem } from '@/entity/chat/model/chatTypes';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
@@ -15,7 +15,6 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
     const accessToken = await SecureStore.getItemAsync('accessToken');
     if (!accessToken) return BackgroundFetch.BackgroundFetchResult.NoData;
 
-    const baseURL = (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? '';
     const response = await fetch(`${baseURL}/chat/rooms`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,

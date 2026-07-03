@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
@@ -25,6 +25,7 @@ export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
@@ -175,24 +176,24 @@ export default function ChatRoomPage() {
         connectionState={connectionState}
       />
 
-      <KeyboardAvoidingView behavior="padding" className="flex-1">
-        <ChatRoomContent
-          messages={messages}
-          hasMessages={updatedComponentState.hasMessages}
-          flatListRef={flatListRef}
-          renderHeader={renderHeader}
-          onProfilePress={navigationHandlers.goToProfile}
-          onScrollToEnd={() => scrollToEnd(true)}
-          tradeEmbedConfig={tradeEmbedConfig}
-          onReviewButtonPress={handleReviewButtonPress}
-          showReviewButton={roomData?.product?.isCompleted}
-        />
+      <ChatRoomContent
+        messages={messages}
+        hasMessages={updatedComponentState.hasMessages}
+        flatListRef={flatListRef}
+        renderHeader={renderHeader}
+        onProfilePress={navigationHandlers.goToProfile}
+        onScrollToEnd={() => scrollToEnd(true)}
+        tradeEmbedConfig={tradeEmbedConfig}
+        onReviewButtonPress={handleReviewButtonPress}
+        showReviewButton={roomData?.product?.isCompleted}
+      />
 
+      <KeyboardStickyView offset={{ opened: insets.bottom }}>
         <ChatInput
           onSendMessage={messageHandlers.sendMessage}
           disabled={!updatedComponentState.canSendMessage}
         />
-      </KeyboardAvoidingView>
+      </KeyboardStickyView>
 
       <TradeRequestModal
         isVisible={isTradeRequestModalVisible}

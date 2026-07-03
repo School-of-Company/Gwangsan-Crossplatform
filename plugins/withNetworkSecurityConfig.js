@@ -40,9 +40,22 @@ const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
 </network-security-config>
 `;
 
+// 개발 서버(Metro) 연결용 - debug 빌드에서만 cleartext 허용, release에는 영향 없음
+const NSC_XML_DEBUG = `<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug-only: Metro 번들러(HTTP) 연결을 위해 cleartext 허용. release 빌드에는 적용되지 않음 -->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system"/>
+      <certificates src="user"/>
+    </trust-anchors>
+  </base-config>
+</network-security-config>
+`;
+
 /** @type {import('@expo/config-plugins').ConfigPlugin} */
 const withNetworkSecurityConfig = (config) => {
-  // Step 1: NSC XML 파일 생성
+  // Step 1: NSC XML 파일 생성 (release 기본값 - 인증서 피닝 적용)
   config = withDangerousMod(config, [
     'android',
     (expoConfig) => {
@@ -56,6 +69,22 @@ const withNetworkSecurityConfig = (config) => {
       );
       fs.mkdirSync(xmlDir, { recursive: true });
       fs.writeFileSync(path.join(xmlDir, 'network_security_config.xml'), NSC_XML, 'utf-8');
+
+      // Step 1b: debug variant 전용 NSC (cleartext 허용) - main 설정을 오버라이드
+      const debugXmlDir = path.join(
+        expoConfig.modRequest.platformProjectRoot,
+        'app',
+        'src',
+        'debug',
+        'res',
+        'xml'
+      );
+      fs.mkdirSync(debugXmlDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(debugXmlDir, 'network_security_config.xml'),
+        NSC_XML_DEBUG,
+        'utf-8'
+      );
       return expoConfig;
     },
   ]);
