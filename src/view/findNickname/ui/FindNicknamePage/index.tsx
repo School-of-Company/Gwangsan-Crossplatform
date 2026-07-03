@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 export default function FindNicknamePage() {
   const [foundNickname, setFoundNickname] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const {
     phoneNumber,
@@ -78,92 +79,92 @@ export default function FindNicknamePage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView behavior="padding" className="flex-1">
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
-          <View className="flex-1 gap-8 px-6">
-            <View className="flex-row items-center pt-4">
-              <TouchableOpacity
-                className="flex-row items-center"
-                onPress={() => router.replace('/onboarding')}>
-                <BackArrow />
-                <Text className="ml-2 text-gray-500">뒤로</Text>
-              </TouchableOpacity>
-            </View>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <View className="gap-8 px-6">
+          <View className="flex-row items-center pt-4">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => router.replace('/onboarding')}>
+              <BackArrow />
+              <Text className="ml-2 text-gray-500">뒤로</Text>
+            </TouchableOpacity>
+          </View>
 
+          <View>
+            <Text className="text-3xl font-bold">별칭 찾기</Text>
+            <Text className="mt-4 text-lg text-gray-700">
+              가입 시 등록한 전화번호를 입력해주세요
+            </Text>
+          </View>
+
+          <View className="mt-8">
             <View>
-              <Text className="text-3xl font-bold">별칭 찾기</Text>
-              <Text className="mt-4 text-lg text-gray-700">
-                가입 시 등록한 전화번호를 입력해주세요
-              </Text>
+              <View className="flex-row items-end gap-2">
+                <View className="flex-1">
+                  <Input
+                    label="전화번호"
+                    placeholder="전화번호를 입력해주세요"
+                    value={phoneNumber}
+                    onChangeText={handlePhoneChange}
+                    onSubmitEditing={handlePhoneSubmit}
+                    keyboardType="numeric"
+                    maxLength={11}
+                    returnKeyType="done"
+                    editable={!verificationState.isSendingCode && !isVerificationComplete}
+                  />
+                </View>
+                <Button
+                  width="w-auto"
+                  onPress={requestVerification}
+                  disabled={buttonState.isDisabled}>
+                  {buttonState.text}
+                </Button>
+              </View>
+              <ErrorMessage error={phoneError} />
             </View>
 
-            <View className="mt-8 flex-1">
-              <View>
+            {verificationState.isVerifying && (
+              <View className="mt-4">
                 <View className="flex-row items-end gap-2">
                   <View className="flex-1">
                     <Input
-                      label="전화번호"
-                      placeholder="전화번호를 입력해주세요"
-                      value={phoneNumber}
-                      onChangeText={handlePhoneChange}
-                      onSubmitEditing={handlePhoneSubmit}
+                      ref={verificationRef}
+                      label="전화번호 인증"
+                      placeholder="인증번호를 입력해주세요"
+                      value={verificationCode}
+                      onChangeText={handleVerificationChange}
+                      onSubmitEditing={handleVerificationSubmit}
                       keyboardType="numeric"
-                      maxLength={11}
                       returnKeyType="done"
-                      editable={!verificationState.isSendingCode && !isVerificationComplete}
+                      editable={!verificationState.isVerifyingCode && !isVerificationComplete}
+                      maxLength={6}
                     />
                   </View>
                   <Button
                     width="w-auto"
-                    onPress={requestVerification}
-                    disabled={buttonState.isDisabled}>
-                    {buttonState.text}
+                    onPress={verifyCode}
+                    disabled={verifyButtonState.isDisabled}>
+                    {verifyButtonState.text}
                   </Button>
                 </View>
-                <ErrorMessage error={phoneError} />
+                <ErrorMessage error={verificationError} />
               </View>
-
-              {verificationState.isVerifying && (
-                <View className="mt-4">
-                  <View className="flex-row items-end gap-2">
-                    <View className="flex-1">
-                      <Input
-                        ref={verificationRef}
-                        label="전화번호 인증"
-                        placeholder="인증번호를 입력해주세요"
-                        value={verificationCode}
-                        onChangeText={handleVerificationChange}
-                        onSubmitEditing={handleVerificationSubmit}
-                        keyboardType="numeric"
-                        returnKeyType="done"
-                        editable={!verificationState.isVerifyingCode && !isVerificationComplete}
-                        maxLength={6}
-                      />
-                    </View>
-                    <Button
-                      width="w-auto"
-                      onPress={verifyCode}
-                      disabled={verifyButtonState.isDisabled}>
-                      {verifyButtonState.text}
-                    </Button>
-                  </View>
-                  <ErrorMessage error={verificationError} />
-                </View>
-              )}
-            </View>
-
-            <View className="mb-4 mt-auto">
-              <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
-                {isLoading ? '찾는 중...' : '별칭 찾기'}
-              </Button>
-            </View>
+            )}
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </ScrollView>
+
+      <KeyboardStickyView offset={{ opened: insets.bottom }}>
+        <View className="mb-3 mt-4 px-6">
+          <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
+            {isLoading ? '찾는 중...' : '별칭 찾기'}
+          </Button>
+        </View>
+      </KeyboardStickyView>
     </SafeAreaView>
   );
 }
