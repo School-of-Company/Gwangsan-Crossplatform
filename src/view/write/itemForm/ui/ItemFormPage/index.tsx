@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { logger } from '@/shared/lib/logger';
 import { Header } from '@/shared/ui';
 import {
@@ -9,7 +9,7 @@ import {
   useCreateItem,
 } from '~/entity/write/itemForm';
 import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/write/itemForm';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
 import Toast from 'react-native-toast-message';
@@ -30,6 +30,7 @@ const ItemFormPage = () => {
   const [imageUploadState, setImageUploadState] = useState<ImageUploadState | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const insets = useSafeAreaInsets();
   const createItemMutation = useCreateItem();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: postData, isLoading, error } = useGetItem(id);
@@ -157,47 +158,46 @@ const ItemFormPage = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView behavior="padding" className="flex-1 bg-white">
-        <Header headerTitle="게시글" />
-        <ItemFormProgressBar step={step} />
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
-          <View className="flex-1 flex-col justify-between">
-            <ItemFormRenderContent
-              step={step}
-              title={title}
-              content={content}
-              gwangsan={gwangsan}
-              images={images}
-              mode={mode as ModeType}
-              type={type as ProductType}
-              onTitleChange={handleTitleChange}
-              onContentChange={handleContentChange}
-              onModeChange={handleModeChange}
-              onTypeChange={handleTypeChange}
-              onImagesChange={handleImagesChange}
-              onGwangsanChange={handleGwangsanChange}
-              onImageIdsChange={handleImageIdsChange}
-              onImageUploadStateChange={handleImageUploadStateChange}
-            />
-            <View>
-              <ItemFormRenderButton
-                step={step}
-                isStep1Valid={isStep1Valid}
-                isStep2Valid={isStep2Valid}
-                onNextStep={setStep}
-                onEditPress={() => setStep(1)}
-                onCompletePress={handleCompletePress}
-                isSubmitting={isSubmitting}
-                imageUploadState={imageUploadState}
-              />
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      <Header headerTitle="게시글" />
+      <ItemFormProgressBar step={step} />
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <ItemFormRenderContent
+          step={step}
+          title={title}
+          content={content}
+          gwangsan={gwangsan}
+          images={images}
+          mode={mode as ModeType}
+          type={type as ProductType}
+          onTitleChange={handleTitleChange}
+          onContentChange={handleContentChange}
+          onModeChange={handleModeChange}
+          onTypeChange={handleTypeChange}
+          onImagesChange={handleImagesChange}
+          onGwangsanChange={handleGwangsanChange}
+          onImageIdsChange={handleImageIdsChange}
+          onImageUploadStateChange={handleImageUploadStateChange}
+        />
+      </ScrollView>
+
+      <KeyboardStickyView offset={{ opened: insets.bottom }}>
+        <View className="mb-1.5 mt-4">
+          <ItemFormRenderButton
+            step={step}
+            isStep1Valid={isStep1Valid}
+            isStep2Valid={isStep2Valid}
+            onNextStep={setStep}
+            onEditPress={() => setStep(1)}
+            onCompletePress={handleCompletePress}
+            isSubmitting={isSubmitting}
+            imageUploadState={imageUploadState}
+          />
+        </View>
+      </KeyboardStickyView>
     </SafeAreaView>
   );
 };
