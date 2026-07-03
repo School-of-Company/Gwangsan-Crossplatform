@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import SpecialtiesDropdown from '../index';
 
-jest.mock('react-native-vector-icons/Ionicons', () => {
+jest.mock('@expo/vector-icons/Ionicons', () => {
   const React = require('react');
   return { __esModule: true, default: () => React.createElement('View', null) };
 });

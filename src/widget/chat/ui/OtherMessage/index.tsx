@@ -7,7 +7,7 @@ import {
   type MessageRenderConfig,
   type ChatMessageResponse,
 } from '@/entity/chat';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 
 interface OtherMessageProps {
   message: ChatMessageResponse;

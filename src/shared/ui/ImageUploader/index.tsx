@@ -8,7 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { memo, useState, useCallback, useMemo, useEffect } from 'react';
 import { useUploadImage } from '@/shared/model/useUploadImage';
