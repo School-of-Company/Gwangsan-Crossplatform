@@ -13,7 +13,11 @@ const path = require('path');
  * 핀 갱신 주기:
  *  - Let's Encrypt는 인증서 갱신 시 발급 중간 CA가 바뀔 수 있다 (예: R13 → YR1, 2026-07-03 갱신 확인).
  *    중간 CA 핀은 CA가 바뀌면 반드시 재확인/갱신해야 하며, 90일 인증서 갱신 주기마다 확인 권장.
- *  - 핀 확인: openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
+ *  - 핀 확인 (리프): openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
+ *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
+ *      | openssl dgst -sha256 -binary | base64
+ *  - 핀 확인 (중간 CA): openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
+ *      | awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{ if(/BEGIN/){n++}; if(n==2) print }' \
  *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
  *      | openssl dgst -sha256 -binary | base64
  *  - 최종 갱신: 2026-07-04 (배포 환경 로그인 Network Error 장애 대응, YR1/Root YR 계열로 전환됨을 확인)
