@@ -11,15 +11,21 @@ const path = require('path');
  *  3. usesCleartextTraffic="false" 로 HTTP 평문 트래픽 차단
  *
  * 핀 갱신 주기:
- *  - Let's Encrypt R13 중간 CA 핀은 CA 교체 시에만 변경 필요 (90일 인증서 갱신과 무관)
- *  - 핀 확인: openssl s_client -connect api.gwangsan.io.kr:443 2>/dev/null \
+ *  - Let's Encrypt는 인증서 갱신 시 발급 중간 CA가 바뀔 수 있다 (예: R13 → YR1, 2026-07-03 갱신 확인).
+ *    중간 CA 핀은 CA가 바뀌면 반드시 재확인/갱신해야 하며, 90일 인증서 갱신 주기마다 확인 권장.
+ *  - 핀 확인 (리프): openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
  *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
  *      | openssl dgst -sha256 -binary | base64
+ *  - 핀 확인 (중간 CA): openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
+ *      | awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{ if(/BEGIN/){n++}; if(n==2) print }' \
+ *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
+ *      | openssl dgst -sha256 -binary | base64
+ *  - 최종 갱신: 2026-07-04 (배포 환경 로그인 Network Error 장애 대응, YR1/Root YR 계열로 전환됨을 확인)
  */
 const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
 <!--
   Certificate Pinning - Gwangsan Crossplatform
-  Primary : Let's Encrypt R13 중간 CA (인증서 갱신 후에도 유효)
+  Primary : Let's Encrypt YR1 중간 CA (인증서 갱신 후에도 유효)
   Backup  : api.gwangsan.io.kr 리프 인증서
 -->
 <network-security-config>
@@ -31,10 +37,10 @@ const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
   <domain-config cleartextTrafficPermitted="false">
     <domain includeSubdomains="true">gwangsan.io.kr</domain>
     <pin-set>
-      <!-- Let's Encrypt R13 중간 CA (주 핀) -->
-      <pin digest="SHA-256">AlSQhgtJirc8ahLyekmtX+Iw+v46yPYRLJt9Cq1GlB0=</pin>
+      <!-- Let's Encrypt YR1 중간 CA (주 핀) -->
+      <pin digest="SHA-256">LoMHBotttiDko50Gi13uXW71eIy7LAttI+rYT8wXF4w=</pin>
       <!-- api.gwangsan.io.kr 리프 인증서 (백업 핀) -->
-      <pin digest="SHA-256">p50MoRVG3nfXUrJGJrfLe5fP+kwk3vgJ/l++gKla2d4=</pin>
+      <pin digest="SHA-256">LJvhzltzFZmCqLJuDqFT7BtZJTQu+ViVV0IEfAsYeF4=</pin>
     </pin-set>
   </domain-config>
 </network-security-config>
