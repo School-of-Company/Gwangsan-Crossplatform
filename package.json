@@ -106,7 +106,7 @@
     "nyc": "^18.0.0",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
-    "react-test-renderer": "^19.1.0",
+    "react-test-renderer": "^19.2.7",
     "tailwindcss": "^3.4.0",
     "ts-jest": "^29.4.11",
     "typescript": "~6.0.3",
