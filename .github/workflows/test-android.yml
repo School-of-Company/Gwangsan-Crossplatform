@@ -77,9 +77,6 @@ jobs:
       - name: Inject Detox into Android build
         run: bash scripts/setup-detox-android.sh
 
-      - name: Debug - patch ExpoAutolinkingPlugin to surface real node stderr
-        run: node scripts/debug-patch-autolinking.js
-
       - name: Configure Gradle JVM memory
         run: |
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
