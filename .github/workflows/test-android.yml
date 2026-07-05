@@ -77,11 +77,9 @@ jobs:
       - name: Inject Detox into Android build
         run: bash scripts/setup-detox-android.sh
 
-      - name: Debug - dump watchedDirectories value and real node stderr
-        run: node scripts/debug-patch-autolinking.js
-
       - name: Configure Gradle JVM memory
         run: |
+          echo "" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
           echo "org.gradle.daemon=false" >> android/gradle.properties
 
