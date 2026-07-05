@@ -2,7 +2,7 @@ name: iOS E2E Tests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       coverage:
