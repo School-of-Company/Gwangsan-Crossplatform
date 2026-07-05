@@ -1,10 +1,15 @@
 name: Android E2E Tests
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  # push/pull_request 트리거 비활성화.
+  # 빌드/설치/에뮬레이터 연결까지는 정상 동작하도록 고쳤지만(gradle.properties
+  # 개행 버그, JitPack의 com.wix:detox 배포 중단 우회, detox 20.51.4 업그레이드,
+  # RN-context/jest 타임아웃 상향), 실제 element 매칭/tap 시점에 Detox가
+  # RN 0.85(Bridgeless/New Architecture)의 Fabric 내부 구조를 리플렉션으로
+  # 조회하다 실패해 "Detox can't seem to connect to the test app(s)!"가 발생함.
+  # device.disableSynchronization()으로도 우회되지 않는 업스트림 미해결 버그:
+  # https://github.com/wix/Detox/issues/4963
+  # 이 이슈가 해결되면 push/pull_request 트리거를 다시 추가할 것.
   workflow_dispatch:
 
 jobs:
