@@ -43,6 +43,10 @@ jobs:
 
       - name: Publish com.wix:detox locally (JitPack distribution is currently broken, see wix/Detox#4697)
         run: |
+          # npm hoisting 때문에 detox/node_modules 안에 @react-native/gradle-plugin이 없어서
+          # detox의 settings.gradle이 기대하는 상대 경로에 심링크로 연결해줌
+          mkdir -p node_modules/detox/node_modules
+          ln -sfn ../../@react-native node_modules/detox/node_modules/@react-native
           cd node_modules/detox/android
           ./gradlew :detox:publishMavenReleaseAarPublicationToMavenRepository -Dversion=20.47.0 --stacktrace
 
