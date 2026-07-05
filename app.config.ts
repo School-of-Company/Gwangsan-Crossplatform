@@ -30,7 +30,8 @@ export default ({ config }: { config: ExpoConfig }) => {
     ],
     extra: {
       ...config.extra,
-      apiUrl: process.env.API_URL,
+      // env 미주입 시 app.json의 extra.apiUrl을 undefined로 덮어쓰지 않는다.
+      apiUrl: process.env.API_URL ?? config.extra?.apiUrl,
       sentryDsn: process.env.SENTRY_DSN,
     },
   };

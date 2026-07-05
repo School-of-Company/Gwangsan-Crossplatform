@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 10
+    # expo/react-native 계열은 Expo SDK 버전에 종속돼 있어 개별 업데이트 시
+    # `expo install --check` CI 게이트가 반드시 실패함. `expo upgrade`로
+    # SDK 단위 일괄 업데이트할 때만 버전을 올리므로 Dependabot 대상에서 제외.
+    ignore:
+      - dependency-name: 'expo*'
+      - dependency-name: '@expo/*'
+      - dependency-name: 'react-native*'
+      - dependency-name: '@react-native*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'

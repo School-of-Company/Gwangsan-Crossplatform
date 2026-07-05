@@ -38,3 +38,34 @@ jobs:
       - name: EAS Submit (App Store)
         run: |
           eas submit --platform ios --profile production --latest --non-interactive
+
+      - name: Tag release
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          TAG="ios-v${VERSION}-${{ github.run_number }}"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook URL not set, skipping"
+            exit 0
+          fi
+
+          if [ "$JOB_STATUS" == "success" ]; then
+            TITLE="✅ iOS 프로덕션 배포 성공"
+            COLOR=3066993
+          else
+            TITLE="❌ iOS 프로덕션 배포 실패"
+            COLOR=15158332
+          fi
+
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"$TITLE\",\"color\":$COLOR,\"fields\":[{\"name\":\"워크플로우\",\"value\":\"[보기]($RUN_URL)\"}]}]}"

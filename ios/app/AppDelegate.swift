@@ -15,7 +15,7 @@ class AppDelegate: ExpoAppDelegate {
   ) -> Bool {
     #if !DEBUG
     // Certificate Pinning — TrustKit
-    // Pins: Let's Encrypt R13 중간 CA (주 핀) + 리프 인증서 (백업 핀)
+    // Pins: Let's Encrypt YR1 중간 CA (주 핀) + ISRG Root YR (백업) + 리프 인증서 (백업)
     // 핀 갱신 명령: openssl s_client -connect api.gwangsan.io.kr:443 2>/dev/null \
     //   | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
     //   | openssl dgst -sha256 -binary | base64
@@ -27,8 +27,9 @@ class AppDelegate: ExpoAppDelegate {
           kTSKEnforcePinning: true,
           kTSKDisableDefaultReportUri: true,
           kTSKPublicKeyHashes: [
-            "AlSQhgtJirc8ahLyekmtX+Iw+v46yPYRLJt9Cq1GlB0=",  // Let's Encrypt R13 중간 CA
-            "p50MoRVG3nfXUrJGJrfLe5fP+kwk3vgJ/l++gKla2d4=",  // 리프 인증서 (백업)
+            "LoMHBotttiDko50Gi13uXW71eIy7LAttI+rYT8wXF4w=",  // Let's Encrypt YR1 중간 CA
+            "fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=",  // ISRG Root YR (중간 CA 로테이션 대비 백업)
+            "LJvhzltzFZmCqLJuDqFT7BtZJTQu+ViVV0IEfAsYeF4=",  // 리프 인증서 (백업)
           ],
         ]
       ]

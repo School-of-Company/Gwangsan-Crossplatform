@@ -1,4 +1,4 @@
-import { API_URL } from '@env';
+import { API_BASE_URL } from '~/shared/consts/api';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
@@ -11,7 +11,7 @@ export const verifyPasswordResetSms = async (
   request: VerifyPasswordResetSmsRequest
 ): Promise<void> => {
   try {
-    const response = await fetch(`${API_URL}/sms/password/verify`, {
+    const response = await fetch(`${API_BASE_URL}/sms/password/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

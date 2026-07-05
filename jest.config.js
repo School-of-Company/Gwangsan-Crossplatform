@@ -23,4 +23,12 @@ module.exports = {
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/app/**'],
   coverageReporters: ['json-summary', 'text', 'lcov'],
+  coverageThreshold: {
+    global: {
+      lines: 45,
+      statements: 45,
+      functions: 45,
+      branches: 40,
+    },
+  },
 };

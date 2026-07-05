@@ -2,7 +2,7 @@ name: iOS E2E Tests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       coverage:
@@ -222,14 +222,14 @@ jobs:
 
       - name: Post E2E coverage comment
         if: steps.coverage-flag.outputs.enabled == 'true' && (github.event_name == 'pull_request' || github.event_name == 'issue_comment')
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: e2e-coverage
           path: coverage/e2e-summary.txt
 
       - name: Upload test artifacts to GitHub
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: detox-artifacts-ios
           path: artifacts/

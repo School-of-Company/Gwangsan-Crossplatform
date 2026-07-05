@@ -91,11 +91,35 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Validate Expo configuration
-        run: |
-          npx expo install --check || true
-          npx eas-cli@latest project:info || true
+        run: npx expo install --check
+
+      - name: Show EAS project info
+        run: npx eas-cli@latest project:info || true
 
       - name: Check build configuration
         run: |
           cat eas.json
           cat app.json | grep -A 10 '"extra"'
+
+  dependency-audit:
+    name: Dependency Vulnerability Audit
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 기존에 확인된 취약점(21건, critical 1건)이 아직 해소되지 않아 우선 리포트만 남깁니다.
+      # 정리가 끝나면 `continue-on-error`를 제거해 실패 게이트로 전환하세요.
+      - name: Run npm audit (report only, not yet blocking)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high

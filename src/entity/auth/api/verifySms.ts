@@ -1,10 +1,10 @@
-import { API_URL } from '@env';
+import { API_BASE_URL } from '~/shared/consts/api';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
 export const verifySms = async (phoneNumber: string, code: string) => {
   try {
-    const response = await fetch(`${API_URL}/sms/verify`, {
+    const response = await fetch(`${API_BASE_URL}/sms/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

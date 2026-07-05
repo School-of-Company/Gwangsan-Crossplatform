@@ -1,0 +1,4 @@
+# Firebase Android API key committed in google-services.json (Dec 2025), removed from
+# tracking in commit 2d650f8. Confirmed the key currently in local google-services.json
+# is a different value than the one below, i.e. it has already been rotated.
+0d16b2926700bcb6aceeb7cfa608effab0177c37:google-services.json:gcp-api-key:18
