@@ -77,6 +77,18 @@ jobs:
       - name: Inject Detox into Android build
         run: bash scripts/setup-detox-android.sh
 
+      - name: Debug - reproduce autolinking mirror-kotlin-inline-modules command
+        run: |
+          set -x
+          node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking \
+            mirror-kotlin-inline-modules \
+            --kotlin-files-mirror-directory "$(pwd)/../node_modules/expo/android/src/main/java/inline/modules" \
+            --inline-modules-list-directory "$(pwd)/../node_modules/expo/android/build/inline/modules" \
+            --watched-directories-serialized "[]"
+          echo "exit code: $?"
+        working-directory: android
+        continue-on-error: true
+
       - name: Configure Gradle JVM memory
         run: |
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
