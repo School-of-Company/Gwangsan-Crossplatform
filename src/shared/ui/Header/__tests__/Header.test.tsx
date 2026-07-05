@@ -5,7 +5,7 @@ jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
 }));
 
-jest.mock('react-native-vector-icons/Ionicons', () => {
+jest.mock('@expo/vector-icons/Ionicons', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
   // eslint-disable-next-line @typescript-eslint/no-require-imports

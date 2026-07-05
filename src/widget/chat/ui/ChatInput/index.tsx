@@ -1,6 +1,6 @@
 import { View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { memo } from 'react';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import { useChatInput } from '../../model/useChatInput';
 import { ImagePreview } from '../ImagePreview';
 

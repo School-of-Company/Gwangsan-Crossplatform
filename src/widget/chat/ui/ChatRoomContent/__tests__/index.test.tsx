@@ -5,7 +5,7 @@ import { ChatRoomContent } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
-jest.mock('react-native-vector-icons/Ionicons', () => {
+jest.mock('@expo/vector-icons/Ionicons', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
   // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -1,5 +1,5 @@
 import { View, Text, Image, ActivityIndicator } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import type { UseImageLoaderReturn } from '../model/useImageLoader';
 
