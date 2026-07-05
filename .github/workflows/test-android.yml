@@ -1,7 +1,15 @@
 name: Android E2E Tests
 
 on:
-  # 임시 비활성화
+  # push/pull_request 트리거 비활성화.
+  # 빌드/설치/에뮬레이터 연결까지는 정상 동작하도록 고쳤지만(gradle.properties
+  # 개행 버그, JitPack의 com.wix:detox 배포 중단 우회, detox 20.51.4 업그레이드,
+  # RN-context/jest 타임아웃 상향), 실제 element 매칭/tap 시점에 Detox가
+  # RN 0.85(Bridgeless/New Architecture)의 Fabric 내부 구조를 리플렉션으로
+  # 조회하다 실패해 "Detox can't seem to connect to the test app(s)!"가 발생함.
+  # device.disableSynchronization()으로도 우회되지 않는 업스트림 미해결 버그:
+  # https://github.com/wix/Detox/issues/4963
+  # 이 이슈가 해결되면 push/pull_request 트리거를 다시 추가할 것.
   workflow_dispatch:
 
 jobs:
@@ -37,6 +45,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Publish com.wix:detox locally (JitPack distribution is currently broken, see wix/Detox#4697)
+        run: |
+          # npm hoisting 때문에 detox/node_modules 안에 @react-native/gradle-plugin이 없어서
+          # detox의 settings.gradle이 기대하는 상대 경로에 심링크로 연결해줌
+          mkdir -p node_modules/detox/node_modules
+          ln -sfn ../../@react-native node_modules/detox/node_modules/@react-native
+          cd node_modules/detox/android
+          ./gradlew :detox:publishMavenReleaseAarPublicationToMavenRepository -Dversion=20.51.4 --stacktrace
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -76,6 +93,7 @@ jobs:
 
       - name: Configure Gradle JVM memory
         run: |
+          echo "" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
           echo "org.gradle.daemon=false" >> android/gradle.properties
 

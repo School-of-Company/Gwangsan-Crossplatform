@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "CocoaPods Podfile.lock SPEC CHECKSUMS are SHA1 hashes of pod specs, not secrets"
+paths = [
+  '''ios/Podfile\.lock''',
+]

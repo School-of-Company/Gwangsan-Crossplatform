@@ -24,11 +24,25 @@ if ! grep -q "com.wix:detox" "$APP_DIR/build.gradle"; then
   cat >> "$APP_DIR/build.gradle" << 'GRADLE'
 
 dependencies {
-    androidTestImplementation('com.wix:detox:20.47.0') { transitive = true }
+    androidTestImplementation('com.wix:detox:20.51.4') { transitive = true }
     androidTestImplementation 'junit:junit:4.13.2'
 }
 GRADLE
   echo "  ✓ Detox dependencies 추가됨"
+fi
+
+# JitPack의 com.wix:detox 배포가 깨져 있어서(모든 버전 조회 실패, wix/Detox#4697과 동일 증상),
+# node_modules/detox/android에서 직접 퍼블리시한 로컬 maven repo를 jitpack보다 먼저 보게 함.
+ROOT_BUILD_GRADLE="$ANDROID_DIR/build.gradle"
+if ! grep -q "detox/Detox-android" "$ROOT_BUILD_GRADLE"; then
+  awk '{
+    if ($0 ~ /jitpack\.io/) {
+      print "    maven { url uri(\"$rootDir/../node_modules/detox/Detox-android\") }"
+    }
+    print
+  }' "$ROOT_BUILD_GRADLE" > /tmp/root_build.gradle.tmp
+  mv /tmp/root_build.gradle.tmp "$ROOT_BUILD_GRADLE"
+  echo "  ✓ 로컬 Detox maven repo 추가됨 (android/build.gradle)"
 fi
 
 echo "Creating androidTest AndroidManifest.xml..."
@@ -70,6 +84,7 @@ class DetoxTest {
         val detoxConfig = DetoxConfig()
         detoxConfig.idlePolicyConfig.masterTimeoutSec = 90
         detoxConfig.idlePolicyConfig.idleResourceTimeoutSec = 60
+        detoxConfig.rnContextLoadTimeoutSec = 180
         Detox.runTests(rule, detoxConfig)
     }
 }
