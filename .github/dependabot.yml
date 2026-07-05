@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 10
+    groups:
+      expo:
+        patterns:
+          - 'expo*'
+          - '@expo/*'
+      react-native:
+        patterns:
+          - 'react-native*'
+          - '@react-native*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    target-branch: 'develop'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
