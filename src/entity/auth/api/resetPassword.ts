@@ -1,4 +1,4 @@
-import { API_URL } from '@env';
+import { API_BASE_URL } from '~/shared/consts/api';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
@@ -9,7 +9,7 @@ export interface ResetPasswordRequest {
 
 export const resetPassword = async (request: ResetPasswordRequest): Promise<void> => {
   try {
-    const response = await fetch(`${API_URL}/auth/password`, {
+    const response = await fetch(`${API_BASE_URL}/auth/password`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

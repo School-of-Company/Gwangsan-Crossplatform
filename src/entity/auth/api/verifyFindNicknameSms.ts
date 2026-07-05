@@ -1,7 +1,7 @@
-import { API_URL } from '@env';
+import { API_BASE_URL } from '~/shared/consts/api';
 
 export const verifyFindNicknameSms = async (phoneNumber: string, code: string) => {
-  const response = await fetch(`${API_URL}/sms/nickname/verify`, {
+  const response = await fetch(`${API_BASE_URL}/sms/nickname/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

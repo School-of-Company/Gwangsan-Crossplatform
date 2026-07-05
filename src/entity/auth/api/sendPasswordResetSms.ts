@@ -1,10 +1,10 @@
-import { API_URL } from '@env';
+import { API_BASE_URL } from '~/shared/consts/api';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
 export const sendPasswordResetSms = async (phoneNumber: string) => {
   try {
-    const response = await fetch(`${API_URL}/sms/password`, {
+    const response = await fetch(`${API_BASE_URL}/sms/password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
