@@ -222,7 +222,7 @@ jobs:
 
       - name: Post E2E coverage comment
         if: steps.coverage-flag.outputs.enabled == 'true' && (github.event_name == 'pull_request' || github.event_name == 'issue_comment')
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: e2e-coverage
           path: coverage/e2e-summary.txt
