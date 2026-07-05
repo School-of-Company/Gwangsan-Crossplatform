@@ -4,7 +4,7 @@
     "owner": "gsmstartup",
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "scheme": "gwangsan",
     "web": {
       "favicon": "./src/app/favicon.png"
