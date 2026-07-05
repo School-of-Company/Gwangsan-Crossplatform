@@ -84,6 +84,7 @@ class DetoxTest {
         val detoxConfig = DetoxConfig()
         detoxConfig.idlePolicyConfig.masterTimeoutSec = 90
         detoxConfig.idlePolicyConfig.idleResourceTimeoutSec = 60
+        detoxConfig.rnContextLoadTimeoutSec = 180
         Detox.runTests(rule, detoxConfig)
     }
 }
