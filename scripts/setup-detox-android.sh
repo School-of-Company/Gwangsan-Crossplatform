@@ -24,7 +24,7 @@ if ! grep -q "com.wix:detox" "$APP_DIR/build.gradle"; then
   cat >> "$APP_DIR/build.gradle" << 'GRADLE'
 
 dependencies {
-    androidTestImplementation('com.wix:detox:20.47.0') { transitive = true }
+    androidTestImplementation('com.wix:detox:20.51.4') { transitive = true }
     androidTestImplementation 'junit:junit:4.13.2'
 }
 GRADLE
