@@ -11,16 +11,18 @@ const path = require('path');
  *  3. usesCleartextTraffic="false" 로 HTTP 평문 트래픽 차단
  *
  * 핀 갱신 주기:
- *  - Let's Encrypt R13 중간 CA 핀은 CA 교체 시에만 변경 필요 (90일 인증서 갱신과 무관)
+ *  - Let's Encrypt YR1 중간 CA 핀은 CA 교체 시에만 변경 필요 (90일 인증서 갱신과 무관)
+ *  - CA 로테이션 대비 ISRG Root YR 핀을 백업으로 포함
  *  - 핀 확인: openssl s_client -connect api.gwangsan.io.kr:443 2>/dev/null \
  *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
  *      | openssl dgst -sha256 -binary | base64
+ *  - iOS는 ios/app/AppDelegate.swift의 TrustKit 핀도 함께 갱신할 것
  */
 const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
 <!--
   Certificate Pinning - Gwangsan Crossplatform
-  Primary : Let's Encrypt R13 중간 CA (인증서 갱신 후에도 유효)
-  Backup  : api.gwangsan.io.kr 리프 인증서
+  Primary : Let's Encrypt YR1 중간 CA (인증서 갱신 후에도 유효)
+  Backup  : ISRG Root YR + api.gwangsan.io.kr 리프 인증서
 -->
 <network-security-config>
   <base-config cleartextTrafficPermitted="false">
@@ -31,10 +33,12 @@ const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
   <domain-config cleartextTrafficPermitted="false">
     <domain includeSubdomains="true">gwangsan.io.kr</domain>
     <pin-set>
-      <!-- Let's Encrypt R13 중간 CA (주 핀) -->
-      <pin digest="SHA-256">AlSQhgtJirc8ahLyekmtX+Iw+v46yPYRLJt9Cq1GlB0=</pin>
+      <!-- Let's Encrypt YR1 중간 CA (주 핀) -->
+      <pin digest="SHA-256">LoMHBotttiDko50Gi13uXW71eIy7LAttI+rYT8wXF4w=</pin>
+      <!-- ISRG Root YR (중간 CA 로테이션 대비 백업 핀) -->
+      <pin digest="SHA-256">fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=</pin>
       <!-- api.gwangsan.io.kr 리프 인증서 (백업 핀) -->
-      <pin digest="SHA-256">p50MoRVG3nfXUrJGJrfLe5fP+kwk3vgJ/l++gKla2d4=</pin>
+      <pin digest="SHA-256">LJvhzltzFZmCqLJuDqFT7BtZJTQu+ViVV0IEfAsYeF4=</pin>
     </pin-set>
   </domain-config>
 </network-security-config>
