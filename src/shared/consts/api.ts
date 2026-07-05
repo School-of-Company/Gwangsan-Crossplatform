@@ -1,5 +1,6 @@
-import { API_URL } from '@env';
+import Constants from 'expo-constants';
 
-// env(API_URL)가 빌드에 주입되지 않은 경우(예: EAS 빌드에 env 미등록)에도
-// 동작하도록 프로덕션 API 주소를 폴백으로 사용한다.
-export const API_BASE_URL: string = API_URL ?? 'https://api.gwangsan.io.kr/api';
+// app.config.ts가 정한 우선순위(process.env.API_URL ?? app.json의 extra.apiUrl)를
+// 그대로 따르도록 expo-constants를 단일 진실 공급원으로 사용한다.
+export const API_BASE_URL: string =
+  Constants.expoConfig?.extra?.apiUrl ?? 'https://api.gwangsan.io.kr/api';
