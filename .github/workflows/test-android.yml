@@ -77,14 +77,8 @@ jobs:
       - name: Inject Detox into Android build
         run: bash scripts/setup-detox-android.sh
 
-      - name: Debug - print generated gradle.properties
-        run: cat android/gradle.properties
-
       - name: Debug - patch ExpoAutolinkingPlugin to surface real node stderr
-        run: |
-          FILE="node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/ExpoAutolinkingPlugin.kt"
-          sed -i 's/spec.workingDir(nodeWorkingDir)/spec.workingDir(nodeWorkingDir)\n        spec.errorOutput = System.err/' "$FILE"
-          grep -n -A2 "spec.workingDir" "$FILE"
+        run: node scripts/debug-patch-autolinking.js
 
       - name: Configure Gradle JVM memory
         run: |
