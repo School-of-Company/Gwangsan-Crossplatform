@@ -41,6 +41,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Publish com.wix:detox locally (JitPack distribution is currently broken, see wix/Detox#4697)
+        run: |
+          cd node_modules/detox/android
+          ./gradlew :detox:publishMavenReleaseAarPublicationToMavenRepository -Dversion=20.47.0 --stacktrace
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -82,20 +87,6 @@ jobs:
           echo "" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
           echo "org.gradle.daemon=false" >> android/gradle.properties
-
-      - name: Wait for JitPack to build com.wix:detox
-        run: |
-          POM_URL="https://www.jitpack.io/com/wix/detox/20.47.0/detox-20.47.0.pom"
-          for i in $(seq 1 20); do
-            body="$(curl -sL "$POM_URL")"
-            if echo "$body" | grep -q "<project"; then
-              echo "JitPack build ready (attempt $i)"
-              exit 0
-            fi
-            echo "JitPack still building com.wix:detox:20.47.0 (attempt $i), waiting..."
-            sleep 15
-          done
-          echo "JitPack did not finish building in time; proceeding anyway (Gradle will surface the real error if it still fails)."
 
       - name: Build app for Detox
         env:
