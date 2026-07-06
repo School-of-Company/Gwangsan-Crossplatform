@@ -91,7 +91,7 @@
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.14",
-    "babel-plugin-istanbul": "^7.0.1",
+    "babel-plugin-istanbul": "^8.0.0",
     "detox": "^20.51.4",
     "eslint": "^9.25.1",
     "eslint-config-expo": "~56.0.4",
