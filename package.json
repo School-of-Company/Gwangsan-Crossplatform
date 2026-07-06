@@ -84,7 +84,7 @@
     "socket.io-client": "^4.8.1",
     "whatwg-fetch": "^3.6.20",
     "zod": "^3.25.72",
-    "zustand": "^5.0.6"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@babel/core": "^7.29.6",
