@@ -57,7 +57,7 @@ jobs:
 
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}-${{ hashFiles('patches/**') }}
@@ -73,7 +73,7 @@ jobs:
 
       - name: Cache applesimutils
         id: cache-applesimutils
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /usr/local/Cellar/applesimutils
           key: applesimutils-${{ runner.os }}-${{ runner.arch }}
@@ -135,7 +135,7 @@ jobs:
 
       - name: Cache Detox framework
         id: cache-detox-framework
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/Library/Detox/ios
           key: detox-framework-${{ hashFiles('package-lock.json') }}
