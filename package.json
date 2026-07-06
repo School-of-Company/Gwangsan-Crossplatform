@@ -60,7 +60,7 @@
     "expo-splash-screen": "~56.0.12",
     "expo-status-bar": "~56.0.4",
     "expo-task-manager": "~56.0.20",
-    "immer": "^10.1.3",
+    "immer": "^11.1.11",
     "nativewind": "latest",
     "patch-package": "^8.0.1",
     "react": "19.2.3",
