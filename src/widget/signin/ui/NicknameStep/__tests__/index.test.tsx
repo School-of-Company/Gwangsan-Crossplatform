@@ -18,6 +18,10 @@ jest.mock('~/shared/lib/setData', () => ({
   setData: jest.fn(),
 }));
 
+jest.mock('~/shared/lib/socket', () => ({
+  chatSocket: { connect: jest.fn().mockResolvedValue(undefined) },
+}));
+
 jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));

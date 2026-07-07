@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { chatSocket } from '~/shared/lib/socket';
 import * as Sentry from '@sentry/react-native';
 import { logger } from '~/shared/lib/logger';
 
@@ -40,6 +41,9 @@ export default function PasswordStep() {
         logger.error('saveCredentialsForBiometric failed', e)
       );
       Sentry.setUser({ username: trimmedNickname });
+
+      // 로그인 직후 전역 채팅 소켓을 연결해 홈 등 채팅 화면 밖에서도 실시간 알림을 받도록 함
+      chatSocket.connect().catch((e) => logger.error('chat socket connect after login failed', e));
 
       resetStore();
       router.replace('/main');

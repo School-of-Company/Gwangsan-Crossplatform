@@ -9,6 +9,7 @@ import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
 import { setData } from '~/shared/lib/setData';
+import { chatSocket } from '~/shared/lib/socket';
 import { logger } from '~/shared/lib/logger';
 
 export default function NicknameStep() {
@@ -30,6 +31,11 @@ export default function NicknameStep() {
           setData('refreshToken', savedTokens.refreshToken),
         ]);
         if (!isMounted) return;
+
+        // 생체 로그인 직후에도 전역 채팅 소켓을 연결
+        chatSocket
+          .connect()
+          .catch((e) => logger.error('chat socket connect after biometric login failed', e));
 
         resetStore();
         router.replace('/main');
