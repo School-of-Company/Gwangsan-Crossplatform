@@ -3,7 +3,9 @@ import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 import { baseURL } from '@/shared/lib/axios';
+import { logger } from '@/shared/lib/logger';
 import type { ChatRoomListItem } from '@/entity/chat/model/chatTypes';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
@@ -102,8 +104,13 @@ export const registerChatBackgroundTask = async (): Promise<void> => {
         startOnBoot: true,
       });
     }
-  } catch {
-    // 미지원 환경에서는 무시
+  } catch (error) {
+    // 미지원 환경(Expo Go 등)에서는 등록이 실패할 수 있으나,
+    // 실기기 빌드에서의 실패는 백그라운드 알림 전체가 죽는 문제라 추적이 필요하다.
+    logger.warn('Background fetch 등록 실패 — 백그라운드 채팅 알림이 동작하지 않습니다', error);
+    Sentry.captureException(error, {
+      extra: { context: 'registerChatBackgroundTask' },
+    });
   }
 };
 
