@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
+import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
@@ -52,7 +53,18 @@ export const useMessageSync = ({
           isMine: message.senderId === userId,
         };
 
-        if (currentRoomId && correctedMessage.roomId === currentRoomId && chatMessageQueryKey) {
+        const isCurrentRoomMessage = currentRoomId && correctedMessage.roomId === currentRoomId;
+
+        if (isCurrentRoomMessage && !correctedMessage.isMine) {
+          useReadRoomsStore
+            .getState()
+            .markRead(correctedMessage.roomId, correctedMessage.messageId);
+          markChatAsRead(correctedMessage.roomId, correctedMessage.messageId).catch((error) => {
+            logger.error('markChatAsRead (auto) failed', error);
+          });
+        }
+
+        if (isCurrentRoomMessage && chatMessageQueryKey) {
           queryClient.setQueryData(
             chatMessageQueryKey,
             (oldData: ChatMessageResponse[] | undefined) => {
@@ -188,12 +200,17 @@ export const useMessageSync = ({
     async (roomId: RoomId) => {
       if (!chatRoomQueryKey) return;
 
-      const resetUnreadCount = () => {
+      const resetUnreadCount = (readMessageId?: ChatMessageResponse['messageId']) => {
         queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
           if (!oldData) return oldData;
-          return oldData.map((room) =>
-            room.roomId === roomId ? { ...room, unreadMessageCount: 0 } : room
-          );
+          return oldData.map((room) => {
+            if (room.roomId !== roomId) return room;
+            const resolvedReadMessageId = readMessageId ?? room.messageId;
+            if (resolvedReadMessageId !== undefined) {
+              useReadRoomsStore.getState().markRead(roomId, resolvedReadMessageId);
+            }
+            return { ...room, unreadMessageCount: 0 };
+          });
         });
       };
 
@@ -212,7 +229,7 @@ export const useMessageSync = ({
       } catch (error) {
         logger.error('markRoomAsRead failed', error);
       } finally {
-        resetUnreadCount();
+        resetUnreadCount(lastMessage.messageId);
       }
     },
     [queryClient, chatRoomQueryKey, chatMessageQueryKey]
