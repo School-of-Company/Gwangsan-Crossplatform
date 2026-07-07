@@ -172,7 +172,7 @@ const ItemFormPage = () => {
       <Header headerTitle="게시글" />
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollViewRef}
           className="flex-1"

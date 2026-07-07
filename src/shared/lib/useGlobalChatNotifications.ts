@@ -15,9 +15,13 @@ export const useGlobalChatNotifications = () => {
   }, [pathname]);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!chatSocket.isConnected) {
       getData('accessToken').then((accessToken) => {
-        if (accessToken) chatSocket.connect().catch(() => {});
+        if (isMounted && accessToken && !chatSocket.isConnected) {
+          chatSocket.connect().catch(() => {});
+        }
       });
     }
 
@@ -38,6 +42,9 @@ export const useGlobalChatNotifications = () => {
     };
 
     chatSocket.on<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
-    return () => chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
+    return () => {
+      isMounted = false;
+      chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
+    };
   }, []);
 };
