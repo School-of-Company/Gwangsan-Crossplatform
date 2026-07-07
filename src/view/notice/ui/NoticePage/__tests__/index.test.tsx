@@ -17,8 +17,8 @@ jest.mock('~/shared/ui', () => ({
   },
 }));
 
-jest.mock('~/shared/ui/Footer', () => ({
-  Footer: () => {
+jest.mock('~/widget/write/ui/AppFooter', () => ({
+  AppFooter: () => {
     const { View } = require('react-native');
     return <View testID="footer" />;
   },

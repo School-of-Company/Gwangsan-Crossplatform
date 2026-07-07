@@ -46,6 +46,7 @@ export default function PasswordStep() {
       chatSocket.connect().catch((e) => logger.error('chat socket connect after login failed', e));
 
       resetStore();
+      if (router.canDismiss()) router.dismissAll();
       router.replace('/main');
     } catch (err) {
       logger.error('PasswordStep login failed', err);

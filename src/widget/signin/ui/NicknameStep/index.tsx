@@ -38,6 +38,7 @@ export default function NicknameStep() {
           .catch((e) => logger.error('chat socket connect after biometric login failed', e));
 
         resetStore();
+        if (router.canDismiss()) router.dismissAll();
         router.replace('/main');
       } catch (e) {
         logger.error('Biometric login failed', e);

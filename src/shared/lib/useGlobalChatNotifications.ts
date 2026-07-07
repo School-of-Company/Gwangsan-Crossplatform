@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import { usePathname } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { chatSocket } from './socket';
+import { getData } from './getData';
 import { getCurrentUserId } from './getCurrentUserId';
 import type { ChatMessageResponse } from '@/entity/chat/model/chatTypes';
 
@@ -18,8 +19,14 @@ export const useGlobalChatNotifications = () => {
   // 화면 이동 시마다 재시도해야 로그인 이후에도 전역 알림이 동작한다.
   // (이미 연결됐거나 연결 중이면 connect()가 즉시 반환되므로 비용 없음)
   useEffect(() => {
+    let isMounted = true;
+
     if (!chatSocket.isConnected) {
-      chatSocket.connect().catch(() => {});
+      getData('accessToken').then((accessToken) => {
+        if (isMounted && accessToken && !chatSocket.isConnected) {
+          chatSocket.connect().catch(() => {});
+        }
+      });
     }
   }, [pathname]);
 
@@ -53,6 +60,9 @@ export const useGlobalChatNotifications = () => {
     };
 
     chatSocket.on<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
-    return () => chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
+    return () => {
+      isMounted = false;
+      chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
+    };
   }, []);
 };

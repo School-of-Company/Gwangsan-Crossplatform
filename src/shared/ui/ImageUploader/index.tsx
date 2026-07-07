@@ -28,6 +28,7 @@ export interface ImageUploadState {
 
 interface Props {
   images?: string[];
+  initialImages?: ImageType[];
   onImagesChange?: (images: string[]) => void;
   onImageIdsChange?: (imageIds: number[]) => void;
   onUploadStateChange?: (state: ImageUploadState) => void;
@@ -45,6 +46,7 @@ interface ImageStatus {
 
 const ImageUploader = ({
   images = [],
+  initialImages = [],
   onImagesChange,
   onImageIdsChange,
   onUploadStateChange,
@@ -52,7 +54,13 @@ const ImageUploader = ({
   readonly = false,
   maxImages = 5,
 }: Props) => {
-  const [imageStatuses, setImageStatuses] = useState<ImageStatus[]>([]);
+  const [imageStatuses, setImageStatuses] = useState<ImageStatus[]>(() =>
+    initialImages.map((img) => ({
+      uri: img.imageUrl,
+      status: 'uploaded' as const,
+      imageData: img,
+    }))
+  );
   const uploadImageMutation = useUploadImage();
 
   const uploadState = useMemo((): ImageUploadState => {
