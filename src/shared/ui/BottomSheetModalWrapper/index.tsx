@@ -70,16 +70,17 @@ export function BottomSheetModalWrapper({
       setShow(true);
       Animated.timing(overlayOpacity, {
         toValue: 1,
-        duration: 120,
+        duration: 200,
         useNativeDriver: true,
-        easing: Easing.linear,
+        easing: Easing.out(Easing.ease),
       }).start();
-      Animated.timing(translateY, {
+      Animated.spring(translateY, {
         toValue: 0,
-        duration: 250,
-        delay: 80,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
+        mass: 1,
+        damping: 20,
+        stiffness: 200,
+        overshootClamping: true,
       }).start();
     } else if (show) {
       Animated.timing(translateY, {
@@ -90,7 +91,7 @@ export function BottomSheetModalWrapper({
       }).start(() => {
         Animated.timing(overlayOpacity, {
           toValue: 0,
-          duration: 120,
+          duration: 150,
           useNativeDriver: true,
           easing: Easing.linear,
         }).start(() => {
