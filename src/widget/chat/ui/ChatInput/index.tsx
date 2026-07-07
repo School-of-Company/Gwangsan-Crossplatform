@@ -7,9 +7,10 @@ import { ImagePreview } from '../ImagePreview';
 interface ChatInputProps {
   onSendMessage: (content: string | null, imageIds: number[]) => void;
   disabled?: boolean;
+  onFocus?: () => void;
 }
 
-const ChatInputComponent = ({ onSendMessage, disabled }: ChatInputProps) => {
+const ChatInputComponent = ({ onSendMessage, disabled, onFocus }: ChatInputProps) => {
   const chatInput = useChatInput({
     onSendMessage,
     disabled,
@@ -36,6 +37,7 @@ const ChatInputComponent = ({ onSendMessage, disabled }: ChatInputProps) => {
             className="min-h-[48px] flex-1 px-4 py-3 text-base text-gray-900"
             multiline={false}
             onSubmitEditing={chatInput.handleSendMessage}
+            onFocus={onFocus}
             editable={!isInputDisabled}
             returnKeyType="send"
             blurOnSubmit={false}

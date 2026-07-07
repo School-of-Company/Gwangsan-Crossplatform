@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Text, FlatList, type ListRenderItem } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, FlatList, Keyboard, type ListRenderItem } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import { MyMessage, OtherMessage } from '~/widget/chat';
 import { TradeEmbed } from '~/entity/chat';
@@ -50,6 +50,22 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onReviewButtonPress,
   showReviewButton,
 }) => {
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const combinedData = useMemo<ChatListItem[]>(() => {
     const items: ChatListItem[] = messages.map((message) => ({
       type: 'message',
@@ -129,7 +145,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       className="flex-1 px-4"
       showsVerticalScrollIndicator={false}
       onContentSizeChange={onScrollToEnd}
-      contentContainerStyle={{ paddingBottom: 10 }}
+      contentContainerStyle={{ paddingBottom: 10 + keyboardHeight }}
       initialNumToRender={15}
       maxToRenderPerBatch={10}
       windowSize={11}
