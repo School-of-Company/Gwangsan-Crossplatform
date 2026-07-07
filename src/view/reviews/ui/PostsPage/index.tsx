@@ -1,12 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Text, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '~/shared/ui';
-import { getReceiveReview, getTossReview } from '../../api/getReviews';
-import { ReviewPostType } from '../../model/reviewPostType';
 import { ReviewPost } from '~/entity/reviews/ui';
-import { logger } from '~/shared/lib/logger';
+import { useGetReviews } from '../../model/useGetReviews';
 
 export default function ReviewsPageView() {
   const rawParams = useLocalSearchParams();
@@ -14,21 +11,10 @@ export default function ReviewsPageView() {
   const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
   const active = Array.isArray(rawParams.active) ? rawParams.active[0] : rawParams.active;
 
-  const [posts, setPosts] = useState<ReviewPostType[]>([]);
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await (active === 'receive' ? getReceiveReview(id) : getTossReview());
-        setPosts(res);
-      } catch (error) {
-        logger.error('getReviews failed', error);
-        setPosts([]);
-      }
-    };
-
-    fetch();
-  }, [active, id]);
+  const { data: posts = [], isError } = useGetReviews(
+    active === 'receive' ? 'receive' : 'toss',
+    id
+  );
 
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white" edges={['top', 'left', 'right']}>
@@ -42,7 +28,11 @@ export default function ReviewsPageView() {
           </View>
         ) : (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-center text-gray-500">표시할 리뷰가 없습니다.</Text>
+            <Text className="text-center text-gray-500">
+              {isError
+                ? '후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+                : '표시할 리뷰가 없습니다.'}
+            </Text>
           </View>
         )}
       </ScrollView>
