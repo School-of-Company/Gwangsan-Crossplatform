@@ -1,17 +1,6 @@
-import * as Notifications from 'expo-notifications';
 import * as Keychain from 'react-native-keychain';
 import { getData } from './getData';
 import { removeData } from './removeData';
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
 
 type AuthConfig = {
   signInPage: string;
