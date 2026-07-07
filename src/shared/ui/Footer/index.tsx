@@ -2,6 +2,8 @@ import { Text, View, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { usePathname, useRouter } from 'expo-router';
 import { Svg, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useChatRooms } from '~/entity/chat/model/useChatRooms';
 
 interface FooterProps {
   onWritePress?: () => void;
@@ -10,9 +12,13 @@ interface FooterProps {
 export function Footer({ onWritePress }: FooterProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
+  const { totalUnreadCount } = useChatRooms();
 
   return (
-    <View className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 py-3">
+    <View
+      className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 pt-3"
+      style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
       <TouchableOpacity
         className="flex items-center justify-center"
         onPress={() => pathname !== '/main' && router.replace('/main')}>
@@ -26,11 +32,16 @@ export function Footer({ onWritePress }: FooterProps = {}) {
       <TouchableOpacity
         className="flex items-center justify-center"
         onPress={() => pathname !== '/chatting' && router.replace('/chatting')}>
-        <Ionicons
-          name="chatbubble-outline"
-          size={24}
-          color={pathname === '/chatting' ? '#8FC31D' : '#8F9094'}
-        />
+        <View className="relative">
+          <Ionicons
+            name="chatbubble-outline"
+            size={24}
+            color={pathname === '/chatting' ? '#8FC31D' : '#8F9094'}
+          />
+          {totalUnreadCount > 0 && (
+            <View className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-main-500" />
+          )}
+        </View>
         <Text className={pathname === '/chatting' ? 'text-[#8FC31D]' : 'text-gray-500'}>채팅</Text>
       </TouchableOpacity>
       <TouchableOpacity

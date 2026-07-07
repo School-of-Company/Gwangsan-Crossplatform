@@ -17,7 +17,7 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
   const renderUnreadBadge = () => {
     if (!room.unreadMessageCount || room.unreadMessageCount === 0) return null;
     return (
-      <View className="ml-2 min-w-[20px] items-center justify-center rounded-full bg-yellow-400 px-1.5 py-0.5">
+      <View className="ml-2 min-w-[20px] items-center justify-center rounded-full bg-main-500 px-1.5 py-0.5">
         <Text className="text-xs font-semibold text-white">{room.unreadMessageCount}</Text>
       </View>
     );

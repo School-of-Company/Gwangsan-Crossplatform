@@ -69,6 +69,7 @@ describe('useMessageSync', () => {
     jest.clearAllMocks();
     setupPendingMessages();
     mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
+    mockMarkChatAsRead.mockResolvedValue(undefined);
   });
 
   const renderSync = async (queryClient?: QueryClient) => {
