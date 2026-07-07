@@ -3,18 +3,17 @@ import { Text, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '~/shared/ui';
 import { ReviewPost } from '~/entity/reviews/ui';
-import { useGetReviews } from '../../model/useGetReviews';
+import { useGetReviews, ReviewsMode } from '../../model/useGetReviews';
 
-export default function ReviewsPageView() {
+interface ReviewsPageViewProps {
+  mode: ReviewsMode;
+}
+
+export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   const rawParams = useLocalSearchParams();
-
   const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
-  const active = Array.isArray(rawParams.active) ? rawParams.active[0] : rawParams.active;
 
-  const { data: posts = [], isError } = useGetReviews(
-    active === 'receive' ? 'receive' : 'toss',
-    id
-  );
+  const { data: posts = [], isError } = useGetReviews(mode, id);
 
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white" edges={['top', 'left', 'right']}>

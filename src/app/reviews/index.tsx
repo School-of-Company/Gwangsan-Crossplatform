@@ -4,7 +4,7 @@ import ReviewsPageView from '~/view/reviews/ui/PostsPage';
 export default function PostPage() {
   return (
     <FeatureErrorBoundary featureName="Reviews">
-      <ReviewsPageView />
+      <ReviewsPageView mode="toss" />
     </FeatureErrorBoundary>
   );
 }

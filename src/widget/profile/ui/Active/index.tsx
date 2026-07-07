@@ -14,13 +14,13 @@ export default function Active({ isMe, id, name }: ActiveProps) {
       <View className="mt-6 flex flex-row items-center justify-center gap-3">
         <TouchableOpacity
           className={`items-center rounded-md border border-main-500 px-6 py-3 text-center ${isMe ? 'w-1/2' : 'w-full'}`}
-          onPress={() => router.push(`/reviews/${id}?active=receive`)}>
+          onPress={() => router.push(`/reviews/${id}`)}>
           <Text className="text-main-500">{isMe ? '내가 받은 후기' : name + '님이 받은 후기'}</Text>
         </TouchableOpacity>
         {isMe && (
           <TouchableOpacity
             className="w-1/2 items-center rounded-md border border-main-500 px-6 py-3 text-center"
-            onPress={() => router.push('/reviews?active=toss')}>
+            onPress={() => router.push('/reviews')}>
             <Text className="text-main-500">내가 작성한 후기</Text>
           </TouchableOpacity>
         )}
