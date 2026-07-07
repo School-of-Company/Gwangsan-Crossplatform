@@ -28,6 +28,10 @@ export const useGlobalChatNotifications = () => {
         }
       });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -36,7 +40,11 @@ export const useGlobalChatNotifications = () => {
       // 포그라운드로 돌아오면 앱 뱃지를 초기화하고 필요 시 소켓을 재연결한다.
       Notifications.setBadgeCountAsync(0).catch(() => {});
       if (!chatSocket.isConnected) {
-        chatSocket.connect().catch(() => {});
+        getData('accessToken').then((accessToken) => {
+          if (accessToken && !chatSocket.isConnected) {
+            chatSocket.connect().catch(() => {});
+          }
+        });
       }
     });
     return () => sub.remove();
@@ -60,9 +68,6 @@ export const useGlobalChatNotifications = () => {
     };
 
     chatSocket.on<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
-    return () => {
-      isMounted = false;
-      chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
-    };
+    return () => chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
   }, []);
 };
