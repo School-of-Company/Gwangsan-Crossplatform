@@ -71,6 +71,10 @@ const ItemFormPage = () => {
   const isStep2Valid =
     gwangsan.trim().length > 0 && (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
 
+  const initialImages = images
+    .map((imageUrl, index) => ({ imageUrl, imageId: imageIds[index] }))
+    .filter((img): img is { imageUrl: string; imageId: number } => img.imageId !== undefined);
+
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
   const handleModeChange = useCallback((v: ModeType) => setMode(v), []);
@@ -171,6 +175,7 @@ const ItemFormPage = () => {
           content={content}
           gwangsan={gwangsan}
           images={images}
+          initialImages={initialImages}
           mode={mode as ModeType}
           type={type as ProductType}
           onTitleChange={handleTitleChange}

@@ -4,6 +4,7 @@ import ItemFormGwangsan from '../ItemFormGwangsan';
 import ItemFormConfirm from '../ItemFormConfirm';
 import { memo } from 'react';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
+import { ImageType } from '~/shared/types/imageType';
 import { ProductType } from '~/widget/write/model/type';
 import { ModeType } from '~/widget/write/model/mode';
 
@@ -13,6 +14,7 @@ interface ItemFormRenderContentProps {
   content: string;
   gwangsan: string;
   images: string[];
+  initialImages?: ImageType[];
   mode: ModeType;
   type: ProductType;
   onTitleChange: (title: string) => void;
@@ -31,6 +33,7 @@ const ItemFormRenderContent = ({
   content,
   gwangsan,
   images,
+  initialImages,
   mode,
   type,
   onTitleChange,
@@ -63,6 +66,7 @@ const ItemFormRenderContent = ({
         <View className="pt-12">
           <ItemFormGwangsan
             images={images}
+            initialImages={initialImages}
             onImageUploadStateChange={onImageUploadStateChange}
             onImagesChange={onImagesChange}
             onImageIdsChange={onImageIdsChange}

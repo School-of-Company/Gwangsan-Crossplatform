@@ -2,9 +2,11 @@ import { View } from 'react-native';
 import { Input } from '~/shared/ui/Input';
 import { memo } from 'react';
 import ImageUploader, { ImageUploadState } from '~/shared/ui/ImageUploader';
+import { ImageType } from '~/shared/types/imageType';
 
 interface Props {
   images: string[];
+  initialImages?: ImageType[];
   gwangsan: string;
   readonly?: boolean;
   onGwangsanChange?: (gwangsan: string) => void;
@@ -18,6 +20,7 @@ const ItemFormGwangsan = ({
   readonly = false,
   onGwangsanChange,
   images,
+  initialImages,
   onImageIdsChange,
   onImageUploadStateChange,
   onImagesChange,
@@ -34,6 +37,7 @@ const ItemFormGwangsan = ({
       />
       <ImageUploader
         images={images}
+        initialImages={initialImages}
         onImagesChange={onImagesChange}
         onImageIdsChange={onImageIdsChange}
         onUploadStateChange={onImageUploadStateChange}
