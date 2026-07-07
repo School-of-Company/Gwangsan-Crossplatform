@@ -42,6 +42,7 @@ export default function PasswordStep() {
       Sentry.setUser({ username: trimmedNickname });
 
       resetStore();
+      if (router.canDismiss()) router.dismissAll();
       router.replace('/main');
     } catch (err) {
       logger.error('PasswordStep login failed', err);

@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
+import { router } from 'expo-router';
 import { useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,7 +33,7 @@ function SigninForm({
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 200 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View className="gap-8 px-6">
@@ -49,11 +50,24 @@ function SigninForm({
           </View>
 
           <View className="mt-8">{children}</View>
+
+          <View className="mt-4 flex-row justify-center gap-4">
+            <Text
+              className="text-sm text-gray-500 underline"
+              onPress={() => router.push('/findNickname')}>
+              별칭 찾기
+            </Text>
+            <Text
+              className="text-sm text-gray-500 underline"
+              onPress={() => router.push('/resetPassword')}>
+              비밀번호 변경하기
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="mb-1.5 mt-4 px-6">
+        <View className="bg-white px-5 pt-5">
           <Button testID="SigninForm-next-button" onPress={onNext} disabled={isNextDisabled}>
             {nextButtonText}
           </Button>

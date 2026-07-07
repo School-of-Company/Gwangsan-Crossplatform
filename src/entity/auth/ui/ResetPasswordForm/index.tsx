@@ -32,7 +32,7 @@ function ResetPasswordForm({
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 200 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View className="gap-8 px-6">
@@ -53,7 +53,7 @@ function ResetPasswordForm({
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="mb-1.5 mt-4 px-6">
+        <View className="bg-white px-5 pt-5">
           <Button onPress={onNext} disabled={isNextDisabled}>
             {nextButtonText}
           </Button>

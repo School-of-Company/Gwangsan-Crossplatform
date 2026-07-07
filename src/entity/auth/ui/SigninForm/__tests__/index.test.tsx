@@ -9,6 +9,9 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: any) => children,
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
 }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), replace: jest.fn() },
+}));
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSigninStepNavigation: jest.fn(),
 }));
