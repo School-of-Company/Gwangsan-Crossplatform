@@ -19,7 +19,7 @@ export default function PhoneStep() {
 
   const handleBack = () => {
     resetStore();
-    router.replace('/onboarding');
+    router.replace('/signin');
   };
 
   const {

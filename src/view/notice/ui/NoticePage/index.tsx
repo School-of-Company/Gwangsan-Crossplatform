@@ -1,7 +1,7 @@
 import { ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { NoticeItem } from '~/widget/notice';
 import { Header } from '~/shared/ui';
-import { Footer } from '~/shared/ui/Footer';
+import { AppFooter } from '~/widget/write/ui/AppFooter';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetNoticeList } from '~/entity/notice/model/useGetNoticeList';
 import { useCallback, useState } from 'react';
@@ -60,7 +60,7 @@ const NoticePage = () => {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="공지" />
       {renderContent()}
-      <Footer />
+      <AppFooter />
     </SafeAreaView>
   );
 };

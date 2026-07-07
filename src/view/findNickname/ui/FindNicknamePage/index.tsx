@@ -54,7 +54,7 @@ export default function FindNicknamePage() {
           <View className="flex-row items-center pt-4">
             <TouchableOpacity
               className="flex-row items-center"
-              onPress={() => router.replace('/onboarding')}>
+              onPress={() => router.replace('/signin')}>
               <BackArrow />
               <Text className="ml-2 text-gray-500">뒤로</Text>
             </TouchableOpacity>
@@ -81,14 +81,14 @@ export default function FindNicknamePage() {
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 200 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         <View className="gap-8 px-6">
           <View className="flex-row items-center pt-4">
             <TouchableOpacity
               className="flex-row items-center"
-              onPress={() => router.replace('/onboarding')}>
+              onPress={() => router.replace('/signin')}>
               <BackArrow />
               <Text className="ml-2 text-gray-500">뒤로</Text>
             </TouchableOpacity>
@@ -159,7 +159,7 @@ export default function FindNicknamePage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="mb-3 mt-4 px-6">
+        <View className="bg-white px-5 pt-5">
           <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
             {isLoading ? '찾는 중...' : '별칭 찾기'}
           </Button>
