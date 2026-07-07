@@ -20,9 +20,7 @@ export default function ReviewsPageView() {
     const fetch = async () => {
       try {
         const res = await (active === 'receive' ? getReceiveReview(id) : getTossReview());
-        if (res.data) {
-          setPosts(res.data);
-        }
+        setPosts(res);
       } catch (error) {
         logger.error('getReviews failed', error);
         setPosts([]);
