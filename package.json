@@ -83,7 +83,7 @@
     "scrolloop": "^0.5.2",
     "socket.io-client": "^4.8.1",
     "whatwg-fetch": "^3.6.20",
-    "zod": "^3.25.72",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
