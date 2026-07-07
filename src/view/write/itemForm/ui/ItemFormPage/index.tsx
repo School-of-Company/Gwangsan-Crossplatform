@@ -1,17 +1,21 @@
-import { useState, useCallback, useEffect } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
-import { logger } from '@/shared/lib/logger';
-import { Header } from '@/shared/ui';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  ItemFormProgressBar,
-  createItemFormRequestBody,
-  useCreateItem,
-} from '~/entity/write/itemForm';
-import { ItemFormRenderContent, ItemFormRenderButton } from '~/widget/write/itemForm';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
+import { logger } from '@/shared/lib/logger';
+import { Button, Header, Input } from '@/shared/ui';
+import { TextField } from '@/shared/ui/TextField';
+import ImageUploader from '@/shared/ui/ImageUploader';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
+import { createItemFormRequestBody, useCreateItem } from '~/entity/write/itemForm';
+import { getModeLabel, getTypeLabel } from '~/widget/write/model/options';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { ProductType } from '~/widget/write/model/type';
 import { ModeType } from '~/widget/write/model/mode';
@@ -19,7 +23,6 @@ import { useEditPost } from '~/entity/post/model/useEditPost';
 import { useGetItem } from '~/entity/post';
 
 const ItemFormPage = () => {
-  const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
   const [type, setType] = useState('');
   const [mode, setMode] = useState('');
@@ -30,9 +33,13 @@ const ItemFormPage = () => {
   const [imageUploadState, setImageUploadState] = useState<ImageUploadState | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
   const createItemMutation = useCreateItem();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const {
+    id,
+    type: typeParam,
+    mode: modeParam,
+  } = useLocalSearchParams<{ id?: string; type?: string; mode?: string }>();
   const { data: postData, isLoading, error } = useGetItem(id);
   const editPostMutation = useEditPost();
 
@@ -52,14 +59,11 @@ const ItemFormPage = () => {
         setImageIds(existingImageIds);
       }
       /* eslint-enable react-hooks/set-state-in-effect */
+    } else if (!id) {
+      setType(typeParam ?? '');
+      setMode(modeParam ?? '');
     }
-  }, [postData]);
-
-  const isStep1Valid =
-    mode.trim().length > 0 &&
-    type.trim().length > 0 &&
-    title.trim().length > 0 &&
-    content.trim().length > 0;
+  }, [postData, id, typeParam, modeParam]);
 
   const mustHaveImage = type === 'OBJECT' && mode === 'GIVER';
 
@@ -68,13 +72,14 @@ const ItemFormPage = () => {
     (!imageUploadState.hasUploadingImages && !imageUploadState.hasFailedImages);
   const hasAtLeastOneImage = (images?.length ?? 0) > 0 || (imageIds?.length ?? 0) > 0;
 
-  const isStep2Valid =
-    gwangsan.trim().length > 0 && (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
+  const isFormValid =
+    mode.trim().length > 0 &&
+    type.trim().length > 0 &&
+    title.trim().length > 0 &&
+    content.trim().length > 0 &&
+    gwangsan.trim().length > 0 &&
+    (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
 
-  const handleTitleChange = useCallback((v: string) => setTitle(v), []);
-  const handleContentChange = useCallback((v: string) => setContent(v), []);
-  const handleModeChange = useCallback((v: ModeType) => setMode(v), []);
-  const handleTypeChange = useCallback((v: ProductType) => setType(v), []);
   const handleGwangsanChange = useCallback(
     (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
     []
@@ -84,8 +89,18 @@ const ItemFormPage = () => {
   const handleImageUploadStateChange = useCallback((state: ImageUploadState) => {
     setImageUploadState(state);
   }, []);
+  const handleGwangsanFocus = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
-  const handleCompletePress = async () => {
+  const getButtonText = () => {
+    if (isSubmitting) return id ? '수정 중...' : '등록 중...';
+    if (imageUploadState?.hasUploadingImages) return '이미지 업로드 중...';
+    if (imageUploadState?.hasFailedImages) return '이미지 업로드 실패';
+    return id ? '수정하기' : '등록하기';
+  };
+
+  const handleSubmit = async () => {
     try {
       if (isSubmitting) return;
 
@@ -109,17 +124,13 @@ const ItemFormPage = () => {
 
       setIsSubmitting(true);
 
-      const formData = {
+      const requestBody = createItemFormRequestBody({
         type,
         mode,
         title,
         content,
         gwangsan,
         images,
-      };
-
-      const requestBody = createItemFormRequestBody({
-        ...formData,
         imageIds,
       });
 
@@ -159,45 +170,56 @@ const ItemFormPage = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="게시글" />
-      <ItemFormProgressBar step={step} />
-      <ScrollView
+      <KeyboardAvoidingView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <ItemFormRenderContent
-          step={step}
-          title={title}
-          content={content}
-          gwangsan={gwangsan}
-          images={images}
-          mode={mode as ModeType}
-          type={type as ProductType}
-          onTitleChange={handleTitleChange}
-          onContentChange={handleContentChange}
-          onModeChange={handleModeChange}
-          onTypeChange={handleTypeChange}
-          onImagesChange={handleImagesChange}
-          onGwangsanChange={handleGwangsanChange}
-          onImageIdsChange={handleImageIdsChange}
-          onImageUploadStateChange={handleImageUploadStateChange}
-        />
-      </ScrollView>
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 250 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <View className="gap-6 px-5 pt-6">
+            {!!type && !!mode && (
+              <Text className="text-sm text-gray-500">
+                {getTypeLabel(type)} · {getModeLabel(type, mode)}
+              </Text>
+            )}
+            <ImageUploader
+              images={images}
+              onImagesChange={handleImagesChange}
+              onImageIdsChange={handleImageIdsChange}
+              onUploadStateChange={handleImageUploadStateChange}
+            />
+            <Input
+              label="주제"
+              placeholder="주제를 작성해주세요"
+              value={title}
+              onChangeText={setTitle}
+            />
+            <TextField
+              label="내용"
+              placeholder="내용을 작성해주세요"
+              value={content}
+              onChangeText={setContent}
+            />
+            <Input
+              label="광산"
+              placeholder="광산을 입력해주세요"
+              value={gwangsan}
+              onChangeText={handleGwangsanChange}
+              onFocus={handleGwangsanFocus}
+              keyboardType="numeric"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-      <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="mb-1.5 mt-4">
-          <ItemFormRenderButton
-            step={step}
-            isStep1Valid={isStep1Valid}
-            isStep2Valid={isStep2Valid}
-            onNextStep={setStep}
-            onEditPress={() => setStep(1)}
-            onCompletePress={handleCompletePress}
-            isSubmitting={isSubmitting}
-            imageUploadState={imageUploadState}
-          />
-        </View>
-      </KeyboardStickyView>
+      <View className="bg-white px-5 pt-5">
+        <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
+          {getButtonText()}
+        </Button>
+      </View>
     </SafeAreaView>
   );
 };
