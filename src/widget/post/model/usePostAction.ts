@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { useQueryClient } from '@tanstack/react-query';
 import { createReview } from '~/entity/post/api/createReview';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
@@ -16,6 +17,7 @@ interface UsePostPageLogicParams {
 
 export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
   const { navigateToChat, isLoading: isChatLoading } = useChatEntry();
@@ -58,6 +60,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
             content: contents,
             light: light,
           });
+          queryClient.invalidateQueries({ queryKey: ['reviews'] });
           Toast.show({
             type: 'success',
             text1: '리뷰가 성공적으로 작성되었습니다.',
@@ -71,7 +74,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
           });
         }
       },
-      [id, data]
+      [id, data, queryClient]
     ),
   };
 

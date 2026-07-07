@@ -123,6 +123,11 @@ export default function ChatRoomPage() {
           content: contents,
           light: light,
         });
+        queryClient.invalidateQueries({ queryKey: ['reviews'] });
+        Toast.show({
+          type: 'success',
+          text1: '리뷰가 성공적으로 작성되었습니다.',
+        });
         setIsReviewModalVisible(false);
         setReviewLight(60);
         setReviewContents('');
@@ -135,7 +140,7 @@ export default function ChatRoomPage() {
         });
       }
     },
-    [roomData]
+    [roomData, queryClient]
   );
 
   const handleReviewButtonPress = useCallback(() => {
