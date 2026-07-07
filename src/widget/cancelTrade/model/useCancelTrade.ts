@@ -78,7 +78,8 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
   const canSubmit = useMemo(() => {
     const { reason, imageUploadState } = formState;
 
-    if (!reason.trim() && productId) return false;
+    if (!productId) return false;
+    if (!reason.trim()) return false;
 
     if (imageUploadState) {
       if (imageUploadState.hasUploadingImages || imageUploadState.hasFailedImages) {
