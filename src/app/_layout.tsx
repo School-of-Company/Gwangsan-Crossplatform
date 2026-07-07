@@ -49,8 +49,17 @@ export default function RootLayout() {
     registerChatBackgroundTask();
   }, []);
 
+  const handledNotificationIdsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+    const handleResponse = (response: Notifications.NotificationResponse) => {
+      // 콜드스타트 경로와 리스너 경로에서 같은 알림이 두 번 처리되지 않도록 방어
+      const id = response.notification.request.identifier;
+      if (id) {
+        if (handledNotificationIdsRef.current.has(id)) return;
+        handledNotificationIdsRef.current.add(id);
+      }
+
       const data = response.notification.request.content.data as {
         alertType?: AlertType;
         sourceId?: number;
@@ -65,7 +74,16 @@ export default function RootLayout() {
       } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
         routerRef.current.push(`/cancelTrade/${data.sourceId}`);
       }
-    });
+    };
+
+    // 앱이 종료된 상태에서 알림을 눌러 실행된 경우 리스너가 놓치므로 마지막 응답을 확인
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) handleResponse(response);
+      })
+      .catch(() => {});
+
+    const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
     return () => sub.remove();
   }, []);
 
