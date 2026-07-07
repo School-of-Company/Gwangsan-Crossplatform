@@ -32,6 +32,7 @@ export default function NicknameStep() {
         if (!isMounted) return;
 
         resetStore();
+        if (router.canDismiss()) router.dismissAll();
         router.replace('/main');
       } catch (e) {
         logger.error('Biometric login failed', e);
