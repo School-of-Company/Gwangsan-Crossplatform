@@ -13,7 +13,8 @@ export const Input = forwardRef<TextInput, InputProps>(({ label, icon, ...props 
       <View className="relative">
         <TextInput
           ref={ref}
-          className="w-full rounded-xl border border-gray-400 px-4 py-5 text-body5 text-gray-900 focus:border-sub2-500"
+          className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+          textAlignVertical="center"
           returnKeyType="next"
           enablesReturnKeyAutomatically={true}
           {...props}

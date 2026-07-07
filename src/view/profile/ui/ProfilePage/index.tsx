@@ -1,8 +1,8 @@
 import { ScrollView, Text, View, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Footer } from '~/shared/ui/Footer';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
+import { AppFooter } from '~/widget/write/ui/AppFooter';
 import { Active, Introduce } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
 import { useGetPosts } from '../../model/useGetPosts';
@@ -114,7 +114,7 @@ export default function ProfilePageView() {
           )}
         </View>
       </ScrollView>
-      <Footer />
+      <AppFooter />
     </SafeAreaView>
   );
 }

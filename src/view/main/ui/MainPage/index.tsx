@@ -1,8 +1,8 @@
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '~/entity/main/ui/header';
-import { Footer } from '~/shared/ui/Footer';
 import { Inform, MainSlideViewer } from '~/widget/main';
+import { AppFooter } from '~/widget/write/ui/AppFooter';
 import { useGetMyInformation } from '../../../../entity/main/model/useGetMyInformation';
 import Toast from 'react-native-toast-message';
 
@@ -25,7 +25,7 @@ export default function MainPageView() {
           place={data?.placeName ?? '지점'}
         />
       </ScrollView>
-      <Footer />
+      <AppFooter />
     </SafeAreaView>
   );
 }

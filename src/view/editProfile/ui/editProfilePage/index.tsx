@@ -12,7 +12,7 @@ export default function EditProfilePageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="프로필 수정" />
 
-      <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingBottom: 200 }}>
         <View className="mt-3 flex gap-5">
           <Input label="별칭" />
           <SpecialtiesDropdown items={[]} label="특기" />
@@ -21,7 +21,7 @@ export default function EditProfilePageView() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="px-6 pb-[18px]">
+        <View className="bg-white px-5 pt-5">
           <Button>수정</Button>
         </View>
       </KeyboardStickyView>

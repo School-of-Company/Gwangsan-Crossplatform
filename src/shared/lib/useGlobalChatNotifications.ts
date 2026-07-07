@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { chatSocket } from './socket';
+import { getData } from './getData';
 import { getCurrentUserId } from './getCurrentUserId';
 import type { ChatMessageResponse } from '@/entity/chat/model/chatTypes';
 
@@ -14,8 +15,14 @@ export const useGlobalChatNotifications = () => {
   }, [pathname]);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!chatSocket.isConnected) {
-      chatSocket.connect().catch(() => {});
+      getData('accessToken').then((accessToken) => {
+        if (isMounted && accessToken && !chatSocket.isConnected) {
+          chatSocket.connect().catch(() => {});
+        }
+      });
     }
 
     const handleReceiveMessage = async (message: ChatMessageResponse) => {
@@ -35,6 +42,9 @@ export const useGlobalChatNotifications = () => {
     };
 
     chatSocket.on<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
-    return () => chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
+    return () => {
+      isMounted = false;
+      chatSocket.off<ChatMessageResponse>('receiveMessage', handleReceiveMessage);
+    };
   }, []);
 };
