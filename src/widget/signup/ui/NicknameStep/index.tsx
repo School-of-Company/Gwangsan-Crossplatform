@@ -20,7 +20,7 @@ export default function NicknameStep() {
       nextStep();
     } catch (err) {
       if (err instanceof ZodError) {
-        setError(err.errors[0].message);
+        setError(err.issues[0].message);
       } else if (err instanceof Error) {
         setError(err.message);
       } else {

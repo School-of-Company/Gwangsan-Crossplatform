@@ -90,7 +90,7 @@ export const usePhoneVerification = ({
     } catch (err) {
       safeSetState(() => {
         if (err instanceof ZodError) {
-          setPhoneError(err.errors[0].message);
+          setPhoneError(err.issues[0].message);
         } else {
           const errorMessage = getErrorMessage(err);
           setPhoneError(errorMessage);
@@ -142,7 +142,7 @@ export const usePhoneVerification = ({
     } catch (err) {
       safeSetState(() => {
         if (err instanceof ZodError) {
-          setVerificationError(err.errors[0].message);
+          setVerificationError(err.issues[0].message);
         } else {
           const errorMessage = getErrorMessage(err);
           setVerificationError(errorMessage);

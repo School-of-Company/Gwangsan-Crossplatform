@@ -41,11 +41,11 @@ export default function ProfileEditPageView() {
 
       updateProfileMutation.mutate(validatedData);
     } catch (error: any) {
-      if (error.errors && error.errors.length > 0) {
+      if (error.issues && error.issues.length > 0) {
         Toast.show({
           type: 'error',
           text1: '입력 오류',
-          text2: error.errors[0].message,
+          text2: error.issues[0].message,
         });
       }
     }
