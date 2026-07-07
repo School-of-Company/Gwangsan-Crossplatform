@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { logger } from '@/shared/lib/logger';
@@ -71,9 +71,13 @@ const ItemFormPage = () => {
   const isStep2Valid =
     gwangsan.trim().length > 0 && (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
 
-  const initialImages = images
-    .map((imageUrl, index) => ({ imageUrl, imageId: imageIds[index] }))
-    .filter((img): img is { imageUrl: string; imageId: number } => img.imageId !== undefined);
+  const initialImages = useMemo(
+    () =>
+      images
+        .map((imageUrl, index) => ({ imageUrl, imageId: imageIds[index] }))
+        .filter((img): img is { imageUrl: string; imageId: number } => img.imageId !== undefined),
+    [images, imageIds]
+  );
 
   const handleTitleChange = useCallback((v: string) => setTitle(v), []);
   const handleContentChange = useCallback((v: string) => setContent(v), []);
