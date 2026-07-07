@@ -22,6 +22,9 @@ jest.mock('~/shared/lib/removeData', () => ({
 jest.mock('~/shared/lib/getCurrentUserId', () => ({
   clearCurrentUserId: jest.fn(),
 }));
+jest.mock('~/shared/lib/sessionCleanup', () => ({
+  cleanupNotificationSession: jest.fn(),
+}));
 
 const mockUseRouter = useRouter as jest.Mock;
 const mockSignout = signout as jest.Mock;

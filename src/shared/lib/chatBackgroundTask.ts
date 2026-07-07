@@ -28,6 +28,8 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
 
     const rooms: ChatRoomListItem[] = await response.json();
     const unreadRooms = rooms.filter((r) => r.unreadMessageCount > 0);
+    const totalUnread = rooms.reduce((sum, r) => sum + (r.unreadMessageCount ?? 0), 0);
+    await Notifications.setBadgeCountAsync(totalUnread).catch(() => {});
 
     if (unreadRooms.length === 0) {
       await AsyncStorage.setItem(LAST_UNREAD_KEY, JSON.stringify({}));
@@ -123,4 +125,9 @@ export const unregisterChatBackgroundTask = async (): Promise<void> => {
   } catch {
     // ignore
   }
+};
+
+// 로그아웃 시 다음 로그인 계정에 이전 계정의 미확인 상태가 새지 않도록 초기화합니다.
+export const clearChatUnreadState = async (): Promise<void> => {
+  await AsyncStorage.removeItem(LAST_UNREAD_KEY).catch(() => {});
 };

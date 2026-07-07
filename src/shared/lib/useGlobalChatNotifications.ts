@@ -25,7 +25,10 @@ export const useGlobalChatNotifications = () => {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && !chatSocket.isConnected) {
+      if (state !== 'active') return;
+      // 포그라운드로 돌아오면 앱 뱃지를 초기화하고 필요 시 소켓을 재연결한다.
+      Notifications.setBadgeCountAsync(0).catch(() => {});
+      if (!chatSocket.isConnected) {
         chatSocket.connect().catch(() => {});
       }
     });
