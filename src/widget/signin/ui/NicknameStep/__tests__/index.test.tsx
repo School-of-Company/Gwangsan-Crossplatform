@@ -7,7 +7,7 @@ import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model
 import NicknameStep from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { replace: jest.fn() },
+  router: { replace: jest.fn(), canDismiss: jest.fn(() => false), dismissAll: jest.fn() },
 }));
 
 jest.mock('~/entity/auth/api/signin', () => ({
