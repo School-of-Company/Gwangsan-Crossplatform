@@ -69,7 +69,10 @@ export default function ProfileEditPageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="내 정보 수정" />
 
-      <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-6 py-4"
+        contentContainerStyle={{ paddingBottom: 200 }}
+        showsVerticalScrollIndicator={false}>
         <View className="gap-6">
           <Input
             label="별칭"
@@ -99,7 +102,7 @@ export default function ProfileEditPageView() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="px-6 pb-[18px]">
+        <View className="bg-white px-5 pt-5">
           <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
             {isSubmitting ? '수정 중...' : '수정'}
           </Button>
