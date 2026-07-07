@@ -20,7 +20,7 @@ export default function CancelTradeView() {
   useEffect(() => {
     if (data && !data.productId) {
       logger.warn('리뷰 상세 응답에 productId가 없어 거래철회를 진행할 수 없습니다', {
-        reviewId: data.review_id,
+        reviewId: data.reviewId,
       });
     }
   }, [data]);

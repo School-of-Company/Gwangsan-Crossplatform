@@ -3,7 +3,7 @@ import { getReview } from '../api/getReview';
 import { ImageType } from '~/shared/types/imageType';
 
 interface ResponseData {
-  review_id: number;
+  reviewId: number;
   productId?: number;
   title: string;
   content: string;

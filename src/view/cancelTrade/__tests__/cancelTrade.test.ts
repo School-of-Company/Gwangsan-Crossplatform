@@ -13,7 +13,14 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('getReview', () => {
   it('getReview를 호출하면 응답 data를 반환한다', async () => {
-    const reviewData = { review_id: 1, title: '좋아요', content: '만족', light: 80, imageUrls: [] };
+    const reviewData = {
+      reviewId: 1,
+      productId: 10,
+      title: '좋아요',
+      content: '만족',
+      light: 80,
+      imageUrls: [],
+    };
     mockGetReview.mockResolvedValue(reviewData);
 
     const result = await getReview('1');
@@ -31,7 +38,14 @@ describe('getReview', () => {
 
 describe('useGetReview', () => {
   it('id가 있으면 getReview를 호출하고 데이터를 반환한다', async () => {
-    const reviewData = { review_id: 1, title: '좋아요', content: '만족', light: 80, imageUrls: [] };
+    const reviewData = {
+      reviewId: 1,
+      productId: 10,
+      title: '좋아요',
+      content: '만족',
+      light: 80,
+      imageUrls: [],
+    };
     mockGetReview.mockResolvedValue(reviewData);
 
     const { result } = renderHookWithProviders(() => useGetReview('1'));
