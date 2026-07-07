@@ -15,7 +15,7 @@ export function Footer({ onWritePress }: FooterProps = {}) {
     <View className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 py-3">
       <TouchableOpacity
         className="flex items-center justify-center"
-        onPress={() => router.push('/main')}>
+        onPress={() => router.replace('/main')}>
         <Ionicons
           name="home-outline"
           size={24}
@@ -25,7 +25,7 @@ export function Footer({ onWritePress }: FooterProps = {}) {
       </TouchableOpacity>
       <TouchableOpacity
         className="flex items-center justify-center"
-        onPress={() => router.push('/chatting')}>
+        onPress={() => router.replace('/chatting')}>
         <Ionicons
           name="chatbubble-outline"
           size={24}
@@ -45,7 +45,7 @@ export function Footer({ onWritePress }: FooterProps = {}) {
       </TouchableOpacity>
       <TouchableOpacity
         className="flex items-center justify-center"
-        onPress={() => router.push('/notice')}>
+        onPress={() => router.replace('/notice')}>
         <Ionicons
           name="megaphone-outline"
           size={24}
@@ -56,7 +56,7 @@ export function Footer({ onWritePress }: FooterProps = {}) {
       <TouchableOpacity
         testID="Footer-profile-button"
         className="flex items-center justify-center"
-        onPress={() => router.push('/profile')}>
+        onPress={() => router.replace('/profile')}>
         <Ionicons
           name="person-outline"
           size={24}
