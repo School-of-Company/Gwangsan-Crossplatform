@@ -17,12 +17,12 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
 
   return (
     <SafeAreaView className="android:pt-10 h-full bg-white" edges={['top', 'left', 'right']}>
-      <Header headerTitle="게시글" />
+      <Header headerTitle={mode === 'receive' ? '받은 후기' : '작성한 후기'} />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {posts.length > 0 ? (
           <View className="pb-6">
             {posts.map((post) => (
-              <ReviewPost key={post.productId} review={post} />
+              <ReviewPost key={post.reviewId} review={post} />
             ))}
           </View>
         ) : (
