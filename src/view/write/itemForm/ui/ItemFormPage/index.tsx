@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -79,6 +79,14 @@ const ItemFormPage = () => {
     content.trim().length > 0 &&
     gwangsan.trim().length > 0 &&
     (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
+
+  const initialImages = useMemo(
+    () =>
+      images
+        .map((imageUrl, index) => ({ imageUrl, imageId: imageIds[index] }))
+        .filter((img): img is { imageUrl: string; imageId: number } => img.imageId !== undefined),
+    [images, imageIds]
+  );
 
   const handleGwangsanChange = useCallback(
     (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
@@ -187,6 +195,7 @@ const ItemFormPage = () => {
             )}
             <ImageUploader
               images={images}
+              initialImages={initialImages}
               onImagesChange={handleImagesChange}
               onImageIdsChange={handleImageIdsChange}
               onUploadStateChange={handleImageUploadStateChange}
