@@ -98,14 +98,14 @@ export const registerChatBackgroundTask = async (): Promise<void> => {
       return;
     }
 
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(CHAT_BACKGROUND_TASK);
-    if (!isRegistered) {
-      await BackgroundFetch.registerTaskAsync(CHAT_BACKGROUND_TASK, {
-        minimumInterval: 60 * 5,
-        stopOnTerminate: false,
-        startOnBoot: true,
-      });
-    }
+    // isTaskRegisteredAsync는 네이티브에 영구 저장된 등록 플래그만 확인하며 실제 알람
+    // 생존 여부와 무관하다. 앱 재시작 등으로 알람이 죽어도 플래그는 true로 남아
+    // 재등록을 건너뛰게 되므로, 매번 호출해 알람을 다시 세팅한다(재호출은 안전함).
+    await BackgroundFetch.registerTaskAsync(CHAT_BACKGROUND_TASK, {
+      minimumInterval: 60 * 5,
+      stopOnTerminate: false,
+      startOnBoot: true,
+    });
   } catch (error) {
     // 미지원 환경(Expo Go 등)에서는 등록이 실패할 수 있으나,
     // 실기기 빌드에서의 실패는 백그라운드 알림 전체가 죽는 문제라 추적이 필요하다.
