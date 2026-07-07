@@ -7,10 +7,22 @@ export default function Index() {
   const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
-    getAccessToken().then((token) => {
-      setHasToken(!!token);
-      setIsChecking(false);
-    });
+    let isMounted = true;
+
+    getAccessToken()
+      .then((token) => {
+        if (isMounted) setHasToken(!!token);
+      })
+      .catch(() => {
+        if (isMounted) setHasToken(false);
+      })
+      .finally(() => {
+        if (isMounted) setIsChecking(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (isChecking) return null;
