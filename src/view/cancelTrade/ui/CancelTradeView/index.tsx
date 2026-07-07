@@ -6,7 +6,8 @@ import { useGetReview } from '../../model/useGetReview';
 import { getLightColor } from '~/shared/lib/handleLightColor';
 import { clsx } from 'clsx';
 import CancelTradeBottomSheet from '~/widget/cancelTrade/ui/CancelTradeBottomSheet';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { logger } from '~/shared/lib/logger';
 
 export default function CancelTradeView() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -16,13 +17,21 @@ export default function CancelTradeView() {
     setShowCancelTradeModal((prev) => !prev);
   }, []);
 
+  useEffect(() => {
+    if (data && !data.productId) {
+      logger.warn('리뷰 상세 응답에 productId가 없어 거래철회를 진행할 수 없습니다', {
+        reviewId: data.review_id,
+      });
+    }
+  }, [data]);
+
   const imageUris = (data?.imageUrls ?? [])
     .map((u: any) => (typeof u === 'string' ? u : (u?.url ?? u?.uri)))
     .filter((u: unknown): u is string => typeof u === 'string' && u.length > 0);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <Header headerTitle="내가 작성한 후기" />
+      <Header headerTitle="리뷰 상세" />
       <View className="flex-1 justify-between px-4">
         <View className="gap-6">
           {imageUris.length > 0 ? (
@@ -47,11 +56,11 @@ export default function CancelTradeView() {
             </View>
           </View>
         </View>
-        <Button variant="error" onPress={handleToggleCancelTradeModal}>
+        <Button variant="error" disabled={!data?.productId} onPress={handleToggleCancelTradeModal}>
           철회하기
         </Button>
         <CancelTradeBottomSheet
-          productId={data?.review_id}
+          productId={data?.productId}
           isVisible={showCancelTradeModal}
           onClose={handleToggleCancelTradeModal}
         />

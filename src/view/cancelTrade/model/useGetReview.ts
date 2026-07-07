@@ -4,6 +4,7 @@ import { ImageType } from '~/shared/types/imageType';
 
 interface ResponseData {
   review_id: number;
+  productId?: number;
   title: string;
   content: string;
   light: number;
