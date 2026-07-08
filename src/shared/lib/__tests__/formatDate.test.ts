@@ -110,5 +110,17 @@ describe('formatDate', () => {
     it('임의의 문자열은 "Invalid Date"를 반환한다', () => {
       expect(formatDate('not a date at all')).toBe('Invalid Date');
     });
+
+    it('내부 처리 중 예외가 발생하면 원본 문자열을 그대로 반환한다', () => {
+      const original = Date.prototype.toLocaleDateString;
+      Date.prototype.toLocaleDateString = jest.fn(() => {
+        throw new Error('toLocaleDateString failure');
+      });
+
+      const dateStr = msAgo(10 * DAY);
+      expect(formatDate(dateStr)).toBe(dateStr);
+
+      Date.prototype.toLocaleDateString = original;
+    });
   });
 });
