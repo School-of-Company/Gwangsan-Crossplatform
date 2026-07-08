@@ -3,6 +3,19 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useGetNoticeDetail } from '../useGetNoticeDetail';
 import { getNoticeDetail } from '../../api/getNoticeDetail';
 
+const capturedQueryOptions: { queryFn: () => unknown }[] = [];
+
+jest.mock('@tanstack/react-query', () => {
+  const actual = jest.requireActual('@tanstack/react-query');
+  return {
+    ...actual,
+    useQuery: jest.fn((options: { queryFn: () => unknown }) => {
+      capturedQueryOptions.push(options);
+      return actual.useQuery(options);
+    }),
+  };
+});
+
 jest.mock('../../api/getNoticeDetail', () => ({
   getNoticeDetail: jest.fn(),
 }));
@@ -101,5 +114,13 @@ describe('useGetNoticeDetail', () => {
     // Number('abc') is NaN, which is falsy → enabled: false
     expect(result.current.fetchStatus).toBe('idle');
     expect(mockGetNoticeDetail).not.toHaveBeenCalled();
+  });
+
+  it('내부 queryFn은 id가 없으면 에러를 던진다 (enabled: false라 정상적으로는 호출되지 않는 방어 코드)', () => {
+    capturedQueryOptions.length = 0;
+
+    renderHookWithProviders(() => useGetNoticeDetail(undefined));
+
+    expect(() => capturedQueryOptions[0].queryFn()).toThrow('Notice ID is required');
   });
 });

@@ -62,6 +62,17 @@ describe('uploadImage', () => {
     expect(formData).toBeDefined();
   });
 
+  it('URI가 슬래시로 끝나 파일명을 추출할 수 없으면 image.jpg를 기본 파일명으로 사용해 정상 업로드한다', async () => {
+    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+
+    await expect(uploadImage('file:///local/path/')).resolves.toEqual({ imageId: 1, imageUrl: '' });
+    expect(mockPost).toHaveBeenCalledWith(
+      '/image',
+      expect.any(Object),
+      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } })
+    );
+  });
+
   it('확장자가 없는 URI는 jpeg를 기본 타입으로 사용한다', async () => {
     mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
 

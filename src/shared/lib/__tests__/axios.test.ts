@@ -88,6 +88,14 @@ describe('request interceptor', () => {
 
     await expect(instance.get('/req-error')).rejects.toThrow();
   });
+
+  it('request 인터셉터 체인 이전 단계에서 에러가 발생하면 그대로 reject한다', async () => {
+    const handlers = (instance.interceptors.request as unknown as { handlers: any[] }).handlers;
+    const rejectedHandler = handlers[0].rejected;
+    const originalError = new Error('upstream config error');
+
+    await expect(rejectedHandler(originalError)).rejects.toBe(originalError);
+  });
 });
 
 describe('response interceptor', () => {
@@ -98,6 +106,26 @@ describe('response interceptor', () => {
 
     await expect(instance.get('/server-error')).rejects.toThrow();
     expect(mockGetRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it('__sentryStartTime이 없는 응답은 duration을 undefined로 기록한다', async () => {
+    const handlers = (instance.interceptors.response as unknown as { handlers: any[] }).handlers;
+    const fulfilledHandler = handlers[0].fulfilled;
+
+    const fakeResponse = {
+      status: 200,
+      config: { method: 'get', url: '/no-start-time' },
+    };
+
+    const result = fulfilledHandler(fakeResponse);
+
+    expect(result).toBe(fakeResponse);
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'http',
+        data: expect.objectContaining({ duration_ms: undefined }),
+      })
+    );
   });
 
   it('/auth/signin 401은 토큰 갱신 시도 없이 reject된다', async () => {
@@ -187,6 +215,26 @@ describe('response interceptor', () => {
     expect(mockClearAuthTokens).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
+  });
+
+  it('토큰 갱신 실패 원인이 Error가 아니면 String으로 변환해 Sentry에 기록한다', async () => {
+    mockGetAccessToken.mockResolvedValue('old-token');
+    mockGetRefreshToken.mockRejectedValue('non-error-rejection-reason');
+    mockClearAuthTokens.mockResolvedValue(undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    server.use(
+      http.get(`${BASE}/secured-non-error`, () => new HttpResponse(null, { status: 401 }))
+    );
+
+    await expect(instance.get('/secured-non-error')).rejects.toBe('non-error-rejection-reason');
+
+    expect(mockSentry.captureException).toHaveBeenCalledWith(
+      'non-error-rejection-reason',
+      expect.objectContaining({
+        extra: expect.objectContaining({ errorMessage: 'non-error-rejection-reason' }),
+      })
+    );
   });
 
   it('queryClientInstance가 null이어도 토큰 초기화 후 이동한다', async () => {

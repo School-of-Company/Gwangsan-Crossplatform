@@ -53,9 +53,9 @@ export const useCreateItem = () => {
     },
 
     onError: (err, variables, context?: MutationContext) => {
-      if (!variables || !context?.previousPosts) return;
-
-      queryClient.setQueryData(['posts', variables.mode, variables.type], context.previousPosts);
+      if (variables && context?.previousPosts) {
+        queryClient.setQueryData(['posts', variables.mode, variables.type], context.previousPosts);
+      }
 
       Toast.show({
         type: 'error',
