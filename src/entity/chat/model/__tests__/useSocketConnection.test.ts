@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { AppState } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSocketConnection } from '../useSocketConnection';
 import { logger } from '@/shared/lib/logger';
@@ -45,7 +45,7 @@ const createMockSocketService = (
 };
 
 describe('useSocketConnection', () => {
-  let appStateListener: ((state: string) => void) | undefined;
+  let appStateListener: ((state: AppStateStatus) => void) | undefined;
   let removeListener: jest.Mock;
 
   beforeEach(() => {

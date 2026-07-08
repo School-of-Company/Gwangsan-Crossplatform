@@ -108,9 +108,10 @@ describe('useChatSocket', () => {
   it('currentRoomId가 바뀌면 이전 방을 leave하고 새 방을 join한다', () => {
     mockChatSocketService.isConnected = true;
 
-    const { rerender } = renderHook(({ roomId }) => useChatSocket({ currentRoomId: roomId }), {
-      initialProps: { roomId: 1 },
-    });
+    const { rerender } = renderHook(
+      ({ roomId }: { roomId: number }) => useChatSocket({ currentRoomId: roomId }),
+      { initialProps: { roomId: 1 } }
+    );
 
     expect(mockChatSocketService.joinRoom).toHaveBeenCalledWith(1);
 

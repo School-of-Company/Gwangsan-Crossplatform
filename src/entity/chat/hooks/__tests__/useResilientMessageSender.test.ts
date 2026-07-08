@@ -145,7 +145,7 @@ describe('useResilientMessageSender', () => {
 
     const socketSendMessage = jest.fn();
     const { rerender } = renderHook(
-      ({ isSocketConnected }) =>
+      ({ isSocketConnected }: { isSocketConnected: boolean }) =>
         useResilientMessageSender({ roomId: 1, isSocketConnected, socketSendMessage }),
       { initialProps: { isSocketConnected: false } }
     );
@@ -163,7 +163,7 @@ describe('useResilientMessageSender', () => {
   it('연결이 계속 유지되는 경우에는 재연결 토스트를 띄우지 않는다', () => {
     const socketSendMessage = jest.fn();
     const { rerender } = renderHook(
-      ({ isSocketConnected }) =>
+      ({ isSocketConnected }: { isSocketConnected: boolean }) =>
         useResilientMessageSender({ roomId: 1, isSocketConnected, socketSendMessage }),
       { initialProps: { isSocketConnected: true } }
     );
@@ -191,7 +191,7 @@ describe('useResilientMessageSender', () => {
 
     const socketSendMessage = jest.fn();
     const { rerender } = renderHook(
-      ({ isSocketConnected }) =>
+      ({ isSocketConnected }: { isSocketConnected: boolean }) =>
         useResilientMessageSender({ roomId: 1, isSocketConnected, socketSendMessage }),
       { initialProps: { isSocketConnected: false } }
     );

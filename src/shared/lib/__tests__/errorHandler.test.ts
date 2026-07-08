@@ -63,7 +63,7 @@ describe('getErrorMessage', () => {
       const originalMatch = String.prototype.match;
       jest.spyOn(String.prototype, 'match').mockImplementation(function (
         this: string,
-        pattern: RegExp
+        pattern: any
       ) {
         callCount += 1;
         // 첫 호출(외부 정규식)은 실제 동작을 사용해 matches를 채우고,

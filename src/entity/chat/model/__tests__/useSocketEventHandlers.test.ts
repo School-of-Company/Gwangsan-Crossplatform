@@ -78,7 +78,8 @@ describe('useSocketEventHandlers', () => {
     const onConnect2 = jest.fn();
 
     const { rerender } = renderHook(
-      ({ onConnect }) => useSocketEventHandlers({ socketService, onConnect }),
+      ({ onConnect }: { onConnect: () => void }) =>
+        useSocketEventHandlers({ socketService, onConnect }),
       { initialProps: { onConnect: onConnect1 } }
     );
 
