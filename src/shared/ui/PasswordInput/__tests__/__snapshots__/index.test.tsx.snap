@@ -1,0 +1,123 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PasswordInput 스냅샷 - 기본 (숨김 상태) 1`] = `
+<View
+  className="flex w-full gap-2"
+>
+  <Text
+    className="text-label"
+  >
+    비밀번호
+  </Text>
+  <View
+    className="relative"
+  >
+    <TextInput
+      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+      enablesReturnKeyAutomatically={true}
+      returnKeyType="next"
+      secureTextEntry={true}
+      textAlignVertical="center"
+    />
+    <View
+      className="absolute bottom-0 right-4 top-0 flex justify-center"
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+      />
+    </View>
+  </View>
+</View>
+`;
+
+exports[`PasswordInput 스냅샷 - 토글 후 (보임 상태) 1`] = `
+<View
+  className="flex w-full gap-2"
+>
+  <Text
+    className="text-label"
+  >
+    비밀번호
+  </Text>
+  <View
+    className="relative"
+  >
+    <TextInput
+      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+      enablesReturnKeyAutomatically={true}
+      returnKeyType="next"
+      secureTextEntry={false}
+      textAlignVertical="center"
+    />
+    <View
+      className="absolute bottom-0 right-4 top-0 flex justify-center"
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+      />
+    </View>
+  </View>
+</View>
+`;
