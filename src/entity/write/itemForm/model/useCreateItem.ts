@@ -53,9 +53,7 @@ export const useCreateItem = () => {
     },
 
     onError: (err, variables, context?: MutationContext) => {
-      if (!variables) return;
-
-      if (context?.previousPosts) {
+      if (variables && context?.previousPosts) {
         queryClient.setQueryData(['posts', variables.mode, variables.type], context.previousPosts);
       }
 

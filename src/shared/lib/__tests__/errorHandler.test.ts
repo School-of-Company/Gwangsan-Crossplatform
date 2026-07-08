@@ -54,6 +54,32 @@ describe('getErrorMessage', () => {
       const error = makeAxiosError('request failed', { message: '' }, 400);
       expect(getErrorMessage(error)).toBe('');
     });
+
+    it('내부 정규식 매칭이 실패해 content를 얻지 못하면 원본 message를 반환한다', () => {
+      const message = 'Validation failed: default message [일부 오류]';
+      const error = makeAxiosError('validation failed', { message }, 400);
+
+      let callCount = 0;
+      const originalMatch = String.prototype.match;
+      jest.spyOn(String.prototype, 'match').mockImplementation(function (
+        this: string,
+        pattern: any
+      ) {
+        callCount += 1;
+        // 첫 호출(외부 정규식)은 실제 동작을 사용해 matches를 채우고,
+        // 두 번째 호출(내부 [..] 추출)만 실패시켜 content가 null이 되는 분기를 유도한다.
+        if (callCount === 1) {
+          return originalMatch.call(this, pattern);
+        }
+        return null;
+      });
+
+      try {
+        expect(getErrorMessage(error)).toBe(message);
+      } finally {
+        (String.prototype.match as jest.Mock).mockRestore();
+      }
+    });
   });
 
   describe('AxiosError — response data에 message 필드가 없을 때', () => {

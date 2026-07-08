@@ -1,6 +1,6 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
-import { useChatMessages } from '../useChatMessages';
+import { useChatMessages, chatMessageKeys } from '../useChatMessages';
 import { getChatMessages } from '../../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 
@@ -207,6 +207,25 @@ describe('useChatMessages', () => {
 
       expect(result.current.data).toHaveLength(0);
     });
+
+    it('IMAGE 타입 pending 메시지의 imageIds를 images 배열로 변환한다', async () => {
+      const pending = makePendingMessage({
+        messageType: 'IMAGE',
+        content: null,
+        imageIds: [10, 20],
+      });
+      mockGetChatMessages.mockResolvedValue([]);
+      setupStoreMock([pending]);
+
+      const { result } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data[0].images).toEqual([
+        { imageId: 10, imageUrl: '' },
+        { imageId: 20, imageUrl: '' },
+      ]);
+    });
   });
 
   describe('캐시 조작 메서드', () => {
@@ -259,6 +278,67 @@ describe('useChatMessages', () => {
         const updated = result.current.data.find((m) => m.messageId === 1);
         expect(updated?.checked).toBe(true);
       });
+    });
+
+    it('updateMessage가 일치하지 않는 다른 메시지는 그대로 유지한다', async () => {
+      const msg1 = makeServerMessage({ messageId: 1, checked: false });
+      const msg2 = makeServerMessage({ messageId: 2, checked: false });
+      mockGetChatMessages.mockResolvedValue([msg1, msg2]);
+
+      const { result } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.updateMessage(1, (m) => ({ ...m, checked: true }));
+      });
+
+      await waitFor(() => {
+        const untouched = result.current.data.find((m) => m.messageId === 2);
+        expect(untouched?.checked).toBe(false);
+      });
+    });
+
+    it('addMessage가 캐시가 비어있을 때 새 메시지 배열을 생성한다', () => {
+      mockGetChatMessages.mockReturnValue(new Promise(() => {}));
+
+      const { result, queryClient } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+
+      const newMsg = makeServerMessage({ messageId: 7 });
+      act(() => {
+        result.current.addMessage(newMsg);
+      });
+
+      const cached = queryClient.getQueryData(chatMessageKeys.room(ROOM_ID));
+      expect(cached).toEqual([newMsg]);
+    });
+
+    it('updateMessage가 캐시가 없으면 아무 것도 하지 않는다', () => {
+      mockGetChatMessages.mockReturnValue(new Promise(() => {}));
+
+      const { result, queryClient } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+
+      act(() => {
+        result.current.updateMessage(1, (m) => ({ ...m, checked: true }));
+      });
+
+      const cached = queryClient.getQueryData(chatMessageKeys.room(ROOM_ID));
+      expect(cached).toBeUndefined();
+    });
+
+    it('invalidateMessages가 해당 room의 쿼리를 무효화한다', async () => {
+      const msg = makeServerMessage({ messageId: 1 });
+      mockGetChatMessages.mockResolvedValue([msg]);
+
+      const { result, queryClient } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.invalidateMessages();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: chatMessageKeys.room(ROOM_ID) });
     });
   });
 
