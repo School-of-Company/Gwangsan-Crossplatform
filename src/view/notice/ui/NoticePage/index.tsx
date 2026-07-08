@@ -58,7 +58,7 @@ const NoticePage = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-      <Header headerTitle="공지" />
+      <Header headerTitle="공지" showBackButton={false} />
       {renderContent()}
       <AppFooter />
     </SafeAreaView>
