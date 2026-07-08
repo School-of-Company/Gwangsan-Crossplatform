@@ -9,7 +9,7 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
       {
         "busy": undefined,
         "checked": undefined,
-        "disabled": undefined,
+        "disabled": false,
         "expanded": undefined,
         "selected": undefined,
       }
@@ -78,7 +78,7 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
       {
         "busy": undefined,
         "checked": undefined,
-        "disabled": undefined,
+        "disabled": false,
         "expanded": undefined,
         "selected": undefined,
       }
@@ -147,7 +147,7 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
       {
         "busy": undefined,
         "checked": undefined,
-        "disabled": undefined,
+        "disabled": false,
         "expanded": undefined,
         "selected": undefined,
       }
@@ -216,7 +216,7 @@ exports[`Header 스냅샷 - 기본 상태 1`] = `
       {
         "busy": undefined,
         "checked": undefined,
-        "disabled": undefined,
+        "disabled": false,
         "expanded": undefined,
         "selected": undefined,
       }
@@ -277,7 +277,7 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
       {
         "busy": undefined,
         "checked": undefined,
-        "disabled": undefined,
+        "disabled": false,
         "expanded": undefined,
         "selected": undefined,
       }

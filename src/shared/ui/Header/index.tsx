@@ -45,13 +45,16 @@ export function Header({
 
   return (
     <View className="flex-row items-center justify-between px-3 py-6">
-      {showBackButton ? (
-        <TouchableOpacity onPress={handleBack} className="w-10 items-center justify-center">
-          <Icon name="chevron-back" size={24} color="#8F9094" />
-        </TouchableOpacity>
-      ) : (
-        <View className="w-10" />
-      )}
+      <TouchableOpacity
+        onPress={handleBack}
+        disabled={!showBackButton}
+        className={
+          showBackButton
+            ? 'w-10 items-center justify-center'
+            : 'w-10 items-center justify-center opacity-0'
+        }>
+        <Icon name="chevron-back" size={24} color="#8F9094" />
+      </TouchableOpacity>
       <View className="flex-1 flex-row items-center justify-center">
         {onTitlePress ? (
           <TouchableOpacity
