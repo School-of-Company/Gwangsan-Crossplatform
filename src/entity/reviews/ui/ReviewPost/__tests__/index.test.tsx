@@ -1,0 +1,68 @@
+import { render, fireEvent } from '@testing-library/react-native';
+import { useRouter } from 'expo-router';
+import ReviewPost from '../index';
+import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(),
+}));
+
+const mockUseRouter = useRouter as jest.Mock;
+const mockPush = jest.fn();
+
+const makeReview = (overrides: Partial<ReviewPostType> = {}): ReviewPostType => ({
+  reviewerName: '홍길동',
+  content: '좋은 거래였습니다.',
+  light: 50,
+  productId: 1,
+  images: [],
+  reviewId: '10',
+  ...overrides,
+});
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUseRouter.mockReturnValue({ push: mockPush });
+});
+
+describe('ReviewPost', () => {
+  it('리뷰어 이름과 내용을 렌더링한다', () => {
+    const review = makeReview();
+    const { getByText } = render(<ReviewPost review={review} />);
+
+    expect(getByText('홍길동')).toBeTruthy();
+    expect(getByText('좋은 거래였습니다.')).toBeTruthy();
+  });
+
+  it('images가 없으면 기본 이미지를 렌더링한다', () => {
+    const review = makeReview({ images: [] });
+    const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
+    const Image = require('react-native').Image;
+
+    const images = UNSAFE_getAllByType(Image);
+    expect(images).toHaveLength(1);
+  });
+
+  it('images가 있으면 각 이미지를 렌더링한다', () => {
+    const review = makeReview({
+      images: [
+        { imageId: 1, imageUrl: 'https://example.com/1.jpg' },
+        { imageId: 2, imageUrl: 'https://example.com/2.jpg' },
+      ],
+    });
+    const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
+    const Image = require('react-native').Image;
+
+    const images = UNSAFE_getAllByType(Image);
+    expect(images).toHaveLength(2);
+  });
+
+  it('클릭 시 cancelTrade 페이지로 이동한다', () => {
+    const review = makeReview({ reviewId: '42' });
+    const { getByText } = render(<ReviewPost review={review} />);
+
+    fireEvent.press(getByText('홍길동'));
+
+    expect(mockPush).toHaveBeenCalledWith('/cancelTrade/42');
+  });
+});
