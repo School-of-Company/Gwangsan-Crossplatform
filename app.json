@@ -31,7 +31,7 @@
       [
         "expo-notifications",
         {
-          "iosDisplayInForeground": true
+          "mode": "production"
         }
       ],
       [
