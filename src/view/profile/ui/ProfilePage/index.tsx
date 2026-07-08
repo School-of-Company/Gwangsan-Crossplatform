@@ -46,6 +46,8 @@ export default function ProfilePageView() {
   const targetMemberId = profileData?.memberId;
   const isBlocked = !!blockList?.some((b) => b.memberId === targetMemberId);
 
+  const activeMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
+
   const postsData = isMe ? myPostsData : otherPostsData;
   const error = isMe ? myPostsError : otherPostsError;
   const isError = isMe ? myPostsIsError : otherPostsIsError;
@@ -100,7 +102,7 @@ export default function ProfilePageView() {
         </View>
         <Active
           name={isMe ? myProfileData?.nickname : profileData?.nickname}
-          id={String(isMe ? myProfileData?.memberId : profileData?.memberId)}
+          id={activeMemberId != null ? String(activeMemberId) : undefined}
           isMe={isMe}
         />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">

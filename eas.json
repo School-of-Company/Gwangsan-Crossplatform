@@ -36,8 +36,12 @@
     "preview3": {
       "environment": "development",
       "developmentClient": true,
+      "distribution": "internal",
       "env": {
         "NODE_ENV": "development"
+      },
+      "ios": {
+        "image": "macos-tahoe-26.4-xcode-26.4"
       }
     },
     "production": {

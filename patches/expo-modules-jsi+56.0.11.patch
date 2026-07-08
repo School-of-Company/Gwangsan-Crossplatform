@@ -259,7 +259,7 @@ index 9c972ff..db8501b 100644
  
    /// Creates a new object in the given runtime.
 diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptPromise.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptPromise.swift
-index 89a90d9..f58012d 100644
+index 5712004..14edd73 100644
 --- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptPromise.swift
 +++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptPromise.swift
 @@ -10,7 +10,7 @@ internal import jsi
@@ -312,33 +312,3 @@ index 9fffe5e..8cc1f18 100644
    internal let pointee: facebook.jsi.WeakObject
  
    /// Initializes a weak object with the underlying JSI weak object.
-diff --git a/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh b/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
-index 7c2587a..fc7f5da 100644
---- a/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
-+++ b/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
-@@ -199,6 +199,9 @@ build_slice() {
-     env_args+=(DEVELOPER_DIR="$DEVELOPER_DIR")
-   fi
- 
-+  local build_log
-+  build_log=$(mktemp -t expo-modules-jsi)
-+  local xc_status=0
-   (cd "$PACKAGE_DIR" && env -i "${env_args[@]}" \
-     xcodebuild \
-     build \
-@@ -217,7 +220,14 @@ build_slice() {
-     DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
-     COMPILER_INDEX_STORE_ENABLE=NO \
-     SWIFT_COMPILATION_MODE=wholemodule \
--  )
-+  ) >"$build_log" 2>&1 || xc_status=$?
-+  if [[ $xc_status -ne 0 ]]; then
-+    log "error: xcodebuild failed for ${platform} (exit ${xc_status}). Full output:"
-+    cat "$build_log"
-+    rm -f "$build_log"
-+    exit $xc_status
-+  fi
-+  rm -f "$build_log"
- 
-   local product_path="${BUILD_PRODUCTS_PATH}/${build_dir_name}"
-   local framework_src="${product_path}/PackageFrameworks/${PACKAGE_NAME}.framework"
