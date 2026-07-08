@@ -53,10 +53,13 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardHeight(e.endCoordinates.height);
     });
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+    const hideSub = Keyboard.addListener(hideEvent, () => {
       setKeyboardHeight(0);
     });
 

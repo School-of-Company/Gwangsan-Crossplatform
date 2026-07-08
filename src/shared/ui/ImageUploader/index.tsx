@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import { memo, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 import { ImageType } from '@/shared/types/imageType';
 import Toast from 'react-native-toast-message';
@@ -61,6 +61,21 @@ const ImageUploader = ({
       imageData: img,
     }))
   );
+  const isInitialized = useRef(false);
+
+  useEffect(() => {
+    if (initialImages.length > 0 && !isInitialized.current) {
+      setImageStatuses(
+        initialImages.map((img) => ({
+          uri: img.imageUrl,
+          status: 'uploaded' as const,
+          imageData: img,
+        }))
+      );
+      isInitialized.current = true;
+    }
+  }, [initialImages]);
+
   const uploadImageMutation = useUploadImage();
 
   const uploadState = useMemo((): ImageUploadState => {
