@@ -1,6 +1,5 @@
 import Toast from 'react-native-toast-message';
 
- 
 import { io } from 'socket.io-client';
 import { getData } from '../getData';
 import { logger } from '../logger';
