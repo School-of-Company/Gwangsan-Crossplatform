@@ -21,6 +21,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
   const { enabled = true, refetchInterval = 30000, onError } = options;
 
   const queryClient = useQueryClient();
+  const readMessageIds = useReadRoomsStore((state) => state.readMessageIds);
 
   const query = useQuery({
     queryKey: chatRoomKeys.list(),
@@ -28,21 +29,25 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
     enabled,
     refetchInterval,
     staleTime: 10000,
-    select: useCallback((data: ChatRoomListItem[]) => {
-      const { isRead } = useReadRoomsStore.getState();
-      const withReadOverride = data.map((room) =>
-        room.unreadMessageCount > 0 && isRead(room.roomId, room.messageId)
-          ? { ...room, unreadMessageCount: 0 }
-          : room
-      );
+    select: useCallback(
+      (data: ChatRoomListItem[]) => {
+        const withReadOverride = data.map((room) => {
+          const recorded = readMessageIds[String(room.roomId)];
+          const isRoomRead = recorded !== undefined && String(recorded) === String(room.messageId);
+          return room.unreadMessageCount > 0 && isRoomRead
+            ? { ...room, unreadMessageCount: 0 }
+            : room;
+        });
 
-      const sortedData = [...withReadOverride].sort((a, b) => {
-        if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
-        if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
-        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
-      });
-      return sortedData;
-    }, []),
+        const sortedData = [...withReadOverride].sort((a, b) => {
+          if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
+          if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
+          return b.lastMessageTime.localeCompare(a.lastMessageTime);
+        });
+        return sortedData;
+      },
+      [readMessageIds]
+    ),
   });
 
   if (query.error && onError) {

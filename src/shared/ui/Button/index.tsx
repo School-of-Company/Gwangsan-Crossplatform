@@ -14,9 +14,6 @@ interface ButtonProps extends TouchableOpacityProps {
   width?: string;
 }
 
-const BUTTON_HEIGHT = 52;
-const PRESS_SHRINK = 3;
-
 export const Button = ({
   children,
   disabled = false,
@@ -27,26 +24,26 @@ export const Button = ({
   onPressOut,
   ...props
 }: ButtonProps) => {
-  const shrink = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = useCallback(
     (e: GestureResponderEvent) => {
-      Animated.timing(shrink, {
-        toValue: PRESS_SHRINK,
+      Animated.timing(scale, {
+        toValue: 0.96,
         duration: 100,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
       onPressIn?.(e);
     },
-    [shrink, onPressIn]
+    [scale, onPressIn]
   );
 
   const handlePressOut = useCallback(
     (e: GestureResponderEvent) => {
-      Animated.timing(shrink, { toValue: 0, duration: 100, useNativeDriver: false }).start();
+      Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
       onPressOut?.(e);
     },
-    [shrink, onPressOut]
+    [scale, onPressOut]
   );
 
   return (
@@ -76,8 +73,7 @@ export const Button = ({
           }
         `}
         style={{
-          height: Animated.subtract(BUTTON_HEIGHT, shrink),
-          marginHorizontal: Animated.divide(shrink, 2),
+          transform: [{ scale }],
         }}>
         <Text
           className={`

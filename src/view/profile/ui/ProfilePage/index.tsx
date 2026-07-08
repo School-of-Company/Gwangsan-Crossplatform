@@ -82,7 +82,7 @@ export default function ProfilePageView() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-      <Header headerTitle="프로필" />
+      <Header headerTitle="프로필" showBackButton={!isMe} />
       <Information
         isMe={isMe}
         id={isMe ? myProfileData?.memberId : profileData?.memberId}

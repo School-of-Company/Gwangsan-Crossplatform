@@ -8,6 +8,7 @@ interface Props {
   onTitlePress?: () => void;
   onMenuPress?: () => void;
   showMenuButton?: boolean;
+  showBackButton?: boolean;
   connectionState?: 'connected' | 'connecting' | 'disconnected';
 }
 
@@ -17,6 +18,7 @@ export function Header({
   onTitlePress,
   onMenuPress,
   showMenuButton = false,
+  showBackButton = true,
   connectionState,
 }: Props) {
   const handleBack = () => {
@@ -43,7 +45,14 @@ export function Header({
 
   return (
     <View className="flex-row items-center justify-between px-3 py-6">
-      <TouchableOpacity onPress={handleBack} className="w-10 items-center justify-center">
+      <TouchableOpacity
+        onPress={handleBack}
+        disabled={!showBackButton}
+        className={
+          showBackButton
+            ? 'w-10 items-center justify-center'
+            : 'w-10 items-center justify-center opacity-0'
+        }>
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
       <View className="flex-1 flex-row items-center justify-center">
