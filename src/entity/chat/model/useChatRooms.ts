@@ -42,7 +42,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
         const sortedData = [...withReadOverride].sort((a, b) => {
           if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
           if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
-          return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
+          return b.lastMessageTime.localeCompare(a.lastMessageTime);
         });
         return sortedData;
       },

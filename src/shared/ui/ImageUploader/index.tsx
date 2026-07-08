@@ -64,7 +64,7 @@ const ImageUploader = ({
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    if (initialImages.length > 0 && !isInitialized.current) {
+    if (initialImages.length > 0 && !isInitialized.current && imageStatuses.length === 0) {
       setImageStatuses(
         initialImages.map((img) => ({
           uri: img.imageUrl,
@@ -74,7 +74,7 @@ const ImageUploader = ({
       );
       isInitialized.current = true;
     }
-  }, [initialImages]);
+  }, [initialImages, imageStatuses.length]);
 
   const uploadImageMutation = useUploadImage();
 
