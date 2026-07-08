@@ -1,11 +1,17 @@
 import { findChatRoom } from '../findChatRoom';
 import { instance } from '@/shared/lib/axios';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 jest.mock('@/shared/lib/axios', () => ({
   instance: { get: jest.fn() },
 }));
 
+jest.mock('~/shared/lib/errorHandler', () => ({
+  toAppError: jest.fn((error) => error),
+}));
+
 const mockGet = instance.get as jest.Mock;
+const mockToAppError = toAppError as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -36,10 +42,15 @@ describe('findChatRoom', () => {
       await expect(findChatRoom(1)).rejects.toThrow('Not found');
     });
 
-    it('에러 메시지가 toAppError를 통해 래핑된다', async () => {
-      mockGet.mockRejectedValue(new Error('Server error'));
+    it('에러가 toAppError를 통해 래핑된다', async () => {
+      const originalError = new Error('Server error');
+      const wrappedError = new Error('Wrapped server error');
+      mockGet.mockRejectedValue(originalError);
+      mockToAppError.mockReturnValueOnce(wrappedError);
 
-      await expect(findChatRoom(1)).rejects.toThrow('Server error');
+      await expect(findChatRoom(1)).rejects.toBe(wrappedError);
+
+      expect(mockToAppError).toHaveBeenCalledWith(originalError);
     });
   });
 });

@@ -1,6 +1,7 @@
 import { createChatRoom } from '../createChatRoom';
 import { instance } from '@/shared/lib/axios';
 import Toast from 'react-native-toast-message';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 jest.mock('@/shared/lib/axios', () => ({
   instance: { post: jest.fn() },
@@ -11,7 +12,12 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
+jest.mock('~/shared/lib/errorHandler', () => ({
+  toAppError: jest.fn((error) => error),
+}));
+
 const mockPost = instance.post as jest.Mock;
+const mockToAppError = toAppError as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -50,10 +56,15 @@ describe('createChatRoom', () => {
       );
     });
 
-    it('에러 메시지가 toAppError를 통해 래핑된다', async () => {
-      mockPost.mockRejectedValue(new Error('Server error'));
+    it('에러가 toAppError를 통해 래핑된다', async () => {
+      const originalError = new Error('Server error');
+      const wrappedError = new Error('Wrapped server error');
+      mockPost.mockRejectedValue(originalError);
+      mockToAppError.mockReturnValueOnce(wrappedError);
 
-      await expect(createChatRoom(1)).rejects.toThrow('Server error');
+      await expect(createChatRoom(1)).rejects.toBe(wrappedError);
+
+      expect(mockToAppError).toHaveBeenCalledWith(originalError);
     });
   });
 });

@@ -117,10 +117,12 @@ describe('formatDate', () => {
         throw new Error('toLocaleDateString failure');
       });
 
-      const dateStr = msAgo(10 * DAY);
-      expect(formatDate(dateStr)).toBe(dateStr);
-
-      Date.prototype.toLocaleDateString = original;
+      try {
+        const dateStr = msAgo(10 * DAY);
+        expect(formatDate(dateStr)).toBe(dateStr);
+      } finally {
+        Date.prototype.toLocaleDateString = original;
+      }
     });
   });
 });
