@@ -23,6 +23,10 @@ jest.mock('@sentry/react-native', () => ({
   setUser: jest.fn(),
 }));
 
+jest.mock('~/shared/lib/socket', () => ({
+  chatSocket: { connect: jest.fn().mockResolvedValue(undefined) },
+}));
+
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSigninFormField: jest.fn(),
   useSigninStepNavigation: jest.fn(),

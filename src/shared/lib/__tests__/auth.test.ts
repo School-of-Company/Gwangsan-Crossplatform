@@ -2,11 +2,6 @@ import { getData } from '../getData';
 import { removeData } from '../removeData';
 import { getAccessToken, getRefreshToken, clearAuthTokens } from '../auth';
 import * as Keychain from 'react-native-keychain';
-import * as Notifications from 'expo-notifications';
-
-jest.mock('expo-notifications', () => ({
-  setNotificationHandler: jest.fn(),
-}));
 
 jest.mock('../getData', () => ({
   getData: jest.fn(),
@@ -26,28 +21,9 @@ const mockResetGenericPassword = Keychain.resetGenericPassword as jest.MockedFun
   typeof Keychain.resetGenericPassword
 >;
 
-// auth.ts는 모듈 로드 시점(최초 import)에 setNotificationHandler를 한 번 호출한다.
-// beforeEach의 jest.clearAllMocks()가 호출 기록을 지우기 전에 미리 캡처해둔다.
-const notificationHandlerConfig = (Notifications.setNotificationHandler as jest.Mock).mock
-  .calls[0][0];
-
 describe('auth utilities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('알림 핸들러 설정', () => {
-    it('handleNotification 콜백이 알림 표시 설정을 반환한다', async () => {
-      const result = await notificationHandlerConfig.handleNotification();
-
-      expect(result).toEqual({
-        shouldShowAlert: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-        shouldShowBanner: true,
-        shouldShowList: true,
-      });
-    });
   });
 
   describe('getAccessToken', () => {

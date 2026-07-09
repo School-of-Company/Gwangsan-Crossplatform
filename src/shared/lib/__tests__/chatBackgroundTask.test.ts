@@ -25,6 +25,7 @@ jest.mock('expo-task-manager', () => ({
 
 jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync: jest.fn(),
+  setBadgeCountAsync: jest.fn(),
 }));
 
 jest.mock('expo-secure-store', () => ({
@@ -46,6 +47,7 @@ const mockRegisterTaskAsync = BackgroundFetch.registerTaskAsync as jest.Mock;
 const mockUnregisterTaskAsync = BackgroundFetch.unregisterTaskAsync as jest.Mock;
 const mockGetItemAsync = SecureStore.getItemAsync as jest.Mock;
 const mockScheduleNotificationAsync = Notifications.scheduleNotificationAsync as jest.Mock;
+const mockSetBadgeCountAsync = Notifications.setBadgeCountAsync as jest.Mock;
 const mockAsyncGetItem = AsyncStorage.getItem as jest.Mock;
 const mockAsyncSetItem = AsyncStorage.setItem as jest.Mock;
 const mockAsyncRemoveItem = AsyncStorage.removeItem as jest.Mock;
@@ -64,6 +66,7 @@ beforeEach(() => {
   mockAsyncSetItem.mockResolvedValue(undefined);
   mockAsyncRemoveItem.mockResolvedValue(undefined);
   mockScheduleNotificationAsync.mockResolvedValue(undefined);
+  mockSetBadgeCountAsync.mockResolvedValue(undefined);
   mockGetItemAsync.mockResolvedValue(null);
 });
 
@@ -276,9 +279,8 @@ describe('registerChatBackgroundTask', () => {
     expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
   });
 
-  it('registers the task when available and not already registered', async () => {
+  it('registers the task when available', async () => {
     mockGetStatusAsync.mockResolvedValue(BackgroundFetch.BackgroundFetchStatus.Available);
-    mockIsTaskRegisteredAsync.mockResolvedValue(false);
 
     await registerChatBackgroundTask();
 
@@ -292,13 +294,22 @@ describe('registerChatBackgroundTask', () => {
     );
   });
 
-  it('does not re-register when already registered', async () => {
+  it('re-registers even when the native flag already reports it as registered', async () => {
+    // isTaskRegisteredAsync only reflects a persisted native flag, not whether the alarm
+    // actually survived a process restart, so registration always re-runs (safe to repeat).
     mockGetStatusAsync.mockResolvedValue(BackgroundFetch.BackgroundFetchStatus.Available);
     mockIsTaskRegisteredAsync.mockResolvedValue(true);
 
     await registerChatBackgroundTask();
 
-    expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
+    expect(mockRegisterTaskAsync).toHaveBeenCalledWith(
+      CHAT_BACKGROUND_TASK,
+      expect.objectContaining({
+        minimumInterval: 60 * 5,
+        stopOnTerminate: false,
+        startOnBoot: true,
+      })
+    );
   });
 
   it('silently ignores unexpected errors', async () => {
