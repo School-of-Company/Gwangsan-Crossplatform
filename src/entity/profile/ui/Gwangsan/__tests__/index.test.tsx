@@ -14,10 +14,11 @@ describe('Gwangsan', () => {
     expect(getByText('0 광산')).toBeTruthy();
   });
 
-  it('gwangsan이 없으면 undefined가 표시된다', () => {
-    const { getAllByText } = render(<Gwangsan />);
+  it('gwangsan이 없으면 값 없이 "광산" 텍스트만 표시된다', () => {
+    const { getAllByText, queryByText } = render(<Gwangsan />);
 
     expect(getAllByText('광산').length).toBeGreaterThan(0);
+    expect(queryByText(/undefined/)).toBeNull();
   });
 
   it('제목 텍스트를 렌더링한다', () => {
