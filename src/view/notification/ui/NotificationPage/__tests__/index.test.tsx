@@ -76,9 +76,9 @@ describe('NotificationPage', () => {
 
   it('apiResponse가 없으면 데이터가 있어도 에러 메시지를 표시한다', () => {
     mockUseGetAlertList.mockReturnValue({
-      data: undefined,
+      data: [makeAlert()],
       isLoading: false,
-      error: null,
+      error: new Error('Failed to fetch'),
       refetch: mockRefetch,
     });
 
