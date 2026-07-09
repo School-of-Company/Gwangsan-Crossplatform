@@ -1,31 +1,21 @@
-import Toast from 'react-native-toast-message';
 import { instance } from '~/shared/lib/axios';
-import { logger } from '~/shared/lib/logger';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { ReviewPostType } from '../model/reviewPostType';
 
-export const getReceiveReview = async (id: string) => {
+export const getReceiveReview = async (id: string): Promise<ReviewPostType[]> => {
   try {
-    return await instance.get(`/review/${id}`);
+    const { data } = await instance.get<ReviewPostType[]>(`/review/${id}`);
+    return data;
   } catch (error) {
-    logger.error('getReceiveReview failed', error);
-    Toast.show({
-      type: 'error',
-      text1: '후기 조회 실패',
-      text2: '잠시 후 다시 시도해주세요.',
-    });
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };
 
-export const getTossReview = async () => {
+export const getTossReview = async (): Promise<ReviewPostType[]> => {
   try {
-    return await instance.get('/review');
+    const { data } = await instance.get<ReviewPostType[]>('/review');
+    return data;
   } catch (error) {
-    logger.error('getTossReview failed', error);
-    Toast.show({
-      type: 'error',
-      text1: '후기 조회 실패',
-      text2: '잠시 후 다시 시도해주세요.',
-    });
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };

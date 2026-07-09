@@ -34,7 +34,7 @@ jobs:
       - name: Get PR ref (comment trigger)
         if: github.event_name == 'issue_comment'
         id: get-pr-ref
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const pr = await github.rest.pulls.get({
@@ -45,19 +45,19 @@ jobs:
             core.setOutput('ref', pr.data.head.sha);
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'issue_comment' && steps.get-pr-ref.outputs.ref || github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('package-lock.json') }}-${{ hashFiles('patches/**') }}
@@ -73,7 +73,7 @@ jobs:
 
       - name: Cache applesimutils
         id: cache-applesimutils
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /usr/local/Cellar/applesimutils
           key: applesimutils-${{ runner.os }}-${{ runner.arch }}
@@ -135,7 +135,7 @@ jobs:
 
       - name: Cache Detox framework
         id: cache-detox-framework
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/Library/Detox/ios
           key: detox-framework-${{ hashFiles('package-lock.json') }}

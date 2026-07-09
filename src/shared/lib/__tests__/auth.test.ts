@@ -3,10 +3,6 @@ import { removeData } from '../removeData';
 import { getAccessToken, getRefreshToken, clearAuthTokens } from '../auth';
 import * as Keychain from 'react-native-keychain';
 
-jest.mock('expo-notifications', () => ({
-  setNotificationHandler: jest.fn(),
-}));
-
 jest.mock('../getData', () => ({
   getData: jest.fn(),
 }));

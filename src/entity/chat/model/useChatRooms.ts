@@ -4,6 +4,7 @@ import { getChatRooms } from '../api/getChatRooms';
 import { markChatAsRead } from '../api/markChatAsRead';
 import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chatTypes';
 import { logger } from '~/shared/lib/logger';
+import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 
 export const chatRoomKeys = {
   all: ['chatRooms'] as const,
@@ -20,6 +21,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
   const { enabled = true, refetchInterval = 30000, onError } = options;
 
   const queryClient = useQueryClient();
+  const readMessageIds = useReadRoomsStore((state) => state.readMessageIds);
 
   const query = useQuery({
     queryKey: chatRoomKeys.list(),
@@ -27,14 +29,25 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
     enabled,
     refetchInterval,
     staleTime: 10000,
-    select: useCallback((data: ChatRoomListItem[]) => {
-      const sortedData = [...data].sort((a, b) => {
-        if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
-        if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
-        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
-      });
-      return sortedData;
-    }, []),
+    select: useCallback(
+      (data: ChatRoomListItem[]) => {
+        const withReadOverride = data.map((room) => {
+          const recorded = readMessageIds[String(room.roomId)];
+          const isRoomRead = recorded !== undefined && String(recorded) === String(room.messageId);
+          return room.unreadMessageCount > 0 && isRoomRead
+            ? { ...room, unreadMessageCount: 0 }
+            : room;
+        });
+
+        const sortedData = [...withReadOverride].sort((a, b) => {
+          if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
+          if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
+          return b.lastMessageTime.localeCompare(a.lastMessageTime);
+        });
+        return sortedData;
+      },
+      [readMessageIds]
+    ),
   });
 
   if (query.error && onError) {
@@ -61,32 +74,32 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
 
   const markRoomAsRead = useCallback(
     async (roomId: string | number) => {
+      const resetUnreadCount = (readMessageId?: ChatMessageResponse['messageId']) => {
+        updateChatRoom(roomId, (room) => {
+          const resolvedReadMessageId = readMessageId ?? room.messageId;
+          if (resolvedReadMessageId !== undefined) {
+            useReadRoomsStore.getState().markRead(roomId, resolvedReadMessageId);
+          }
+          return { ...room, unreadMessageCount: 0 };
+        });
+      };
+
       const messages = queryClient.getQueryData(['chatMessages', roomId]) as
         | ChatMessageResponse[]
         | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
 
       if (!lastMessage) {
-        updateChatRoom(roomId, (room) => ({
-          ...room,
-          unreadMessageCount: 0,
-        }));
+        resetUnreadCount();
         return;
       }
 
       try {
         await markChatAsRead(roomId, lastMessage.messageId);
-
-        updateChatRoom(roomId, (room) => ({
-          ...room,
-          unreadMessageCount: 0,
-        }));
+        resetUnreadCount(lastMessage.messageId);
       } catch (error) {
         logger.error('markRoomAsRead failed', error);
-        updateChatRoom(roomId, (room) => ({
-          ...room,
-          unreadMessageCount: 0,
-        }));
+        resetUnreadCount(lastMessage.messageId);
       }
     },
     [updateChatRoom, queryClient]

@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CheckIcon 스냅샷 - 기본값 1`] = `
+<RNSVGSvgView
+  align="xMidYMid"
+  bbHeight={16}
+  bbWidth={16}
+  fill="none"
+  focusable={false}
+  height={16}
+  meetOrSlice={0}
+  minX={0}
+  minY={0}
+  style={
+    [
+      {
+        "backgroundColor": "transparent",
+        "borderWidth": 0,
+      },
+      {
+        "flex": 0,
+        "height": 16,
+        "width": 16,
+      },
+    ]
+  }
+  vbHeight={16}
+  vbWidth={16}
+  width={16}
+>
+  <RNSVGGroup
+    fill={null}
+    propList={
+      [
+        "fill",
+      ]
+    }
+  >
+    <RNSVGPath
+      d="M13.3332 4L5.99984 11.3333L2.6665 8"
+      fill={
+        {
+          "payload": 4278190080,
+          "type": 0,
+        }
+      }
+      propList={
+        [
+          "stroke",
+          "strokeWidth",
+          "strokeLinecap",
+          "strokeLinejoin",
+        ]
+      }
+      stroke={
+        {
+          "payload": 4278220226,
+          "type": 0,
+        }
+      }
+      strokeLinecap={1}
+      strokeLinejoin={1}
+      strokeWidth="2"
+    />
+  </RNSVGGroup>
+</RNSVGSvgView>
+`;

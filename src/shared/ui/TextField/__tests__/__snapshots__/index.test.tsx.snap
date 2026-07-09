@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TextField 스냅샷 1`] = `
+<View
+  className="flex w-full gap-2"
+>
+  <Text
+    className="text-label"
+  >
+    상세 설명
+  </Text>
+  <TextInput
+    className="max-h-[200px] min-h-[120px] w-full rounded-xl border border-gray-400 px-4 py-5 text-body5 focus:border-black"
+    multiline={true}
+    textAlignVertical="top"
+  />
+</View>
+`;

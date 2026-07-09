@@ -137,6 +137,24 @@ describe('getChatRoomData', () => {
 
       expect(result.product).toBeNull();
     });
+
+    it('응답 데이터가 null이면 메시지와 product가 비어있다', async () => {
+      mockGet.mockResolvedValue({ data: null });
+
+      const result = await getChatRoomData(100);
+
+      expect(result.messages).toHaveLength(0);
+      expect(result.product).toBeNull();
+    });
+
+    it('응답 데이터가 undefined이면 메시지와 product가 비어있다', async () => {
+      mockGet.mockResolvedValue({ data: undefined });
+
+      const result = await getChatRoomData(100);
+
+      expect(result.messages).toHaveLength(0);
+      expect(result.product).toBeNull();
+    });
   });
 
   describe('에러 처리', () => {
@@ -146,6 +164,16 @@ describe('getChatRoomData', () => {
 
       await expect(getChatRoomData(100)).rejects.toThrow();
       expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
+
+    it('에러에 message가 없으면 기본 문구로 Toast를 보여준다', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockGet.mockRejectedValue({});
+
+      await expect(getChatRoomData(100)).rejects.toThrow();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '채팅방 데이터를 불러올 수 없습니다' })
+      );
     });
 
     it('API와 getCurrentUserId를 병렬로 호출한다', async () => {

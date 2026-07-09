@@ -1,4 +1,11 @@
-import { TouchableOpacity, Text, TouchableOpacityProps } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  TouchableOpacityProps,
+  Animated,
+  GestureResponderEvent,
+} from 'react-native';
+import { useRef, useCallback } from 'react';
 
 interface ButtonProps extends TouchableOpacityProps {
   children: React.ReactNode;
@@ -13,44 +20,77 @@ export const Button = ({
   variant = 'primary',
   style,
   width = 'w-full',
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(
+    (e: GestureResponderEvent) => {
+      Animated.timing(scale, {
+        toValue: 0.96,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+      onPressIn?.(e);
+    },
+    [scale, onPressIn]
+  );
+
+  const handlePressOut = useCallback(
+    (e: GestureResponderEvent) => {
+      Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+      onPressOut?.(e);
+    },
+    [scale, onPressOut]
+  );
+
   return (
     <TouchableOpacity
-      className={`
-        min-h-[56px] ${width} items-center justify-center rounded-lg px-8 py-4
-        ${
-          disabled
-            ? variant === 'primary'
-              ? 'bg-[#CDCDCF]'
-              : variant === 'secondary'
-                ? 'border-2 border-[#CDCDCF] bg-white'
-                : 'bg-[#CDCDCF]'
-            : variant === 'primary'
-              ? 'bg-[#8FC31D]'
-              : variant === 'secondary'
-                ? 'border-2 border-[#8FC31D] bg-white active:bg-gray-50'
-                : 'bg-[#DF454A]'
-        }
-      `}
+      className={`h-[52px] ${width} justify-center bg-white`}
       disabled={disabled}
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       style={style}
       {...props}>
-      <Text
+      <Animated.View
         className={`
-        text-lg font-semibold
-        ${
-          disabled
-            ? 'text-gray-500'
-            : variant === 'primary'
-              ? 'text-white'
-              : variant === 'secondary'
-                ? 'text-[#8FC31D]'
-                : 'text-white'
-        }
-      `}>
-        {children}
-      </Text>
+          items-center justify-center rounded-xl px-8 py-3
+          ${
+            disabled
+              ? variant === 'primary'
+                ? 'bg-[#CDCDCF]'
+                : variant === 'secondary'
+                  ? 'border-2 border-[#CDCDCF] bg-white'
+                  : 'bg-[#CDCDCF]'
+              : variant === 'primary'
+                ? 'bg-main-500'
+                : variant === 'secondary'
+                  ? 'border-2 border-main-500 bg-white'
+                  : 'bg-error-500'
+          }
+        `}
+        style={{
+          transform: [{ scale }],
+        }}>
+        <Text
+          className={`
+          text-lg font-semibold
+          ${
+            disabled
+              ? 'text-gray-500'
+              : variant === 'primary'
+                ? 'text-white'
+                : variant === 'secondary'
+                  ? 'text-main-500'
+                  : 'text-white'
+          }
+        `}>
+          {children}
+        </Text>
+      </Animated.View>
     </TouchableOpacity>
   );
 };

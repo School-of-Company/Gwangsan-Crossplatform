@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import { memo, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 import { ImageType } from '@/shared/types/imageType';
 import Toast from 'react-native-toast-message';
@@ -28,6 +28,7 @@ export interface ImageUploadState {
 
 interface Props {
   images?: string[];
+  initialImages?: ImageType[];
   onImagesChange?: (images: string[]) => void;
   onImageIdsChange?: (imageIds: number[]) => void;
   onUploadStateChange?: (state: ImageUploadState) => void;
@@ -45,6 +46,7 @@ interface ImageStatus {
 
 const ImageUploader = ({
   images = [],
+  initialImages = [],
   onImagesChange,
   onImageIdsChange,
   onUploadStateChange,
@@ -52,7 +54,28 @@ const ImageUploader = ({
   readonly = false,
   maxImages = 5,
 }: Props) => {
-  const [imageStatuses, setImageStatuses] = useState<ImageStatus[]>([]);
+  const [imageStatuses, setImageStatuses] = useState<ImageStatus[]>(() =>
+    initialImages.map((img) => ({
+      uri: img.imageUrl,
+      status: 'uploaded' as const,
+      imageData: img,
+    }))
+  );
+  const isInitialized = useRef(false);
+
+  useEffect(() => {
+    if (initialImages.length > 0 && !isInitialized.current && imageStatuses.length === 0) {
+      setImageStatuses(
+        initialImages.map((img) => ({
+          uri: img.imageUrl,
+          status: 'uploaded' as const,
+          imageData: img,
+        }))
+      );
+      isInitialized.current = true;
+    }
+  }, [initialImages, imageStatuses.length]);
+
   const uploadImageMutation = useUploadImage();
 
   const uploadState = useMemo((): ImageUploadState => {

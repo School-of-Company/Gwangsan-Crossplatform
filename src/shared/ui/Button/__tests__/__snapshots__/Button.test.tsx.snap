@@ -35,14 +35,31 @@ exports[`Button 스냅샷 - disabled 상태 1`] = `
     }
   }
 >
-  <Text
+  <View
     className="
-        text-lg font-semibold
-        text-gray-500
-      "
+          items-center justify-center rounded-xl px-8 py-3
+          bg-[#CDCDCF]
+        "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
   >
-    확인
-  </Text>
+    <Text
+      className="
+          text-lg font-semibold
+          text-gray-500
+        "
+    >
+      확인
+    </Text>
+  </View>
 </View>
 `;
 
@@ -81,14 +98,31 @@ exports[`Button 스냅샷 - error variant 1`] = `
     }
   }
 >
-  <Text
+  <View
     className="
-        text-lg font-semibold
-        text-white
-      "
+          items-center justify-center rounded-xl px-8 py-3
+          bg-error-500
+        "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
   >
-    확인
-  </Text>
+    <Text
+      className="
+          text-lg font-semibold
+          text-white
+        "
+    >
+      확인
+    </Text>
+  </View>
 </View>
 `;
 
@@ -127,14 +161,31 @@ exports[`Button 스냅샷 - primary variant (기본값) 1`] = `
     }
   }
 >
-  <Text
+  <View
     className="
-        text-lg font-semibold
-        text-white
-      "
+          items-center justify-center rounded-xl px-8 py-3
+          bg-main-500
+        "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
   >
-    확인
-  </Text>
+    <Text
+      className="
+          text-lg font-semibold
+          text-white
+        "
+    >
+      확인
+    </Text>
+  </View>
 </View>
 `;
 
@@ -173,13 +224,30 @@ exports[`Button 스냅샷 - secondary variant 1`] = `
     }
   }
 >
-  <Text
+  <View
     className="
-        text-lg font-semibold
-        text-[#8FC31D]
-      "
+          items-center justify-center rounded-xl px-8 py-3
+          border-2 border-main-500 bg-white
+        "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
   >
-    확인
-  </Text>
+    <Text
+      className="
+          text-lg font-semibold
+          text-main-500
+        "
+    >
+      확인
+    </Text>
+  </View>
 </View>
 `;

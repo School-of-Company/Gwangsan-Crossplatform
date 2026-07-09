@@ -1,0 +1,109 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BackArrow 스냅샷 - 기본값 1`] = `
+<RNSVGSvgView
+  align="xMidYMid"
+  bbHeight={24}
+  bbWidth={24}
+  fill="none"
+  focusable={false}
+  height={24}
+  meetOrSlice={0}
+  minX={0}
+  minY={0}
+  style={
+    [
+      {
+        "backgroundColor": "transparent",
+        "borderWidth": 0,
+      },
+      {
+        "flex": 0,
+        "height": 24,
+        "width": 24,
+      },
+    ]
+  }
+  vbHeight={24}
+  vbWidth={24}
+  width={24}
+>
+  <RNSVGGroup
+    fill={null}
+    propList={
+      [
+        "fill",
+      ]
+    }
+  >
+    <RNSVGGroup
+      fill={
+        {
+          "payload": 4278190080,
+          "type": 0,
+        }
+      }
+    >
+      <RNSVGPath
+        d="M15 6L9.70711 11.2929C9.31658 11.6834 9.31658 12.3166 9.70711 12.7071L15 18"
+        fill={
+          {
+            "payload": 4278190080,
+            "type": 0,
+          }
+        }
+        propList={
+          [
+            "stroke",
+          ]
+        }
+        stroke={
+          {
+            "payload": 4287598740,
+            "type": 0,
+          }
+        }
+      />
+    </RNSVGGroup>
+    <RNSVGDefs>
+      <RNSVGClipPath
+        fill={
+          {
+            "payload": 4278190080,
+            "type": 0,
+          }
+        }
+        name="clip0_3028_3906"
+      >
+        <RNSVGRect
+          fill={
+            {
+              "payload": 4294967295,
+              "type": 0,
+            }
+          }
+          height="14"
+          matrix={
+            [
+              1,
+              0,
+              0,
+              1,
+              8,
+              5,
+            ]
+          }
+          propList={
+            [
+              "fill",
+            ]
+          }
+          width="8"
+          x={0}
+          y={0}
+        />
+      </RNSVGClipPath>
+    </RNSVGDefs>
+  </RNSVGGroup>
+</RNSVGSvgView>
+`;

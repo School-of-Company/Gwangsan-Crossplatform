@@ -81,10 +81,14 @@ describe('useCancelTrade', () => {
     expect(result.current.canSubmit).toBe(false);
   });
 
-  it('productId가 없고 reason도 비어있으면 canSubmit이 true이다', () => {
+  it('productId가 없으면 reason이 있어도 canSubmit이 false이다', () => {
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: undefined }));
 
-    expect(result.current.canSubmit).toBe(true);
+    act(() => {
+      result.current.setReason('충분한 사유');
+    });
+
+    expect(result.current.canSubmit).toBe(false);
   });
 
   it('reason이 있으면 canSubmit이 true이다', () => {

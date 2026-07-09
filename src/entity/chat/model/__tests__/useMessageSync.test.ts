@@ -69,6 +69,7 @@ describe('useMessageSync', () => {
     jest.clearAllMocks();
     setupPendingMessages();
     mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
+    mockMarkChatAsRead.mockResolvedValue(undefined);
   });
 
   const renderSync = async (queryClient?: QueryClient) => {
@@ -525,6 +526,152 @@ describe('useMessageSync', () => {
         });
       }).not.toThrow();
     });
+
+    it('현재 방의 상대방 메시지 수신 시 markChatAsRead(자동) 실패하면 logger.error를 호출한다', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockMarkChatAsRead.mockRejectedValue(new Error('mark failed'));
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      await act(async () => {
+        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID }));
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'markChatAsRead (auto) failed',
+        expect.any(Error)
+      );
+    });
+
+    it('roomId 또는 messageType이 다른 pending 메시지는 큐에서 제거하지 않는다', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          {
+            tempId: 'temp-other-room',
+            roomId: 999,
+            messageType: 'TEXT',
+            content: '안녕',
+            imageIds: [],
+          },
+          {
+            tempId: 'temp-other-type',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [],
+          },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' })
+        );
+      });
+
+      expect(removeMessage).not.toHaveBeenCalled();
+    });
+
+    it('IMAGE 타입 pending 메시지가 이미지 개수 불일치로 매칭되지 않으면 큐에서 제거하지 않는다', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          {
+            tempId: 'temp-img-mismatch',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [10, 20],
+          },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            images: [{ imageId: 10, imageUrl: 'url1' }],
+          })
+        );
+      });
+
+      expect(removeMessage).not.toHaveBeenCalled();
+    });
+
+    it('handleReceiveMessage 처리 중 예외가 발생하면 logger.error를 호출하고 전파하지 않는다', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetState.mockImplementationOnce(() => {
+        throw new Error('queue store boom');
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      expect(() => {
+        act(() => {
+          result.current.handleReceiveMessage(makeMessage());
+        });
+      }).not.toThrow();
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('handleReceiveMessage error', expect.any(Error));
+    });
+
+    it('chatRoomQueryKey가 없으면 방 목록 캐시를 건드리지 않는다', async () => {
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({ currentRoomId: ROOM_ID, chatMessageQueryKey: CHAT_MSG_KEY })
+      );
+      await act(async () => {});
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      expect(() => {
+        act(() => {
+          rendered.result.current.handleReceiveMessage(makeMessage());
+        });
+      }).not.toThrow();
+
+      const cachedMessages = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cachedMessages).toHaveLength(1);
+      expect(rendered.queryClient.getQueryData(CHAT_ROOM_KEY)).toBeUndefined();
+    });
+
+    it('메시지의 roomId와 일치하지 않는 다른 방들은 그대로 유지한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: 1, messageId: 1, lastMessage: '방1 메시지' }),
+        makeRoomListItem({ roomId: 2, messageId: 1, lastMessage: '방2 메시지' }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 99,
+            roomId: 1,
+            content: '새 메시지',
+            createdAt: '2024-01-02T00:00:00Z',
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.find((r) => r.roomId === 1)?.lastMessage).toBe('새 메시지');
+        expect(rooms?.find((r) => r.roomId === 2)?.lastMessage).toBe('방2 메시지');
+      });
+    });
   });
 
   describe('handleUpdateRoomList', () => {
@@ -819,6 +966,41 @@ describe('useMessageSync', () => {
     it('메시지가 없으면 API를 호출하지 않고 unreadCount만 0으로 설정한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      await act(async () => {
+        await result.current.markRoomAsRead(ROOM_ID);
+      });
+
+      expect(mockMarkChatAsRead).not.toHaveBeenCalled();
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[0].unreadMessageCount).toBe(0);
+    });
+
+    it('markRoomAsRead 호출 시 대상이 아닌 다른 방의 unreadMessageCount는 변경하지 않는다', async () => {
+      mockMarkChatAsRead.mockResolvedValue(undefined);
+      const { result, queryClient } = await renderSync();
+
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: ROOM_ID, unreadMessageCount: 5 }),
+        makeRoomListItem({ roomId: 999, unreadMessageCount: 3 }),
+      ]);
+      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage()]);
+
+      await act(async () => {
+        await result.current.markRoomAsRead(ROOM_ID);
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.find((r) => r.roomId === ROOM_ID)?.unreadMessageCount).toBe(0);
+      expect(rooms?.find((r) => r.roomId === 999)?.unreadMessageCount).toBe(3);
+    });
+
+    it('마지막 메시지와 room.messageId가 모두 없으면 markRead 대상 메시지 없이 unreadCount만 0으로 설정한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ unreadMessageCount: 4, messageId: undefined as unknown as number }),
+      ]);
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
       await act(async () => {

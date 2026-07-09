@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator } from 'react-native';
+import { Text, ActivityIndicator, Platform } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -123,6 +123,11 @@ export default function ChatRoomPage() {
           content: contents,
           light: light,
         });
+        queryClient.invalidateQueries({ queryKey: ['reviews'] });
+        Toast.show({
+          type: 'success',
+          text1: '리뷰가 성공적으로 작성되었습니다.',
+        });
         setIsReviewModalVisible(false);
         setReviewLight(60);
         setReviewContents('');
@@ -135,7 +140,7 @@ export default function ChatRoomPage() {
         });
       }
     },
-    [roomData]
+    [roomData, queryClient]
   );
 
   const handleReviewButtonPress = useCallback(() => {
@@ -168,7 +173,7 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <Header
         headerTitle={updatedComponentState.headerTitle}
         onMenuPress={handleMenuPress}
@@ -188,10 +193,16 @@ export default function ChatRoomPage() {
         showReviewButton={roomData?.product?.isCompleted}
       />
 
-      <KeyboardStickyView offset={{ opened: insets.bottom }}>
+      <KeyboardStickyView
+        offset={
+          Platform.OS === 'ios'
+            ? { closed: -insets.bottom, opened: 0 }
+            : { closed: -15, opened: 21 }
+        }>
         <ChatInput
           onSendMessage={messageHandlers.sendMessage}
           disabled={!updatedComponentState.canSendMessage}
+          onFocus={() => scrollToEnd(true)}
         />
       </KeyboardStickyView>
 

@@ -56,6 +56,14 @@ describe('getPosts', () => {
       expect(result[0].isCompletable).toBe(false);
     });
 
+    it('isCompleted가 없으면 false로 기본값을 설정한다', async () => {
+      mockGet.mockResolvedValue({ data: [makeRawPost({ isCompleted: undefined })] });
+
+      const result = await getPosts();
+
+      expect(result[0].isCompleted).toBe(false);
+    });
+
     it('type이 있으면 쿼리스트링에 포함한다', async () => {
       mockGet.mockResolvedValue({ data: [] });
 

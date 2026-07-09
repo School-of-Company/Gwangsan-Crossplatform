@@ -1,8 +1,8 @@
 import { ScrollView, Text, View, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Footer } from '~/shared/ui/Footer';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
+import { AppFooter } from '~/widget/write/ui/AppFooter';
 import { Active, Introduce } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
 import { useGetPosts } from '../../model/useGetPosts';
@@ -46,6 +46,8 @@ export default function ProfilePageView() {
   const targetMemberId = profileData?.memberId;
   const isBlocked = !!blockList?.some((b) => b.memberId === targetMemberId);
 
+  const activeMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
+
   const postsData = isMe ? myPostsData : otherPostsData;
   const error = isMe ? myPostsError : otherPostsError;
   const isError = isMe ? myPostsIsError : otherPostsIsError;
@@ -79,8 +81,8 @@ export default function ProfilePageView() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <Header headerTitle="프로필" />
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+      <Header headerTitle="프로필" showBackButton={!isMe} />
       <Information
         isMe={isMe}
         id={isMe ? myProfileData?.memberId : profileData?.memberId}
@@ -100,11 +102,11 @@ export default function ProfilePageView() {
         </View>
         <Active
           name={isMe ? myProfileData?.nickname : profileData?.nickname}
-          id={String(isMe ? myProfileData?.memberId : profileData?.memberId)}
+          id={activeMemberId != null ? String(activeMemberId) : undefined}
           isMe={isMe}
         />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
-          <Text className=" text-titleSmall">
+          <Text className="text-titleSmall">
             {isMe ? '내 글' : `${profileData?.nickname}님의 글`}
           </Text>
           {Array.isArray(postsData) && postsData.length > 0 ? (
@@ -114,7 +116,7 @@ export default function ProfilePageView() {
           )}
         </View>
       </ScrollView>
-      <Footer />
+      <AppFooter />
     </SafeAreaView>
   );
 }
