@@ -1,0 +1,143 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Dropdown 스냅샷 - 닫힌 상태 1`] = `
+<View
+  className="full relative flex gap-2"
+>
+  <Text
+    className="text-label text-black"
+  >
+    선택
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      className="flex-row items-center justify-between"
+    >
+      <Text>
+        선택해주세요
+      </Text>
+    </View>
+  </View>
+</View>
+`;
+
+exports[`Dropdown 스냅샷 - 열린 상태 1`] = `
+<View
+  className="full relative flex gap-2"
+>
+  <Text
+    className="text-label text-black"
+  >
+    선택
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "opacity": 1,
+      }
+    }
+  >
+    <View
+      className="flex-row items-center justify-between"
+    >
+      <Text>
+        선택해주세요
+      </Text>
+    </View>
+  </View>
+  <View
+    className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 last:border-b-0"
+  >
+    <RCTScrollView
+      nestedScrollEnabled={true}
+      showsVerticalScrollIndicator={true}
+      style={
+        {
+          "maxHeight": 200,
+        }
+      }
+    >
+      <View>
+        <Text
+          className="border-b border-gray-300 bg-gray-50 px-4 py-5 rounded-t-xl "
+          onPress={[Function]}
+        >
+          항목 A
+        </Text>
+        <Text
+          className="border-b border-gray-300 bg-gray-50 px-4 py-5  "
+          onPress={[Function]}
+        >
+          항목 B
+        </Text>
+        <Text
+          className="border-b border-gray-300 bg-gray-50 px-4 py-5  rounded-b-xl border-b-0"
+          onPress={[Function]}
+        >
+          항목 C
+        </Text>
+      </View>
+    </RCTScrollView>
+  </View>
+</View>
+`;

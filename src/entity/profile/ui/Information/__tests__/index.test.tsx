@@ -1,0 +1,268 @@
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { useRouter } from 'expo-router';
+import { Alert, TouchableOpacity } from 'react-native';
+import { useSignout, useWithdrawal } from '~/entity/auth';
+import { useBlockUser } from '~/view/profile/model/useBlockUser';
+import Information from '../index';
+
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(),
+}));
+
+jest.mock('~/entity/auth', () => ({
+  useSignout: jest.fn(),
+  useWithdrawal: jest.fn(),
+}));
+
+jest.mock('~/view/profile/model/useBlockUser', () => ({
+  useBlockUser: jest.fn(),
+}));
+
+jest.mock('~/entity/post/ui', () => ({
+  ReportModal: () => null,
+}));
+
+jest.mock('~/shared/ui', () => {
+  const { View } = require('react-native');
+  return {
+    BottomSheetModalWrapper: ({
+      isVisible,
+      children,
+    }: {
+      isVisible: boolean;
+      children: React.ReactNode;
+    }) => (isVisible ? <View>{children}</View> : null),
+  };
+});
+
+const mockUseRouter = useRouter as jest.Mock;
+const mockUseSignout = useSignout as jest.Mock;
+const mockUseWithdrawal = useWithdrawal as jest.Mock;
+const mockUseBlockUser = useBlockUser as jest.Mock;
+
+const mockPush = jest.fn();
+const mockSignout = jest.fn();
+const mockWithdrawal = jest.fn();
+const mockBlockMutate = jest.fn();
+const mockUnblockMutate = jest.fn();
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUseRouter.mockReturnValue({ push: mockPush });
+  mockUseSignout.mockReturnValue({ signout: mockSignout, isLoading: false });
+  mockUseWithdrawal.mockReturnValue({ withdrawal: mockWithdrawal, isLoading: false });
+  mockUseBlockUser.mockReturnValue({
+    block: { mutate: mockBlockMutate, isPending: false },
+    unblock: { mutate: mockUnblockMutate, isPending: false },
+  });
+  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+describe('Information', () => {
+  describe('렌더링', () => {
+    it('name을 표시한다', () => {
+      const { getByTestId } = render(<Information name="홍길동" id={1} isMe={false} />);
+
+      expect(getByTestId('Information-nickname').props.children).toBe('홍길동');
+    });
+
+    it('name이 없으면 "사용자"를 표시한다', () => {
+      const { getByTestId } = render(<Information id={1} isMe={false} />);
+
+      expect(getByTestId('Information-nickname').props.children).toBe('사용자');
+    });
+
+    it('isMe가 true이면 로그아웃 아이콘과 내 정보 수정 버튼을 표시한다', () => {
+      const { getByTestId, getByText } = render(<Information name="홍길동" id={1} isMe />);
+
+      expect(getByTestId('Information-logout-button')).toBeTruthy();
+      expect(getByText('내 정보 수정')).toBeTruthy();
+    });
+
+    it('isMe가 false이면 더보기 메뉴 버튼을 표시하고 로그아웃 아이콘은 표시하지 않는다', () => {
+      const { queryByTestId } = render(<Information name="타인" id={2} isMe={false} />);
+
+      expect(queryByTestId('Information-logout-button')).toBeNull();
+    });
+  });
+
+  describe('내 정보 수정', () => {
+    it('내 정보 수정 버튼을 누르면 편집 페이지로 이동한다', () => {
+      const { getByText } = render(<Information name="홍길동" id={7} isMe />);
+
+      fireEvent.press(getByText('내 정보 수정'));
+
+      expect(mockPush).toHaveBeenCalledWith('/profile/7/edit');
+    });
+  });
+
+  describe('로그아웃 / 회원탈퇴 바텀시트', () => {
+    it('로그아웃 아이콘을 누르면 바텀시트가 표시된다', () => {
+      const { getByTestId, getByText } = render(<Information name="홍길동" id={1} isMe />);
+
+      fireEvent.press(getByTestId('Information-logout-button'));
+
+      expect(getByText('로그아웃')).toBeTruthy();
+      expect(getByText('회원탈퇴')).toBeTruthy();
+    });
+
+    it('로그아웃을 누르면 signout을 호출한다', () => {
+      const { getByTestId, getByText } = render(<Information name="홍길동" id={1} isMe />);
+
+      fireEvent.press(getByTestId('Information-logout-button'));
+      fireEvent.press(getByText('로그아웃'));
+
+      expect(mockSignout).toHaveBeenCalled();
+    });
+
+    it('signout 진행 중이면 로그아웃 버튼 텍스트가 변경된다', () => {
+      const { getByTestId, getByText, rerender } = render(
+        <Information name="홍길동" id={1} isMe />
+      );
+
+      fireEvent.press(getByTestId('Information-logout-button'));
+      mockUseSignout.mockReturnValue({ signout: mockSignout, isLoading: true });
+      rerender(<Information name="홍길동" id={1} isMe />);
+
+      expect(getByText('로그아웃 중...')).toBeTruthy();
+    });
+
+    it('회원탈퇴를 누르면 확인 Alert를 표시한다', () => {
+      const { getByTestId, getByText } = render(<Information name="홍길동" id={1} isMe />);
+
+      fireEvent.press(getByTestId('Information-logout-button'));
+      fireEvent.press(getByText('회원탈퇴'));
+
+      expect(Alert.alert).toHaveBeenCalledWith('회원탈퇴', expect.any(String), expect.any(Array));
+    });
+
+    it('회원탈퇴 Alert에서 탈퇴를 확정하면 withdrawal을 호출한다', () => {
+      const { getByTestId, getByText } = render(<Information name="홍길동" id={1} isMe />);
+
+      fireEvent.press(getByTestId('Information-logout-button'));
+      fireEvent.press(getByText('회원탈퇴'));
+
+      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
+      const buttons = alertCall[2];
+      const confirmButton = buttons.find((b: { text: string }) => b.text === '탈퇴');
+      act(() => {
+        confirmButton.onPress();
+      });
+
+      expect(mockWithdrawal).toHaveBeenCalled();
+    });
+
+    it('withdrawal 진행 중이면 회원탈퇴 버튼 텍스트가 변경된다', () => {
+      const { getByTestId, getByText, rerender } = render(
+        <Information name="홍길동" id={1} isMe />
+      );
+
+      fireEvent.press(getByTestId('Information-logout-button'));
+      mockUseWithdrawal.mockReturnValue({ withdrawal: mockWithdrawal, isLoading: true });
+      rerender(<Information name="홍길동" id={1} isMe />);
+
+      expect(getByText('회원탈퇴 중...')).toBeTruthy();
+    });
+  });
+
+  describe('차단 / 신고 메뉴 (isMe=false)', () => {
+    it('더보기 버튼을 누르면 메뉴가 표시된다', () => {
+      const { UNSAFE_getByType, getByText } = render(
+        <Information name="타인" id={2} isMe={false} />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+
+      expect(getByText('차단하기')).toBeTruthy();
+      expect(getByText('신고하기')).toBeTruthy();
+    });
+
+    it('isBlocked가 false이면 "차단하기"를 표시하고 누르면 차단 확인 Alert를 띄운다', () => {
+      const { UNSAFE_getByType, getByText } = render(
+        <Information name="타인" id={2} isMe={false} isBlocked={false} />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+      fireEvent.press(getByText('차단하기'));
+
+      expect(Alert.alert).toHaveBeenCalledWith(
+        '사용자 차단',
+        expect.stringContaining('타인'),
+        expect.any(Array)
+      );
+    });
+
+    it('차단 확인 Alert에서 차단을 누르면 block.mutate를 호출한다', () => {
+      const { UNSAFE_getByType, getByText } = render(
+        <Information name="타인" id={2} isMe={false} isBlocked={false} />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+      fireEvent.press(getByText('차단하기'));
+
+      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
+      const buttons = alertCall[2];
+      const confirmButton = buttons.find((b: { text: string }) => b.text === '차단');
+      confirmButton.onPress();
+
+      expect(mockBlockMutate).toHaveBeenCalled();
+    });
+
+    it('isBlocked가 true이면 "차단 해제하기"를 표시하고 누르면 해제 확인 Alert를 띄운다', () => {
+      const { UNSAFE_getByType, getByText } = render(
+        <Information name="타인" id={2} isMe={false} isBlocked />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+      fireEvent.press(getByText('차단 해제하기'));
+
+      expect(Alert.alert).toHaveBeenCalledWith(
+        '차단 해제',
+        expect.stringContaining('타인'),
+        expect.any(Array)
+      );
+    });
+
+    it('차단 해제 확인 Alert에서 해제를 누르면 unblock.mutate를 호출한다', () => {
+      const { UNSAFE_getByType, getByText } = render(
+        <Information name="타인" id={2} isMe={false} isBlocked />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+      fireEvent.press(getByText('차단 해제하기'));
+
+      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
+      const buttons = alertCall[2];
+      const confirmButton = buttons.find((b: { text: string }) => b.text === '해제');
+      confirmButton.onPress();
+
+      expect(mockUnblockMutate).toHaveBeenCalled();
+    });
+
+    it('신고하기를 누르면 메뉴를 닫고 신고 모달을 연다', async () => {
+      const { UNSAFE_getByType, getByText, queryByText } = render(
+        <Information name="타인" id={2} isMe={false} />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+      fireEvent.press(getByText('신고하기'));
+
+      await waitFor(() => expect(queryByText('신고하기')).toBeNull());
+    });
+
+    it('block/unblock이 진행 중이면 더보기 버튼이 비활성화된다', () => {
+      mockUseBlockUser.mockReturnValue({
+        block: { mutate: mockBlockMutate, isPending: true },
+        unblock: { mutate: mockUnblockMutate, isPending: false },
+      });
+
+      const { UNSAFE_getByType } = render(<Information name="타인" id={2} isMe={false} />);
+
+      expect(UNSAFE_getByType(TouchableOpacity).props.disabled).toBe(true);
+    });
+  });
+});

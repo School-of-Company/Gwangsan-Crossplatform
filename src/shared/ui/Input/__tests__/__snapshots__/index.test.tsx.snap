@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Input 스냅샷 - icon 있음 1`] = `
+<View
+  className="flex w-full gap-2"
+>
+  <Text
+    className="text-label"
+  >
+    이메일
+  </Text>
+  <View
+    className="relative"
+  >
+    <TextInput
+      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+      enablesReturnKeyAutomatically={true}
+      returnKeyType="next"
+      textAlignVertical="center"
+    />
+    <View
+      className="absolute bottom-0 right-4 top-0 flex justify-center"
+    >
+      <Text>
+        아이콘
+      </Text>
+    </View>
+  </View>
+</View>
+`;
+
+exports[`Input 스냅샷 - 기본 1`] = `
+<View
+  className="flex w-full gap-2"
+>
+  <Text
+    className="text-label"
+  >
+    이메일
+  </Text>
+  <View
+    className="relative"
+  >
+    <TextInput
+      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+      enablesReturnKeyAutomatically={true}
+      returnKeyType="next"
+      textAlignVertical="center"
+    />
+  </View>
+</View>
+`;
