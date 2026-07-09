@@ -13,6 +13,15 @@ jest.mock('@/shared/assets/png/mainSlides/slide6.png', () => 6);
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 describe('MainSlideViewer', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
   it('6개의 슬라이드 이미지를 렌더링한다', () => {
     const { UNSAFE_getAllByType } = render(<MainSlideViewer />);
 
@@ -36,7 +45,6 @@ describe('MainSlideViewer', () => {
   });
 
   it('3초 간격의 setInterval을 등록한다', () => {
-    jest.useFakeTimers();
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
     render(<MainSlideViewer />);
@@ -44,12 +52,9 @@ describe('MainSlideViewer', () => {
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
 
     setIntervalSpy.mockRestore();
-    jest.useRealTimers();
   });
 
   it('interval 콜백 실행 시 에러 없이 스크롤을 진행한다', () => {
-    jest.useFakeTimers();
-
     render(<MainSlideViewer />);
 
     expect(() => {
@@ -57,12 +62,9 @@ describe('MainSlideViewer', () => {
         jest.advanceTimersByTime(3000 * (6 + 1));
       });
     }).not.toThrow();
-
-    jest.useRealTimers();
   });
 
   it('언마운트 시 interval을 정리한다', () => {
-    jest.useFakeTimers();
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
     const { unmount } = render(<MainSlideViewer />);
@@ -71,6 +73,5 @@ describe('MainSlideViewer', () => {
     expect(clearIntervalSpy).toHaveBeenCalled();
 
     clearIntervalSpy.mockRestore();
-    jest.useRealTimers();
   });
 });
