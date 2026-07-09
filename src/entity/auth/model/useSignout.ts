@@ -5,6 +5,7 @@ import { signout } from '../api/signout';
 import { clearCredentialsForBiometric } from '../api/signin';
 import { removeData } from '~/shared/lib/removeData';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
+import { cleanupNotificationSession } from '~/shared/lib/sessionCleanup';
 import * as Sentry from '@sentry/react-native';
 
 export const useSignout = () => {
@@ -12,7 +13,11 @@ export const useSignout = () => {
   const queryClient = useQueryClient();
 
   const cleanup = async () => {
-    await Promise.allSettled([clearCredentialsForBiometric(), removeData('memberId')]);
+    await Promise.allSettled([
+      clearCredentialsForBiometric(),
+      removeData('memberId'),
+      cleanupNotificationSession(),
+    ]);
     clearCurrentUserId();
     Sentry.setUser(null);
     queryClient.clear();

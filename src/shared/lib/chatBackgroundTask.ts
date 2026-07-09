@@ -3,7 +3,9 @@ import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 import { baseURL } from '@/shared/lib/axios';
+import { logger } from '@/shared/lib/logger';
 import type { ChatRoomListItem } from '@/entity/chat/model/chatTypes';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
@@ -26,6 +28,8 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
 
     const rooms: ChatRoomListItem[] = await response.json();
     const unreadRooms = rooms.filter((r) => r.unreadMessageCount > 0);
+    const totalUnread = rooms.reduce((sum, r) => sum + (r.unreadMessageCount ?? 0), 0);
+    await Notifications.setBadgeCountAsync(totalUnread).catch(() => {});
 
     if (unreadRooms.length === 0) {
       await AsyncStorage.setItem(LAST_UNREAD_KEY, JSON.stringify({}));
@@ -94,16 +98,21 @@ export const registerChatBackgroundTask = async (): Promise<void> => {
       return;
     }
 
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(CHAT_BACKGROUND_TASK);
-    if (!isRegistered) {
-      await BackgroundFetch.registerTaskAsync(CHAT_BACKGROUND_TASK, {
-        minimumInterval: 60 * 5,
-        stopOnTerminate: false,
-        startOnBoot: true,
-      });
-    }
-  } catch {
-    // 미지원 환경에서는 무시
+    // isTaskRegisteredAsync는 네이티브에 영구 저장된 등록 플래그만 확인하며 실제 알람
+    // 생존 여부와 무관하다. 앱 재시작 등으로 알람이 죽어도 플래그는 true로 남아
+    // 재등록을 건너뛰게 되므로, 매번 호출해 알람을 다시 세팅한다(재호출은 안전함).
+    await BackgroundFetch.registerTaskAsync(CHAT_BACKGROUND_TASK, {
+      minimumInterval: 60 * 5,
+      stopOnTerminate: false,
+      startOnBoot: true,
+    });
+  } catch (error) {
+    // 미지원 환경(Expo Go 등)에서는 등록이 실패할 수 있으나,
+    // 실기기 빌드에서의 실패는 백그라운드 알림 전체가 죽는 문제라 추적이 필요하다.
+    logger.warn('Background fetch 등록 실패 — 백그라운드 채팅 알림이 동작하지 않습니다', error);
+    Sentry.captureException(error, {
+      extra: { context: 'registerChatBackgroundTask' },
+    });
   }
 };
 
@@ -116,4 +125,9 @@ export const unregisterChatBackgroundTask = async (): Promise<void> => {
   } catch {
     // ignore
   }
+};
+
+// 로그아웃 시 다음 로그인 계정에 이전 계정의 미확인 상태가 새지 않도록 초기화합니다.
+export const clearChatUnreadState = async (): Promise<void> => {
+  await AsyncStorage.removeItem(LAST_UNREAD_KEY).catch(() => {});
 };

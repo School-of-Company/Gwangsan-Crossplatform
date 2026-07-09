@@ -27,6 +27,9 @@ jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
+jest.mock('~/shared/lib/sessionCleanup', () => ({
+  cleanupNotificationSession: jest.fn(),
+}));
 
 const mockUseRouter = useRouter as jest.Mock;
 const mockWithdrawal = withdrawal as jest.Mock;
