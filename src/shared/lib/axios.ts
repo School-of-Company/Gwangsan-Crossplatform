@@ -66,8 +66,7 @@ instance.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as
-      | (InternalAxiosRequestConfig & { _retry?: boolean })
-      | undefined;
+      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
     const startTime = (originalRequest as any)?.__sentryStartTime;
     const duration = startTime ? Date.now() - startTime : undefined;
 
