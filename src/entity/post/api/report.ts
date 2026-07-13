@@ -2,12 +2,7 @@ import { instance } from '~/shared/lib/axios';
 import { toAppError } from '~/shared/lib/errorHandler';
 
 export type ReportReason =
-  | 'SEXUAL'
-  | 'ABUSE_HATE_HARASSMENT'
-  | 'SPAM_AD'
-  | 'IMPERSONATION'
-  | 'SELF_HARM_DANGER'
-  | 'ETC';
+  'SEXUAL' | 'ABUSE_HATE_HARASSMENT' | 'SPAM_AD' | 'IMPERSONATION' | 'SELF_HARM_DANGER' | 'ETC';
 
 export type ReportTargetType = 'PRODUCT' | 'MEMBER';
 
