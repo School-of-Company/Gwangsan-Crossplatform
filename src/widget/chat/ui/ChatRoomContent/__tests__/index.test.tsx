@@ -5,6 +5,10 @@ import { ChatRoomContent } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
+}));
+
 jest.mock('@expo/vector-icons/Ionicons', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');

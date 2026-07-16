@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, Keyboard, Platform, type ListRenderItem } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
 import { MyMessage, OtherMessage } from '~/widget/chat';
 import { TradeEmbed } from '~/entity/chat';
@@ -51,6 +52,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   showReviewButton,
 }) => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -148,7 +150,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       className="flex-1 px-4"
       showsVerticalScrollIndicator={false}
       onContentSizeChange={onScrollToEnd}
-      contentContainerStyle={{ paddingBottom: 10 + (Platform.OS === 'ios' ? keyboardHeight : 0) }}
+      contentContainerStyle={{
+        // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 insets.bottom(iOS)/15(Android)만큼
+        // 위로 띄우므로, 그만큼 리스트 하단 여백을 확보해야 마지막 메시지가 가려지지 않음
+        paddingBottom: 10 + (Platform.OS === 'ios' ? Math.max(keyboardHeight, insets.bottom) : 15),
+      }}
       initialNumToRender={15}
       maxToRenderPerBatch={10}
       windowSize={11}
