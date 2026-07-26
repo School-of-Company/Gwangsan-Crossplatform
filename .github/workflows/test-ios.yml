@@ -47,7 +47,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'issue_comment' && steps.get-pr-ref.outputs.ref || github.sha }}
+          ref: ${{ github.event_name == 'issue_comment' && steps.get-pr-ref.outputs.ref || github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
