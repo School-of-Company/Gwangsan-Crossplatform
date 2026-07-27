@@ -64,7 +64,7 @@
     "nativewind": "latest",
     "patch-package": "^8.0.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react-dom": "19.2.8",
     "react-native": "0.85.3",
     "react-native-css-interop": "^0.2.1",
     "react-native-dotenv": "^3.4.11",
