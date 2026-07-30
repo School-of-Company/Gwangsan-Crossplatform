@@ -85,8 +85,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
       };
 
       const messages = queryClient.getQueryData(['chatMessages', roomId]) as
-        | ChatMessageResponse[]
-        | undefined;
+        ChatMessageResponse[] | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
 
       if (!lastMessage) {
