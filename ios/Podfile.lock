@@ -6,7 +6,7 @@ PODS:
   - EXJSONUtils (56.0.0)
   - EXManifests (56.0.4):
     - ExpoModulesCore
-  - Expo (56.0.17):
+  - Expo (56.0.18):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -183,7 +183,7 @@ PODS:
     - Yoga
   - ExpoAsset (56.0.21):
     - ExpoModulesCore
-  - ExpoBackgroundFetch (56.0.23):
+  - ExpoBackgroundFetch (56.0.24):
     - ExpoModulesCore
   - ExpoDevice (56.0.4):
     - ExpoModulesCore
@@ -249,7 +249,7 @@ PODS:
     - RNWorklets
   - ExpoNotifications (56.0.22):
     - ExpoModulesCore
-  - ExpoRouter (56.2.16):
+  - ExpoRouter (56.2.17):
     - ExpoModulesCore
     - RNScreens
   - ExpoSecureStore (56.0.4):
@@ -258,10 +258,10 @@ PODS:
     - ExpoModulesCore
   - ExpoSymbols (56.0.6):
     - ExpoModulesCore
-  - ExpoTaskManager (56.0.23):
+  - ExpoTaskManager (56.0.24):
     - ExpoModulesCore
     - UMAppLoader
-  - ExpoUI (56.0.23):
+  - ExpoUI (56.0.24):
     - ExpoModulesCore
     - ExpoModulesWorklets
     - React-RCTFabric
@@ -2994,13 +2994,13 @@ SPEC CHECKSUMS:
   EXConstants: 40ff12b3db2639a23fc9f1c598c21e0b9b086634
   EXJSONUtils: dba2755f4e24009eaf87a876b2d615ea06c16e42
   EXManifests: 9548f57656823662ca8f2708d76b986abd417273
-  Expo: f18926934a4083df93ab493291e38683a01f7f68
+  Expo: 4af0885844a5b6b36ca5bffd72686d15f2e26587
   expo-dev-client: 8886afbde849de460910ec28593348bcc52039bf
   expo-dev-launcher: 7ee54ca9a477b01821d514ce39bfedc03ee85d5f
   expo-dev-menu: 2fec9085fdce7b077eaaad34af95e598c4c2f3d8
   expo-dev-menu-interface: 65402d4affb8b418aa6cec29b3abb0e313c8f443
   ExpoAsset: 9d123685b99c905207a112e9993645c7b37bcbc5
-  ExpoBackgroundFetch: 9bcf8cba57f401b50d2915336b9f1ba51f74df06
+  ExpoBackgroundFetch: 5b48a8854c8554b7ce383b87833b7bbea5c3bf8e
   ExpoDevice: 14b86df89a95ac59fce049600590e4e1924b0a9a
   ExpoDomWebView: fc6ec6e9a8e1ea00e6b13511768e70ffc7a71e04
   ExpoFileSystem: 2a6be8ba7e627bee6d0a31a13ff349b39e1f2098
@@ -3017,12 +3017,12 @@ SPEC CHECKSUMS:
   ExpoModulesWorklets: 01ad7e413fb6fce87e4fc618e18b7bc320ac364a
   ExpoModulesWorkletsAdapter: 124ac909a7b4976d0e0572104f80cb18d7be907f
   ExpoNotifications: 18be95cff236e84fe1830d69220cd70e31b51f14
-  ExpoRouter: e112c806c30c658403a66122620ef1de6abff9fb
+  ExpoRouter: b9bc6d78cfa2d34bb3663ed144c007a75cd27242
   ExpoSecureStore: 20be7fe1601ed1726afaf04ea1321a2b6ac549fc
   ExpoSplashScreen: 467b928715ab988ea8192799f9b32ed5d25cc087
   ExpoSymbols: d5ab119f716b775c65d82fbfe5fc86839e37914e
-  ExpoTaskManager: b41a6302d6b48525b13daff1f1435aaeeb588104
-  ExpoUI: 129525fe4cb012b684a3b5436ac3c53f1c33cf17
+  ExpoTaskManager: dd073ef8458b6e0786fc4dbfda4660490b471569
+  ExpoUI: 6d7cf529d4b7f0341fddf214ee9d42a3b592785b
   EXUpdatesInterface: 211042a76ef49beec0de793aa4439de3164c4fd4
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: 39b07e186030b2989e011e2c6760fbbde7859030
