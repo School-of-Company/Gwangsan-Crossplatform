@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+/ios
+/android
+
+# Metro
+.metro-health-check*
+
+# debug / logs
+npm-debug.*
+*.log
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# env / secrets
+.env*.local
+.env.local
+
+# testing / coverage
+coverage/
+.nyc_output/
+
+# typescript
+*.tsbuildinfo
+
+# native builds
+*.orig.*
