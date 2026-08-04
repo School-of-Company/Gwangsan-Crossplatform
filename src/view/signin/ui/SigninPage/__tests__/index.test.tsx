@@ -36,7 +36,7 @@ const mockUseNavigation = useNavigation as jest.Mock;
 
 const mockPrevStep = jest.fn();
 const mockGoToStep = jest.fn();
-const mockAddListener = jest.fn(() => jest.fn());
+const mockAddListener = jest.fn((_event: string, _handler: (...args: any[]) => void) => jest.fn());
 
 beforeEach(() => {
   jest.clearAllMocks();
