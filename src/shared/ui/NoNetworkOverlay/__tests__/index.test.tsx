@@ -4,10 +4,11 @@ import { render } from '@testing-library/react-native';
 import { NoNetworkOverlay } from '../index';
 
 describe('NoNetworkOverlay', () => {
-  it('visible이 true이면 안내 텍스트를 렌더링한다', () => {
+  it('visible이 true이면 안내 텍스트와 재시도 버튼을 렌더링한다', () => {
     const { getByText } = render(<NoNetworkOverlay visible />);
-    expect(getByText('네트워크 연결 없음')).toBeTruthy();
-    expect(getByText(/인터넷 연결을 확인한 후/)).toBeTruthy();
+    expect(getByText('인터넷에 연결되어 있지 않아요.')).toBeTruthy();
+    expect(getByText(/Wi-Fi나 셀룰러 데이터 연결 상태를/)).toBeTruthy();
+    expect(getByText('재시도')).toBeTruthy();
   });
 
   it('visible prop이 Modal에 그대로 전달된다 (true)', () => {
