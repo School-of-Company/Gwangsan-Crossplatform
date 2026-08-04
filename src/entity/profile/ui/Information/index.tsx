@@ -1,10 +1,18 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  GestureResponderEvent,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useSignout, useWithdrawal } from '~/entity/auth';
 import { ReportModal } from '~/entity/post/ui';
-import { BottomSheetModalWrapper } from '~/shared/ui';
+import { BottomSheetModalWrapper, Button } from '~/shared/ui';
 import { useBlockUser } from '~/view/profile/model/useBlockUser';
 
 interface InformationProps {
@@ -22,6 +30,29 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isReportVisible, setIsReportVisible] = useState(false);
   const { block, unblock } = useBlockUser(id);
+  const logoutScale = useRef(new Animated.Value(1)).current;
+  const withdrawalScale = useRef(new Animated.Value(1)).current;
+
+  const animateScale = useCallback((scale: Animated.Value, toValue: number) => {
+    Animated.timing(scale, { toValue, duration: 100, useNativeDriver: true }).start();
+  }, []);
+
+  const handleLogoutPressIn = useCallback(
+    (_e: GestureResponderEvent) => animateScale(logoutScale, 0.96),
+    [animateScale, logoutScale]
+  );
+  const handleLogoutPressOut = useCallback(
+    (_e: GestureResponderEvent) => animateScale(logoutScale, 1),
+    [animateScale, logoutScale]
+  );
+  const handleWithdrawalPressIn = useCallback(
+    (_e: GestureResponderEvent) => animateScale(withdrawalScale, 0.96),
+    [animateScale, withdrawalScale]
+  );
+  const handleWithdrawalPressOut = useCallback(
+    (_e: GestureResponderEvent) => animateScale(withdrawalScale, 1),
+    [animateScale, withdrawalScale]
+  );
 
   const handleEditProfile = useCallback(() => {
     R.push(`/profile/${id}/edit`);
@@ -158,32 +189,60 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
         onClose={handleCloseBottomSheet}
         title=""
         hasHeader={false}
-        height={270}>
-        <View className="gap-8">
-          <TouchableOpacity
-            onPress={handleLogoutPress}
-            disabled={isSignoutLoading || isWithdrawalLoading}
-            className="items-center py-4">
-            <Text className="text-lg text-red-500">
-              {isSignoutLoading ? '로그아웃 중...' : '로그아웃'}
-            </Text>
-          </TouchableOpacity>
+        height={260}>
+        <View className="flex-1 justify-center">
+          <View className="overflow-hidden rounded-xl bg-white">
+            <TouchableOpacity
+              onPress={handleLogoutPress}
+              onPressIn={handleLogoutPressIn}
+              onPressOut={handleLogoutPressOut}
+              disabled={isSignoutLoading || isWithdrawalLoading}
+              activeOpacity={1}
+              className="border-b border-gray-200">
+              <Animated.View
+                className={`h-[52px] items-center justify-center px-8 py-3 ${
+                  isSignoutLoading || isWithdrawalLoading ? 'bg-[#CDCDCF]' : 'bg-[#F3F4F5]'
+                }`}
+                style={{ transform: [{ scale: logoutScale }] }}>
+                <Text
+                  className={`text-lg font-semibold ${
+                    isSignoutLoading || isWithdrawalLoading ? 'text-gray-500' : 'text-red-500'
+                  }`}>
+                  {isSignoutLoading ? '로그아웃 중...' : '로그아웃'}
+                </Text>
+              </Animated.View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={handleWithdrawalPress}
-            disabled={isSignoutLoading || isWithdrawalLoading}
-            className="items-center py-4">
-            <Text className="text-lg text-red-500">
-              {isWithdrawalLoading ? '회원탈퇴 중...' : '회원탈퇴'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleWithdrawalPress}
+              onPressIn={handleWithdrawalPressIn}
+              onPressOut={handleWithdrawalPressOut}
+              disabled={isSignoutLoading || isWithdrawalLoading}
+              activeOpacity={1}>
+              <Animated.View
+                className={`h-[52px] items-center justify-center px-8 py-3 ${
+                  isSignoutLoading || isWithdrawalLoading ? 'bg-[#CDCDCF]' : 'bg-[#F3F4F5]'
+                }`}
+                style={{ transform: [{ scale: withdrawalScale }] }}>
+                <Text
+                  className={`text-lg font-semibold ${
+                    isSignoutLoading || isWithdrawalLoading ? 'text-gray-500' : 'text-red-500'
+                  }`}>
+                  {isWithdrawalLoading ? '회원탈퇴 중...' : '회원탈퇴'}
+                </Text>
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            onPress={handleCloseBottomSheet}
-            disabled={isSignoutLoading || isWithdrawalLoading}
-            className="items-center py-4">
-            <Text className="text-lg text-gray-700">취소</Text>
-          </TouchableOpacity>
+          <View className="mt-3">
+            <Button
+              variant="neutral"
+              onPress={handleCloseBottomSheet}
+              disabled={isSignoutLoading || isWithdrawalLoading}
+              width="w-full">
+              <Text className="text-gray-900">닫기</Text>
+            </Button>
+          </View>
         </View>
       </BottomSheetModalWrapper>
     </>
