@@ -19,6 +19,7 @@ const Animated = {
   FadeIn: { duration: noop },
   FadeOut: { duration: noop },
   SlideInRight: { duration: noop },
+  SlideInLeft: { duration: noop },
   SlideOutLeft: { duration: noop },
   View: 'Animated.View',
   ScrollView: 'Animated.ScrollView',

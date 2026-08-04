@@ -110,7 +110,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
   return (
     <KeyboardProvider>
-      <View className="mb-6 flex-1 bg-white">
+      <View className="flex-1 bg-white">
         <QueryProvider>
           <SentryRN.ErrorBoundary fallback={<></>}>
             <Stack
@@ -119,8 +119,12 @@ export default function RootLayout() {
                 animation: 'fade',
                 gestureEnabled: true,
                 gestureDirection: 'horizontal',
-              }}
-            />
+              }}>
+              {/* 하단 탭 전환은 (tabs) 레이아웃의 sceneStyleInterpolator가 전담하므로
+                  네이티브 트랜지션은 끄고 중복 애니메이션을 방지한다. */}
+              <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+              <Stack.Screen name="signin" options={{ animation: 'slide_from_right' }} />
+            </Stack>
           </SentryRN.ErrorBoundary>
           <Toast />
           <NoNetworkOverlay visible={!isConnected} />

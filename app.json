@@ -15,6 +15,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "dark"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./src/shared/assets/png/splash.png",
@@ -68,8 +75,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/shared/assets/png/icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./src/shared/assets/png/adaptive-icon-foreground.png",
+        "backgroundColor": "#6F9723"
       },
       "package": "gwangsan.io.kr",
       "googleServicesFile": "$GOOGLE_SERVICES_JSON",
