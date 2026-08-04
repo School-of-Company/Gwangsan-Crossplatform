@@ -2,21 +2,18 @@
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 <View
-  className="absolute inset-0 z-[1000] bg-black/50"
-  collapsable={false}
-  style={
-    {
-      "backgroundColor": "rgba(0, 0, 0, 0.5)",
-      "bottom": 0,
-      "left": 0,
-      "opacity": 0,
-      "position": "absolute",
-      "right": 0,
-      "top": 0,
-      "zIndex": 1000,
-    }
-  }
+  className="absolute inset-0 z-[1000]"
 >
+  <View
+    className="absolute inset-0 bg-black/50"
+    collapsable={false}
+    pointerEvents="none"
+    style={
+      {
+        "opacity": 0,
+      }
+    }
+  />
   <View
     accessibilityState={
       {
@@ -50,7 +47,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
     onStartShouldSetResponder={[Function]}
   >
     <View
-      className="rounded-t-2xl bg-white"
+      className="rounded-t-[20px] bg-white"
       collapsable={false}
       style={
         {
@@ -96,6 +93,33 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
         onStartShouldSetResponder={[Function]}
       >
         <View
+          className="items-center py-2"
+          hitSlop={
+            {
+              "bottom": 12,
+              "left": 40,
+              "right": 40,
+              "top": 12,
+            }
+          }
+          onMoveShouldSetResponder={[Function]}
+          onMoveShouldSetResponderCapture={[Function]}
+          onResponderEnd={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderReject={[Function]}
+          onResponderRelease={[Function]}
+          onResponderStart={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onStartShouldSetResponderCapture={[Function]}
+        >
+          <View
+            className="h-1 w-10 rounded-full bg-gray-200"
+          />
+        </View>
+        <View
           className="flex-1"
         >
           <Text>
@@ -110,21 +134,18 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
 <View
-  className="absolute inset-0 z-[1000] bg-black/50"
-  collapsable={false}
-  style={
-    {
-      "backgroundColor": "rgba(0, 0, 0, 0.5)",
-      "bottom": 0,
-      "left": 0,
-      "opacity": 0,
-      "position": "absolute",
-      "right": 0,
-      "top": 0,
-      "zIndex": 1000,
-    }
-  }
+  className="absolute inset-0 z-[1000]"
 >
+  <View
+    className="absolute inset-0 bg-black/50"
+    collapsable={false}
+    pointerEvents="none"
+    style={
+      {
+        "opacity": 0,
+      }
+    }
+  />
   <View
     accessibilityState={
       {
@@ -158,7 +179,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
     onStartShouldSetResponder={[Function]}
   >
     <View
-      className="rounded-t-2xl bg-white"
+      className="rounded-t-[20px] bg-white"
       collapsable={false}
       style={
         {
@@ -203,6 +224,33 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
         onResponderTerminationRequest={[Function]}
         onStartShouldSetResponder={[Function]}
       >
+        <View
+          className="items-center py-2"
+          hitSlop={
+            {
+              "bottom": 12,
+              "left": 40,
+              "right": 40,
+              "top": 12,
+            }
+          }
+          onMoveShouldSetResponder={[Function]}
+          onMoveShouldSetResponderCapture={[Function]}
+          onResponderEnd={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderReject={[Function]}
+          onResponderRelease={[Function]}
+          onResponderStart={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onStartShouldSetResponderCapture={[Function]}
+        >
+          <View
+            className="h-1 w-10 rounded-full bg-gray-200"
+          />
+        </View>
         <View
           className="relative mb-4 flex-row items-center justify-center py-6"
         >

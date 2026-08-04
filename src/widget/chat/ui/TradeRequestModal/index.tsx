@@ -27,26 +27,17 @@ const TradeRequestModalComponent: React.FC<TradeRequestModalProps> = ({
       isVisible={isVisible}
       onClose={onClose}
       onAnimationComplete={onAnimationComplete}
-      title="거래 요청"
-      height={200}>
-      <View className="flex-1 flex-col justify-between gap-4">
-        <View className="gap-4">
-          <Text className="text-center text-gray-600">이 상품에 대한 거래를 요청하시겠습니까?</Text>
-        </View>
+      title=""
+      hasHeader={false}
+      height={220}>
+      <View className="flex-1 justify-center gap-3">
+        <Button variant="primary" onPress={handleTradeRequest} disabled={isLoading} width="w-full">
+          <Text className="text-white">{isLoading ? '요청 중...' : '거래 요청'}</Text>
+        </Button>
 
-        <View className="flex-row gap-3">
-          <Button variant="secondary" onPress={onClose} width="flex-1" disabled={isLoading}>
-            <Text className="text-gray-700">취소</Text>
-          </Button>
-
-          <Button
-            variant="primary"
-            onPress={handleTradeRequest}
-            disabled={isLoading}
-            width="flex-1">
-            <Text className="text-white">{isLoading ? '요청 중...' : '거래 요청하기'}</Text>
-          </Button>
-        </View>
+        <Button variant="neutral" onPress={onClose} disabled={isLoading} width="w-full">
+          <Text className="text-gray-900">닫기</Text>
+        </Button>
       </View>
     </BottomSheetModalWrapper>
   );

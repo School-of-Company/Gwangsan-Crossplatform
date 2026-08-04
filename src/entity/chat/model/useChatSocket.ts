@@ -93,10 +93,28 @@ export const useChatSocket = ({
     [chatSocketService]
   );
 
+  const joinRoom = useCallback(
+    (roomId: RoomId) => {
+      if (chatSocketService.isConnected) {
+        chatSocketService.joinRoom(roomId);
+      }
+    },
+    [chatSocketService]
+  );
+
+  const leaveRoom = useCallback(
+    (roomId: RoomId) => {
+      chatSocketService.leaveRoom(roomId);
+    },
+    [chatSocketService]
+  );
+
   return {
     isConnected: connection.isConnected,
     connectionState: connection.connectionState,
     sendMessage,
+    joinRoom,
+    leaveRoom,
     markRoomAsRead,
     connect: connection.connect,
     disconnect: connection.disconnect,

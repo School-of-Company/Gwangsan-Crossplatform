@@ -159,7 +159,7 @@ export default function FindNicknamePage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pt-5">
+        <View className="bg-white px-5 pb-3 pt-5">
           <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
             {isLoading ? '찾는 중...' : '별칭 찾기'}
           </Button>

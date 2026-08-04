@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
 import { FlatList } from 'react-native';
+import { renderWithProviders as render } from '~/test-utils';
 import { ChatRoomList } from '../index';
-import { useChatRooms, useChatSocket, chatRoomKeys } from '@/entity/chat';
+import { useChatRooms, useChatSocket, chatRoomKeys, getChatRoomData } from '@/entity/chat';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -13,6 +14,8 @@ jest.mock('@/entity/chat', () => ({
   useChatRooms: jest.fn(),
   useChatSocket: jest.fn(),
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
+  chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
+  getChatRoomData: jest.fn(),
   ChatRoomItem: ({ room, onPress }: any) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { TouchableOpacity, Text } = require('react-native');
@@ -26,6 +29,8 @@ jest.mock('@/entity/chat', () => ({
 
 const mockUseChatRooms = useChatRooms as jest.Mock;
 const mockUseChatSocket = useChatSocket as jest.Mock;
+const mockGetChatRoomData = getChatRoomData as jest.Mock;
+const mockJoinRoom = jest.fn();
 
 const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
   data: [],
@@ -38,7 +43,8 @@ const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseChatRooms.mockReturnValue(makeChatRoomsReturn());
-  mockUseChatSocket.mockReturnValue({});
+  mockUseChatSocket.mockReturnValue({ joinRoom: mockJoinRoom });
+  mockGetChatRoomData.mockResolvedValue({ product: null, messages: [] });
 });
 
 describe('ChatRoomList', () => {
@@ -82,6 +88,20 @@ describe('ChatRoomList', () => {
     fireEvent.press(getByTestId('room-7'));
 
     expect(mockPush).toHaveBeenCalledWith('/chatting/7');
+  });
+
+  it('채팅방을 누르면 데이터를 미리 받아오고 소켓 방에 미리 join한다', async () => {
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+    );
+
+    const { getByTestId } = render(<ChatRoomList />);
+
+    fireEvent.press(getByTestId('room-7'));
+
+    expect(mockJoinRoom).toHaveBeenCalledWith(7);
+    expect(mockGetChatRoomData).toHaveBeenCalledWith(7);
+    await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
   });
 
   it('isLoading=true이면 RefreshControl의 refreshing이 true이다', () => {

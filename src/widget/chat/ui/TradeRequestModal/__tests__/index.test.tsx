@@ -47,30 +47,30 @@ describe('TradeRequestModal', () => {
     expect(queryByText('거래 요청')).toBeNull();
   });
 
-  it('isVisible=true이면 제목과 안내 문구를 표시한다', () => {
+  it('isVisible=true이면 거래 요청/닫기 버튼을 표시한다', () => {
     const { getByText } = render(<TradeRequestModal {...defaultProps} />);
 
     expect(getByText('거래 요청')).toBeTruthy();
-    expect(getByText('이 상품에 대한 거래를 요청하시겠습니까?')).toBeTruthy();
+    expect(getByText('닫기')).toBeTruthy();
   });
 
-  it('취소 버튼을 누르면 onClose가 호출된다', () => {
+  it('닫기 버튼을 누르면 onClose가 호출된다', () => {
     const onClose = jest.fn();
     const { getByText } = render(<TradeRequestModal {...defaultProps} onClose={onClose} />);
 
-    fireEvent.press(getByText('취소'));
+    fireEvent.press(getByText('닫기'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('거래 요청하기 버튼을 누르면 onTradeRequest와 onClose가 모두 호출된다', () => {
+  it('거래 요청 버튼을 누르면 onTradeRequest와 onClose가 모두 호출된다', () => {
     const onTradeRequest = jest.fn();
     const onClose = jest.fn();
     const { getByText } = render(
       <TradeRequestModal {...defaultProps} onTradeRequest={onTradeRequest} onClose={onClose} />
     );
 
-    fireEvent.press(getByText('거래 요청하기'));
+    fireEvent.press(getByText('거래 요청'));
 
     expect(onTradeRequest).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -91,10 +91,10 @@ describe('TradeRequestModal', () => {
     });
   });
 
-  it('isLoading=false(기본값)이면 "거래 요청하기" 텍스트를 표시한다', () => {
+  it('isLoading=false(기본값)이면 "거래 요청" 텍스트를 표시한다', () => {
     const { getByText } = render(<TradeRequestModal {...defaultProps} />);
 
-    expect(getByText('거래 요청하기')).toBeTruthy();
+    expect(getByText('거래 요청')).toBeTruthy();
   });
 
   it('모달 닫기(오버레이)로 닫히면 onClose가 호출된다', () => {

@@ -35,6 +35,11 @@ describe('Button', () => {
     expect(toJSON()).toMatchSnapshot();
   });
 
+  it('스냅샷 - neutral variant', () => {
+    const { toJSON } = render(<Button variant="neutral">확인</Button>);
+    expect(toJSON()).toMatchSnapshot();
+  });
+
   it('스냅샷 - disabled 상태', () => {
     const { toJSON } = render(<Button disabled>확인</Button>);
     expect(toJSON()).toMatchSnapshot();

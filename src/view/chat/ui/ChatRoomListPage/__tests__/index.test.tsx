@@ -20,13 +20,6 @@ jest.mock('@/widget/chat', () => ({
   },
 }));
 
-jest.mock('@/widget/write/ui/AppFooter', () => ({
-  AppFooter: () => {
-    const { View } = require('react-native');
-    return <View testID="footer" />;
-  },
-}));
-
 describe('ChatRoomListPage', () => {
   it('헤더에 "채팅" 타이틀과 뒤로가기 버튼 숨김을 전달한다', () => {
     const { getByTestId } = render(<ChatRoomListPage />);
@@ -38,11 +31,5 @@ describe('ChatRoomListPage', () => {
     const { getByTestId } = render(<ChatRoomListPage />);
 
     expect(getByTestId('chat-room-list')).toBeTruthy();
-  });
-
-  it('Footer를 렌더링한다', () => {
-    const { getByTestId } = render(<ChatRoomListPage />);
-
-    expect(getByTestId('footer')).toBeTruthy();
   });
 });
