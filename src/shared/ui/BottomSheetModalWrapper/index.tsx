@@ -8,8 +8,10 @@ import {
   Animated,
   Easing,
   Keyboard,
+  Platform,
 } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
+import * as NavigationBar from 'expo-navigation-bar';
 
 interface BottomSheetModalWrapperProps {
   isVisible: boolean;
@@ -20,6 +22,9 @@ interface BottomSheetModalWrapperProps {
   height?: number;
   hasHeader?: boolean;
 }
+
+// iOS 시트 프레젠테이션에서 쓰이는 곡선
+const APPLE_SHEET_EASING = Easing.bezier(0.32, 0.72, 0, 1);
 
 export function BottomSheetModalWrapper({
   isVisible,
@@ -63,6 +68,11 @@ export function BottomSheetModalWrapper({
   }, [translateY]);
 
   useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    NavigationBar.setVisibilityAsync(isVisible ? 'hidden' : 'visible').catch(() => {});
+  }, [isVisible]);
+
+  useEffect(() => {
     if (isVisible) {
       translateY.setValue(modalHeight);
       overlayOpacity.setValue(0);
@@ -70,28 +80,26 @@ export function BottomSheetModalWrapper({
       setShow(true);
       Animated.timing(overlayOpacity, {
         toValue: 1,
-        duration: 200,
+        duration: 250,
         useNativeDriver: true,
         easing: Easing.out(Easing.ease),
       }).start();
-      Animated.spring(translateY, {
+      Animated.timing(translateY, {
         toValue: 0,
+        duration: 380,
         useNativeDriver: true,
-        mass: 1,
-        damping: 20,
-        stiffness: 200,
-        overshootClamping: true,
+        easing: APPLE_SHEET_EASING,
       }).start();
     } else if (show) {
       Animated.timing(translateY, {
         toValue: modalHeight,
-        duration: 220,
+        duration: 300,
         useNativeDriver: true,
-        easing: Easing.in(Easing.cubic),
+        easing: APPLE_SHEET_EASING,
       }).start(() => {
         Animated.timing(overlayOpacity, {
           toValue: 0,
-          duration: 150,
+          duration: 200,
           useNativeDriver: true,
           easing: Easing.linear,
         }).start(() => {
@@ -123,8 +131,9 @@ export function BottomSheetModalWrapper({
             height: modalHeight,
             transform: [{ translateY }],
           }}
-          className="rounded-t-2xl bg-white">
+          className="rounded-t-[20px] bg-white">
           <Pressable className="flex-1 p-4" onPress={(e) => e.stopPropagation()}>
+            <View className="mb-1 h-1 w-10 self-center rounded-full bg-gray-200" />
             {hasHeader && (
               <View className="relative mb-4 flex-row items-center justify-center py-6">
                 <Text className="text-body1 text-black">{title}</Text>
