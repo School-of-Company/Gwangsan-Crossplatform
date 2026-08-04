@@ -2,20 +2,7 @@
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 <View
-  className="absolute inset-0 z-[1000] bg-black/50"
-  collapsable={false}
-  style={
-    {
-      "backgroundColor": "rgba(0, 0, 0, 0.5)",
-      "bottom": 0,
-      "left": 0,
-      "opacity": 0,
-      "position": "absolute",
-      "right": 0,
-      "top": 0,
-      "zIndex": 1000,
-    }
-  }
+  className="absolute inset-0 z-[1000]"
 >
   <View
     accessibilityState={
@@ -96,8 +83,32 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
         onStartShouldSetResponder={[Function]}
       >
         <View
-          className="mb-1 h-1 w-10 self-center rounded-full bg-gray-200"
-        />
+          className="items-center py-2"
+          hitSlop={
+            {
+              "bottom": 12,
+              "left": 40,
+              "right": 40,
+              "top": 12,
+            }
+          }
+          onMoveShouldSetResponder={[Function]}
+          onMoveShouldSetResponderCapture={[Function]}
+          onResponderEnd={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderReject={[Function]}
+          onResponderRelease={[Function]}
+          onResponderStart={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onStartShouldSetResponderCapture={[Function]}
+        >
+          <View
+            className="h-1 w-10 rounded-full bg-gray-200"
+          />
+        </View>
         <View
           className="flex-1"
         >
@@ -113,20 +124,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
 <View
-  className="absolute inset-0 z-[1000] bg-black/50"
-  collapsable={false}
-  style={
-    {
-      "backgroundColor": "rgba(0, 0, 0, 0.5)",
-      "bottom": 0,
-      "left": 0,
-      "opacity": 0,
-      "position": "absolute",
-      "right": 0,
-      "top": 0,
-      "zIndex": 1000,
-    }
-  }
+  className="absolute inset-0 z-[1000]"
 >
   <View
     accessibilityState={
@@ -207,8 +205,32 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
         onStartShouldSetResponder={[Function]}
       >
         <View
-          className="mb-1 h-1 w-10 self-center rounded-full bg-gray-200"
-        />
+          className="items-center py-2"
+          hitSlop={
+            {
+              "bottom": 12,
+              "left": 40,
+              "right": 40,
+              "top": 12,
+            }
+          }
+          onMoveShouldSetResponder={[Function]}
+          onMoveShouldSetResponderCapture={[Function]}
+          onResponderEnd={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderReject={[Function]}
+          onResponderRelease={[Function]}
+          onResponderStart={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onStartShouldSetResponderCapture={[Function]}
+        >
+          <View
+            className="h-1 w-10 rounded-full bg-gray-200"
+          />
+        </View>
         <View
           className="relative mb-4 flex-row items-center justify-center py-6"
         >

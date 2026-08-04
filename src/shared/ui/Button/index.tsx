@@ -57,7 +57,7 @@ export const Button = ({
       {...props}>
       <Animated.View
         className={`
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           ${
             disabled
               ? variant === 'primary'

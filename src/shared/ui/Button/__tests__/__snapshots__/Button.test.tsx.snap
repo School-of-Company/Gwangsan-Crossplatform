@@ -37,7 +37,7 @@ exports[`Button 스냅샷 - disabled 상태 1`] = `
 >
   <View
     className="
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           bg-[#CDCDCF]
         "
     collapsable={false}
@@ -100,7 +100,7 @@ exports[`Button 스냅샷 - error variant 1`] = `
 >
   <View
     className="
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           bg-error-500
         "
     collapsable={false}
@@ -163,7 +163,7 @@ exports[`Button 스냅샷 - neutral variant 1`] = `
 >
   <View
     className="
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           bg-[#F3F4F5]
         "
     collapsable={false}
@@ -226,7 +226,7 @@ exports[`Button 스냅샷 - primary variant (기본값) 1`] = `
 >
   <View
     className="
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           bg-main-500
         "
     collapsable={false}
@@ -289,7 +289,7 @@ exports[`Button 스냅샷 - secondary variant 1`] = `
 >
   <View
     className="
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           border-2 border-main-500 bg-white
         "
     collapsable={false}
