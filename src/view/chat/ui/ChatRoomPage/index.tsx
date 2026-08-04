@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, Platform, Keyboard } from 'react-native';
+import { Text, ActivityIndicator, Keyboard } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -194,12 +194,7 @@ export default function ChatRoomPage() {
         showReviewButton={roomData?.product?.isCompleted}
       />
 
-      <KeyboardStickyView
-        offset={
-          Platform.OS === 'ios'
-            ? { closed: -insets.bottom, opened: 0 }
-            : { closed: -15, opened: 21 }
-        }>
+      <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
         <ChatInput
           onSendMessage={messageHandlers.sendMessage}
           disabled={!updatedComponentState.canSendMessage}

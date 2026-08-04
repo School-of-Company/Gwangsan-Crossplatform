@@ -2,10 +2,18 @@
 
 exports[`Footer 스냅샷 - 기본 상태 1`] = `
 <View
-  className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 pt-3"
+  className="relative bottom-0 w-full flex-row border-t border-gray-200 bg-white px-2 pt-1"
+  collapsable={false}
+  onLayout={[Function]}
+  pointerEvents="auto"
   style={
     {
       "paddingBottom": 12,
+      "transform": [
+        {
+          "translateY": 0,
+        },
+      ],
     }
   }
 >
@@ -30,6 +38,14 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -43,8 +59,20 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       }
     }
   >
+    <View
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
+    />
     <Text
-      className="text-gray-500"
+      className="text-[#8FC31D]"
     >
       홈
     </Text>
@@ -70,6 +98,14 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -85,6 +121,16 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
   >
     <View
       className="relative"
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
     />
     <Text
       className="text-gray-500"
@@ -113,6 +159,14 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -126,57 +180,70 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       }
     }
   >
-    <RNSVGSvgView
-      align="xMidYMid"
-      bbHeight={32}
-      bbWidth={33}
-      fill="none"
-      focusable={false}
-      height={32}
-      meetOrSlice={0}
-      minX={0}
-      minY={0}
+    <View
+      collapsable={false}
       style={
-        [
-          {
-            "backgroundColor": "transparent",
-            "borderWidth": 0,
-          },
-          {
-            "flex": 0,
-            "height": 32,
-            "width": 33,
-          },
-        ]
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
       }
-      vbHeight={32}
-      vbWidth={33}
-      width={33}
     >
-      <RNSVGGroup
-        fill={null}
-        propList={
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={32}
+        bbWidth={33}
+        fill="none"
+        focusable={false}
+        height={32}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
+        style={
           [
-            "fill",
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "flex": 0,
+              "height": 32,
+              "width": 33,
+            },
           ]
         }
+        vbHeight={32}
+        vbWidth={33}
+        width={33}
       >
-        <RNSVGPath
-          d="M16.5 0C7.67785 0 0.5 7.17785 0.5 16C0.5 24.8222 7.67785 32 16.5 32C25.3222 32 32.5 24.8222 32.5 16C32.5 7.17785 25.3222 0 16.5 0ZM16.5 2.46154C23.9917 2.46154 30.0385 8.50831 30.0385 16C30.0385 23.4917 23.9917 29.5385 16.5 29.5385C9.00831 29.5385 2.96154 23.4917 2.96154 16C2.96154 8.50831 9.00831 2.46154 16.5 2.46154ZM15.2692 8.61539V14.7692H9.11539V17.2308H15.2692V23.3846H17.7308V17.2308H23.8846V14.7692H17.7308V8.61539H15.2692Z"
-          fill={
-            {
-              "payload": 4278190080,
-              "type": 0,
-            }
-          }
+        <RNSVGGroup
+          fill={null}
           propList={
             [
               "fill",
             ]
           }
-        />
-      </RNSVGGroup>
-    </RNSVGSvgView>
+        >
+          <RNSVGPath
+            d="M16.5 0C7.67785 0 0.5 7.17785 0.5 16C0.5 24.8222 7.67785 32 16.5 32C25.3222 32 32.5 24.8222 32.5 16C32.5 7.17785 25.3222 0 16.5 0ZM16.5 2.46154C23.9917 2.46154 30.0385 8.50831 30.0385 16C30.0385 23.4917 23.9917 29.5385 16.5 29.5385C9.00831 29.5385 2.96154 23.4917 2.96154 16C2.96154 8.50831 9.00831 2.46154 16.5 2.46154ZM15.2692 8.61539V14.7692H9.11539V17.2308H15.2692V23.3846H17.7308V17.2308H23.8846V14.7692H17.7308V8.61539H15.2692Z"
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+            propList={
+              [
+                "fill",
+              ]
+            }
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
+    </View>
   </View>
   <View
     accessibilityState={
@@ -199,6 +266,14 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -212,6 +287,18 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       }
     }
   >
+    <View
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
+    />
     <Text
       className="text-gray-500"
     >
@@ -239,6 +326,14 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -253,6 +348,18 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     }
     testID="Footer-profile-button"
   >
+    <View
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
+    />
     <Text
       className="text-gray-500"
     >
@@ -264,10 +371,18 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
 
 exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
 <View
-  className="relative bottom-0 w-full flex-row justify-between border-t border-gray-200 bg-white px-6 pt-3"
+  className="relative bottom-0 w-full flex-row border-t border-gray-200 bg-white px-2 pt-1"
+  collapsable={false}
+  onLayout={[Function]}
+  pointerEvents="auto"
   style={
     {
       "paddingBottom": 12,
+      "transform": [
+        {
+          "translateY": 0,
+        },
+      ],
     }
   }
 >
@@ -292,6 +407,14 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -305,8 +428,20 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       }
     }
   >
+    <View
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
+    />
     <Text
-      className="text-gray-500"
+      className="text-[#8FC31D]"
     >
       홈
     </Text>
@@ -332,6 +467,14 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -347,6 +490,16 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
   >
     <View
       className="relative"
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
     >
       <View
         className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-main-500"
@@ -379,6 +532,14 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -392,57 +553,70 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       }
     }
   >
-    <RNSVGSvgView
-      align="xMidYMid"
-      bbHeight={32}
-      bbWidth={33}
-      fill="none"
-      focusable={false}
-      height={32}
-      meetOrSlice={0}
-      minX={0}
-      minY={0}
+    <View
+      collapsable={false}
       style={
-        [
-          {
-            "backgroundColor": "transparent",
-            "borderWidth": 0,
-          },
-          {
-            "flex": 0,
-            "height": 32,
-            "width": 33,
-          },
-        ]
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
       }
-      vbHeight={32}
-      vbWidth={33}
-      width={33}
     >
-      <RNSVGGroup
-        fill={null}
-        propList={
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={32}
+        bbWidth={33}
+        fill="none"
+        focusable={false}
+        height={32}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
+        style={
           [
-            "fill",
+            {
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "flex": 0,
+              "height": 32,
+              "width": 33,
+            },
           ]
         }
+        vbHeight={32}
+        vbWidth={33}
+        width={33}
       >
-        <RNSVGPath
-          d="M16.5 0C7.67785 0 0.5 7.17785 0.5 16C0.5 24.8222 7.67785 32 16.5 32C25.3222 32 32.5 24.8222 32.5 16C32.5 7.17785 25.3222 0 16.5 0ZM16.5 2.46154C23.9917 2.46154 30.0385 8.50831 30.0385 16C30.0385 23.4917 23.9917 29.5385 16.5 29.5385C9.00831 29.5385 2.96154 23.4917 2.96154 16C2.96154 8.50831 9.00831 2.46154 16.5 2.46154ZM15.2692 8.61539V14.7692H9.11539V17.2308H15.2692V23.3846H17.7308V17.2308H23.8846V14.7692H17.7308V8.61539H15.2692Z"
-          fill={
-            {
-              "payload": 4278190080,
-              "type": 0,
-            }
-          }
+        <RNSVGGroup
+          fill={null}
           propList={
             [
               "fill",
             ]
           }
-        />
-      </RNSVGGroup>
-    </RNSVGSvgView>
+        >
+          <RNSVGPath
+            d="M16.5 0C7.67785 0 0.5 7.17785 0.5 16C0.5 24.8222 7.67785 32 16.5 32C25.3222 32 32.5 24.8222 32.5 16C32.5 7.17785 25.3222 0 16.5 0ZM16.5 2.46154C23.9917 2.46154 30.0385 8.50831 30.0385 16C30.0385 23.4917 23.9917 29.5385 16.5 29.5385C9.00831 29.5385 2.96154 23.4917 2.96154 16C2.96154 8.50831 9.00831 2.46154 16.5 2.46154ZM15.2692 8.61539V14.7692H9.11539V17.2308H15.2692V23.3846H17.7308V17.2308H23.8846V14.7692H17.7308V8.61539H15.2692Z"
+            fill={
+              {
+                "payload": 4278190080,
+                "type": 0,
+              }
+            }
+            propList={
+              [
+                "fill",
+              ]
+            }
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
+    </View>
   </View>
   <View
     accessibilityState={
@@ -465,6 +639,14 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -478,6 +660,18 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       }
     }
   >
+    <View
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
+    />
     <Text
       className="text-gray-500"
     >
@@ -505,6 +699,14 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    hitSlop={
+      {
+        "bottom": 8,
+        "left": 8,
+        "right": 8,
+        "top": 8,
+      }
+    }
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -519,6 +721,18 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     }
     testID="Footer-profile-button"
   >
+    <View
+      collapsable={false}
+      style={
+        {
+          "transform": [
+            {
+              "scale": 1,
+            },
+          ],
+        }
+      }
+    />
     <Text
       className="text-gray-500"
     >

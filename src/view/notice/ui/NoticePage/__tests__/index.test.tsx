@@ -17,13 +17,6 @@ jest.mock('~/shared/ui', () => ({
   },
 }));
 
-jest.mock('~/widget/write/ui/AppFooter', () => ({
-  AppFooter: () => {
-    const { View } = require('react-native');
-    return <View testID="footer" />;
-  },
-}));
-
 jest.mock('~/widget/notice', () => ({
   NoticeItem: ({
     id,
@@ -120,19 +113,6 @@ describe('NoticePage', () => {
     const { getByTestId } = renderWithProviders(<NoticePage />);
 
     expect(getByTestId('header').props.children).toBe('공지');
-  });
-
-  it('Footer를 렌더링한다', () => {
-    mockUseGetNoticeList.mockReturnValue({
-      data: [],
-      isLoading: false,
-      error: null,
-      refetch: mockRefetch,
-    });
-
-    const { getByTestId } = renderWithProviders(<NoticePage />);
-
-    expect(getByTestId('footer')).toBeTruthy();
   });
 
   it('로딩 중이지만 캐시 데이터가 있으면 목록을 표시한다 (refetch 중)', () => {
