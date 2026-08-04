@@ -102,7 +102,7 @@ export default function ProfileEditPageView() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pt-5">
+        <View className="bg-white px-5 pb-3 pt-5">
           <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
             {isSubmitting ? '수정 중...' : '수정'}
           </Button>

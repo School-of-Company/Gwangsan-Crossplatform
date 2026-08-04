@@ -61,13 +61,6 @@ jest.mock('~/widget/profile/ui', () => ({
   },
 }));
 
-jest.mock('~/widget/write/ui/AppFooter', () => ({
-  AppFooter: () => {
-    const { View } = require('react-native');
-    return <View testID="app-footer" />;
-  },
-}));
-
 jest.mock('~/shared/ui/Post', () => ({
   __esModule: true,
   default: ({ id, title }: any) => {
@@ -294,11 +287,5 @@ describe('ProfilePageView', () => {
         expect.objectContaining({ type: 'error', text1: '글을 불러오는데 실패했습니다.' })
       );
     });
-  });
-
-  it('AppFooter를 렌더링한다', () => {
-    const { getByTestId } = render(<ProfilePageView />);
-
-    expect(getByTestId('app-footer')).toBeTruthy();
   });
 });

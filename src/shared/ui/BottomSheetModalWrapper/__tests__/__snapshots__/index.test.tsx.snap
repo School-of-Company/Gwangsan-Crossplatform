@@ -5,6 +5,16 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
   className="absolute inset-0 z-[1000]"
 >
   <View
+    className="absolute inset-0 bg-black/50"
+    collapsable={false}
+    pointerEvents="none"
+    style={
+      {
+        "opacity": 0,
+      }
+    }
+  />
+  <View
     accessibilityState={
       {
         "busy": undefined,
@@ -126,6 +136,16 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
 <View
   className="absolute inset-0 z-[1000]"
 >
+  <View
+    className="absolute inset-0 bg-black/50"
+    collapsable={false}
+    pointerEvents="none"
+    style={
+      {
+        "opacity": 0,
+      }
+    }
+  />
   <View
     accessibilityState={
       {

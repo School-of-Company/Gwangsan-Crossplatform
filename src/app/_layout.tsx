@@ -123,7 +123,10 @@ export default function RootLayout() {
               {/* 하단 탭 전환은 (tabs) 레이아웃의 sceneStyleInterpolator가 전담하므로
                   네이티브 트랜지션은 끄고 중복 애니메이션을 방지한다. */}
               <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
-              <Stack.Screen name="signin" options={{ animation: 'slide_from_right' }} />
+              {/* 로그인(별칭 → 비밀번호) 화면은 SigninPage 내부의 SlideFadeTransition이
+                  푸터 탭 전환과 동일한 애니메이션을 전담하므로, 네이티브 트랜지션은 끄고
+                  중복 애니메이션을 방지한다. */}
+              <Stack.Screen name="signin" options={{ animation: 'none' }} />
             </Stack>
           </SentryRN.ErrorBoundary>
           <Toast />

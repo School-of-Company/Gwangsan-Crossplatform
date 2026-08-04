@@ -17,7 +17,8 @@ const INITIAL_FORM_DATA: SigninState['formData'] = {
 
 export const useSigninStore = create<SigninState>((set) => ({
   currentStep: 'nickname' as SigninState['currentStep'],
-  direction: null,
+  // 로그인 진입 시 별칭 입력 화면도 푸터 탭 전환과 동일한 애니메이션으로 나타나도록 함
+  direction: 'right',
   formData: INITIAL_FORM_DATA,
   setField: (field, value) =>
     set((state) => ({
@@ -42,7 +43,7 @@ export const useSigninStore = create<SigninState>((set) => ({
   resetStore: () =>
     set({
       currentStep: 'nickname',
-      direction: null,
+      direction: 'right',
       formData: INITIAL_FORM_DATA,
     }),
 }));

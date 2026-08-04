@@ -44,6 +44,7 @@ export function BottomSheetModalWrapper({
 
   const [show, setShow] = useState(isVisible);
   const translateY = useRef(new Animated.Value(modalHeight)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
   const hideFooter = useFooterVisibilityStore((state) => state.hide);
   const showFooter = useFooterVisibilityStore((state) => state.show);
@@ -119,20 +120,29 @@ export function BottomSheetModalWrapper({
   useEffect(() => {
     if (isVisible) {
       translateY.setValue(modalHeight);
+      backdropOpacity.setValue(0);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true);
     } else if (show) {
-      Animated.timing(translateY, {
-        toValue: modalHeight,
-        duration: 300,
-        useNativeDriver: true,
-        easing: APPLE_SHEET_EASING,
-      }).start(() => {
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: modalHeight,
+          duration: 300,
+          useNativeDriver: true,
+          easing: APPLE_SHEET_EASING,
+        }),
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+          easing: APPLE_SHEET_EASING,
+        }),
+      ]).start(() => {
         setShow(false);
         onAnimationComplete?.();
       });
     }
-  }, [isVisible, modalHeight, translateY, show, onAnimationComplete]);
+  }, [isVisible, modalHeight, translateY, backdropOpacity, show, onAnimationComplete]);
 
   // show가 true로 커밋되어 시트가 오프스크린 위치에 실제로 마운트된 다음에만
   // 여는 애니메이션을 시작한다. 마운트 전에 시작하면 애니메이션 시계가 이미
@@ -140,18 +150,31 @@ export function BottomSheetModalWrapper({
   useEffect(() => {
     if (!isVisible || !show) return;
 
-    Animated.timing(translateY, {
-      toValue: 0,
-      duration: 380,
-      useNativeDriver: true,
-      easing: APPLE_SHEET_EASING,
-    }).start();
-  }, [isVisible, show, translateY]);
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 380,
+        useNativeDriver: true,
+        easing: APPLE_SHEET_EASING,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 380,
+        useNativeDriver: true,
+        easing: APPLE_SHEET_EASING,
+      }),
+    ]).start();
+  }, [isVisible, show, translateY, backdropOpacity]);
 
   if (!show) return null;
 
   return (
     <View className="absolute inset-0 z-[1000]">
+      <Animated.View
+        className="absolute inset-0 bg-black/50"
+        style={{ opacity: backdropOpacity }}
+        pointerEvents="none"
+      />
       <Pressable className="flex-1 justify-end" onPress={onClose}>
         <Animated.View
           style={{

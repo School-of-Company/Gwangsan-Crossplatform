@@ -12,6 +12,13 @@ jest.mock('~/shared/ui/Footer', () => ({
   },
 }));
 
+const mockTabBarProps = {
+  state: { index: 0, routes: [{ key: 'main', name: 'main' }] },
+  navigation: { navigate: jest.fn() },
+  descriptors: {},
+  insets: { top: 0, bottom: 0, left: 0, right: 0 },
+} as any;
+
 jest.mock('../../WriteEntryModal', () => ({
   WriteEntryModal: ({ isVisible, onClose }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
@@ -27,14 +34,14 @@ jest.mock('../../WriteEntryModal', () => ({
 
 describe('AppFooter', () => {
   it('Footer를 렌더링하고 모달은 기본적으로 보이지 않는다', () => {
-    const { getByTestId, queryByText } = render(<AppFooter />);
+    const { getByTestId, queryByText } = render(<AppFooter {...mockTabBarProps} />);
 
     expect(getByTestId('footer-write-button')).toBeTruthy();
     expect(queryByText('모달 열림')).toBeNull();
   });
 
   it('글쓰기 버튼을 누르면 WriteEntryModal이 보인다', () => {
-    const { getByTestId, getByText } = render(<AppFooter />);
+    const { getByTestId, getByText } = render(<AppFooter {...mockTabBarProps} />);
 
     fireEvent.press(getByTestId('footer-write-button'));
 
@@ -42,7 +49,7 @@ describe('AppFooter', () => {
   });
 
   it('모달의 onClose가 호출되면 모달이 닫힌다', () => {
-    const { getByTestId, queryByText } = render(<AppFooter />);
+    const { getByTestId, queryByText } = render(<AppFooter {...mockTabBarProps} />);
 
     fireEvent.press(getByTestId('footer-write-button'));
     expect(queryByText('모달 열림')).toBeTruthy();
