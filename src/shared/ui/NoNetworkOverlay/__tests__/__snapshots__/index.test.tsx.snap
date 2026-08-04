@@ -6,28 +6,83 @@ exports[`NoNetworkOverlay 스냅샷 - visible true 1`] = `
 <Modal
   animationType="fade"
   statusBarTranslucent={true}
-  transparent={true}
   visible={true}
 >
   <View
-    className="flex-1 items-center justify-center bg-black/60"
+    className="flex-1 items-center justify-center gap-3 bg-white px-8"
   >
-    <View
-      className="mx-8 items-center rounded-2xl bg-white px-6 py-8"
+    <Text
+      className="text-center text-titleSmall text-gray-900"
     >
-      <Text
-        className="mb-2 text-lg font-bold text-gray-900"
-      >
-        네트워크 연결 없음
-      </Text>
-      <Text
-        className="text-center text-sm text-gray-500"
-      >
-        인터넷 연결을 확인한 후
-        
+      인터넷에 연결되어 있지 않아요.
+    </Text>
+    <Text
+      className="mb-6 text-center text-body5 text-gray-500"
+    >
+      Wi-Fi나 셀룰러 데이터 연결 상태를
+      
 
-        다시 시도해 주세요.
-      </Text>
+      확인하고 다시 시도해 주세요.
+    </Text>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <View
+        className="
+          items-center justify-center rounded-xl px-8 py-3
+          bg-main-500
+        "
+        collapsable={false}
+        style={
+          {
+            "transform": [
+              {
+                "scale": 1,
+              },
+            ],
+          }
+        }
+      >
+        <Text
+          className="
+          text-lg font-semibold
+          text-white
+        "
+        >
+          재시도
+        </Text>
+      </View>
     </View>
   </View>
 </Modal>

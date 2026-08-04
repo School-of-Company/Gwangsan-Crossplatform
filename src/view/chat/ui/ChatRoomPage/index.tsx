@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, Platform } from 'react-native';
+import { Text, ActivityIndicator, Platform, Keyboard } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -100,6 +100,7 @@ export default function ChatRoomPage() {
     });
 
   const handleMenuPress = useCallback(() => {
+    Keyboard.dismiss();
     setIsTradeRequestModalVisible(true);
   }, []);
 
