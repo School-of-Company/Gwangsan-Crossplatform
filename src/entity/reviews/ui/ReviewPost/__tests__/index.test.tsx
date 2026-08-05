@@ -30,7 +30,7 @@ describe('ReviewPost', () => {
     const review = makeReview();
     const { getByText } = render(<ReviewPost review={review} />);
 
-    expect(getByText('홍길동')).toBeTruthy();
+    expect(getByText('작성자 홍길동')).toBeTruthy();
     expect(getByText('좋은 거래였습니다.')).toBeTruthy();
   });
 
@@ -61,7 +61,7 @@ describe('ReviewPost', () => {
     const review = makeReview({ reviewId: '42' });
     const { getByText } = render(<ReviewPost review={review} />);
 
-    fireEvent.press(getByText('홍길동'));
+    fireEvent.press(getByText('작성자 홍길동'));
 
     expect(mockPush).toHaveBeenCalledWith('/cancelTrade/42');
   });

@@ -35,7 +35,7 @@ export default function ReviewPost({ review }: ReviewPostProps) {
         <Text className="mb-1 max-w-[200px] flex-wrap text-label text-[#555555]">
           {review.content}
         </Text>
-        <Text className="text-label">{review.reviewerName}</Text>
+        <Text className="text-label">작성자 {review.reviewerName}</Text>
       </View>
     </TouchableOpacity>
   );
