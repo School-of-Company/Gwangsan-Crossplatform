@@ -22,7 +22,8 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
         {posts.length > 0 ? (
           <View className="pb-6">
             {posts.map((post) => (
-              <ReviewPost key={post.reviewId} review={post} />
+              /* 작성한 후기의 reviewerName은 항상 나이므로 표시하지 않는다 */
+              <ReviewPost key={post.reviewId} review={post} showReviewerName={mode === 'receive'} />
             ))}
           </View>
         ) : (

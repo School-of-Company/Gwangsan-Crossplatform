@@ -30,7 +30,7 @@ describe('ReviewPost', () => {
     const review = makeReview();
     const { getByText } = render(<ReviewPost review={review} />);
 
-    expect(getByText('홍길동')).toBeTruthy();
+    expect(getByText('작성자 홍길동')).toBeTruthy();
     expect(getByText('좋은 거래였습니다.')).toBeTruthy();
   });
 
@@ -41,6 +41,27 @@ describe('ReviewPost', () => {
 
     const images = UNSAFE_getAllByType(Image);
     expect(images).toHaveLength(1);
+  });
+
+  it('imageUrls가 있으면 각 이미지를 렌더링한다', () => {
+    const review = makeReview({
+      imageUrls: [
+        { imageId: 1, imageUrl: 'https://example.com/1.jpg' },
+        { imageId: 2, imageUrl: 'https://example.com/2.jpg' },
+      ],
+    });
+    const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
+    const Image = require('react-native').Image;
+
+    expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
+  });
+
+  it('showReviewerName=false면 작성자 이름을 숨긴다', () => {
+    const review = makeReview();
+    const { queryByText } = render(<ReviewPost review={review} showReviewerName={false} />);
+
+    expect(queryByText('작성자 홍길동')).toBeNull();
+    expect(queryByText('좋은 거래였습니다.')).toBeTruthy();
   });
 
   it('images가 있으면 각 이미지를 렌더링한다', () => {
@@ -61,7 +82,7 @@ describe('ReviewPost', () => {
     const review = makeReview({ reviewId: '42' });
     const { getByText } = render(<ReviewPost review={review} />);
 
-    fireEvent.press(getByText('홍길동'));
+    fireEvent.press(getByText('작성자 홍길동'));
 
     expect(mockPush).toHaveBeenCalledWith('/cancelTrade/42');
   });

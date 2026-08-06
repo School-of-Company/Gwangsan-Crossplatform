@@ -1,7 +1,8 @@
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
@@ -14,6 +15,11 @@ import ChatRoomPage from '../index';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
+  useRouter: jest.fn(),
+}));
+
+jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+  useGetMyInformation: jest.fn(),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -149,6 +155,9 @@ jest.mock('@/widget/chat', () => ({
 }));
 
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
+const mockUseRouter = useRouter as jest.Mock;
+const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
+const mockRouterPush = jest.fn();
 const mockUseChatMessages = useChatMessages as jest.Mock;
 const mockUseChatAction = useChatAction as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
@@ -201,6 +210,8 @@ const makeChatUIStateReturn = (overrides = {}) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseLocalSearchParams.mockReturnValue({ id: '10' });
+  mockUseRouter.mockReturnValue({ push: mockRouterPush });
+  mockUseGetMyInformation.mockReturnValue({ data: { memberId: 5 } });
   mockUseChatMessages.mockReturnValue(makeChatMessagesReturn());
   mockUseChatAction.mockReturnValue({
     navigationHandlers: { goToProfile: jest.fn(), goToOtherUserProfile: jest.fn() },
@@ -239,6 +250,34 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('header-title').props.children).toBe('상대방');
+  });
+
+  it('거래가 완료되지 않으면 완료 배너를 표시하지 않는다', () => {
+    const { queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-completed-banner')).toBeNull();
+  });
+
+  it('거래 완료 시 배너와 받은 후기 링크를 표시하고, 링크로 이동한다', () => {
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('trade-completed-banner')).toBeTruthy();
+    expect(getByTestId('show-review-button').props.children).toBe('true');
+
+    fireEvent.press(getByTestId('received-reviews-link'));
+    expect(mockRouterPush).toHaveBeenCalledWith('/reviews/5');
+  });
+
+  it('내 정보가 없으면 받은 후기 링크를 숨긴다', () => {
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
+    mockUseGetMyInformation.mockReturnValue({ data: undefined });
+
+    const { getByTestId, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('trade-completed-banner')).toBeTruthy();
+    expect(queryByTestId('received-reviews-link')).toBeNull();
   });
 
   it('메뉴 버튼을 누르면 거래 요청 모달이 열린다', () => {
