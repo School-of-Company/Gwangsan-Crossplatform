@@ -23,7 +23,7 @@ jest.mock('~/entity/post/ui', () => ({
 }));
 
 jest.mock('~/shared/ui', () => {
-  const { View } = require('react-native');
+  const { View, TouchableOpacity } = require('react-native');
   return {
     BottomSheetModalWrapper: ({
       isVisible,
@@ -32,6 +32,19 @@ jest.mock('~/shared/ui', () => {
       isVisible: boolean;
       children: React.ReactNode;
     }) => (isVisible ? <View>{children}</View> : null),
+    Button: ({
+      children,
+      onPress,
+      disabled,
+    }: {
+      children: React.ReactNode;
+      onPress?: () => void;
+      disabled?: boolean;
+    }) => (
+      <TouchableOpacity onPress={onPress} disabled={disabled}>
+        {children}
+      </TouchableOpacity>
+    ),
   };
 });
 

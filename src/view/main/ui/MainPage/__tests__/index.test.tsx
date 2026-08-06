@@ -39,13 +39,6 @@ jest.mock('~/widget/main', () => ({
   },
 }));
 
-jest.mock('~/widget/write/ui/AppFooter', () => ({
-  AppFooter: () => {
-    const { View } = require('react-native');
-    return <View testID="app-footer" />;
-  },
-}));
-
 const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
 
@@ -82,14 +75,13 @@ describe('MainPageView', () => {
     expect(getByTestId('inform-place').props.children).toBe('지점');
   });
 
-  it('Header, MainSlideViewer, AppFooter를 렌더링한다', () => {
+  it('Header, MainSlideViewer를 렌더링한다', () => {
     mockUseGetMyInformation.mockReturnValue({ data: undefined, isError: false, error: null });
 
     const { getByTestId } = render(<MainPageView />);
 
     expect(getByTestId('main-header')).toBeTruthy();
     expect(getByTestId('slide-viewer')).toBeTruthy();
-    expect(getByTestId('app-footer')).toBeTruthy();
   });
 
   it('isError가 true이면 Toast로 에러 메시지를 보여준다', async () => {

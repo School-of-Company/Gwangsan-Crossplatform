@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getReceiveReview, getTossReview } from '../api/getReviews';
+import { getMyReceivedReview, getReceiveReview, getTossReview } from '../api/getReviews';
 
 jest.mock('~/shared/lib/axios', () => ({
   instance: { get: jest.fn() },
@@ -28,6 +28,24 @@ describe('getReceiveReview', () => {
     mockGet.mockRejectedValue(new Error('Server error'));
 
     await expect(getReceiveReview('3')).rejects.toThrow('Server error');
+  });
+});
+
+describe('getMyReceivedReview', () => {
+  it('GET /review/current 응답 data를 반환한다', async () => {
+    const reviews = [{ reviewId: '5', content: '내가 받은 후기' }];
+    mockGet.mockResolvedValue({ data: reviews });
+
+    const result = await getMyReceivedReview();
+
+    expect(mockGet).toHaveBeenCalledWith('/review/current');
+    expect(result).toEqual(reviews);
+  });
+
+  it('API 실패 시 getErrorMessage로 변환된 에러를 던진다', async () => {
+    mockGet.mockRejectedValue(new Error('Server error'));
+
+    await expect(getMyReceivedReview()).rejects.toThrow('Server error');
   });
 });
 

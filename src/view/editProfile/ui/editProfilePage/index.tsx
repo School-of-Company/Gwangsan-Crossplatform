@@ -21,7 +21,7 @@ export default function EditProfilePageView() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pt-5">
+        <View className="bg-white px-5 pb-3 pt-5">
           <Button>수정</Button>
         </View>
       </KeyboardStickyView>

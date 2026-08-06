@@ -1,6 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, Platform } from 'react-native';
+import { Text, View, TouchableOpacity, ActivityIndicator, Keyboard } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,12 +20,14 @@ import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
+import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
@@ -49,6 +51,8 @@ export default function ChatRoomPage() {
   });
 
   const { data: roomData } = useChatRoomData({ roomId });
+  const { data: myInfo } = useGetMyInformation();
+  const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
 
   const {
     handleTradeAccept,
@@ -100,6 +104,7 @@ export default function ChatRoomPage() {
     });
 
   const handleMenuPress = useCallback(() => {
+    Keyboard.dismiss();
     setIsTradeRequestModalVisible(true);
   }, []);
 
@@ -181,6 +186,21 @@ export default function ChatRoomPage() {
         connectionState={connectionState}
       />
 
+      {isTradeCompleted && (
+        <View
+          testID="trade-completed-banner"
+          className="flex-row items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
+          <Text className="text-label text-gray-700">거래 완료</Text>
+          {myInfo?.memberId != null && (
+            <TouchableOpacity
+              testID="received-reviews-link"
+              onPress={() => router.push(`/reviews/${myInfo.memberId}`)}>
+              <Text className="text-label text-main-500">내가 받은 후기 보기</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       <ChatRoomContent
         messages={messages}
         hasMessages={updatedComponentState.hasMessages}
@@ -190,15 +210,10 @@ export default function ChatRoomPage() {
         onScrollToEnd={() => scrollToEnd(true)}
         tradeEmbedConfig={tradeEmbedConfig}
         onReviewButtonPress={handleReviewButtonPress}
-        showReviewButton={roomData?.product?.isCompleted}
+        showReviewButton={isTradeCompleted}
       />
 
-      <KeyboardStickyView
-        offset={
-          Platform.OS === 'ios'
-            ? { closed: -insets.bottom, opened: 0 }
-            : { closed: -15, opened: 21 }
-        }>
+      <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
         <ChatInput
           onSendMessage={messageHandlers.sendMessage}
           disabled={!updatedComponentState.canSendMessage}

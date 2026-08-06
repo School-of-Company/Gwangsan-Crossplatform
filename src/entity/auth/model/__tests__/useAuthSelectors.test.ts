@@ -8,6 +8,7 @@ import {
   useFormField,
   useSignupCurrentStep,
   useSigninCurrentStep,
+  useSigninDirection,
   useResetPasswordCurrentStep,
   useSignupStepNavigation,
   useSigninStepNavigation,
@@ -56,6 +57,7 @@ const mockSignupState: SignupState = {
 
 const mockSigninState: SigninState = {
   currentStep: 'nickname',
+  direction: null,
   formData: {
     nickname: 'user',
     password: 'pass',
@@ -164,6 +166,11 @@ describe('convenience hooks', () => {
   it('useSigninCurrentStep은 signin store의 currentStep을 반환한다', () => {
     const { result } = renderHook(() => useSigninCurrentStep());
     expect(result.current).toBe('nickname');
+  });
+
+  it('useSigninDirection은 signin store의 direction을 반환한다', () => {
+    const { result } = renderHook(() => useSigninDirection());
+    expect(result.current).toBe(null);
   });
 
   it('useResetPasswordCurrentStep은 reset store의 currentStep을 반환한다', () => {

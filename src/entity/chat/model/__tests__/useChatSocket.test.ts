@@ -178,6 +178,40 @@ describe('useChatSocket', () => {
     });
   });
 
+  it('joinRoom은 연결된 상태에서 chatSocketService.joinRoom에 위임한다', () => {
+    mockChatSocketService.isConnected = true;
+
+    const { result } = renderHook(() => useChatSocket());
+
+    act(() => {
+      result.current.joinRoom(9);
+    });
+
+    expect(mockChatSocketService.joinRoom).toHaveBeenCalledWith(9);
+  });
+
+  it('joinRoom은 연결되지 않은 상태면 아무것도 하지 않는다', () => {
+    mockChatSocketService.isConnected = false;
+
+    const { result } = renderHook(() => useChatSocket());
+
+    act(() => {
+      result.current.joinRoom(9);
+    });
+
+    expect(mockChatSocketService.joinRoom).not.toHaveBeenCalled();
+  });
+
+  it('leaveRoom은 항상 chatSocketService.leaveRoom에 위임한다', () => {
+    const { result } = renderHook(() => useChatSocket());
+
+    act(() => {
+      result.current.leaveRoom(9);
+    });
+
+    expect(mockChatSocketService.leaveRoom).toHaveBeenCalledWith(9);
+  });
+
   it('connection/messageSync의 값들을 그대로 반환한다', () => {
     mockUseSocketConnection.mockReturnValue({
       ...mockConnection,

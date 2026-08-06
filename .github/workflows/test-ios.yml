@@ -2,7 +2,7 @@ name: iOS E2E Tests
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   workflow_dispatch:
     inputs:
       coverage:
@@ -107,7 +107,7 @@ jobs:
             git fetch origin "$BRANCH"
             git restore .
             git rebase "origin/$BRANCH"
-            git push origin HEAD:"$BRANCH"
+            git push origin HEAD:"$BRANCH" || echo "::warning::Podfile.lock sync push to $BRANCH was rejected (likely a protected branch) — skipping, this run still builds with the updated lock file."
           fi
 
       - name: Create placeholder GoogleService-Info.plist

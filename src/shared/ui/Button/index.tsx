@@ -10,7 +10,7 @@ import { useRef, useCallback } from 'react';
 interface ButtonProps extends TouchableOpacityProps {
   children: React.ReactNode;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'error';
+  variant?: 'primary' | 'secondary' | 'error' | 'neutral';
   width?: string;
 }
 
@@ -57,19 +57,23 @@ export const Button = ({
       {...props}>
       <Animated.View
         className={`
-          items-center justify-center rounded-xl px-8 py-3
+          h-full items-center justify-center rounded-xl px-8 py-3
           ${
             disabled
               ? variant === 'primary'
                 ? 'bg-[#CDCDCF]'
                 : variant === 'secondary'
                   ? 'border-2 border-[#CDCDCF] bg-white'
-                  : 'bg-[#CDCDCF]'
+                  : variant === 'neutral'
+                    ? 'bg-[#CDCDCF]'
+                    : 'bg-[#CDCDCF]'
               : variant === 'primary'
                 ? 'bg-main-500'
                 : variant === 'secondary'
                   ? 'border-2 border-main-500 bg-white'
-                  : 'bg-error-500'
+                  : variant === 'neutral'
+                    ? 'bg-[#F3F4F5]'
+                    : 'bg-error-500'
           }
         `}
         style={{
@@ -85,7 +89,9 @@ export const Button = ({
                 ? 'text-white'
                 : variant === 'secondary'
                   ? 'text-main-500'
-                  : 'text-white'
+                  : variant === 'neutral'
+                    ? 'text-gray-900'
+                    : 'text-white'
           }
         `}>
           {children}

@@ -1,7 +1,37 @@
 const noop = () => {};
 const identity = (v) => v;
 
+const Easing = {
+  linear: identity,
+  ease: identity,
+  quad: identity,
+  cubic: identity,
+  bezier: () => identity,
+  in: (fn) => fn,
+  out: (fn) => fn,
+  inOut: (fn) => fn,
+};
+
+function createAnimationBuilderMock() {
+  const builder = {};
+  [
+    'duration',
+    'easing',
+    'delay',
+    'springify',
+    'damping',
+    'mass',
+    'stiffness',
+    'withInitialValues',
+    'withCallback',
+  ].forEach((method) => {
+    builder[method] = () => builder;
+  });
+  return builder;
+}
+
 const Animated = {
+  Easing,
   Value: () => ({ value: 0 }),
   SharedValue: noop,
   useSharedValue: (v) => ({ value: v }),
@@ -16,10 +46,13 @@ const Animated = {
   runOnUI: (fn) => fn,
   interpolate: identity,
   Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
-  FadeIn: { duration: noop },
-  FadeOut: { duration: noop },
-  SlideInRight: { duration: noop },
-  SlideOutLeft: { duration: noop },
+  FadeIn: createAnimationBuilderMock(),
+  FadeOut: createAnimationBuilderMock(),
+  FadeInRight: createAnimationBuilderMock(),
+  FadeInLeft: createAnimationBuilderMock(),
+  SlideInRight: createAnimationBuilderMock(),
+  SlideInLeft: createAnimationBuilderMock(),
+  SlideOutLeft: createAnimationBuilderMock(),
   View: 'Animated.View',
   ScrollView: 'Animated.ScrollView',
   FlatList: 'Animated.FlatList',

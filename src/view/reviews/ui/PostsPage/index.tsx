@@ -22,7 +22,7 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
         {posts.length > 0 ? (
           <View className="pb-6">
             {posts.map((post) => (
-              <ReviewPost key={post.reviewId} review={post} />
+              <ReviewPost key={post.reviewId} review={post} mode={mode} />
             ))}
           </View>
         ) : (

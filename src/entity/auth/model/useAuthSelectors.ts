@@ -53,6 +53,8 @@ export const useSigninCurrentStep = () => useCurrentStep<SigninState>(useSigninS
 export const useResetPasswordCurrentStep = () =>
   useCurrentStep<ResetPasswordState>(useResetPasswordStore);
 
+export const useSigninDirection = () => useSigninStore((state) => state.direction);
+
 export const useSignupStepNavigation = () => useStepNavigation<SignupState>(useSignupStore);
 export const useSigninStepNavigation = () => useStepNavigation<SigninState>(useSigninStore);
 export const useResetPasswordStepNavigation = () =>

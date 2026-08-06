@@ -38,5 +38,5 @@ EXPO_PUBLIC_SENTRY_DSN / SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN
 ## CI/CD
 
 `ci.yml` lint+tsc+test on PR → `main`/`develop`.
-`test-ios.yml` / `test-android.yml` — Detox E2E (PR or `/run-e2e` comment).
+`test-ios.yml` — Detox E2E (PR → `main` only, or `/run-e2e` comment on any PR).
 `ios_cd.yml` / `android_cd.yml` — EAS cloud builds.

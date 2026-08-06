@@ -7,19 +7,21 @@ import { useCallback } from 'react';
 
 interface ReviewPostProps {
   review: ReviewPostType;
+  mode?: 'toss' | 'receive';
 }
 
-export default function ReviewPost({ review }: ReviewPostProps) {
+export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps) {
   const R = useRouter();
   const handleClick = useCallback(() => {
     R.push('/cancelTrade/' + review.reviewId);
   }, [R, review]);
+  const images = review.imageUrls ?? review.images ?? [];
   return (
     <TouchableOpacity
       onPress={handleClick}
       className="flex flex-row gap-9 border-b border-b-gray-200 px-6 py-3">
-      {Array.isArray(review.images) && review.images.length > 0 ? (
-        review.images.map((image, index) => (
+      {images.length > 0 ? (
+        images.map((image, index) => (
           <Image key={index} source={{ uri: image.imageUrl }} className="size-24 rounded-lg" />
         ))
       ) : (
@@ -35,7 +37,11 @@ export default function ReviewPost({ review }: ReviewPostProps) {
         <Text className="mb-1 max-w-[200px] flex-wrap text-label text-[#555555]">
           {review.content}
         </Text>
-        <Text className="text-label">{review.reviewerName}</Text>
+        {mode === 'receive' ? (
+          <Text className="text-label">작성자 {review.reviewerName}</Text>
+        ) : (
+          <Text className="text-label text-gray-400">내가 작성한 후기</Text>
+        )}
       </View>
     </TouchableOpacity>
   );

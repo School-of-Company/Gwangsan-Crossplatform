@@ -4,7 +4,7 @@
     "owner": "gsmstartup",
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
-    "version": "1.0.26",
+    "version": "1.0.27",
     "scheme": "gwangsan",
     "web": {
       "favicon": "./src/app/favicon.png"
@@ -14,6 +14,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "dark"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -68,8 +75,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/shared/assets/png/icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./src/shared/assets/png/adaptive-icon-foreground.png",
+        "backgroundColor": "#6F9723"
       },
       "package": "gwangsan.io.kr",
       "googleServicesFile": "$GOOGLE_SERVICES_JSON",
