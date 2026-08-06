@@ -70,7 +70,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
           Toast.show({
             type: 'error',
             text1: '리뷰 작성 실패',
-            text2: error as string,
+            text2: error instanceof Error ? error.message : '리뷰 작성 중 오류가 발생했습니다.',
           });
         }
       },
