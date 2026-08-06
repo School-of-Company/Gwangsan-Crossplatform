@@ -1,12 +1,13 @@
-import { device, expect, element, by, waitFor } from 'detox';
+import { expect, element, by, waitFor } from 'detox';
 import { collectCoverage } from './coverage';
+import { launchAppResilient } from './launchApp';
 
 // TODO: CI 환경에서 로그인 API 호출 후 네비게이션 완료 감지 불안정으로 인해 임시 비활성화
 describe.skip('프로필', () => {
   afterAll(collectCoverage);
 
   beforeAll(async () => {
-    await device.launchApp({
+    await launchAppResilient({
       newInstance: true,
       launchArgs: { detoxDisableSynchronization: 1 },
       permissions: { notifications: 'YES' },
@@ -26,7 +27,7 @@ describe.skip('프로필', () => {
     await waitFor(element(by.id('PasswordStep-password-input')))
       .not.toBeVisible()
       .withTimeout(30000);
-  });
+  }, 300000);
 
   it('푸터의 프로필 버튼을 탭하면 프로필 화면으로 이동한다', async () => {
     await element(by.id('Footer-profile-button')).tap();

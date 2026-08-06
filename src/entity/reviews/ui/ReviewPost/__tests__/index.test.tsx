@@ -56,12 +56,21 @@ describe('ReviewPost', () => {
     expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
   });
 
-  it('showReviewerName=false면 작성자 이름을 숨긴다', () => {
+  it('mode="toss"면 작성자 이름 대신 내가 작성한 후기임을 표시한다', () => {
     const review = makeReview();
-    const { queryByText } = render(<ReviewPost review={review} showReviewerName={false} />);
+    const { queryByText, getByText } = render(<ReviewPost review={review} mode="toss" />);
 
     expect(queryByText('작성자 홍길동')).toBeNull();
-    expect(queryByText('좋은 거래였습니다.')).toBeTruthy();
+    expect(getByText('내가 작성한 후기')).toBeTruthy();
+    expect(getByText('좋은 거래였습니다.')).toBeTruthy();
+  });
+
+  it('mode="receive"면 작성자 이름을 표시한다', () => {
+    const review = makeReview();
+    const { getByText, queryByText } = render(<ReviewPost review={review} mode="receive" />);
+
+    expect(getByText('작성자 홍길동')).toBeTruthy();
+    expect(queryByText('내가 작성한 후기')).toBeNull();
   });
 
   it('images가 있으면 각 이미지를 렌더링한다', () => {

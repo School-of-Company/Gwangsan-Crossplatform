@@ -7,10 +7,10 @@ import { useCallback } from 'react';
 
 interface ReviewPostProps {
   review: ReviewPostType;
-  showReviewerName?: boolean;
+  mode?: 'toss' | 'receive';
 }
 
-export default function ReviewPost({ review, showReviewerName = true }: ReviewPostProps) {
+export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps) {
   const R = useRouter();
   const handleClick = useCallback(() => {
     R.push('/cancelTrade/' + review.reviewId);
@@ -37,7 +37,11 @@ export default function ReviewPost({ review, showReviewerName = true }: ReviewPo
         <Text className="mb-1 max-w-[200px] flex-wrap text-label text-[#555555]">
           {review.content}
         </Text>
-        {showReviewerName && <Text className="text-label">작성자 {review.reviewerName}</Text>}
+        {mode === 'receive' ? (
+          <Text className="text-label">작성자 {review.reviewerName}</Text>
+        ) : (
+          <Text className="text-label text-gray-400">내가 작성한 후기</Text>
+        )}
       </View>
     </TouchableOpacity>
   );

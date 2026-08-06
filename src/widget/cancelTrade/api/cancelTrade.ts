@@ -1,4 +1,5 @@
 import { instance } from '~/shared/lib/axios';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 
 export const cancelTrade = async (reason: string, imageIds: number[], productId: number) => {
   try {
@@ -8,6 +9,6 @@ export const cancelTrade = async (reason: string, imageIds: number[], productId:
     });
     return res;
   } catch (error) {
-    throw error;
+    throw new Error(getErrorMessage(error));
   }
 };
