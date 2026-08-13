@@ -36,10 +36,7 @@ exports[`Button 스냅샷 - disabled 상태 1`] = `
   }
 >
   <View
-    className="
-          h-full items-center justify-center rounded-xl px-8 py-3
-          bg-[#CDCDCF]
-        "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#CDCDCF] "
     collapsable={false}
     style={
       {
@@ -52,10 +49,7 @@ exports[`Button 스냅샷 - disabled 상태 1`] = `
     }
   >
     <Text
-      className="
-          text-lg font-semibold
-          text-gray-500
-        "
+      className="text-lg font-semibold text-gray-500 "
     >
       확인
     </Text>
@@ -99,10 +93,7 @@ exports[`Button 스냅샷 - error variant 1`] = `
   }
 >
   <View
-    className="
-          h-full items-center justify-center rounded-xl px-8 py-3
-          bg-error-500
-        "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-error-500 "
     collapsable={false}
     style={
       {
@@ -115,10 +106,7 @@ exports[`Button 스냅샷 - error variant 1`] = `
     }
   >
     <Text
-      className="
-          text-lg font-semibold
-          text-white
-        "
+      className="text-lg font-semibold text-white "
     >
       확인
     </Text>
@@ -162,10 +150,7 @@ exports[`Button 스냅샷 - neutral variant 1`] = `
   }
 >
   <View
-    className="
-          h-full items-center justify-center rounded-xl px-8 py-3
-          bg-[#F3F4F5]
-        "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#F3F4F5] "
     collapsable={false}
     style={
       {
@@ -178,10 +163,7 @@ exports[`Button 스냅샷 - neutral variant 1`] = `
     }
   >
     <Text
-      className="
-          text-lg font-semibold
-          text-gray-900
-        "
+      className="text-lg font-semibold text-gray-900 "
     >
       확인
     </Text>
@@ -225,10 +207,7 @@ exports[`Button 스냅샷 - primary variant (기본값) 1`] = `
   }
 >
   <View
-    className="
-          h-full items-center justify-center rounded-xl px-8 py-3
-          bg-main-500
-        "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-main-500 "
     collapsable={false}
     style={
       {
@@ -241,10 +220,7 @@ exports[`Button 스냅샷 - primary variant (기본값) 1`] = `
     }
   >
     <Text
-      className="
-          text-lg font-semibold
-          text-white
-        "
+      className="text-lg font-semibold text-white "
     >
       확인
     </Text>
@@ -288,10 +264,7 @@ exports[`Button 스냅샷 - secondary variant 1`] = `
   }
 >
   <View
-    className="
-          h-full items-center justify-center rounded-xl px-8 py-3
-          border-2 border-main-500 bg-white
-        "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 border-2 border-main-500 bg-white "
     collapsable={false}
     style={
       {
@@ -304,10 +277,7 @@ exports[`Button 스냅샷 - secondary variant 1`] = `
     }
   >
     <Text
-      className="
-          text-lg font-semibold
-          text-main-500
-        "
+      className="text-lg font-semibold text-main-500 "
     >
       확인
     </Text>

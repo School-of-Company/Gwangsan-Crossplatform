@@ -33,7 +33,7 @@ export default function Inform({ dong, place, head }: InformProps) {
   return (
     <View className="flex gap-2 bg-white p-7">
       <Text className="text-titleSmall">{head}</Text>
-      <Text className=" text-body2">{dong + ' ' + place}</Text>
+      <Text className="text-body2">{dong + ' ' + place}</Text>
       <View className="flex w-full flex-row items-center justify-around pb-10">
         <TouchableOpacity
           onPress={() => handlePress('OBJECT')}
