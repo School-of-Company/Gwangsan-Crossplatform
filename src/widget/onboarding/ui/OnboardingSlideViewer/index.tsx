@@ -31,7 +31,7 @@ const OnboardingSlideViewer = () => {
   };
 
   return (
-    <View className="flex flex-col items-center gap-3 ">
+    <View className="flex flex-col items-center gap-3">
       <ScrollView
         ref={scrollViewRef}
         horizontal
