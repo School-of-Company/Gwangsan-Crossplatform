@@ -10,11 +10,19 @@ updates:
     # expo/react-native 계열은 Expo SDK 버전에 종속돼 있어 개별 업데이트 시
     # `expo install --check` CI 게이트가 반드시 실패함. `expo upgrade`로
     # SDK 단위 일괄 업데이트할 때만 버전을 올리므로 Dependabot 대상에서 제외.
+    # react/babel-preset-expo 등은 위 glob에 걸리지 않지만 동일하게 SDK에
+    # 고정되는 패키지라 명시적으로 추가 (#474, #475 CI 실패로 확인).
     ignore:
       - dependency-name: 'expo*'
       - dependency-name: '@expo/*'
       - dependency-name: 'react-native*'
       - dependency-name: '@react-native*'
+      - dependency-name: 'babel-preset-expo'
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: '@types/react'
+      - dependency-name: '@types/react-dom'
+      - dependency-name: 'react-test-renderer'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
