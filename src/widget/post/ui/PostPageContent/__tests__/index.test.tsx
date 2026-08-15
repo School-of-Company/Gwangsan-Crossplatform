@@ -198,6 +198,14 @@ describe('PostPageContent', () => {
       expect(queryByText('거래하기')).toBeNull();
     });
 
+    it('내 게시글이면 리뷰 작성 버튼을 노출하지 않는다', () => {
+      const { queryByText } = render(
+        <PostPageContent {...makeProps({ review: '1', isMyPost: true })} />
+      );
+
+      expect(queryByText('리뷰 작성')).toBeNull();
+    });
+
     it('"리뷰 작성"을 누르면 onReviewButtonPress가 호출된다', () => {
       const onReviewButtonPress = jest.fn();
       const { getByText } = render(

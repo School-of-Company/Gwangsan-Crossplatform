@@ -71,6 +71,19 @@ describe('ChatRoomItem', () => {
     expect(typeof images[0].props.source).not.toBe('string');
   });
 
+  it('isCompleted면 거래 완료 태그를 표시한다', () => {
+    const room = { ...baseRoom, product: { ...baseRoom.product, isCompleted: true } };
+    const { getByTestId } = render(<ChatRoomItem room={room} onPress={jest.fn()} />);
+
+    expect(getByTestId('trade-completed-tag')).toBeTruthy();
+  });
+
+  it('isCompleted가 아니면 거래 완료 태그를 표시하지 않는다', () => {
+    const { queryByTestId } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
+
+    expect(queryByTestId('trade-completed-tag')).toBeNull();
+  });
+
   it('누르면 onPress에 roomId를 전달한다', () => {
     const onPress = jest.fn();
     const { getByText } = render(<ChatRoomItem room={baseRoom} onPress={onPress} />);

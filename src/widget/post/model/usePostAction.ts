@@ -57,6 +57,9 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
         try {
           await createReview({
             productId: data.id,
+            // 이 화면에는 거래 상대 정보가 없어 글 작성자를 대상으로 보낸다.
+            // 내 글이면 대상이 나가 되므로 리뷰 작성 버튼 자체를 노출하지 않는다
+            otherMemberId: data.member.memberId,
             content: contents,
             light: light,
           });

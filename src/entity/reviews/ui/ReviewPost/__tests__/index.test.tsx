@@ -65,6 +65,14 @@ describe('ReviewPost', () => {
     expect(getByText('좋은 거래였습니다.')).toBeTruthy();
   });
 
+  it('mode="toss"이고 targetName이 있으면 받은 사람을 표시한다', () => {
+    const review = makeReview({ targetName: '김민하' });
+    const { getByText, queryByText } = render(<ReviewPost review={review} mode="toss" />);
+
+    expect(getByText('받은 사람 김민하')).toBeTruthy();
+    expect(queryByText('내가 작성한 후기')).toBeNull();
+  });
+
   it('mode="receive"면 작성자 이름을 표시한다', () => {
     const review = makeReview();
     const { getByText, queryByText } = render(<ReviewPost review={review} mode="receive" />);
