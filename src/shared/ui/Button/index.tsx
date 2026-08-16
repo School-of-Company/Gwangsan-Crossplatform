@@ -56,33 +56,28 @@ export const Button = ({
       style={style}
       {...props}>
       <Animated.View
-        className={`
-          h-full items-center justify-center rounded-xl px-8 py-3
-          ${
-            disabled
-              ? variant === 'primary'
-                ? 'bg-[#CDCDCF]'
-                : variant === 'secondary'
-                  ? 'border-2 border-[#CDCDCF] bg-white'
-                  : variant === 'neutral'
-                    ? 'bg-[#CDCDCF]'
-                    : 'bg-[#CDCDCF]'
-              : variant === 'primary'
-                ? 'bg-main-500'
-                : variant === 'secondary'
-                  ? 'border-2 border-main-500 bg-white'
-                  : variant === 'neutral'
-                    ? 'bg-[#F3F4F5]'
-                    : 'bg-error-500'
-          }
-        `}
+        className={`h-full items-center justify-center rounded-xl px-8 py-3 ${
+          disabled
+            ? variant === 'primary'
+              ? 'bg-[#CDCDCF]'
+              : variant === 'secondary'
+                ? 'border-2 border-[#CDCDCF] bg-white'
+                : variant === 'neutral'
+                  ? 'bg-[#CDCDCF]'
+                  : 'bg-[#CDCDCF]'
+            : variant === 'primary'
+              ? 'bg-main-500'
+              : variant === 'secondary'
+                ? 'border-2 border-main-500 bg-white'
+                : variant === 'neutral'
+                  ? 'bg-[#F3F4F5]'
+                  : 'bg-error-500'
+        } `}
         style={{
           transform: [{ scale }],
         }}>
         <Text
-          className={`
-          text-lg font-semibold
-          ${
+          className={`text-lg font-semibold ${
             disabled
               ? 'text-gray-500'
               : variant === 'primary'
@@ -92,8 +87,7 @@ export const Button = ({
                   : variant === 'neutral'
                     ? 'text-gray-900'
                     : 'text-white'
-          }
-        `}>
+          } `}>
           {children}
         </Text>
       </Animated.View>

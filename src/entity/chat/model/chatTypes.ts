@@ -23,6 +23,7 @@ export interface ProductImage {
 export interface ProductInfo {
   readonly productId: string | number;
   readonly title: string;
+  readonly isCompleted?: boolean;
   readonly images: readonly ProductImage[];
 }
 

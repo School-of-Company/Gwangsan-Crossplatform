@@ -40,7 +40,9 @@ export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps
         {mode === 'receive' ? (
           <Text className="text-label">작성자 {review.reviewerName}</Text>
         ) : (
-          <Text className="text-label text-gray-400">내가 작성한 후기</Text>
+          <Text className="text-label">
+            {review.targetName ? `받은 사람 ${review.targetName}` : '내가 작성한 후기'}
+          </Text>
         )}
       </View>
     </TouchableOpacity>

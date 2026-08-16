@@ -339,6 +339,7 @@ describe('ChatRoomPage', () => {
     await waitFor(() =>
       expect(mockCreateReview).toHaveBeenCalledWith({
         productId: 1,
+        otherMemberId: 7,
         content: '좋은 거래였어요',
         light: 80,
       })

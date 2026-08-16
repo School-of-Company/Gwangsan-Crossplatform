@@ -188,6 +188,12 @@ describe('usePostAction', () => {
         await result.current.reviewHandlers.onSubmit(80, '좋았어요');
       });
 
+      expect(mockCreateReview).toHaveBeenCalledWith({
+        productId: 1,
+        otherMemberId: 42,
+        content: '좋았어요',
+        light: 80,
+      });
       expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
       expect(result.current.isReviewModalVisible).toBe(false);
     });

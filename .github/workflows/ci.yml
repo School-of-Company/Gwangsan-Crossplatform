@@ -55,6 +55,9 @@ jobs:
       - name: Update npm
         run: npm install -g npm@11
 
+      - name: Create env file for tests
+        run: echo "EXPO_PUBLIC_SENTRY_DSN=https://test-placeholder@sentry.io/0" > .env
+
       - name: Report unit test coverage
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
