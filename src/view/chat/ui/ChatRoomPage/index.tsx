@@ -120,11 +120,12 @@ export default function ChatRoomPage() {
 
   const handleReviewSubmit = useCallback(
     async (light: number, contents: string) => {
-      if (!roomData?.product?.id) return;
+      if (!roomData?.product?.id || !otherUserInfo.id) return;
 
       try {
         await createReview({
           productId: roomData.product.id,
+          otherMemberId: otherUserInfo.id,
           content: contents,
           light: light,
         });
@@ -145,7 +146,7 @@ export default function ChatRoomPage() {
         });
       }
     },
-    [roomData, queryClient]
+    [roomData, otherUserInfo.id, queryClient]
   );
 
   const handleReviewButtonPress = useCallback(() => {

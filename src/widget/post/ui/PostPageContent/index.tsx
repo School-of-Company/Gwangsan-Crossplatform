@@ -77,7 +77,7 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
         </TouchableOpacity>
 
         <View className="w-full flex-row justify-center gap-4">
-          {review === '1' ? (
+          {review === '1' && !isMyPost ? (
             <Button variant="primary" width="w-full" onPress={onReviewButtonPress}>
               리뷰 작성
             </Button>

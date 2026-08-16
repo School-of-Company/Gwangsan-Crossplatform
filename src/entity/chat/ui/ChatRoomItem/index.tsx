@@ -38,9 +38,16 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
         resizeMode="cover"
       />
       <View className="flex-1">
-        <Text className="text-base font-bold text-gray-900" numberOfLines={1}>
-          {room.product?.title}
-        </Text>
+        <View className="flex-row items-center gap-1.5">
+          <Text className="shrink text-base font-bold text-gray-900" numberOfLines={1}>
+            {room.product?.title}
+          </Text>
+          {room.product?.isCompleted && (
+            <Text testID="trade-completed-tag" className="text-xs text-gray-500">
+              거래 완료
+            </Text>
+          )}
+        </View>
         <Text className="text-sm text-gray-700" numberOfLines={1}>
           {room.member.nickname}
         </Text>
