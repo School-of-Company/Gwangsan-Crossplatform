@@ -6,16 +6,24 @@ interface CompletedTradesProps {
   posts?: PostType[];
   isMe: boolean;
   name?: string;
+  showTitle?: boolean;
 }
 
-export default function CompletedTrades({ posts = [], isMe, name }: CompletedTradesProps) {
+export default function CompletedTrades({
+  posts = [],
+  isMe,
+  name,
+  showTitle = true,
+}: CompletedTradesProps) {
   const completedPosts = posts.filter((post) => post.isCompleted);
 
   return (
     <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
-      <Text className="text-titleSmall">
-        {isMe ? '거래 완료 품목' : `${name ?? ''}님의 거래 완료 품목`}
-      </Text>
+      {showTitle && (
+        <Text className="text-titleSmall">
+          {isMe ? '거래 완료 품목' : `${name ?? ''}님의 거래 완료 품목`}
+        </Text>
+      )}
       {completedPosts.length > 0 ? (
         completedPosts.map((post) => <Post {...post} key={post.id} />)
       ) : (

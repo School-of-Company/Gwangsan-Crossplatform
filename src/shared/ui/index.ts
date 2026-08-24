@@ -9,3 +9,4 @@ export { BottomSheetModalWrapper } from './BottomSheetModalWrapper';
 export { default as ProgressBar } from './ProgressBar';
 export { SlideIndicator } from './SlideIndicator';
 export { Card } from './Card';
+export { MenuRow } from './MenuRow';
