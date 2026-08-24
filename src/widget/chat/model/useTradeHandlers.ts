@@ -16,6 +16,7 @@ interface UseTradeHandlersParams {
     } | null;
   } | null;
   readonly otherUserInfo: { nickname: string; id?: number };
+  readonly sendMessage?: (content: string | null, imageIds: number[]) => void;
 }
 
 interface UseTradeHandlersReturn {
@@ -30,8 +31,10 @@ export const useTradeHandlers = ({
   roomId,
   roomData,
   otherUserInfo,
+  sendMessage,
 }: UseTradeHandlersParams): UseTradeHandlersReturn => {
   const queryClient = useQueryClient();
+
   const hasTradeRequest =
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
 
@@ -76,6 +79,10 @@ export const useTradeHandlers = ({
     try {
       await makeReservation({ productId: roomData.product.id });
 
+      // ponytail: 예약 사실을 채팅 메시지로도 알림. 채팅 서버가 transactionStateChanged에
+      // isReserved를 실어주기 시작하면(현재 DTO에서 whitelist로 잘림) 이 줄은 제거.
+      sendMessage?.('예약했습니다.', []);
+
       Toast.show({
         type: 'success',
         text1: '예약이 완료되었습니다!',
@@ -87,13 +94,15 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData]);
+  }, [roomData, sendMessage]);
 
   const handleCancelReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
 
     try {
       await cancelReservation({ productId: roomData.product.id });
+
+      sendMessage?.('예약을 취소했습니다.', []);
 
       Toast.show({
         type: 'success',
@@ -106,7 +115,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData]);
+  }, [roomData, sendMessage]);
 
   return {
     handleTradeAccept,

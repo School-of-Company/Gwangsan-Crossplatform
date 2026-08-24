@@ -243,6 +243,36 @@ describe('useTradeHandlers', () => {
       );
     });
 
+    it('성공 시 예약 사실을 채팅 메시지로 상대방에게 알린다', async () => {
+      mockMakeReservation.mockResolvedValue({});
+      const sendMessage = jest.fn();
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo, sendMessage })
+      );
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('예약했습니다.', []);
+    });
+
+    it('실패 시 채팅 메시지를 보내지 않는다', async () => {
+      mockMakeReservation.mockRejectedValue(new Error('예약 실패'));
+      const sendMessage = jest.fn();
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo, sendMessage })
+      );
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      expect(sendMessage).not.toHaveBeenCalled();
+    });
+
     it('productId가 없으면 makeReservation을 호출하지 않는다', async () => {
       const { result } = renderHookWithProviders(() =>
         useTradeHandlers({ roomId: 1, roomData: { product: null }, otherUserInfo })
@@ -288,6 +318,21 @@ describe('useTradeHandlers', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', text1: '예약 취소 실패', text2: '취소 실패' })
       );
+    });
+
+    it('성공 시 예약 취소 사실을 채팅 메시지로 상대방에게 알린다', async () => {
+      mockCancelReservation.mockResolvedValue({});
+      const sendMessage = jest.fn();
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo, sendMessage })
+      );
+
+      await act(async () => {
+        await result.current.handleCancelReservation();
+      });
+
+      expect(sendMessage).toHaveBeenCalledWith('예약을 취소했습니다.', []);
     });
 
     it('productId가 없으면 cancelReservation을 호출하지 않는다', async () => {
