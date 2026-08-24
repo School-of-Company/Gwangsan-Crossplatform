@@ -49,7 +49,7 @@ exports[`Button 스냅샷 - disabled 상태 1`] = `
     }
   >
     <Text
-      className="text-lg font-semibold text-gray-500 "
+      className="text-lg font-medium text-gray-500 "
     >
       확인
     </Text>
@@ -106,7 +106,7 @@ exports[`Button 스냅샷 - error variant 1`] = `
     }
   >
     <Text
-      className="text-lg font-semibold text-white "
+      className="text-lg font-medium text-white "
     >
       확인
     </Text>
@@ -163,7 +163,7 @@ exports[`Button 스냅샷 - neutral variant 1`] = `
     }
   >
     <Text
-      className="text-lg font-semibold text-gray-900 "
+      className="text-lg font-medium text-gray-900 "
     >
       확인
     </Text>
@@ -220,7 +220,7 @@ exports[`Button 스냅샷 - primary variant (기본값) 1`] = `
     }
   >
     <Text
-      className="text-lg font-semibold text-white "
+      className="text-lg font-medium text-white "
     >
       확인
     </Text>
@@ -277,7 +277,7 @@ exports[`Button 스냅샷 - secondary variant 1`] = `
     }
   >
     <Text
-      className="text-lg font-semibold text-main-500 "
+      className="text-lg font-medium text-main-500 "
     >
       확인
     </Text>

@@ -72,7 +72,7 @@ exports[`NoNetworkOverlay 스냅샷 - visible true 1`] = `
         }
       >
         <Text
-          className="text-lg font-semibold text-white "
+          className="text-lg font-medium text-white "
         >
           재시도
         </Text>

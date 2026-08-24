@@ -5,8 +5,6 @@ import Toast from 'react-native-toast-message';
 import ProfilePageView from '../index';
 import { useGetProfile } from '~/view/profile/model/useGetProfile';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
-import { useGetMyPosts } from '~/view/profile/model/useGetMyPosts';
-import { useGetPosts } from '~/view/profile/model/useGetPosts';
 import { useGetBlockList } from '~/view/profile/model/useGetBlockList';
 
 jest.mock('expo-router', () => ({
@@ -24,8 +22,6 @@ jest.mock('react-native-toast-message', () => ({
 
 jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
-jest.mock('~/view/profile/model/useGetPosts', () => ({ useGetPosts: jest.fn() }));
 jest.mock('~/view/profile/model/useGetBlockList', () => ({ useGetBlockList: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
@@ -51,35 +47,23 @@ jest.mock('~/entity/profile/ui', () => ({
 }));
 
 jest.mock('~/widget/profile/ui', () => ({
-  Active: (props: any) => {
-    const { Text } = require('react-native');
-    return <Text testID="active">{JSON.stringify(props)}</Text>;
-  },
   Introduce: (props: any) => {
     const { Text } = require('react-native');
     return <Text testID="introduce">{JSON.stringify(props)}</Text>;
   },
-}));
-
-jest.mock('~/shared/ui/Post', () => ({
-  __esModule: true,
-  default: ({ id, title }: any) => {
+  ProfileMenu: (props: any) => {
     const { Text } = require('react-native');
-    return <Text testID={`post-${id}`}>{title}</Text>;
+    return <Text testID="profile-menu">{JSON.stringify(props)}</Text>;
   },
 }));
 
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUseGetProfile = useGetProfile as jest.Mock;
 const mockUseGetMyProfile = useGetMyProfile as jest.Mock;
-const mockUseGetMyPosts = useGetMyPosts as jest.Mock;
-const mockUseGetPosts = useGetPosts as jest.Mock;
 const mockUseGetBlockList = useGetBlockList as jest.Mock;
 
 const refetchProfile = jest.fn().mockResolvedValue({});
 const refetchMyProfile = jest.fn().mockResolvedValue({});
-const refetchMyPosts = jest.fn().mockResolvedValue({});
-const refetchOtherPosts = jest.fn().mockResolvedValue({});
 
 const defaultProfileReturn = () => ({
   data: undefined,
@@ -100,27 +84,11 @@ const defaultMyProfileReturn = () => ({
   refetch: refetchMyProfile,
 });
 
-const defaultMyPostsReturn = () => ({
-  data: [],
-  error: null,
-  isError: false,
-  refetch: refetchMyPosts,
-});
-
-const defaultOtherPostsReturn = () => ({
-  data: [],
-  error: null,
-  isError: false,
-  refetch: refetchOtherPosts,
-});
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseLocalSearchParams.mockReturnValue({});
   mockUseGetProfile.mockReturnValue(defaultProfileReturn());
   mockUseGetMyProfile.mockReturnValue(defaultMyProfileReturn());
-  mockUseGetMyPosts.mockReturnValue(defaultMyPostsReturn());
-  mockUseGetPosts.mockReturnValue(defaultOtherPostsReturn());
   mockUseGetBlockList.mockReturnValue({ data: [] });
 });
 
@@ -130,9 +98,7 @@ describe('ProfilePageView', () => {
       render(<ProfilePageView />);
 
       expect(mockUseGetMyProfile).toHaveBeenCalledWith(true);
-      expect(mockUseGetMyPosts).toHaveBeenCalledWith(true);
       expect(mockUseGetProfile).toHaveBeenCalledWith(undefined);
-      expect(mockUseGetPosts).toHaveBeenCalledWith(undefined);
     });
 
     it('Header에 뒤로가기 버튼을 표시하지 않는다', () => {
@@ -157,6 +123,15 @@ describe('ProfilePageView', () => {
 
       expect(getByTestId('gwangsan')).toBeTruthy();
     });
+
+    it('ProfileMenu에 isMe=true와 내 memberId를 전달한다', () => {
+      const { getByTestId } = render(<ProfilePageView />);
+
+      const menu = JSON.parse(getByTestId('profile-menu').props.children);
+      expect(menu.isMe).toBe(true);
+      expect(menu.memberId).toBe(1);
+      expect(menu.name).toBe('나');
+    });
   });
 
   describe('상대방 프로필(id 있음)', () => {
@@ -174,9 +149,7 @@ describe('ProfilePageView', () => {
       render(<ProfilePageView />);
 
       expect(mockUseGetMyProfile).toHaveBeenCalledWith(false);
-      expect(mockUseGetMyPosts).toHaveBeenCalledWith(false);
       expect(mockUseGetProfile).toHaveBeenCalledWith('5');
-      expect(mockUseGetPosts).toHaveBeenCalledWith('5');
     });
 
     it('Header에 뒤로가기 버튼을 표시한다', () => {
@@ -190,6 +163,15 @@ describe('ProfilePageView', () => {
       const { queryByTestId } = render(<ProfilePageView />);
 
       expect(queryByTestId('gwangsan')).toBeNull();
+    });
+
+    it('ProfileMenu에 isMe=false와 상대방 memberId를 전달한다', () => {
+      const { getByTestId } = render(<ProfilePageView />);
+
+      const menu = JSON.parse(getByTestId('profile-menu').props.children);
+      expect(menu.isMe).toBe(false);
+      expect(menu.memberId).toBe(5);
+      expect(menu.name).toBe('상대방');
     });
 
     it('차단된 사용자면 Information에 isBlocked=true를 전달한다', () => {
@@ -211,51 +193,6 @@ describe('ProfilePageView', () => {
     });
   });
 
-  describe('게시물 목록', () => {
-    it('게시물이 없으면 안내 문구를 표시한다', () => {
-      const { getByText } = render(<ProfilePageView />);
-
-      expect(getByText('게시물이 없습니다.')).toBeTruthy();
-    });
-
-    it('게시물이 있으면 Post 컴포넌트를 렌더링한다', () => {
-      mockUseGetMyPosts.mockReturnValue({
-        data: [
-          { id: 1, title: '내 글 1' },
-          { id: 2, title: '내 글 2' },
-        ],
-        error: null,
-        isError: false,
-        refetch: refetchMyPosts,
-      });
-
-      const { getByTestId } = render(<ProfilePageView />);
-
-      expect(getByTestId('post-1')).toBeTruthy();
-      expect(getByTestId('post-2')).toBeTruthy();
-    });
-
-    it('본인 프로필일 때 "내 글" 타이틀을 표시한다', () => {
-      const { getByText } = render(<ProfilePageView />);
-
-      expect(getByText('내 글')).toBeTruthy();
-    });
-
-    it('상대방 프로필일 때 "{닉네임}님의 글" 타이틀을 표시한다', () => {
-      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
-      mockUseGetProfile.mockReturnValue({
-        data: { memberId: 5, nickname: '상대방', specialties: [] },
-        error: null,
-        isError: false,
-        refetch: refetchProfile,
-      });
-
-      const { getByText } = render(<ProfilePageView />);
-
-      expect(getByText('상대방님의 글')).toBeTruthy();
-    });
-  });
-
   describe('에러 처리', () => {
     it('프로필 조회 실패 시 에러 Toast를 표시한다', () => {
       mockUseLocalSearchParams.mockReturnValue({ id: '5' });
@@ -270,21 +207,6 @@ describe('ProfilePageView', () => {
 
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', text1: '프로필을 불러오는데 실패했습니다.' })
-      );
-    });
-
-    it('게시물 조회 실패 시 에러 Toast를 표시한다', () => {
-      mockUseGetMyPosts.mockReturnValue({
-        data: undefined,
-        error: new Error('게시물 오류'),
-        isError: true,
-        refetch: refetchMyPosts,
-      });
-
-      render(<ProfilePageView />);
-
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '글을 불러오는데 실패했습니다.' })
       );
     });
   });
