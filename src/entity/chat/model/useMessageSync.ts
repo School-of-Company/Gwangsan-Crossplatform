@@ -188,6 +188,7 @@ export const useMessageSync = ({
             ...old.product,
             isCompleted: data.isCompleted,
             isCompletable: data.isCompleted ? false : old.product.isCompletable,
+            ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
             ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
           },
         };
