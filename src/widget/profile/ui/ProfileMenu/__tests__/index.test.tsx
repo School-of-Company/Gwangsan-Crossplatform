@@ -18,6 +18,11 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.28' } },
 }));
 
+jest.mock('@expo/vector-icons/MaterialIcons', () => {
+  const { Text } = require('react-native');
+  return ({ name }: { name: string }) => <Text testID="chevron-icon">{name}</Text>;
+});
+
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseSignout = useSignout as jest.Mock;
 
@@ -32,20 +37,28 @@ beforeEach(() => {
 });
 
 describe('ProfileMenu', () => {
-  it('본인 프로필이면 "내 글"과 로그아웃 행을 표시한다', () => {
+  it('본인 프로필이면 "나의 거래" 섹션과 "내 글", 로그아웃 행을 표시한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
+    expect(getByText('나의 거래')).toBeTruthy();
     expect(getByText('내 글')).toBeTruthy();
     expect(getByText('로그아웃')).toBeTruthy();
   });
 
-  it('상대방 프로필이면 "{이름}님의 글"을 표시하고 로그아웃 행은 없다', () => {
+  it('상대방 프로필이면 "{이름}님의 거래" 섹션과 "{이름}님의 글"을 표시하고 로그아웃 행은 없다', () => {
     const { getByText, queryByText } = render(
       <ProfileMenu isMe={false} memberId={5} name="홍길동" />
     );
 
+    expect(getByText('홍길동님의 거래')).toBeTruthy();
     expect(getByText('홍길동님의 글')).toBeTruthy();
     expect(queryByText('로그아웃')).toBeNull();
+  });
+
+  it('내 글/거래 내역/후기 행 각각에 chevron 아이콘을 표시한다', () => {
+    const { getAllByTestId } = render(<ProfileMenu isMe memberId={1} />);
+
+    expect(getAllByTestId('chevron-icon')).toHaveLength(3);
   });
 
   it('본인 프로필에서 "내 글"을 누르면 id 없이 posts 페이지로 이동한다', () => {

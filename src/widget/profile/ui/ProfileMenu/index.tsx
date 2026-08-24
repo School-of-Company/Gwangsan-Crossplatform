@@ -1,6 +1,7 @@
-import { Alert, Text, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Button } from '~/shared/ui/Button';
 import { useSignout } from '~/entity/auth';
 
@@ -9,6 +10,26 @@ interface ProfileMenuProps {
   memberId?: number;
   name?: string;
 }
+
+interface TradeMenuRowProps {
+  label: string;
+  isLast?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+}
+
+const TradeMenuRow = ({ label, isLast = false, disabled = false, onPress }: TradeMenuRowProps) => (
+  <TouchableOpacity
+    activeOpacity={0.7}
+    disabled={disabled}
+    onPress={onPress}
+    className={`h-[56px] flex-row items-center justify-between bg-[#F3F4F5] px-6 ${
+      isLast ? '' : 'border-b border-gray-200'
+    } ${disabled ? 'opacity-50' : ''}`}>
+    <Text className="text-body2 text-gray-900">{label}</Text>
+    <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
+  </TouchableOpacity>
+);
 
 export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) {
   const router = useRouter();
@@ -26,28 +47,28 @@ export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) 
 
   return (
     <View className="mx-6 mt-3 gap-6">
-      <View className="gap-2">
-        <Button
-          variant="neutral"
-          width="w-full"
-          onPress={() => router.push(`/profile/posts${idQuery}`)}>
-          <Text className="text-gray-900">{isMe ? '내 글' : `${name ?? ''}님의 글`}</Text>
-        </Button>
-        <Button
-          variant="neutral"
-          width="w-full"
-          onPress={() => router.push(`/profile/completedTrades${idQuery}`)}>
-          <Text className="text-gray-900">거래 내역</Text>
-        </Button>
-        <Button
-          variant="neutral"
-          width="w-full"
-          disabled={memberId == null}
-          onPress={() => {
-            if (memberId != null) router.push(`/reviews/${memberId}`);
-          }}>
-          <Text className="text-gray-900">후기</Text>
-        </Button>
+      <View className="gap-3">
+        <Text className="px-1 text-titleSmall">
+          {isMe ? '나의 거래' : `${name ?? ''}님의 거래`}
+        </Text>
+        <View className="overflow-hidden rounded-xl">
+          <TradeMenuRow
+            label={isMe ? '내 글' : `${name ?? ''}님의 글`}
+            onPress={() => router.push(`/profile/posts${idQuery}`)}
+          />
+          <TradeMenuRow
+            label="거래 내역"
+            onPress={() => router.push(`/profile/completedTrades${idQuery}`)}
+          />
+          <TradeMenuRow
+            label="후기"
+            isLast
+            disabled={memberId == null}
+            onPress={() => {
+              if (memberId != null) router.push(`/reviews/${memberId}`);
+            }}
+          />
+        </View>
       </View>
 
       {appVersion && (
