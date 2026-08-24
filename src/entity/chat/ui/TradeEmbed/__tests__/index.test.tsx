@@ -110,38 +110,38 @@ describe('TradeEmbed', () => {
     expect(queryByText('리뷰 작성하기')).toBeNull();
   });
 
-  it('예약하기를 누르면 onReservation을 호출하고 예약 취소 버튼으로 전환된다', async () => {
+  it('product.isReserved가 false면 예약하기 버튼을 보여주고 누르면 onReservation을 호출한다', async () => {
     const onReservation = jest.fn().mockResolvedValue(undefined);
     const { getByText, queryByText } = render(
-      <TradeEmbed product={createProduct()} showButtons onReservation={onReservation} />
+      <TradeEmbed
+        product={createProduct({ isReserved: false })}
+        showButtons
+        onReservation={onReservation}
+      />
     );
+
+    expect(queryByText('예약 취소')).toBeNull();
 
     fireEvent.press(getByText('예약하기'));
 
     await waitFor(() => expect(onReservation).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(getByText('예약 취소')).toBeTruthy());
-    expect(queryByText('예약하기')).toBeNull();
   });
 
-  it('예약 취소를 누르면 onCancelReservation을 호출하고 예약하기 버튼으로 되돌아간다', async () => {
-    const onReservation = jest.fn().mockResolvedValue(undefined);
+  it('product.isReserved가 true면 예약 취소 버튼을 보여주고 누르면 onCancelReservation을 호출한다', async () => {
     const onCancelReservation = jest.fn().mockResolvedValue(undefined);
-    const { getByText } = render(
+    const { getByText, queryByText } = render(
       <TradeEmbed
-        product={createProduct()}
+        product={createProduct({ isReserved: true })}
         showButtons
-        onReservation={onReservation}
         onCancelReservation={onCancelReservation}
       />
     );
 
-    fireEvent.press(getByText('예약하기'));
-    await waitFor(() => expect(getByText('예약 취소')).toBeTruthy());
+    expect(queryByText('예약하기')).toBeNull();
 
     fireEvent.press(getByText('예약 취소'));
 
     await waitFor(() => expect(onCancelReservation).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(getByText('예약하기')).toBeTruthy());
   });
 
   it('거래 완료하기를 누르면 onTradeAccept를 호출한다', async () => {

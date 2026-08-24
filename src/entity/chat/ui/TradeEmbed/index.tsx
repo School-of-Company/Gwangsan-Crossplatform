@@ -30,7 +30,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   showReviewButton = false,
 }) => {
   const [localLoading, setLocalLoading] = useState(false);
-  const [isReserved, setIsReserved] = useState(false);
 
   const handleTradeAccept = useCallback(async () => {
     if (!onTradeAccept || localLoading || isLoading) return;
@@ -51,7 +50,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
     try {
       setLocalLoading(true);
       await onReservation();
-      setIsReserved(true);
     } catch (error) {
       logger.error('TradeEmbed action failed', error);
     } finally {
@@ -65,7 +63,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
     try {
       setLocalLoading(true);
       await onCancelReservation();
-      setIsReserved(false);
     } catch (error) {
       logger.error('TradeEmbed action failed', error);
     } finally {
@@ -116,7 +113,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
           {showButtons && !product.isCompleted && (
             <>
               <View className="flex-row justify-between">
-                {isReserved ? (
+                {product.isReserved ? (
                   <Button
                     variant="secondary"
                     onPress={handleCancelReservation}
