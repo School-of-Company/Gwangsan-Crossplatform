@@ -14,7 +14,7 @@ export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) 
   const router = useRouter();
   const { signout, isLoading: isSignoutLoading } = useSignout();
 
-  const idQuery = memberId != null ? `?id=${memberId}` : '';
+  const idQuery = !isMe && memberId != null ? `?id=${memberId}` : '';
 
   const handleLogoutPress = () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [

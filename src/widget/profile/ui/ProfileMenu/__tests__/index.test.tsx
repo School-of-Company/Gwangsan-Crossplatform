@@ -43,20 +43,36 @@ describe('ProfileMenu', () => {
     expect(queryByText('로그아웃')).toBeNull();
   });
 
-  it('"내 글"을 누르면 posts 페이지로 이동한다', () => {
+  it('본인 프로필에서 "내 글"을 누르면 id 없이 posts 페이지로 이동한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
     fireEvent.press(getByText('내 글'));
 
-    expect(push).toHaveBeenCalledWith('/profile/posts?id=1');
+    expect(push).toHaveBeenCalledWith('/profile/posts');
   });
 
-  it('"거래 완료 품목"을 누르면 completedTrades 페이지로 이동한다', () => {
+  it('본인 프로필에서 "거래 완료 품목"을 누르면 id 없이 completedTrades 페이지로 이동한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
     fireEvent.press(getByText('거래 완료 품목'));
 
-    expect(push).toHaveBeenCalledWith('/profile/completedTrades?id=1');
+    expect(push).toHaveBeenCalledWith('/profile/completedTrades');
+  });
+
+  it('상대방 프로필에서 "{이름}님의 글"을 누르면 id와 함께 posts 페이지로 이동한다', () => {
+    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} name="홍길동" />);
+
+    fireEvent.press(getByText('홍길동님의 글'));
+
+    expect(push).toHaveBeenCalledWith('/profile/posts?id=5');
+  });
+
+  it('상대방 프로필에서 "거래 완료 품목"을 누르면 id와 함께 completedTrades 페이지로 이동한다', () => {
+    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} name="홍길동" />);
+
+    fireEvent.press(getByText('거래 완료 품목'));
+
+    expect(push).toHaveBeenCalledWith('/profile/completedTrades?id=5');
   });
 
   it('"후기"를 누르면 해당 회원의 리뷰 페이지로 이동한다', () => {
