@@ -1,4 +1,5 @@
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useRef } from 'react';
+import { Alert, Animated, GestureResponderEvent, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -18,18 +19,42 @@ interface TradeMenuRowProps {
   onPress?: () => void;
 }
 
-const TradeMenuRow = ({ label, isLast = false, disabled = false, onPress }: TradeMenuRowProps) => (
-  <TouchableOpacity
-    activeOpacity={0.7}
-    disabled={disabled}
-    onPress={onPress}
-    className={`h-[56px] flex-row items-center justify-between bg-[#F3F4F5] px-6 ${
-      isLast ? '' : 'border-b border-gray-200'
-    } ${disabled ? 'opacity-50' : ''}`}>
-    <Text className="text-body2 text-gray-900">{label}</Text>
-    <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
-  </TouchableOpacity>
-);
+const TradeMenuRow = ({ label, isLast = false, disabled = false, onPress }: TradeMenuRowProps) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(
+    (_e: GestureResponderEvent) => {
+      Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
+    },
+    [scale]
+  );
+
+  const handlePressOut = useCallback(
+    (_e: GestureResponderEvent) => {
+      Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+    },
+    [scale]
+  );
+
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      className={disabled ? 'opacity-50' : ''}>
+      <Animated.View
+        className={`h-[56px] flex-row items-center justify-between px-6 ${
+          isLast ? '' : 'border-b border-gray-200'
+        }`}
+        style={{ transform: [{ scale }] }}>
+        <Text className="text-lg font-semibold text-gray-900">{label}</Text>
+        <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) {
   const router = useRouter();
@@ -47,28 +72,26 @@ export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) 
 
   return (
     <View className="mx-6 mt-3 gap-6">
-      <View className="gap-3">
-        <Text className="px-1 text-titleSmall">
+      <View className="overflow-hidden rounded-xl bg-[#F3F4F5]">
+        <Text className="px-6 pb-2 pt-4 text-titleSmall">
           {isMe ? '나의 거래' : `${name ?? ''}님의 거래`}
         </Text>
-        <View className="overflow-hidden rounded-xl">
-          <TradeMenuRow
-            label={isMe ? '내 글' : `${name ?? ''}님의 글`}
-            onPress={() => router.push(`/profile/posts${idQuery}`)}
-          />
-          <TradeMenuRow
-            label="거래 내역"
-            onPress={() => router.push(`/profile/completedTrades${idQuery}`)}
-          />
-          <TradeMenuRow
-            label="후기"
-            isLast
-            disabled={memberId == null}
-            onPress={() => {
-              if (memberId != null) router.push(`/reviews/${memberId}`);
-            }}
-          />
-        </View>
+        <TradeMenuRow
+          label={isMe ? '내 글' : `${name ?? ''}님의 글`}
+          onPress={() => router.push(`/profile/posts${idQuery}`)}
+        />
+        <TradeMenuRow
+          label="거래 내역"
+          onPress={() => router.push(`/profile/completedTrades${idQuery}`)}
+        />
+        <TradeMenuRow
+          label="후기"
+          isLast
+          disabled={memberId == null}
+          onPress={() => {
+            if (memberId != null) router.push(`/reviews/${memberId}`);
+          }}
+        />
       </View>
 
       {appVersion && (
