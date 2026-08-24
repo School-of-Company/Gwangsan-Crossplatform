@@ -36,7 +36,7 @@ export default function CompletedTradesPageView() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-      <Header headerTitle="거래 완료 품목" showBackButton />
+      <Header headerTitle="거래 내역" showBackButton />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <CompletedTrades
           posts={postsData}

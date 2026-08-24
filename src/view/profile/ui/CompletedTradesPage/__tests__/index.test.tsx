@@ -56,11 +56,11 @@ beforeEach(() => {
 });
 
 describe('CompletedTradesPageView', () => {
-  it('Header에 "거래 완료 품목" 타이틀과 뒤로가기 버튼을 표시한다', () => {
+  it('Header에 "거래 내역" 타이틀과 뒤로가기 버튼을 표시한다', () => {
     const { getByTestId } = render(<CompletedTradesPageView />);
 
     const header = JSON.parse(getByTestId('header').props.children);
-    expect(header.headerTitle).toBe('거래 완료 품목');
+    expect(header.headerTitle).toBe('거래 내역');
     expect(header.showBackButton).toBe(true);
   });
 

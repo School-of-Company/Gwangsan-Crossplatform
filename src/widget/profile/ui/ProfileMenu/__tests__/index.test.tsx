@@ -13,6 +13,11 @@ jest.mock('~/entity/auth', () => ({
   useSignout: jest.fn(),
 }));
 
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: { expoConfig: { version: '1.0.28' } },
+}));
+
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseSignout = useSignout as jest.Mock;
 
@@ -51,10 +56,10 @@ describe('ProfileMenu', () => {
     expect(push).toHaveBeenCalledWith('/profile/posts');
   });
 
-  it('본인 프로필에서 "거래 완료 품목"을 누르면 id 없이 completedTrades 페이지로 이동한다', () => {
+  it('본인 프로필에서 "거래 내역"을 누르면 id 없이 completedTrades 페이지로 이동한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
-    fireEvent.press(getByText('거래 완료 품목'));
+    fireEvent.press(getByText('거래 내역'));
 
     expect(push).toHaveBeenCalledWith('/profile/completedTrades');
   });
@@ -67,10 +72,10 @@ describe('ProfileMenu', () => {
     expect(push).toHaveBeenCalledWith('/profile/posts?id=5');
   });
 
-  it('상대방 프로필에서 "거래 완료 품목"을 누르면 id와 함께 completedTrades 페이지로 이동한다', () => {
+  it('상대방 프로필에서 "거래 내역"을 누르면 id와 함께 completedTrades 페이지로 이동한다', () => {
     const { getByText } = render(<ProfileMenu isMe={false} memberId={5} name="홍길동" />);
 
-    fireEvent.press(getByText('거래 완료 품목'));
+    fireEvent.press(getByText('거래 내역'));
 
     expect(push).toHaveBeenCalledWith('/profile/completedTrades?id=5');
   });
@@ -107,6 +112,12 @@ describe('ProfileMenu', () => {
     confirmButton.onPress();
 
     expect(signout).toHaveBeenCalledTimes(1);
+  });
+
+  it('앱 버전을 표시한다', () => {
+    const { getByText } = render(<ProfileMenu isMe memberId={1} />);
+
+    expect(getByText('버전 1.0.28')).toBeTruthy();
   });
 
   it('로그아웃 진행 중이면 "로그아웃 중..." 텍스트를 표시하고 비활성화한다', () => {
