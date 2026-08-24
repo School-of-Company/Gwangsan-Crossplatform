@@ -243,6 +243,50 @@ describe('useTradeHandlers', () => {
       );
     });
 
+    it('성공 시 캐시된 product.isReserved를 true로 갱신한다', async () => {
+      mockMakeReservation.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isReserved: false },
+      });
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isReserved).toBe(true);
+    });
+
+    it('실패 시 캐시된 product.isReserved를 갱신하지 않는다', async () => {
+      mockMakeReservation.mockRejectedValue(new Error('예약 실패'));
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isReserved: false },
+      });
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isReserved).toBe(false);
+    });
+
     it('성공 시 예약 사실을 채팅 메시지로 상대방에게 알린다', async () => {
       mockMakeReservation.mockResolvedValue({});
       const sendMessage = jest.fn();
@@ -318,6 +362,28 @@ describe('useTradeHandlers', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', text1: '예약 취소 실패', text2: '취소 실패' })
       );
+    });
+
+    it('성공 시 캐시된 product.isReserved를 false로 갱신한다', async () => {
+      mockCancelReservation.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isReserved: true },
+      });
+
+      await act(async () => {
+        await result.current.handleCancelReservation();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isReserved).toBe(false);
     });
 
     it('성공 시 예약 취소 사실을 채팅 메시지로 상대방에게 알린다', async () => {

@@ -35,6 +35,16 @@ export const useTradeHandlers = ({
 }: UseTradeHandlersParams): UseTradeHandlersReturn => {
   const queryClient = useQueryClient();
 
+  const patchProduct = useCallback(
+    (patch: Record<string, unknown>) => {
+      queryClient.setQueryData<{ product: Record<string, unknown> | null }>(
+        ['chatRoomData', roomId],
+        (old) => (old?.product ? { ...old, product: { ...old.product, ...patch } } : old)
+      );
+    },
+    [queryClient, roomId]
+  );
+
   const hasTradeRequest =
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
 
@@ -49,16 +59,7 @@ export const useTradeHandlers = ({
         otherMemberId: otherUserInfo.id,
       });
 
-      queryClient.setQueryData<{ product: Record<string, unknown> | null }>(
-        ['chatRoomData', roomId],
-        (old) => {
-          if (!old?.product) return old;
-          return {
-            ...old,
-            product: { ...old.product, isCompleted: true, isCompletable: false },
-          };
-        }
-      );
+      patchProduct({ isCompleted: true, isCompletable: false });
 
       Toast.show({
         type: 'success',
@@ -71,13 +72,15 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData, otherUserInfo.id, queryClient, roomId]);
+  }, [roomData, otherUserInfo.id, patchProduct]);
 
   const handleReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
 
     try {
       await makeReservation({ productId: roomData.product.id });
+
+      patchProduct({ isReserved: true });
 
       // ponytail: 예약 사실을 채팅 메시지로도 알림. 채팅 서버가 transactionStateChanged에
       // isReserved를 실어주기 시작하면(현재 DTO에서 whitelist로 잘림) 이 줄은 제거.
@@ -94,13 +97,15 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData, sendMessage]);
+  }, [roomData, sendMessage, patchProduct]);
 
   const handleCancelReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
 
     try {
       await cancelReservation({ productId: roomData.product.id });
+
+      patchProduct({ isReserved: false });
 
       sendMessage?.('예약을 취소했습니다.', []);
 
@@ -115,7 +120,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData, sendMessage]);
+  }, [roomData, sendMessage, patchProduct]);
 
   return {
     handleTradeAccept,
