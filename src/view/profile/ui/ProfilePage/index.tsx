@@ -52,15 +52,15 @@ export default function ProfilePageView() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <Header headerTitle="프로필" showBackButton={!isMe} />
-      <Information
-        isMe={isMe}
-        id={isMe ? myProfileData?.memberId : profileData?.memberId}
-        name={isMe ? myProfileData?.nickname : profileData?.nickname}
-        isBlocked={isBlocked}
-      />
       <ScrollView
         className="flex-0.8 flex gap-3"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        <Information
+          isMe={isMe}
+          id={isMe ? myProfileData?.memberId : profileData?.memberId}
+          name={isMe ? myProfileData?.nickname : profileData?.nickname}
+          isBlocked={isBlocked}
+        />
         <View className="bg-white pb-14">
           <Introduce
             introduce={isMe ? myProfileData?.description : profileData?.description}

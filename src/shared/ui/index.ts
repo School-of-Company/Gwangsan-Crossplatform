@@ -1,3 +1,4 @@
+export { AlertModal } from './AlertModal';
 export { Button } from './Button';
 export { Input } from './Input';
 export { Dropdown } from './Dropdown';
@@ -9,3 +10,5 @@ export { BottomSheetModalWrapper } from './BottomSheetModalWrapper';
 export { default as ProgressBar } from './ProgressBar';
 export { SlideIndicator } from './SlideIndicator';
 export { Card } from './Card';
+export { PillTabs } from './PillTabs';
+export type { PillTabOption } from './PillTabs';
