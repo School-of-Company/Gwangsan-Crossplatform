@@ -55,6 +55,10 @@ jest.mock('~/widget/profile/ui', () => ({
     const { Text } = require('react-native');
     return <Text testID="active">{JSON.stringify(props)}</Text>;
   },
+  CompletedTrades: (props: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="completed-trades">{JSON.stringify(props)}</Text>;
+  },
   Introduce: (props: any) => {
     const { Text } = require('react-native');
     return <Text testID="introduce">{JSON.stringify(props)}</Text>;

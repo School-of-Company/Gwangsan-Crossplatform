@@ -49,7 +49,7 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
           )}
         </View>
         <Text className="text-sm text-gray-700" numberOfLines={1}>
-          {room.member.nickname}
+          {room.member?.nickname}
         </Text>
         <Text className="text-xs text-gray-500" numberOfLines={1}>
           {room.lastMessageType === 'IMAGE' ? '📷 사진을 보냈습니다.' : room.lastMessage}

@@ -2,7 +2,7 @@ import { ScrollView, Text, View, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
-import { Active, Introduce } from '~/widget/profile/ui';
+import { Active, CompletedTrades, Introduce } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
 import { useGetPosts } from '../../model/useGetPosts';
 import Post from '~/shared/ui/Post';
@@ -103,6 +103,11 @@ export default function ProfilePageView() {
           name={isMe ? myProfileData?.nickname : profileData?.nickname}
           id={activeMemberId != null ? String(activeMemberId) : undefined}
           isMe={isMe}
+        />
+        <CompletedTrades
+          posts={postsData}
+          isMe={isMe}
+          name={isMe ? myProfileData?.nickname : profileData?.nickname}
         />
         <View className="mt-3 flex gap-6 bg-white px-6 pb-9 pt-10">
           <Text className="text-titleSmall">
