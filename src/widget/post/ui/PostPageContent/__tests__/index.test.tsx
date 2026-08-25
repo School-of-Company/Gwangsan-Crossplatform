@@ -207,6 +207,20 @@ describe('PostPageContent', () => {
       expect(queryByText('리뷰 작성')).toBeNull();
     });
 
+    it('data.isReserved가 true이면 예약중 태그를 표시한다', () => {
+      const { getByTestId } = render(
+        <PostPageContent {...makeProps({ data: { ...makeProps().data, isReserved: true } })} />
+      );
+
+      expect(getByTestId('post-reserved-tag')).toBeTruthy();
+    });
+
+    it('data.isReserved가 false이면 예약중 태그를 표시하지 않는다', () => {
+      const { queryByTestId } = render(<PostPageContent {...makeProps()} />);
+
+      expect(queryByTestId('post-reserved-tag')).toBeNull();
+    });
+
     it('"리뷰 작성"을 누르면 onReviewButtonPress가 호출된다', () => {
       const onReviewButtonPress = jest.fn();
       const { getByText } = render(

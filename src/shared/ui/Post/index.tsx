@@ -4,7 +4,14 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { PostType } from '~/shared/types/postType';
 
-export default function Post({ id, title, gwangsan, imageUrls = [], images = [] }: PostType) {
+export default function Post({
+  id,
+  title,
+  gwangsan,
+  isReserved,
+  imageUrls = [],
+  images = [],
+}: PostType) {
   const router = useRouter();
 
   const handlePress = useCallback(() => {
@@ -58,7 +65,16 @@ export default function Post({ id, title, gwangsan, imageUrls = [], images = [] 
         )}
       </View>
       <View className="flex-1">
-        <Text className={`text-lg font-semibold ${isTemporary ? 'opacity-70' : ''}`}>{title}</Text>
+        <View className="flex-row items-center gap-1.5">
+          <Text className={`shrink text-lg font-semibold ${isTemporary ? 'opacity-70' : ''}`}>
+            {title}
+          </Text>
+          {isReserved && (
+            <Text testID="post-reserved-tag" className="text-xs text-gray-500">
+              예약중
+            </Text>
+          )}
+        </View>
         <Text className={`text-sm text-gray-600 ${isTemporary ? 'opacity-70' : ''}`}>
           {gwangsan} 광산
         </Text>
