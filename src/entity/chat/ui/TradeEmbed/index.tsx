@@ -101,6 +101,13 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
               ? '거래가 완료되었습니다'
               : `${requestorNickname}님께서 거래하기를 누르셨습니다`}
           </Text>
+          {!product.isCompleted && product.isReserved && (
+            <Text
+              testID="trade-reserved-notice"
+              className="mb-4 text-sm font-medium text-[#8FC31D]">
+              예약 중입니다
+            </Text>
+          )}
           {showReviewButton && product.isCompleted && (
             <Button
               variant="primary"

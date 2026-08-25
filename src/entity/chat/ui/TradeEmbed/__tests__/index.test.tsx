@@ -110,6 +110,30 @@ describe('TradeEmbed', () => {
     expect(queryByText('리뷰 작성하기')).toBeNull();
   });
 
+  it('버튼이 없는 쪽에서도 isReserved가 true면 예약 중 안내를 보여준다', () => {
+    const { getByTestId } = render(
+      <TradeEmbed product={createProduct({ isReserved: true })} showButtons={false} />
+    );
+
+    expect(getByTestId('trade-reserved-notice')).toBeTruthy();
+  });
+
+  it('isReserved가 false면 예약 중 안내를 보여주지 않는다', () => {
+    const { queryByTestId } = render(
+      <TradeEmbed product={createProduct({ isReserved: false })} showButtons={false} />
+    );
+
+    expect(queryByTestId('trade-reserved-notice')).toBeNull();
+  });
+
+  it('거래가 완료되면 예약 중 안내를 보여주지 않는다', () => {
+    const { queryByTestId } = render(
+      <TradeEmbed product={createProduct({ isReserved: true, isCompleted: true })} showButtons />
+    );
+
+    expect(queryByTestId('trade-reserved-notice')).toBeNull();
+  });
+
   it('product.isReserved가 false면 예약하기 버튼을 보여주고 누르면 onReservation을 호출한다', async () => {
     const onReservation = jest.fn().mockResolvedValue(undefined);
     const { getByText, queryByText } = render(
