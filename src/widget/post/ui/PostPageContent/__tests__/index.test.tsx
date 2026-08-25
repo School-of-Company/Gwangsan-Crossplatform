@@ -27,6 +27,7 @@ const makeData = (overrides = {}) => ({
   mode: 'GIVER' as const,
   isCompletable: true,
   isCompleted: false,
+  isReserved: false,
   images: [{ imageId: 1, imageUrl: 'https://example.com/img.jpg' }],
   member: { memberId: 42, nickname: '홍길동', placeName: '광산구', light: 3 },
   ...overrides,

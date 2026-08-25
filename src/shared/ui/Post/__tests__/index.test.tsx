@@ -26,6 +26,7 @@ const makePost = (overrides = {}) => ({
   content: '내용',
   isCompletable: true,
   isCompleted: false,
+  isReserved: false,
   imageUrls: [],
   images: [],
   ...overrides,
