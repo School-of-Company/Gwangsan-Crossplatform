@@ -64,7 +64,6 @@ export default function ChatRoomPage() {
     roomId,
     roomData: roomData || null,
     otherUserInfo,
-    sendMessage: messageHandlers.sendMessage,
   });
 
   const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
