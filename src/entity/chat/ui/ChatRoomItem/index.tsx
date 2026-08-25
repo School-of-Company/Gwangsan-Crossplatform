@@ -7,11 +7,16 @@ import type { RoomId } from '@/shared/types/chatType';
 interface ChatRoomItemProps {
   room: ChatRoomListItem;
   onPress: (roomId: RoomId) => void;
+  onLongPress?: (roomId: RoomId) => void;
 }
 
-const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
+const ChatRoomItemComponent = ({ room, onPress, onLongPress }: ChatRoomItemProps) => {
   const handlePress = () => {
     onPress(room.roomId);
+  };
+
+  const handleLongPress = () => {
+    onLongPress?.(room.roomId);
   };
 
   const renderUnreadBadge = () => {
@@ -28,6 +33,7 @@ const ChatRoomItemComponent = ({ room, onPress }: ChatRoomItemProps) => {
   return (
     <TouchableOpacity
       onPress={handlePress}
+      onLongPress={handleLongPress}
       className="flex-row items-center border-b border-gray-100 px-4 py-3 active:bg-gray-50"
       activeOpacity={0.7}>
       <Image

@@ -92,4 +92,21 @@ describe('ChatRoomItem', () => {
 
     expect(onPress).toHaveBeenCalledWith(1);
   });
+
+  it('길게 누르면 onLongPress에 roomId를 전달한다', () => {
+    const onLongPress = jest.fn();
+    const { getByText } = render(
+      <ChatRoomItem room={baseRoom} onPress={jest.fn()} onLongPress={onLongPress} />
+    );
+
+    fireEvent(getByText('상품 제목'), 'longPress');
+
+    expect(onLongPress).toHaveBeenCalledWith(1);
+  });
+
+  it('onLongPress가 없어도 길게 눌렀을 때 에러가 발생하지 않는다', () => {
+    const { getByText } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
+
+    expect(() => fireEvent(getByText('상품 제목'), 'longPress')).not.toThrow();
+  });
 });

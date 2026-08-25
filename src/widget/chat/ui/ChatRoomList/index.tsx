@@ -1,27 +1,32 @@
 import { FlatList, View, Text, RefreshControl } from 'react-native';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useChatRooms,
   ChatRoomItem,
   useChatSocket,
+  useDeleteChatRoom,
   chatRoomKeys,
   chatMessageKeys,
   getChatRoomData,
 } from '@/entity/chat';
 import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
+import { AlertModal } from '~/shared/ui/AlertModal';
 
 export function ChatRoomList() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
+  const [deleteTargetRoomId, setDeleteTargetRoomId] = useState<RoomId | null>(null);
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
     chatRoomQueryKey: chatRoomKeys.list(),
   });
+
+  const deleteChatRoomMutation = useDeleteChatRoom();
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
@@ -48,11 +53,29 @@ export function ChatRoomList() {
     refetch();
   }, [refetch]);
 
+  const handleChatRoomLongPress = useCallback((roomId: RoomId) => {
+    setDeleteTargetRoomId(roomId);
+  }, []);
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteTargetRoomId(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deleteTargetRoomId === null) return;
+    deleteChatRoomMutation.mutate(deleteTargetRoomId);
+    setDeleteTargetRoomId(null);
+  }, [deleteTargetRoomId, deleteChatRoomMutation]);
+
   const renderChatRoomItem = useCallback(
     ({ item }: { item: ChatRoomListItem }) => (
-      <ChatRoomItem room={item} onPress={handleChatRoomPress} />
+      <ChatRoomItem
+        room={item}
+        onPress={handleChatRoomPress}
+        onLongPress={handleChatRoomLongPress}
+      />
     ),
-    [handleChatRoomPress]
+    [handleChatRoomPress, handleChatRoomLongPress]
   );
 
   const renderEmptyState = () => (
@@ -72,14 +95,26 @@ export function ChatRoomList() {
   }
 
   return (
-    <FlatList
-      data={chatRooms || []}
-      renderItem={renderChatRoomItem}
-      keyExtractor={(item) => item.roomId.toString()}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
-      ListEmptyComponent={renderEmptyState}
-      showsVerticalScrollIndicator={false}
-      className="flex-1"
-    />
+    <>
+      <FlatList
+        data={chatRooms || []}
+        renderItem={renderChatRoomItem}
+        keyExtractor={(item) => item.roomId.toString()}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+        ListEmptyComponent={renderEmptyState}
+        showsVerticalScrollIndicator={false}
+        className="flex-1"
+      />
+
+      <AlertModal
+        isVisible={deleteTargetRoomId !== null}
+        message={'채팅방을 삭제하시겠어요?\n삭제해도 거래 내역은 유지됩니다.'}
+        confirmText="삭제"
+        destructive
+        isLoading={deleteChatRoomMutation.isPending}
+        onCancel={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+      />
+    </>
   );
 }

@@ -3,7 +3,13 @@ import { fireEvent, waitFor } from '@testing-library/react-native';
 import { FlatList } from 'react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { ChatRoomList } from '../index';
-import { useChatRooms, useChatSocket, chatRoomKeys, getChatRoomData } from '@/entity/chat';
+import {
+  useChatRooms,
+  useChatSocket,
+  useDeleteChatRoom,
+  chatRoomKeys,
+  getChatRoomData,
+} from '@/entity/chat';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -13,14 +19,18 @@ jest.mock('expo-router', () => ({
 jest.mock('@/entity/chat', () => ({
   useChatRooms: jest.fn(),
   useChatSocket: jest.fn(),
+  useDeleteChatRoom: jest.fn(),
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
-  ChatRoomItem: ({ room, onPress }: any) => {
+  ChatRoomItem: ({ room, onPress, onLongPress }: any) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { TouchableOpacity, Text } = require('react-native');
     return (
-      <TouchableOpacity testID={`room-${room.roomId}`} onPress={() => onPress(room.roomId)}>
+      <TouchableOpacity
+        testID={`room-${room.roomId}`}
+        onPress={() => onPress(room.roomId)}
+        onLongPress={() => onLongPress?.(room.roomId)}>
         <Text>{room.nickname}</Text>
       </TouchableOpacity>
     );
@@ -29,8 +39,10 @@ jest.mock('@/entity/chat', () => ({
 
 const mockUseChatRooms = useChatRooms as jest.Mock;
 const mockUseChatSocket = useChatSocket as jest.Mock;
+const mockUseDeleteChatRoom = useDeleteChatRoom as jest.Mock;
 const mockGetChatRoomData = getChatRoomData as jest.Mock;
 const mockJoinRoom = jest.fn();
+const mockDeleteMutate = jest.fn();
 
 const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
   data: [],
@@ -44,6 +56,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockUseChatRooms.mockReturnValue(makeChatRoomsReturn());
   mockUseChatSocket.mockReturnValue({ joinRoom: mockJoinRoom });
+  mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: false });
   mockGetChatRoomData.mockResolvedValue({ product: null, messages: [] });
 });
 
@@ -144,5 +157,39 @@ describe('ChatRoomList', () => {
     const { UNSAFE_getByType } = render(<ChatRoomList />);
 
     expect(UNSAFE_getByType(FlatList).props.data).toEqual([]);
+  });
+
+  describe('채팅방 삭제', () => {
+    beforeEach(() => {
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+      );
+    });
+
+    it('채팅방을 길게 누르면 삭제 확인 모달을 표시한다', () => {
+      const { getByTestId, getByText } = render(<ChatRoomList />);
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+
+      expect(getByText(/채팅방을 삭제하시겠어요/)).toBeTruthy();
+    });
+
+    it('삭제를 확인하면 해당 roomId로 삭제 mutation을 호출한다', () => {
+      const { getByTestId, getByText } = render(<ChatRoomList />);
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('삭제'));
+
+      expect(mockDeleteMutate).toHaveBeenCalledWith(7);
+    });
+
+    it('취소하면 삭제 mutation을 호출하지 않는다', () => {
+      const { getByTestId, getByText } = render(<ChatRoomList />);
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('취소'));
+
+      expect(mockDeleteMutate).not.toHaveBeenCalled();
+    });
   });
 });
