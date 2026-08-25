@@ -1,7 +1,13 @@
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryCache,
+  MutationCache,
+  focusManager,
+} from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
 import { setQueryClientInstance } from './axios';
 import * as Sentry from '@sentry/react-native';
@@ -53,6 +59,17 @@ interface QueryProviderProps {
 export default function QueryProvider({ children }: QueryProviderProps) {
   useEffect(() => {
     setQueryClientInstance(queryClient);
+  }, []);
+
+  // RN에는 window focus 이벤트가 없어 focusManager가 항상 focused로 남는다.
+  // 그러면 refetchInterval이 백그라운드/화면 잠금 상태에서도 계속 돌고,
+  // 이때 잠긴 키체인에서 토큰을 읽다 SecureStore가 FunctionCallException으로 실패한다.
+  useEffect(() => {
+    focusManager.setFocused(AppState.currentState === 'active');
+    const sub = AppState.addEventListener('change', (status) => {
+      focusManager.setFocused(status === 'active');
+    });
+    return () => sub.remove();
   }, []);
 
   return (

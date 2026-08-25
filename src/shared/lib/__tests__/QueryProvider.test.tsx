@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { render, waitFor } from '@testing-library/react-native';
-import { useQuery, useQueryClient, QueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, QueryClient, focusManager } from '@tanstack/react-query';
+import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
 import QueryProvider from '../QueryProvider';
 import { setQueryClientInstance } from '../axios';
@@ -45,8 +45,21 @@ const callThrowOnError = (error: unknown, data: unknown) => {
   return throwOnError(error, { state: { data } });
 };
 
+let appStateListener: ((state: AppStateStatus) => void) | undefined;
+
 beforeEach(() => {
   jest.clearAllMocks();
+  appStateListener = undefined;
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
+    appStateListener = handler;
+    return { remove: jest.fn() } as never;
+  });
+  (AppState as { currentState: string }).currentState = 'active';
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  focusManager.setFocused(true);
 });
 
 describe('QueryProvider', () => {
@@ -96,6 +109,24 @@ describe('QueryProvider', () => {
 
     it('AxiosError가 아니면 던지지 않는다', () => {
       expect(callThrowOnError(new Error('boom'), undefined)).toBe(false);
+    });
+  });
+
+  describe('AppState 연동', () => {
+    it('앱이 백그라운드로 가면 focusManager를 unfocused로 만들어 폴링을 멈춘다', () => {
+      const setFocused = jest.spyOn(focusManager, 'setFocused');
+
+      render(
+        <QueryProvider>
+          <Text>child</Text>
+        </QueryProvider>
+      );
+
+      appStateListener?.('background');
+      expect(setFocused).toHaveBeenLastCalledWith(false);
+
+      appStateListener?.('active');
+      expect(setFocused).toHaveBeenLastCalledWith(true);
     });
   });
 
