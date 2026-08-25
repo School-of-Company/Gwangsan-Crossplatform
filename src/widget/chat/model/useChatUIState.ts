@@ -11,8 +11,8 @@ interface UseChatUIStateParams {
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
   readonly handleTradeAccept: () => Promise<void>;
-  readonly handleReservation: () => Promise<void>;
   readonly handleCancelReservation: () => Promise<void>;
+  readonly onOpenReservationModal: () => void;
 }
 
 interface UseChatUIStateReturn {
@@ -20,7 +20,7 @@ interface UseChatUIStateReturn {
     readonly shouldShow: boolean;
     readonly product: any;
     readonly onTradeAccept?: () => Promise<void>;
-    readonly onReservation?: () => void;
+    readonly onOpenReservationModal?: () => void;
     readonly onCancelReservation?: () => void;
     readonly showButtons: boolean;
     readonly isLoading: boolean;
@@ -48,8 +48,8 @@ export const useChatUIState = ({
   hasTradeRequest,
   shouldShowButtons,
   handleTradeAccept,
-  handleReservation,
   handleCancelReservation,
+  onOpenReservationModal,
 }: UseChatUIStateParams): UseChatUIStateReturn => {
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
@@ -66,7 +66,7 @@ export const useChatUIState = ({
       shouldShow: hasTradeRequest,
       product: roomData?.product,
       onTradeAccept: shouldShowButtons ? handleTradeAccept : undefined,
-      onReservation: shouldShowButtons ? handleReservation : undefined,
+      onOpenReservationModal: shouldShowButtons ? onOpenReservationModal : undefined,
       onCancelReservation: shouldShowButtons ? handleCancelReservation : undefined,
       showButtons: shouldShowButtons,
       isLoading: false,
@@ -77,7 +77,7 @@ export const useChatUIState = ({
       roomData?.product,
       shouldShowButtons,
       handleTradeAccept,
-      handleReservation,
+      onOpenReservationModal,
       handleCancelReservation,
       otherUserInfo.nickname,
       myInfo?.nickname,

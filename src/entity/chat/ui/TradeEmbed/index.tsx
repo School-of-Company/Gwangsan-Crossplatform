@@ -2,12 +2,22 @@ import React, { memo, useCallback, useState } from 'react';
 import { View, Text, Image, ActivityIndicator } from 'react-native';
 import { Card, Button } from '~/shared/ui';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
+import { useReservationDraftStore } from '~/shared/store/useReservationDraftStore';
 import { logger } from '~/shared/lib/logger';
+
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const formatReservationDate = (isoDate: string) => {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (!year || !month || !day) return isoDate;
+  const date = new Date(year, month - 1, day);
+  return `${month}월 ${day}일 (${WEEKDAY_LABELS[date.getDay()]})`;
+};
 
 export interface TradeEmbedProps {
   readonly product: TradeProduct;
   readonly onTradeAccept?: () => Promise<void>;
-  readonly onReservation?: () => void;
+  readonly onOpenReservationModal?: () => void;
   readonly onCancelReservation?: () => void;
   readonly showButtons?: boolean;
   readonly isLoading?: boolean;
@@ -20,7 +30,7 @@ export interface TradeEmbedProps {
 const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   product,
   onTradeAccept,
-  onReservation,
+  onOpenReservationModal,
   onCancelReservation,
   showButtons = false,
   isLoading = false,
@@ -30,6 +40,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   showReviewButton = false,
 }) => {
   const [localLoading, setLocalLoading] = useState(false);
+  const reservationDraft = useReservationDraftStore((state) => state.drafts[product.id]);
 
   const handleTradeAccept = useCallback(async () => {
     if (!onTradeAccept || localLoading || isLoading) return;
@@ -43,19 +54,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
       setLocalLoading(false);
     }
   }, [onTradeAccept, localLoading, isLoading]);
-
-  const handleReservation = useCallback(async () => {
-    if (!onReservation || localLoading || isLoading) return;
-
-    try {
-      setLocalLoading(true);
-      await onReservation();
-    } catch (error) {
-      logger.error('TradeEmbed action failed', error);
-    } finally {
-      setLocalLoading(false);
-    }
-  }, [onReservation, localLoading, isLoading]);
 
   const handleCancelReservation = useCallback(async () => {
     if (!onCancelReservation || localLoading || isLoading) return;
@@ -73,6 +71,10 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   const productImage = product.images[0];
 
   const alignmentClass = alignment === 'right' ? 'self-end' : 'self-start';
+
+  const reservationDetailLabel = reservationDraft
+    ? `${formatReservationDate(reservationDraft.date)} · ${reservationDraft.time} · ${reservationDraft.place}`
+    : null;
 
   return (
     <View className={`mb-4 ${alignmentClass}`}>
@@ -102,11 +104,16 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
               : `${requestorNickname}님께서 거래하기를 누르셨습니다`}
           </Text>
           {!product.isCompleted && product.isReserved && (
-            <Text
-              testID="trade-reserved-notice"
-              className="mb-4 text-sm font-medium text-[#8FC31D]">
-              예약 중입니다
-            </Text>
+            <View className="mb-4 gap-1">
+              <Text testID="trade-reserved-notice" className="text-sm font-medium text-[#8FC31D]">
+                예약 중입니다
+              </Text>
+              {reservationDetailLabel && (
+                <Text testID="trade-reservation-detail" className="text-xs text-gray-600">
+                  {reservationDetailLabel}
+                </Text>
+              )}
+            </View>
           )}
           {showReviewButton && product.isCompleted && (
             <Button
@@ -118,9 +125,9 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
             </Button>
           )}
           {showButtons && !product.isCompleted && (
-            <>
-              <View className="flex-row justify-between">
-                {product.isReserved ? (
+            <View className="flex-row justify-between">
+              {product.isSeller &&
+                (product.isReserved ? (
                   <Button
                     variant="secondary"
                     onPress={handleCancelReservation}
@@ -136,32 +143,27 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
                 ) : (
                   <Button
                     variant="secondary"
-                    onPress={handleReservation}
+                    onPress={onOpenReservationModal}
                     disabled={localLoading || isLoading}
                     width="w-[48%]"
                     style={{ minHeight: 40 }}>
-                    {localLoading || isLoading ? (
-                      <ActivityIndicator size="small" color="#8FC31D" />
-                    ) : (
-                      <Text className="text-sm font-medium text-[#8FC31D]">예약하기</Text>
-                    )}
+                    <Text className="text-sm font-medium text-[#8FC31D]">예약하기</Text>
                   </Button>
-                )}
+                ))}
 
-                <Button
-                  variant="primary"
-                  onPress={handleTradeAccept}
-                  disabled={localLoading || isLoading}
-                  width="w-[48%]"
-                  style={{ minHeight: 40 }}>
-                  {localLoading || isLoading ? (
-                    <ActivityIndicator size="small" color="white" />
-                  ) : (
-                    <Text className="text-sm font-medium text-white">거래 완료하기</Text>
-                  )}
-                </Button>
-              </View>
-            </>
+              <Button
+                variant="primary"
+                onPress={handleTradeAccept}
+                disabled={localLoading || isLoading}
+                width={product.isSeller ? 'w-[48%]' : 'w-full'}
+                style={{ minHeight: 40 }}>
+                {localLoading || isLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-sm font-medium text-white">거래 완료하기</Text>
+                )}
+              </Button>
+            </View>
           )}
         </View>
       </Card>

@@ -14,6 +14,7 @@ import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
+import { ReservationModal } from '@/widget/chat/ui/ReservationModal';
 import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
@@ -21,6 +22,8 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useReservationDraftStore } from '~/shared/store/useReservationDraftStore';
+import type { ReservationDraft } from '~/shared/store/useReservationDraftStore';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,6 +33,7 @@ export default function ChatRoomPage() {
   const router = useRouter();
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
+  const [isReservationModalVisible, setIsReservationModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
@@ -66,14 +70,38 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
+  const handleOpenReservationModal = useCallback(() => {
+    setIsReservationModalVisible(true);
+  }, []);
+
+  const handleReservationConfirm = useCallback(
+    async (draft: ReservationDraft) => {
+      const productId = roomData?.product?.id;
+      if (!productId) return;
+
+      await handleReservation();
+      useReservationDraftStore.getState().setDraft(productId, draft);
+      setIsReservationModalVisible(false);
+    },
+    [handleReservation, roomData?.product?.id]
+  );
+
+  const handleCancelReservationAndClearDraft = useCallback(async () => {
+    const productId = roomData?.product?.id;
+    await handleCancelReservation();
+    if (productId) {
+      useReservationDraftStore.getState().clearDraft(productId);
+    }
+  }, [handleCancelReservation, roomData?.product?.id]);
+
   const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
     roomId,
     otherUserInfo,
     hasTradeRequest,
     shouldShowButtons,
     handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
+    handleCancelReservation: handleCancelReservationAndClearDraft,
+    onOpenReservationModal: handleOpenReservationModal,
   });
 
   const updatedComponentState = useMemo(
@@ -227,6 +255,12 @@ export default function ChatRoomPage() {
         onClose={() => setIsTradeRequestModalVisible(false)}
         onTradeRequest={handleTradeRequest}
         isLoading={isTradeRequestLoading}
+      />
+
+      <ReservationModal
+        isVisible={isReservationModalVisible}
+        onClose={() => setIsReservationModalVisible(false)}
+        onConfirm={handleReservationConfirm}
       />
 
       <ReviewsModal

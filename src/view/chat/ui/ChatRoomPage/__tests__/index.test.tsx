@@ -123,6 +123,27 @@ jest.mock('@/widget/chat/ui/TradeRequestModal', () => ({
   },
 }));
 
+jest.mock('@/widget/chat/ui/ReservationModal', () => ({
+  ReservationModal: ({ isVisible, onClose, onConfirm }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    return (
+      <View testID="reservation-modal">
+        <Text testID="reservation-modal-visible">{String(isVisible)}</Text>
+        <TouchableOpacity
+          testID="reservation-modal-confirm"
+          onPress={() =>
+            onConfirm({ date: '2026-08-28', time: '14:00', place: '상무역 2번 출구' })
+          }>
+          <Text>confirm</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="reservation-modal-close" onPress={onClose}>
+          <Text>close</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  },
+}));
+
 jest.mock('@/shared/ui/Header', () => ({
   Header: ({ headerTitle, onMenuPress, showMenuButton, connectionState }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
@@ -286,6 +307,24 @@ describe('ChatRoomPage', () => {
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
     fireEvent.press(getByTestId('header-menu-button'));
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
+  });
+
+  it('예약 확인 시 handleReservation이 호출되고 모달이 닫힌다', async () => {
+    const mockHandleReservation = jest.fn().mockResolvedValue(undefined);
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({ handleReservation: mockHandleReservation })
+    );
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
+
+    fireEvent.press(getByTestId('reservation-modal-confirm'));
+
+    await waitFor(() => expect(mockHandleReservation).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(getByTestId('reservation-modal-visible').props.children).toBe('false')
+    );
   });
 
   it('거래 요청 확인 시 handleTradeRequest가 호출되고 모달이 닫힌다', async () => {

@@ -10,7 +10,7 @@ interface TradeEmbedConfig {
   readonly shouldShow: boolean;
   readonly product?: TradeProduct | null;
   readonly onTradeAccept?: () => Promise<void>;
-  readonly onReservation?: () => void;
+  readonly onOpenReservationModal?: () => void;
   readonly onCancelReservation?: () => void;
   readonly showButtons: boolean;
   readonly isLoading: boolean;
@@ -113,7 +113,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         <TradeEmbed
           product={config.product}
           onTradeAccept={config.onTradeAccept}
-          onReservation={config.onReservation}
+          onOpenReservationModal={config.onOpenReservationModal}
           onCancelReservation={config.onCancelReservation}
           showButtons={config.showButtons}
           isLoading={config.isLoading}

@@ -42,8 +42,8 @@ const defaultProps = {
   hasTradeRequest: false,
   shouldShowButtons: false,
   handleTradeAccept: jest.fn(),
-  handleReservation: jest.fn(),
   handleCancelReservation: jest.fn(),
+  onOpenReservationModal: jest.fn(),
 };
 
 describe('useChatUIState', () => {
@@ -126,7 +126,7 @@ describe('useChatUIState', () => {
       );
 
       expect(result.current.tradeEmbedConfig.onTradeAccept).toBeUndefined();
-      expect(result.current.tradeEmbedConfig.onReservation).toBeUndefined();
+      expect(result.current.tradeEmbedConfig.onOpenReservationModal).toBeUndefined();
       expect(result.current.tradeEmbedConfig.onCancelReservation).toBeUndefined();
     });
 
@@ -136,7 +136,7 @@ describe('useChatUIState', () => {
       );
 
       expect(result.current.tradeEmbedConfig.onTradeAccept).toBeDefined();
-      expect(result.current.tradeEmbedConfig.onReservation).toBeDefined();
+      expect(result.current.tradeEmbedConfig.onOpenReservationModal).toBeDefined();
       expect(result.current.tradeEmbedConfig.onCancelReservation).toBeDefined();
     });
 

@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { TradeEmbed } from '../index';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
 import { logger } from '~/shared/lib/logger';
+import { useReservationDraftStore } from '~/shared/store/useReservationDraftStore';
 
 jest.mock('~/shared/lib/logger', () => ({
   logger: {
@@ -73,10 +74,21 @@ describe('TradeEmbed', () => {
     expect(getByText('+2')).toBeTruthy();
   });
 
-  it('showButtons가 true이고 미완료면 예약하기/거래 완료하기 버튼을 표시한다', () => {
-    const { getByText } = render(<TradeEmbed product={createProduct()} showButtons />);
+  it('showButtons가 true이고 게시물 작성자이며 미완료면 예약하기/거래 완료하기 버튼을 표시한다', () => {
+    const { getByText } = render(
+      <TradeEmbed product={createProduct({ isSeller: true })} showButtons />
+    );
 
     expect(getByText('예약하기')).toBeTruthy();
+    expect(getByText('거래 완료하기')).toBeTruthy();
+  });
+
+  it('게시물 작성자가 아니면 예약하기 버튼을 표시하지 않는다', () => {
+    const { getByText, queryByText } = render(
+      <TradeEmbed product={createProduct({ isSeller: false })} showButtons />
+    );
+
+    expect(queryByText('예약하기')).toBeNull();
     expect(getByText('거래 완료하기')).toBeTruthy();
   });
 
@@ -134,13 +146,13 @@ describe('TradeEmbed', () => {
     expect(queryByTestId('trade-reserved-notice')).toBeNull();
   });
 
-  it('product.isReserved가 false면 예약하기 버튼을 보여주고 누르면 onReservation을 호출한다', async () => {
-    const onReservation = jest.fn().mockResolvedValue(undefined);
+  it('product.isReserved가 false면 예약하기 버튼을 보여주고 누르면 onOpenReservationModal을 호출한다', () => {
+    const onOpenReservationModal = jest.fn();
     const { getByText, queryByText } = render(
       <TradeEmbed
-        product={createProduct({ isReserved: false })}
+        product={createProduct({ isSeller: true, isReserved: false })}
         showButtons
-        onReservation={onReservation}
+        onOpenReservationModal={onOpenReservationModal}
       />
     );
 
@@ -148,14 +160,14 @@ describe('TradeEmbed', () => {
 
     fireEvent.press(getByText('예약하기'));
 
-    await waitFor(() => expect(onReservation).toHaveBeenCalledTimes(1));
+    expect(onOpenReservationModal).toHaveBeenCalledTimes(1);
   });
 
   it('product.isReserved가 true면 예약 취소 버튼을 보여주고 누르면 onCancelReservation을 호출한다', async () => {
     const onCancelReservation = jest.fn().mockResolvedValue(undefined);
     const { getByText, queryByText } = render(
       <TradeEmbed
-        product={createProduct({ isReserved: true })}
+        product={createProduct({ isSeller: true, isReserved: true })}
         showButtons
         onCancelReservation={onCancelReservation}
       />
@@ -166,6 +178,23 @@ describe('TradeEmbed', () => {
     fireEvent.press(getByText('예약 취소'));
 
     await waitFor(() => expect(onCancelReservation).toHaveBeenCalledTimes(1));
+  });
+
+  it('예약 중이고 예약 정보가 저장되어 있으면 날짜/시간/장소를 함께 보여준다', () => {
+    useReservationDraftStore.getState().setDraft(100, {
+      date: '2026-08-28',
+      time: '14:00',
+      place: '상무역 2번 출구',
+    });
+
+    const { getByTestId } = render(
+      <TradeEmbed product={createProduct({ isReserved: true })} showButtons={false} />
+    );
+
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
+
+    act(() => useReservationDraftStore.getState().clearDraft(100));
   });
 
   it('거래 완료하기를 누르면 onTradeAccept를 호출한다', async () => {
