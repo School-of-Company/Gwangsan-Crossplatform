@@ -91,6 +91,18 @@ jest.mock('@/widget/chat/ui/ChatRoomHeader', () => ({
   },
 }));
 
+jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
+  ChatRoomProductInfo: ({ title, gwangsan }: any) => {
+    const { View, Text } = require('react-native');
+    return (
+      <View testID="chat-room-product-info">
+        <Text testID="chat-room-product-info-title">{title}</Text>
+        <Text testID="chat-room-product-info-gwangsan">{gwangsan}</Text>
+      </View>
+    );
+  },
+}));
+
 jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
   ChatRoomContent: ({ onReviewButtonPress, showReviewButton }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
@@ -204,6 +216,7 @@ const makeChatUIStateReturn = (overrides = {}) => ({
   menuConfig: { shouldShowMenuButton: true, isProductLoading: false, isGiverMode: false },
   tradeRequestInfo: { productId: 1, sellerId: 7 },
   componentState: { hasMessages: false, canSendMessage: true, headerTitle: '상대방' },
+  productInfoConfig: { shouldShow: true, title: '상품', gwangsan: 3000, imageUrl: undefined },
   ...overrides,
 });
 
@@ -250,6 +263,23 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('header-title').props.children).toBe('상대방');
+  });
+
+  it('productInfoConfig.shouldShow가 true이면 물품 정보를 계속 표시한다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('chat-room-product-info-title').props.children).toBe('상품');
+    expect(getByTestId('chat-room-product-info-gwangsan').props.children).toBe(3000);
+  });
+
+  it('productInfoConfig.shouldShow가 false이면 물품 정보를 표시하지 않는다', () => {
+    mockUseChatUIState.mockReturnValue(
+      makeChatUIStateReturn({ productInfoConfig: { shouldShow: false, title: '' } })
+    );
+
+    const { queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('chat-room-product-info')).toBeNull();
   });
 
   it('거래가 완료되지 않으면 완료 배너를 표시하지 않는다', () => {

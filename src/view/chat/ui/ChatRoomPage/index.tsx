@@ -12,6 +12,7 @@ import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
+import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { Header } from '@/shared/ui/Header';
@@ -66,15 +67,16 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
-    roomId,
-    otherUserInfo,
-    hasTradeRequest,
-    shouldShowButtons,
-    handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
-  });
+  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState, productInfoConfig } =
+    useChatUIState({
+      roomId,
+      otherUserInfo,
+      hasTradeRequest,
+      shouldShowButtons,
+      handleTradeAccept,
+      handleReservation,
+      handleCancelReservation,
+    });
 
   const updatedComponentState = useMemo(
     () => ({
@@ -186,6 +188,14 @@ export default function ChatRoomPage() {
         showMenuButton={menuConfig.shouldShowMenuButton}
         connectionState={connectionState}
       />
+
+      {productInfoConfig.shouldShow && (
+        <ChatRoomProductInfo
+          title={productInfoConfig.title}
+          gwangsan={productInfoConfig.gwangsan}
+          imageUrl={productInfoConfig.imageUrl}
+        />
+      )}
 
       {isTradeCompleted && (
         <View
