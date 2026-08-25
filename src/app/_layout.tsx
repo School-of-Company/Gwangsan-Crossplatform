@@ -32,14 +32,19 @@ export default function RootLayout() {
   const isConnected = useNetworkStatus();
   const pathname = usePathname();
   const router = useRouter();
-  const { navigateToChat } = useChatEntry();
+  const { navigateToChat, navigateToRoom } = useChatEntry();
   const navigateToChatRef = useRef(navigateToChat);
+  const navigateToRoomRef = useRef(navigateToRoom);
   const routerRef = useRef(router);
   useGlobalChatNotifications();
 
   useEffect(() => {
     navigateToChatRef.current = navigateToChat;
   }, [navigateToChat]);
+
+  useEffect(() => {
+    navigateToRoomRef.current = navigateToRoom;
+  }, [navigateToRoom]);
 
   useEffect(() => {
     routerRef.current = router;
@@ -68,7 +73,7 @@ export default function RootLayout() {
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
         navigateToChatRef.current(data.sourceId);
       } else if (data?.roomId != null) {
-        routerRef.current.push(`/chatting/${data.roomId}`);
+        navigateToRoomRef.current(data.roomId);
       } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
         routerRef.current.push(`/post/${data.sourceId}?review=1`);
       } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
