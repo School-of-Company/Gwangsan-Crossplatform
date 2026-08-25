@@ -49,18 +49,18 @@ describe('getChatRooms', () => {
   });
 
   describe('에러 케이스', () => {
-    it('API 실패 시 에러 토스트를 보여주고 에러를 throw한다', async () => {
+    it('API 실패 시 에러를 throw한다', async () => {
+      mockGet.mockRejectedValue(new Error('Network error'));
+
+      await expect(getChatRooms()).rejects.toThrow('Network error');
+    });
+
+    it('폴링 중 토스트가 쌓이지 않도록 실패해도 토스트를 띄우지 않는다', async () => {
       mockGet.mockRejectedValue(new Error('Network error'));
 
       await expect(getChatRooms()).rejects.toThrow('Network error');
 
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'error',
-          text1: '채팅방 목록 조회 실패',
-          text2: 'Network error',
-        })
-      );
+      expect(Toast.show).not.toHaveBeenCalled();
     });
   });
 });

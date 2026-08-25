@@ -32,7 +32,10 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
-      throwOnError: (error) => {
+      // 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도
+      // 화면 전체를 ErrorBoundary로 날리지 않고 기존 데이터를 유지한다.
+      throwOnError: (error, query) => {
+        if (query.state.data !== undefined) return false;
         if (error instanceof AxiosError) {
           const status = error.response?.status;
           return status !== undefined && status >= 500;

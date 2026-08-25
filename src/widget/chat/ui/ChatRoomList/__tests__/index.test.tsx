@@ -48,12 +48,41 @@ beforeEach(() => {
 });
 
 describe('ChatRoomList', () => {
-  it('isError=true이면 에러 상태를 표시한다', () => {
+  it('isError=true이고 캐시된 목록도 없으면 에러 상태를 표시한다', () => {
     mockUseChatRooms.mockReturnValue(makeChatRoomsReturn({ isError: true }));
 
     const { getByText } = render(<ChatRoomList />);
 
-    expect(getByText('채팅방 목록을 불러올 수 없습니다')).toBeTruthy();
+    expect(getByText('오류가 발생했습니다')).toBeTruthy();
+  });
+
+  it('에러 상태에서 다시 시도를 누르면 refetch한다', () => {
+    const refetch = jest.fn();
+    mockUseChatRooms.mockReturnValue(makeChatRoomsReturn({ isError: true, refetch }));
+
+    const { getByText } = render(<ChatRoomList />);
+    fireEvent.press(getByText('다시 시도'));
+
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it('isError=true여도 캐시된 목록이 있으면 목록을 계속 보여준다', () => {
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ isError: true, data: [{ roomId: 1, nickname: '방장1' }] })
+    );
+
+    const { getByTestId, queryByText } = render(<ChatRoomList />);
+
+    expect(getByTestId('room-1')).toBeTruthy();
+    expect(queryByText('오류가 발생했습니다')).toBeNull();
+  });
+
+  it('로딩 중에는 빈 상태 문구를 표시하지 않는다', () => {
+    mockUseChatRooms.mockReturnValue(makeChatRoomsReturn({ data: [], isLoading: true }));
+
+    const { queryByText } = render(<ChatRoomList />);
+
+    expect(queryByText('아직 채팅방 없습니다')).toBeNull();
   });
 
   it('채팅방이 없으면 빈 상태를 표시한다', () => {
