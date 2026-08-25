@@ -35,6 +35,7 @@ export interface TradeProduct {
   readonly isSeller: boolean;
   readonly isCompletable: boolean;
   readonly isCompleted: boolean;
+  readonly isReserved: boolean;
 }
 
 export interface ChatRoomWithProduct {

@@ -62,7 +62,14 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
       />
 
       <View className="gap-6 p-6">
-        <Text className="text-titleSmall">{data.title}</Text>
+        <View className="flex-row items-center gap-2">
+          <Text className="shrink text-titleSmall">{data.title}</Text>
+          {data.isReserved && (
+            <Text testID="post-reserved-tag" className="text-xs text-gray-500">
+              예약중
+            </Text>
+          )}
+        </View>
         <Text className="text-body3">{data.gwangsan} 광산</Text>
         <Text>{data.content}</Text>
 

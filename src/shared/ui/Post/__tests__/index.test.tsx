@@ -26,6 +26,7 @@ const makePost = (overrides = {}) => ({
   content: '내용',
   isCompletable: true,
   isCompleted: false,
+  isReserved: false,
   imageUrls: [],
   images: [],
   ...overrides,
@@ -78,6 +79,18 @@ describe('Post', () => {
     const { getByText } = render(<Post {...makePost({ imageUrls })} />);
 
     expect(getByText('+2')).toBeTruthy();
+  });
+
+  it('isReserved가 true이면 예약중 태그를 표시한다', () => {
+    const { getByTestId } = render(<Post {...makePost({ isReserved: true })} />);
+
+    expect(getByTestId('post-reserved-tag')).toBeTruthy();
+  });
+
+  it('isReserved가 false이면 예약중 태그를 표시하지 않는다', () => {
+    const { queryByTestId } = render(<Post {...makePost({ isReserved: false })} />);
+
+    expect(queryByTestId('post-reserved-tag')).toBeNull();
   });
 
   it('이미지가 한 개이면 +N 뱃지를 표시하지 않는다', () => {

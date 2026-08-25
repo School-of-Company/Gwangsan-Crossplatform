@@ -62,6 +62,7 @@ const createProduct = (overrides: Partial<TradeProduct> = {}): TradeProduct => (
   isSeller: false,
   isCompletable: true,
   isCompleted: false,
+  isReserved: false,
   ...overrides,
 });
 

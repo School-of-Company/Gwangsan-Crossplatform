@@ -20,6 +20,7 @@ const makePost = (overrides: Partial<PostType> = {}): PostType => ({
   gwangsan: 3,
   isCompletable: true,
   isCompleted: true,
+  isReserved: false,
   imageUrls: [],
   images: [],
   ...overrides,

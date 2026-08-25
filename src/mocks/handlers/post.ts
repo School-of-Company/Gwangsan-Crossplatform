@@ -12,6 +12,7 @@ export const makePostListItem = (overrides: Record<string, unknown> = {}) => ({
   images: [{ imageId: 1, imageUrl: 'https://example.com/img.jpg' }],
   isCompletable: true,
   isCompleted: false,
+  isReserved: false,
   ...overrides,
 });
 
@@ -25,6 +26,7 @@ export const makePostDetail = (overrides: Record<string, unknown> = {}) => ({
   images: [{ imageId: 1, imageUrl: 'https://example.com/img.jpg' }],
   isCompletable: true,
   isCompleted: false,
+  isReserved: false,
   member: {
     memberId: 42,
     nickname: '홍길동',
