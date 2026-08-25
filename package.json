@@ -95,7 +95,7 @@
     "babel-plugin-istanbul": "^8.0.0",
     "detox": "^20.51.4",
     "eslint": "^9.25.1",
-    "eslint-config-expo": "~56.0.4",
+    "eslint-config-expo": "~57.0.1",
     "eslint-config-prettier": "^10.1.2",
     "eslint-import-resolver-babel-module": "^5.3.2",
     "eslint-plugin-security": "^4.0.1",
