@@ -16,6 +16,21 @@ jest.mock('~/shared/ui', () => ({
     const { Text } = require('react-native');
     return <Text testID="header-title">{headerTitle}</Text>;
   },
+  PillTabs: ({ tabs, onChange, testIDPrefix }: any) => {
+    const { Text, TouchableOpacity, View } = require('react-native');
+    return (
+      <View>
+        {tabs.map((tab: any) => (
+          <TouchableOpacity
+            key={tab.value}
+            testID={`${testIDPrefix}-${tab.value}`}
+            onPress={() => onChange(tab.value)}>
+            <Text>{tab.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  },
 }));
 
 jest.mock('~/widget/post/ui/PostList', () => {

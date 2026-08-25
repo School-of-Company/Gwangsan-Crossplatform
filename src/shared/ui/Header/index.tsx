@@ -55,30 +55,28 @@ export function Header({
         }>
         <Icon name="chevron-back" size={24} color="#8F9094" />
       </TouchableOpacity>
-      <View className="flex-1 flex-row items-center justify-center">
+      <View className="flex-1 flex-row items-center justify-center gap-2">
         {onTitlePress ? (
           <TouchableOpacity
             onPress={onTitlePress}
-            className="flex-1 flex-row items-center justify-center gap-2">
+            className="flex-row items-center justify-center gap-2">
             <Text className="text-center text-body1 text-black">{headerTitle}</Text>
             {connectionDot}
           </TouchableOpacity>
         ) : (
-          <View className="flex-1 flex-row items-center justify-center gap-2">
+          <>
             <Text className="text-center text-body1 text-black">{headerTitle}</Text>
             {connectionDot}
-          </View>
-        )}
-        {showMenuButton && (
-          <TouchableOpacity
-            onPress={onMenuPress}
-            className="absolute right-0 p-2"
-            style={{ right: 0 }}>
-            <Icon name="ellipsis-vertical" size={24} />
-          </TouchableOpacity>
+          </>
         )}
       </View>
-      {!showMenuButton && <View className="size-6" />}
+      {showMenuButton ? (
+        <TouchableOpacity onPress={onMenuPress} className="w-10 items-center justify-center">
+          <Icon name="ellipsis-vertical" size={24} />
+        </TouchableOpacity>
+      ) : (
+        <View className="w-10" />
+      )}
     </View>
   );
 }

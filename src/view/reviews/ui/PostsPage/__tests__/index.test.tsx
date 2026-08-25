@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useGetReviews } from '../../../model/useGetReviews';
 import ReviewsPageView from '../index';
@@ -20,6 +20,21 @@ jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle }: any) => {
     const { Text } = require('react-native');
     return <Text testID="header-title">{headerTitle}</Text>;
+  },
+  PillTabs: ({ tabs, value, onChange, testIDPrefix }: any) => {
+    const { Text, TouchableOpacity, View } = require('react-native');
+    return (
+      <View>
+        {tabs.map((tab: any) => (
+          <TouchableOpacity
+            key={tab.value}
+            testID={`${testIDPrefix}-${tab.value}`}
+            onPress={() => onChange(tab.value)}>
+            <Text>{tab.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   },
 }));
 
@@ -49,15 +64,39 @@ beforeEach(() => {
 });
 
 describe('ReviewsPageView', () => {
-  describe('receive 모드', () => {
-    it('헤더에 "받은 후기"를 표시한다', () => {
+  describe('탭', () => {
+    it('헤더는 "후기"를 표시하고, "받은 후기"/"작성한 후기" 탭을 보여준다', () => {
+      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+
+      const { getByTestId, getByText } = render(<ReviewsPageView mode="receive" />);
+
+      expect(getByTestId('header-title').props.children).toBe('후기');
+      expect(getByText('받은 후기')).toBeTruthy();
+      expect(getByText('작성한 후기')).toBeTruthy();
+    });
+
+    it('"작성한 후기" 탭을 누르면 toss 모드로 조회한다', () => {
       mockUseGetReviews.mockReturnValue({ data: [], isError: false });
 
       const { getByTestId } = render(<ReviewsPageView mode="receive" />);
 
-      expect(getByTestId('header-title').props.children).toBe('받은 후기');
+      fireEvent.press(getByTestId('reviews-tab-toss'));
+
+      expect(mockUseGetReviews).toHaveBeenLastCalledWith('toss', '1');
     });
 
+    it('작성한 후기 페이지에서 "받은 후기" 탭을 누르면 receive 모드로 조회한다', () => {
+      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+
+      const { getByTestId } = render(<ReviewsPageView mode="toss" />);
+
+      fireEvent.press(getByTestId('reviews-tab-receive'));
+
+      expect(mockUseGetReviews).toHaveBeenLastCalledWith('receive', '1');
+    });
+  });
+
+  describe('receive 모드', () => {
     it('posts가 있으면 각 리뷰를 렌더링한다', () => {
       const posts = [makeReview({ reviewId: '1' }), makeReview({ reviewId: '2' })];
       mockUseGetReviews.mockReturnValue({ data: posts, isError: false });
@@ -103,14 +142,6 @@ describe('ReviewsPageView', () => {
   });
 
   describe('toss 모드', () => {
-    it('헤더에 "작성한 후기"를 표시한다', () => {
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
-
-      const { getByTestId } = render(<ReviewsPageView mode="toss" />);
-
-      expect(getByTestId('header-title').props.children).toBe('작성한 후기');
-    });
-
     it('useGetReviews를 toss 모드로 호출한다', () => {
       mockUseGetReviews.mockReturnValue({ data: [], isError: false });
 

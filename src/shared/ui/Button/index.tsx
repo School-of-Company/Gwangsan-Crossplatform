@@ -77,7 +77,7 @@ export const Button = ({
           transform: [{ scale }],
         }}>
         <Text
-          className={`text-lg font-semibold ${
+          className={`text-lg font-medium ${
             disabled
               ? 'text-gray-500'
               : variant === 'primary'

@@ -35,6 +35,7 @@ const makePost = (overrides: Partial<PostType> = {}): PostType => ({
   gwangsan: 5,
   isCompletable: false,
   isCompleted: false,
+  isReserved: false,
   ...overrides,
 });
 

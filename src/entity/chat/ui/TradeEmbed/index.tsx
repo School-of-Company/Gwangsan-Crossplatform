@@ -30,7 +30,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   showReviewButton = false,
 }) => {
   const [localLoading, setLocalLoading] = useState(false);
-  const [isReserved, setIsReserved] = useState(false);
 
   const handleTradeAccept = useCallback(async () => {
     if (!onTradeAccept || localLoading || isLoading) return;
@@ -51,7 +50,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
     try {
       setLocalLoading(true);
       await onReservation();
-      setIsReserved(true);
     } catch (error) {
       logger.error('TradeEmbed action failed', error);
     } finally {
@@ -65,7 +63,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
     try {
       setLocalLoading(true);
       await onCancelReservation();
-      setIsReserved(false);
     } catch (error) {
       logger.error('TradeEmbed action failed', error);
     } finally {
@@ -104,6 +101,13 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
               ? '거래가 완료되었습니다'
               : `${requestorNickname}님께서 거래하기를 누르셨습니다`}
           </Text>
+          {!product.isCompleted && product.isReserved && (
+            <Text
+              testID="trade-reserved-notice"
+              className="mb-4 text-sm font-medium text-[#8FC31D]">
+              예약 중입니다
+            </Text>
+          )}
           {showReviewButton && product.isCompleted && (
             <Button
               variant="primary"
@@ -116,7 +120,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
           {showButtons && !product.isCompleted && (
             <>
               <View className="flex-row justify-between">
-                {isReserved ? (
+                {product.isReserved ? (
                   <Button
                     variant="secondary"
                     onPress={handleCancelReservation}

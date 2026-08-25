@@ -243,6 +243,50 @@ describe('useTradeHandlers', () => {
       );
     });
 
+    it('성공 시 캐시된 product.isReserved를 true로 갱신한다', async () => {
+      mockMakeReservation.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isReserved: false },
+      });
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isReserved).toBe(true);
+    });
+
+    it('실패 시 캐시된 product.isReserved를 갱신하지 않는다', async () => {
+      mockMakeReservation.mockRejectedValue(new Error('예약 실패'));
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isReserved: false },
+      });
+
+      await act(async () => {
+        await result.current.handleReservation();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isReserved).toBe(false);
+    });
+
     it('productId가 없으면 makeReservation을 호출하지 않는다', async () => {
       const { result } = renderHookWithProviders(() =>
         useTradeHandlers({ roomId: 1, roomData: { product: null }, otherUserInfo })
@@ -288,6 +332,28 @@ describe('useTradeHandlers', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', text1: '예약 취소 실패', text2: '취소 실패' })
       );
+    });
+
+    it('성공 시 캐시된 product.isReserved를 false로 갱신한다', async () => {
+      mockCancelReservation.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, isReserved: true },
+      });
+
+      await act(async () => {
+        await result.current.handleCancelReservation();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isReserved).toBe(false);
     });
 
     it('productId가 없으면 cancelReservation을 호출하지 않는다', async () => {

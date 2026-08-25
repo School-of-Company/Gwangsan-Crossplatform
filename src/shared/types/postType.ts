@@ -12,5 +12,6 @@ export interface PostType {
   imageUrls?: ImageType[];
   isCompletable: boolean;
   isCompleted: boolean;
+  isReserved: boolean;
   images?: ImageType[];
 }

@@ -7,6 +7,7 @@ export interface TransactionStateChangedPayload {
   targetMemberId?: number;
   productId: number;
   isCompleted: boolean;
+  isReserved?: boolean;
   createdAt: string;
 }
 

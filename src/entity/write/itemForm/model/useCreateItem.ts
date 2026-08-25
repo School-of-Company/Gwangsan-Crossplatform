@@ -43,6 +43,7 @@ export const useCreateItem = () => {
               imageUrls: [],
               isCompletable: false,
               isCompleted: false,
+              isReserved: false,
             },
             ...previousPosts,
           ]
