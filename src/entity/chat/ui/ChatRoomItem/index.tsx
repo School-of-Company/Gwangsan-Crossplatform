@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { formatDate } from '@/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
@@ -21,6 +22,8 @@ interface ChatRoomItemProps {
   room: ChatRoomListItem;
   onPress: (roomId: RoomId) => void;
   onLongPress?: (roomId: RoomId) => void;
+  /** 우측 상단 점 3개 메뉴 버튼 클릭 시 호출 */
+  onMenuPress?: (roomId: RoomId) => void;
   /** 채팅방 나가기 확인 후 왼쪽으로 슬라이드 아웃되는 중인지 여부 */
   isExiting?: boolean;
   /** 슬라이드 아웃 애니메이션이 끝난 뒤 호출 — 이 시점에 목록에서 실제로 제거해야 위/아래 항목이 붙는 애니메이션이 이어진다 */
@@ -31,6 +34,7 @@ const ChatRoomItemComponent = ({
   room,
   onPress,
   onLongPress,
+  onMenuPress,
   isExiting = false,
   onExited,
 }: ChatRoomItemProps) => {
@@ -66,6 +70,10 @@ const ChatRoomItemComponent = ({
 
   const handleLongPress = () => {
     onLongPress?.(room.roomId);
+  };
+
+  const handleMenuPress = () => {
+    onMenuPress?.(room.roomId);
   };
 
   const renderUnreadBadge = () => {
@@ -117,7 +125,15 @@ const ChatRoomItemComponent = ({
           </Text>
         </View>
         <View className="ml-2 flex-col items-end">
-          <Text className="mb-1 text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
+          <View className="mb-1 flex-row items-center">
+            <Text className="text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
+            <TouchableOpacity
+              onPress={handleMenuPress}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              className="-mr-1 p-1">
+              <Ionicons name="ellipsis-vertical" size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
           {renderUnreadBadge()}
         </View>
       </TouchableOpacity>

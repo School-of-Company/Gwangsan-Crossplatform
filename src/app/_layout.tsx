@@ -1,6 +1,6 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppState, View } from 'react-native';
+import { AppState, Platform, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useRef } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
@@ -134,7 +134,7 @@ export default function RootLayout() {
             </Stack>
           </SentryRN.ErrorBoundary>
           <BottomSheetPortalOutlet />
-          <Toast config={toastConfig} />
+          <Toast config={toastConfig} topOffset={Platform.select({ ios: 70, default: 40 })} />
           <NoNetworkOverlay visible={!isConnected} />
         </QueryProvider>
       </View>

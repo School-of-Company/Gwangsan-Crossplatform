@@ -113,6 +113,7 @@ export function ChatRoomList() {
         room={item}
         onPress={handleChatRoomPress}
         onLongPress={handleChatRoomLongPress}
+        onMenuPress={handleChatRoomLongPress}
         isExiting={item.roomId === exitingRoomId}
         onExited={handleChatRoomExited}
       />
