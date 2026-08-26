@@ -2,129 +2,139 @@
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 <View
-  className="absolute inset-0 z-[1000]"
+  style={
+    {
+      "bottom": 0,
+      "left": 0,
+      "position": "absolute",
+      "right": 0,
+      "top": 0,
+    }
+  }
 >
   <View
-    className="absolute inset-0 bg-black/50"
-    collapsable={false}
-    pointerEvents="none"
-    style={
-      {
-        "opacity": 0,
-      }
-    }
-  />
-  <View
-    accessibilityState={
-      {
-        "busy": undefined,
-        "checked": undefined,
-        "disabled": undefined,
-        "expanded": undefined,
-        "selected": undefined,
-      }
-    }
-    accessibilityValue={
-      {
-        "max": undefined,
-        "min": undefined,
-        "now": undefined,
-        "text": undefined,
-      }
-    }
-    accessible={true}
-    className="flex-1 justify-end"
-    collapsable={false}
-    focusable={true}
-    onBlur={[Function]}
-    onClick={[Function]}
-    onFocus={[Function]}
-    onResponderGrant={[Function]}
-    onResponderMove={[Function]}
-    onResponderRelease={[Function]}
-    onResponderTerminate={[Function]}
-    onResponderTerminationRequest={[Function]}
-    onStartShouldSetResponder={[Function]}
+    className="flex-1"
   >
     <View
-      className="rounded-t-[20px] bg-white"
+      className="absolute inset-0 bg-black/50"
       collapsable={false}
+      pointerEvents="none"
       style={
         {
-          "height": 889.3333333333334,
-          "transform": [
-            {
-              "translateY": 889.3333333333334,
-            },
-          ],
+          "opacity": 0,
         }
       }
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      className="flex-1 justify-end"
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
     >
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        className="flex-1 p-4"
+        className="rounded-t-[20px] bg-white"
         collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
+        onLayout={[Function]}
+        onMoveShouldSetResponder={[Function]}
+        onMoveShouldSetResponderCapture={[Function]}
+        onResponderEnd={[Function]}
         onResponderGrant={[Function]}
         onResponderMove={[Function]}
+        onResponderReject={[Function]}
         onResponderRelease={[Function]}
+        onResponderStart={[Function]}
         onResponderTerminate={[Function]}
         onResponderTerminationRequest={[Function]}
         onStartShouldSetResponder={[Function]}
+        onStartShouldSetResponderCapture={[Function]}
+        style={
+          {
+            "height": 889.3333333333334,
+            "transform": [
+              {
+                "translateY": 889.3333333333334,
+              },
+            ],
+          }
+        }
       >
         <View
-          className="items-center py-2"
-          hitSlop={
+          accessibilityState={
             {
-              "bottom": 12,
-              "left": 40,
-              "right": 40,
-              "top": 12,
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
-          onMoveShouldSetResponder={[Function]}
-          onMoveShouldSetResponderCapture={[Function]}
-          onResponderEnd={[Function]}
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="flex-1 px-4 pt-4"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
           onResponderGrant={[Function]}
           onResponderMove={[Function]}
-          onResponderReject={[Function]}
           onResponderRelease={[Function]}
-          onResponderStart={[Function]}
           onResponderTerminate={[Function]}
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
-          onStartShouldSetResponderCapture={[Function]}
+          style={
+            {
+              "paddingBottom": 16,
+            }
+          }
         >
           <View
-            className="h-1 w-10 rounded-full bg-gray-200"
-          />
-        </View>
-        <View
-          className="flex-1"
-        >
-          <Text>
-            내용
-          </Text>
+            className="items-center py-2"
+          >
+            <View
+              className="h-1 w-10 rounded-full bg-gray-200"
+            />
+          </View>
+          <View
+            className="flex-1"
+          >
+            <Text>
+              내용
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -134,173 +144,183 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
 <View
-  className="absolute inset-0 z-[1000]"
+  style={
+    {
+      "bottom": 0,
+      "left": 0,
+      "position": "absolute",
+      "right": 0,
+      "top": 0,
+    }
+  }
 >
   <View
-    className="absolute inset-0 bg-black/50"
-    collapsable={false}
-    pointerEvents="none"
-    style={
-      {
-        "opacity": 0,
-      }
-    }
-  />
-  <View
-    accessibilityState={
-      {
-        "busy": undefined,
-        "checked": undefined,
-        "disabled": undefined,
-        "expanded": undefined,
-        "selected": undefined,
-      }
-    }
-    accessibilityValue={
-      {
-        "max": undefined,
-        "min": undefined,
-        "now": undefined,
-        "text": undefined,
-      }
-    }
-    accessible={true}
-    className="flex-1 justify-end"
-    collapsable={false}
-    focusable={true}
-    onBlur={[Function]}
-    onClick={[Function]}
-    onFocus={[Function]}
-    onResponderGrant={[Function]}
-    onResponderMove={[Function]}
-    onResponderRelease={[Function]}
-    onResponderTerminate={[Function]}
-    onResponderTerminationRequest={[Function]}
-    onStartShouldSetResponder={[Function]}
+    className="flex-1"
   >
     <View
-      className="rounded-t-[20px] bg-white"
+      className="absolute inset-0 bg-black/50"
       collapsable={false}
+      pointerEvents="none"
       style={
         {
-          "height": 889.3333333333334,
-          "transform": [
-            {
-              "translateY": 889.3333333333334,
-            },
-          ],
+          "opacity": 0,
         }
       }
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      className="flex-1 justify-end"
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
     >
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        className="flex-1 p-4"
+        className="rounded-t-[20px] bg-white"
         collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
+        onLayout={[Function]}
+        onMoveShouldSetResponder={[Function]}
+        onMoveShouldSetResponderCapture={[Function]}
+        onResponderEnd={[Function]}
         onResponderGrant={[Function]}
         onResponderMove={[Function]}
+        onResponderReject={[Function]}
         onResponderRelease={[Function]}
+        onResponderStart={[Function]}
         onResponderTerminate={[Function]}
         onResponderTerminationRequest={[Function]}
         onStartShouldSetResponder={[Function]}
+        onStartShouldSetResponderCapture={[Function]}
+        style={
+          {
+            "height": 889.3333333333334,
+            "transform": [
+              {
+                "translateY": 889.3333333333334,
+              },
+            ],
+          }
+        }
       >
         <View
-          className="items-center py-2"
-          hitSlop={
+          accessibilityState={
             {
-              "bottom": 12,
-              "left": 40,
-              "right": 40,
-              "top": 12,
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
-          onMoveShouldSetResponder={[Function]}
-          onMoveShouldSetResponderCapture={[Function]}
-          onResponderEnd={[Function]}
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="flex-1 px-4 pt-4"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
           onResponderGrant={[Function]}
           onResponderMove={[Function]}
-          onResponderReject={[Function]}
           onResponderRelease={[Function]}
-          onResponderStart={[Function]}
           onResponderTerminate={[Function]}
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
-          onStartShouldSetResponderCapture={[Function]}
+          style={
+            {
+              "paddingBottom": 16,
+            }
+          }
         >
           <View
-            className="h-1 w-10 rounded-full bg-gray-200"
-          />
-        </View>
-        <View
-          className="relative mb-4 flex-row items-center justify-center py-6"
-        >
-          <Text
-            className="text-body1 text-black"
+            className="items-center py-2"
           >
-            제목
-          </Text>
+            <View
+              className="h-1 w-10 rounded-full bg-gray-200"
+            />
+          </View>
           <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
+            className="relative mb-4 flex-row items-center justify-center py-6"
+          >
+            <Text
+              className="text-body1 text-black"
+            >
+              제목
+            </Text>
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
               }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
               }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-                "right": 0,
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "opacity": 1,
+                  "right": 0,
+                }
               }
-            }
-          />
-        </View>
-        <View
-          className="flex-1"
-        >
-          <Text>
-            내용
-          </Text>
+            />
+          </View>
+          <View
+            className="flex-1"
+          >
+            <Text>
+              내용
+            </Text>
+          </View>
         </View>
       </View>
     </View>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -8,12 +8,12 @@ import {
   Animated,
   Easing,
   Keyboard,
-  Platform,
+  BackHandler,
   PanResponder,
 } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import * as NavigationBar from 'expo-navigation-bar';
-import { useFooterVisibilityStore } from '~/shared/store/useFooterVisibilityStore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 
 interface BottomSheetModalWrapperProps {
   isVisible: boolean;
@@ -28,6 +28,10 @@ interface BottomSheetModalWrapperProps {
 
 // iOS 시트 프레젠테이션에서 쓰이는 곡선
 const APPLE_SHEET_EASING = Easing.bezier(0.32, 0.72, 0, 1);
+// 손가락 이동량을 그대로 반영하면 체감상 너무 많이 움직여서, 이동량에 저항을 준다
+const DRAG_RESISTANCE = 0.7;
+// 여닫힘 속도를 동일하게 맞춘다
+const SHEET_TRANSITION_DURATION = 500;
 
 export function BottomSheetModalWrapper({
   isVisible,
@@ -39,6 +43,10 @@ export function BottomSheetModalWrapper({
   hasHeader = true,
   showCloseButton = true,
 }: BottomSheetModalWrapperProps) {
+  const id = useId();
+  const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
+  const removeSheet = useBottomSheetPortalStore((s) => s.removeSheet);
+  const insets = useSafeAreaInsets();
   const screenHeight = Dimensions.get('window').height;
   const modalHeight = height ?? (screenHeight * 2) / 3;
 
@@ -46,24 +54,30 @@ export function BottomSheetModalWrapper({
   const translateY = useRef(new Animated.Value(modalHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
-  const hideFooter = useFooterVisibilityStore((state) => state.hide);
-  const showFooter = useFooterVisibilityStore((state) => state.show);
 
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 4,
+        // 시작 시점엔 절대 가로채지 않는다 — 버튼 탭이 정상적으로 눌리게 하기 위함.
+        // 아래로 끄는 움직임이 뚜렷해지는 순간(move, capture 단계)에만 시트가
+        // 제스처를 가로채, 버튼을 누르고 있던 도중에도 그대로 내려가게 한다.
+        onStartShouldSetPanResponder: () => false,
+        onStartShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
         onPanResponderGrant: () => {
           translateY.stopAnimation((value) => {
             dragStartValue.current = value;
           });
         },
         onPanResponderMove: (_, gestureState) => {
-          translateY.setValue(Math.max(0, dragStartValue.current + gestureState.dy));
+          translateY.setValue(
+            Math.max(0, dragStartValue.current + gestureState.dy * DRAG_RESISTANCE)
+          );
         },
         onPanResponderRelease: (_, gestureState) => {
-          const shouldClose = gestureState.dy > modalHeight * 0.25 || gestureState.vy > 0.8;
+          const shouldClose =
+            gestureState.dy * DRAG_RESISTANCE > modalHeight * 0.25 || gestureState.vy > 0.8;
           if (shouldClose) {
             onClose();
           } else {
@@ -75,6 +89,7 @@ export function BottomSheetModalWrapper({
             }).start();
           }
         },
+        onPanResponderTerminationRequest: () => false,
       }),
     [modalHeight, onClose, translateY]
   );
@@ -105,19 +120,6 @@ export function BottomSheetModalWrapper({
   }, [translateY]);
 
   useEffect(() => {
-    if (Platform.OS !== 'android') return;
-    NavigationBar.setVisibilityAsync(isVisible ? 'hidden' : 'visible').catch(() => {});
-  }, [isVisible]);
-
-  useEffect(() => {
-    if (isVisible) {
-      hideFooter();
-    } else {
-      showFooter();
-    }
-  }, [isVisible, hideFooter, showFooter]);
-
-  useEffect(() => {
     if (isVisible) {
       translateY.setValue(modalHeight);
       backdropOpacity.setValue(0);
@@ -127,13 +129,13 @@ export function BottomSheetModalWrapper({
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: modalHeight,
-          duration: 300,
+          duration: SHEET_TRANSITION_DURATION,
           useNativeDriver: true,
           easing: APPLE_SHEET_EASING,
         }),
         Animated.timing(backdropOpacity, {
           toValue: 0,
-          duration: 300,
+          duration: SHEET_TRANSITION_DURATION,
           useNativeDriver: true,
           easing: APPLE_SHEET_EASING,
         }),
@@ -144,68 +146,109 @@ export function BottomSheetModalWrapper({
     }
   }, [isVisible, modalHeight, translateY, backdropOpacity, show, onAnimationComplete]);
 
-  // show가 true로 커밋되어 시트가 오프스크린 위치에 실제로 마운트된 다음에만
-  // 여는 애니메이션을 시작한다. 마운트 전에 시작하면 애니메이션 시계가 이미
-  // 흐르고 있는 상태로 뷰가 붙어 중간부터 나타나는 것처럼 보이는 문제가 있었다.
+  // Modal(별도 네이티브 창) 없이 이미 떠 있는 화면 위에 바로 얹기 때문에, 토스트처럼
+  // 창 생성 지연이 없다. 시트의 첫 layout이 실제로 커밋된 직후(onLayout)에만
+  // 애니메이션을 시작해 첫 프레임이 끊기지 않게 하고, rAF로 한 프레임 더 미뤄 안전
+  // 여유를 둔다.
+  const handleSheetLayout = useCallback(() => {
+    requestAnimationFrame(() => {
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: SHEET_TRANSITION_DURATION,
+          useNativeDriver: true,
+          easing: APPLE_SHEET_EASING,
+        }),
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: SHEET_TRANSITION_DURATION,
+          useNativeDriver: true,
+          easing: APPLE_SHEET_EASING,
+        }),
+      ]).start();
+    });
+  }, [translateY, backdropOpacity]);
+
+  // Modal의 onRequestClose를 대체 — 안드로이드 뒤로가기를 닫기 동작으로 처리한다
   useEffect(() => {
-    if (!isVisible || !show) return;
+    if (!show) return;
 
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 380,
-        useNativeDriver: true,
-        easing: APPLE_SHEET_EASING,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 1,
-        duration: 380,
-        useNativeDriver: true,
-        easing: APPLE_SHEET_EASING,
-      }),
-    ]).start();
-  }, [isVisible, show, translateY, backdropOpacity]);
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
 
-  if (!show) return null;
+    return () => subscription.remove();
+  }, [show, onClose]);
 
-  return (
-    <View className="absolute inset-0 z-[1000]">
-      <Animated.View
-        className="absolute inset-0 bg-black/50"
-        style={{ opacity: backdropOpacity }}
-        pointerEvents="none"
-      />
-      <Pressable className="flex-1 justify-end" onPress={onClose}>
+  useEffect(() => {
+    if (!show) {
+      removeSheet(id);
+      return undefined;
+    }
+
+    setSheet(
+      id,
+      <View className="flex-1">
         <Animated.View
-          style={{
-            height: modalHeight,
-            transform: [{ translateY }],
-          }}
-          className="rounded-t-[20px] bg-white">
-          <Pressable className="flex-1 p-4" onPress={(e) => e.stopPropagation()}>
-            <View
-              {...panResponder.panHandlers}
-              hitSlop={{ top: 12, bottom: 12, left: 40, right: 40 }}
-              className="items-center py-2">
-              <View className="h-1 w-10 rounded-full bg-gray-200" />
-            </View>
-            {hasHeader && (
-              <View className="relative mb-4 flex-row items-center justify-center py-6">
-                <Text className="text-body1 text-black">{title}</Text>
-                {showCloseButton && (
-                  <TouchableOpacity
-                    onPress={onClose}
-                    className="absolute right-0"
-                    style={{ right: 0 }}>
-                    <Icon name="close" size={24} color="#666" />
-                  </TouchableOpacity>
-                )}
+          className="absolute inset-0 bg-black/50"
+          style={{ opacity: backdropOpacity }}
+          pointerEvents="none"
+        />
+        <Pressable className="flex-1 justify-end" onPress={onClose}>
+          <Animated.View
+            {...panResponder.panHandlers}
+            onLayout={handleSheetLayout}
+            style={{
+              height: modalHeight,
+              transform: [{ translateY }],
+            }}
+            className="rounded-t-[20px] bg-white">
+            <Pressable
+              className="flex-1 px-4 pt-4"
+              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+              onPress={(e) => e.stopPropagation()}>
+              <View className="items-center py-2">
+                <View className="h-1 w-10 rounded-full bg-gray-200" />
               </View>
-            )}
-            <View className="flex-1">{children}</View>
-          </Pressable>
-        </Animated.View>
-      </Pressable>
-    </View>
-  );
+              {hasHeader && (
+                <View className="relative mb-4 flex-row items-center justify-center py-6">
+                  <Text className="text-body1 text-black">{title}</Text>
+                  {showCloseButton && (
+                    <TouchableOpacity
+                      onPress={onClose}
+                      className="absolute right-0"
+                      style={{ right: 0 }}>
+                      <Icon name="close" size={24} color="#666" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              <View className="flex-1">{children}</View>
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </View>
+    );
+
+    return () => removeSheet(id);
+  }, [
+    show,
+    id,
+    setSheet,
+    removeSheet,
+    backdropOpacity,
+    onClose,
+    panResponder,
+    handleSheetLayout,
+    modalHeight,
+    translateY,
+    insets.bottom,
+    hasHeader,
+    title,
+    showCloseButton,
+    children,
+  ]);
+
+  return null;
 }
