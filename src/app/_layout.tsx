@@ -27,10 +27,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function RootLayout() {
-  const fontsLoaded = useCustomFonts();
-  const isConnected = useNetworkStatus();
-  const pathname = usePathname();
+function ChatNotificationHandler() {
   const router = useRouter();
   const { navigateToChat, navigateToRoom } = useChatEntry();
   const navigateToChatRef = useRef(navigateToChat);
@@ -92,6 +89,14 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
+  return null;
+}
+
+export default function RootLayout() {
+  const fontsLoaded = useCustomFonts();
+  const isConnected = useNetworkStatus();
+  const pathname = usePathname();
+
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'background') saveE2ECoverage();
@@ -117,6 +122,7 @@ export default function RootLayout() {
     <KeyboardProvider>
       <View className="flex-1 bg-white">
         <QueryProvider>
+          <ChatNotificationHandler />
           <SentryRN.ErrorBoundary fallback={<></>}>
             <Stack
               screenOptions={{
