@@ -1,3 +1,9 @@
+// sentry.ts reads process.env.EXPO_PUBLIC_SENTRY_DSN directly at module-load time.
+// Expo normally inlines this via Metro's .env loading, which Jest never runs, so the
+// CI step that writes a `.env` file has no effect here — set a placeholder directly.
+process.env.EXPO_PUBLIC_SENTRY_DSN =
+  process.env.EXPO_PUBLIC_SENTRY_DSN || 'https://test-placeholder@sentry.io/0';
+
 // axios 1.15.0 calls body.cancel() at module load time to detect fetch support.
 // Expo's ReadableStream polyfill returns a rejected Promise when cancel() is called
 // on a stream that has a reader, causing unhandled rejections in every test that
