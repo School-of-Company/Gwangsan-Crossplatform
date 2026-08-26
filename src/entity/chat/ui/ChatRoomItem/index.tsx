@@ -13,9 +13,9 @@ import type { ChatRoomListItem } from '../../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const EXIT_DURATION = 3000; // TEMP DEBUG: slowed down to visually confirm the animation is running at all
+const EXIT_DURATION = 220;
 const EXIT_EASING = Easing.out(Easing.cubic);
-const REFLOW_DURATION = 3000; // TEMP DEBUG
+const REFLOW_DURATION = 220;
 
 interface ChatRoomItemProps {
   room: ChatRoomListItem;
