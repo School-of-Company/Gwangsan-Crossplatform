@@ -224,7 +224,7 @@ describe('ChatRoomList', () => {
       expect(getByText('채팅방 나가기')).toBeTruthy();
     });
 
-    it('삭제를 확인하면 해당 roomId로 삭제 mutation을 호출한다', () => {
+    it('삭제를 확인하면 슬라이드 아웃 애니메이션이 끝난 뒤에 해당 roomId로 삭제 mutation을 호출한다', () => {
       const { getByTestId, getByText } = render(
         <>
           <ChatRoomList />
@@ -234,6 +234,11 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+
+      // 애니메이션이 API 응답과 무관하게 먼저 재생되어야 하므로, 이 시점에는 아직 mutation이 호출되지 않는다.
+      expect(mockDeleteMutate).not.toHaveBeenCalled();
+
+      fireEvent.press(getByTestId('exit-complete-7'));
 
       expect(mockDeleteMutate).toHaveBeenCalledWith(
         7,

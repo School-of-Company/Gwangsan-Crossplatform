@@ -75,33 +75,37 @@ export function ChatRoomList() {
 
   const handleConfirmDelete = useCallback(() => {
     if (deleteTargetRoomId === null) return;
-    const roomId = deleteTargetRoomId;
 
-    deleteChatRoomMutation.mutate(roomId, {
-      onError: () => {
-        // 나가기가 실패하면 슬라이드 아웃으로 숨겼던 항목을 다시 목록에 되돌린다
-        setHiddenRoomIds((prev) => {
-          if (!prev.has(roomId)) return prev;
-          const next = new Set(prev);
-          next.delete(roomId);
-          return next;
-        });
-      },
-    });
-
-    setExitingRoomId(roomId);
+    // 슬라이드 아웃 애니메이션은 API 응답과 무관하게 먼저 재생한다 — 낙관적 업데이트.
+    // 실제 삭제 요청은 애니메이션이 끝나 목록에서 제거된 뒤 handleChatRoomExited에서 보낸다.
+    setExitingRoomId(deleteTargetRoomId);
     setDeleteTargetRoomId(null);
-  }, [deleteTargetRoomId, deleteChatRoomMutation]);
+  }, [deleteTargetRoomId]);
 
-  const handleChatRoomExited = useCallback((roomId: RoomId) => {
-    // 슬라이드 아웃이 끝난 뒤에만 목록에서 제거해야 위/아래 항목이 붙는 애니메이션이 이어서 재생된다
-    setHiddenRoomIds((prev) => {
-      const next = new Set(prev);
-      next.add(roomId);
-      return next;
-    });
-    setExitingRoomId(null);
-  }, []);
+  const handleChatRoomExited = useCallback(
+    (roomId: RoomId) => {
+      // 슬라이드 아웃이 끝난 뒤에만 목록에서 제거해야 위/아래 항목이 붙는 애니메이션이 이어서 재생된다
+      setHiddenRoomIds((prev) => {
+        const next = new Set(prev);
+        next.add(roomId);
+        return next;
+      });
+      setExitingRoomId(null);
+
+      deleteChatRoomMutation.mutate(roomId, {
+        onError: () => {
+          // 나가기가 실패하면 토스트로 알리고 숨겼던 항목을 다시 목록에 되돌린다
+          setHiddenRoomIds((prev) => {
+            if (!prev.has(roomId)) return prev;
+            const next = new Set(prev);
+            next.delete(roomId);
+            return next;
+          });
+        },
+      });
+    },
+    [deleteChatRoomMutation]
+  );
 
   const renderChatRoomItem = useCallback(
     ({ item }: { item: ChatRoomListItem }) => (

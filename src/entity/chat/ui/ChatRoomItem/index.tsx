@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { memo, useEffect } from 'react';
 import Animated, {
   Easing,
   LinearTransition,
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -11,6 +12,7 @@ import { formatDate } from '@/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const EXIT_DURATION = 220;
 const EXIT_EASING = Easing.out(Easing.cubic);
 const REFLOW_DURATION = 220;
@@ -32,19 +34,26 @@ const ChatRoomItemComponent = ({
   isExiting = false,
   onExited,
 }: ChatRoomItemProps) => {
-  const { width } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
 
   useEffect(() => {
     if (!isExiting) return;
 
-    translateX.value = withTiming(-width, { duration: EXIT_DURATION, easing: EXIT_EASING });
-    opacity.value = withTiming(0, { duration: EXIT_DURATION, easing: EXIT_EASING });
+    translateX.value = withTiming(-SCREEN_WIDTH, {
+      duration: EXIT_DURATION,
+      easing: EXIT_EASING,
+      reduceMotion: ReduceMotion.Never,
+    });
+    opacity.value = withTiming(0, {
+      duration: EXIT_DURATION,
+      easing: EXIT_EASING,
+      reduceMotion: ReduceMotion.Never,
+    });
 
     const timer = setTimeout(() => onExited?.(room.roomId), EXIT_DURATION);
     return () => clearTimeout(timer);
-  }, [isExiting, width, room.roomId, onExited, translateX, opacity]);
+  }, [isExiting, room.roomId, onExited, translateX, opacity]);
 
   const exitStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -71,7 +80,11 @@ const ChatRoomItemComponent = ({
   const productImage = room.product?.images?.[0]?.imageUrl;
 
   return (
-    <Animated.View layout={LinearTransition.duration(REFLOW_DURATION)} style={exitStyle}>
+    <Animated.View
+      layout={LinearTransition.duration(REFLOW_DURATION)
+        .easing(EXIT_EASING)
+        .reduceMotion(ReduceMotion.Never)}
+      style={exitStyle}>
       <TouchableOpacity
         onPress={handlePress}
         onLongPress={handleLongPress}
