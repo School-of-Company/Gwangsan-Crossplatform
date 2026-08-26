@@ -1,7 +1,13 @@
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryCache,
+  MutationCache,
+  focusManager,
+} from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
 import { setQueryClientInstance } from './axios';
 import * as Sentry from '@sentry/react-native';
@@ -32,7 +38,10 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
-      throwOnError: (error) => {
+      // 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도
+      // 화면 전체를 ErrorBoundary로 날리지 않고 기존 데이터를 유지한다.
+      throwOnError: (error, query) => {
+        if (query.state.data !== undefined) return false;
         if (error instanceof AxiosError) {
           const status = error.response?.status;
           return status !== undefined && status >= 500;
@@ -50,6 +59,17 @@ interface QueryProviderProps {
 export default function QueryProvider({ children }: QueryProviderProps) {
   useEffect(() => {
     setQueryClientInstance(queryClient);
+  }, []);
+
+  // RN에는 window focus 이벤트가 없어 focusManager가 항상 focused로 남는다.
+  // 그러면 refetchInterval이 백그라운드/화면 잠금 상태에서도 계속 돌고,
+  // 이때 잠긴 키체인에서 토큰을 읽다 SecureStore가 FunctionCallException으로 실패한다.
+  useEffect(() => {
+    focusManager.setFocused(AppState.currentState === 'active');
+    const sub = AppState.addEventListener('change', (status) => {
+      focusManager.setFocused(status === 'active');
+    });
+    return () => sub.remove();
   }, []);
 
   return (

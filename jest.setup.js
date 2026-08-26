@@ -1,3 +1,14 @@
+// sentry.ts reads process.env.EXPO_PUBLIC_SENTRY_DSN directly at module-load time.
+// Expo normally inlines this via Metro's .env loading, which Jest never runs, so the
+// CI step that writes a `.env` file has no effect here — set a placeholder directly.
+// The key is read through a variable (not a static `process.env.X` member expression)
+// because babel-plugin react-native-dotenv rewrites any static `process.env.<KEY>`
+// access it can resolve — including on the left side of an assignment, which babel
+// then rejects since a string literal can't be an assignment target.
+const SENTRY_DSN_ENV_KEY = 'EXPO_PUBLIC_SENTRY_DSN';
+process.env[SENTRY_DSN_ENV_KEY] =
+  process.env[SENTRY_DSN_ENV_KEY] || 'https://test-placeholder@sentry.io/0';
+
 // axios 1.15.0 calls body.cancel() at module load time to detect fetch support.
 // Expo's ReadableStream polyfill returns a rejected Promise when cancel() is called
 // on a stream that has a reader, causing unhandled rejections in every test that
