@@ -10,6 +10,7 @@ import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { createReview } from '~/entity/post/api/createReview';
+import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
 
@@ -64,6 +65,10 @@ jest.mock('~/entity/post/api/createReview', () => ({
   createReview: jest.fn(),
 }));
 
+jest.mock('~/view/reviews/api/getReviews', () => ({
+  getMyReceivedReview: jest.fn(),
+}));
+
 jest.mock('~/entity/post/ui/ReviewsModal', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
   return {
@@ -92,12 +97,15 @@ jest.mock('@/widget/chat/ui/ChatRoomHeader', () => ({
 }));
 
 jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
-  ChatRoomProductInfo: ({ title, gwangsan }: any) => {
-    const { View, Text } = require('react-native');
+  ChatRoomProductInfo: ({ title, gwangsan, trailing, onPress }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-room-product-info">
-        <Text testID="chat-room-product-info-title">{title}</Text>
-        <Text testID="chat-room-product-info-gwangsan">{gwangsan}</Text>
+        <TouchableOpacity testID="chat-room-product-info-press" onPress={onPress}>
+          <Text testID="chat-room-product-info-title">{title}</Text>
+          <Text testID="chat-room-product-info-gwangsan">{gwangsan}</Text>
+        </TouchableOpacity>
+        {trailing}
       </View>
     );
   },
@@ -177,6 +185,7 @@ const mockUseChatUIState = useChatUIState as jest.Mock;
 const mockUseTradeRequest = useTradeRequest as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockCreateReview = createReview as jest.Mock;
+const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
 
 const mockMarkRoomAsRead = jest.fn().mockResolvedValue(undefined);
@@ -238,6 +247,7 @@ beforeEach(() => {
   });
   mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: false } } });
   mockCreateReview.mockResolvedValue(true);
+  mockGetMyReceivedReview.mockResolvedValue([]);
   mockMarkRoomAsRead.mockClear().mockResolvedValue(undefined);
 });
 
