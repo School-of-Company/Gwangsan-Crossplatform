@@ -3,7 +3,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text, View, TouchableOpacity, ActivityIndicator, Keyboard } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
@@ -12,6 +12,7 @@ import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
+import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { Header } from '@/shared/ui/Header';
@@ -21,6 +22,7 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -53,6 +55,30 @@ export default function ChatRoomPage() {
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
   const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
+  const productId = roomData?.product?.id;
+
+  // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
+  const { data: myReceivedReviews } = useQuery({
+    queryKey: ['reviews', 'receive', 'current'],
+    queryFn: getMyReceivedReview,
+    enabled: isTradeCompleted && !!myInfo,
+  });
+  const tradeReview = myReceivedReviews?.find((review) => review.productId === productId);
+
+  const handleProductPress = useCallback(() => {
+    if (!productId) return;
+    router.push(`/post/${productId}`);
+  }, [router, productId]);
+
+  const handleReviewLinkPress = useCallback(() => {
+    if (tradeReview) {
+      router.push(`/cancelTrade/${tradeReview.reviewId}`);
+      return;
+    }
+    if (myInfo?.memberId != null) {
+      router.push(`/reviews/${myInfo.memberId}`);
+    }
+  }, [router, tradeReview, myInfo]);
 
   const {
     handleTradeAccept,
@@ -66,15 +92,16 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
-    roomId,
-    otherUserInfo,
-    hasTradeRequest,
-    shouldShowButtons,
-    handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
-  });
+  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState, productInfoConfig } =
+    useChatUIState({
+      roomId,
+      otherUserInfo,
+      hasTradeRequest,
+      shouldShowButtons,
+      handleTradeAccept,
+      handleReservation,
+      handleCancelReservation,
+    });
 
   const updatedComponentState = useMemo(
     () => ({
@@ -162,6 +189,21 @@ export default function ChatRoomPage() {
     />
   );
 
+  const renderTradeCompletedInfo = () => (
+    <View testID="trade-completed-banner" className="items-end gap-0.5">
+      <Text className="shrink-0 text-label text-gray-700" numberOfLines={1}>
+        거래 완료
+      </Text>
+      {myInfo?.memberId != null && (
+        <TouchableOpacity testID="received-reviews-link" onPress={handleReviewLinkPress}>
+          <Text className="shrink-0 text-caption text-main-500" numberOfLines={1}>
+            받은 후기 보기
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -187,17 +229,18 @@ export default function ChatRoomPage() {
         connectionState={connectionState}
       />
 
-      {isTradeCompleted && (
-        <View
-          testID="trade-completed-banner"
-          className="flex-row items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-          <Text className="text-label text-gray-700">거래 완료</Text>
-          {myInfo?.memberId != null && (
-            <TouchableOpacity
-              testID="received-reviews-link"
-              onPress={() => router.push(`/reviews/${myInfo.memberId}`)}>
-              <Text className="text-label text-main-500">내가 받은 후기 보기</Text>
-            </TouchableOpacity>
+      {(productInfoConfig.shouldShow || isTradeCompleted) && (
+        <View className="bg-[#F3F4F5]">
+          {productInfoConfig.shouldShow ? (
+            <ChatRoomProductInfo
+              title={productInfoConfig.title}
+              gwangsan={productInfoConfig.gwangsan}
+              imageUrl={productInfoConfig.imageUrl}
+              trailing={isTradeCompleted && renderTradeCompletedInfo()}
+              onPress={productId ? handleProductPress : undefined}
+            />
+          ) : (
+            isTradeCompleted && <View className="px-4 py-3">{renderTradeCompletedInfo()}</View>
           )}
         </View>
       )}

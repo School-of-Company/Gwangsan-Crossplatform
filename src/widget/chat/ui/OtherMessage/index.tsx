@@ -52,7 +52,7 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({ message, onProfile
             <Text className="mb-1 text-xs text-gray-600">{message.senderNickname}</Text>
           </TouchableOpacity>
           <View className="flex-row items-end">
-            <View className="max-w-[280px] rounded-xl bg-gray-100 px-4 py-3">{content}</View>
+            <View className="max-w-[280px] rounded-[100px] bg-gray-100 px-4 py-3">{content}</View>
             <Text className="ml-2 text-xs text-gray-500">
               {formatMessageTime(message.createdAt)}
             </Text>

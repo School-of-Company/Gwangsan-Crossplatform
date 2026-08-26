@@ -25,7 +25,9 @@ jest.mock('~/widget/chat', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    MyMessage: ({ message }: any) => <Text testID={`my-message-${message.messageId}`} />,
+    MyMessage: ({ message, isLast }: any) => (
+      <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
+    ),
     OtherMessage: ({ message }: any) => <Text testID={`other-message-${message.messageId}`} />,
   };
 });
@@ -172,5 +174,22 @@ describe('ChatRoomContent', () => {
 
     expect(list.props.keyExtractor(list.props.data[0])).toBe('m-7');
     expect(list.props.keyExtractor(list.props.data[1])).toBe('t-8');
+  });
+
+  it('내가 보낸 마지막 메시지에만 isLast를 전달한다', () => {
+    const messages = [
+      createMessage({ messageId: 1, isMine: true }),
+      createMessage({ messageId: 2, isMine: false }),
+      createMessage({ messageId: 3, isMine: true }),
+      createMessage({ messageId: 4, isMine: true }),
+    ];
+
+    const { getByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+    );
+
+    expect(getByTestId('my-message-1').props.children).toBe('');
+    expect(getByTestId('my-message-3').props.children).toBe('');
+    expect(getByTestId('my-message-4').props.children).toBe('last');
   });
 });
