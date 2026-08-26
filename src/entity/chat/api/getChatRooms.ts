@@ -1,4 +1,3 @@
-import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import type { ChatRoomListItem, ChatApiError } from '../model/chatTypes';
 import { toAppError } from '~/shared/lib/errorHandler';
@@ -8,15 +7,8 @@ export const getChatRooms = async (): Promise<ChatRoomListItem[]> => {
     const response = await instance.get('/chat/rooms');
     return response.data;
   } catch (e) {
-    const error = e as ChatApiError;
-
-    Toast.show({
-      type: 'error',
-      text1: '채팅방 목록 조회 실패',
-      text2: error.message,
-      visibilityTime: 3000,
-    });
-
-    throw toAppError(error);
+    // 30초마다 폴링하므로 토스트를 띄우면 실패가 이어질 때 계속 쌓인다.
+    // 실패 표시는 목록 화면의 에러 상태가 담당한다.
+    throw toAppError(e as ChatApiError);
   }
 };

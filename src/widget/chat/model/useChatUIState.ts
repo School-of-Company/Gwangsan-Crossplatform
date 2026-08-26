@@ -40,6 +40,12 @@ interface UseChatUIStateReturn {
     readonly canSendMessage: boolean;
     readonly headerTitle: string;
   };
+  readonly productInfoConfig: {
+    readonly shouldShow: boolean;
+    readonly title: string;
+    readonly gwangsan?: number;
+    readonly imageUrl?: string;
+  };
 }
 
 export const useChatUIState = ({
@@ -110,10 +116,21 @@ export const useChatUIState = ({
     [otherUserInfo.nickname]
   );
 
+  const productInfoConfig = useMemo(
+    () => ({
+      shouldShow: Boolean(roomData?.product),
+      title: productDetail?.title ?? roomData?.product?.title ?? '',
+      gwangsan: productDetail?.gwangsan,
+      imageUrl: productDetail?.images?.[0]?.imageUrl ?? roomData?.product?.images?.[0]?.imageUrl,
+    }),
+    [roomData?.product, productDetail]
+  );
+
   return {
     tradeEmbedConfig,
     menuConfig,
     tradeRequestInfo,
     componentState,
+    productInfoConfig,
   };
 };

@@ -71,6 +71,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     };
   }, []);
 
+  const lastMyMessageId = useMemo(() => {
+    const lastMyMessage = [...messages].reverse().find((message) => message.isMine);
+    return lastMyMessage?.messageId ?? null;
+  }, [messages]);
+
   const combinedData = useMemo<ChatListItem[]>(() => {
     const items: ChatListItem[] = messages.map((message) => ({
       type: 'message',
@@ -102,7 +107,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     ({ item }) => {
       if (item.type === 'message') {
         return item.data.isMine ? (
-          <MyMessage message={item.data} />
+          <MyMessage message={item.data} isLast={item.data.messageId === lastMyMessageId} />
         ) : (
           <OtherMessage message={item.data} onProfilePress={onProfilePress} />
         );
@@ -124,7 +129,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, showReviewButton]
+    [onProfilePress, onReviewButtonPress, showReviewButton, lastMyMessageId]
   );
 
   const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);

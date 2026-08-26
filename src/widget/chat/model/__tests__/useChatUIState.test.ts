@@ -169,4 +169,71 @@ describe('useChatUIState', () => {
       expect(result.current.tradeEmbedConfig.requestorNickname).toBe('나');
     });
   });
+
+  describe('productInfoConfig', () => {
+    it('roomData.product가 있으면 shouldShow가 true이다', () => {
+      setupMocks({ roomData: { product: { id: 1, title: '상품' } } });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.shouldShow).toBe(true);
+    });
+
+    it('roomData.product가 없으면 shouldShow가 false이다', () => {
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.shouldShow).toBe(false);
+    });
+
+    it('productDetail.title이 있으면 title로 사용한다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, title: '채팅방 상품명' } },
+        productDetail: { title: '상세 상품명', gwangsan: 3000 },
+      });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.title).toBe('상세 상품명');
+    });
+
+    it('productDetail이 없으면 roomData.product.title을 사용한다', () => {
+      setupMocks({ roomData: { product: { id: 1, title: '채팅방 상품명' } } });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.title).toBe('채팅방 상품명');
+    });
+
+    it('productDetail.gwangsan을 가격으로 노출한다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, title: '상품' } },
+        productDetail: { title: '상품', gwangsan: 5000 },
+      });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.gwangsan).toBe(5000);
+    });
+
+    it('productDetail의 첫 이미지를 imageUrl로 사용한다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, title: '상품', images: [{ imageUrl: 'room.png' }] } },
+        productDetail: { title: '상품', images: [{ imageUrl: 'detail.png' }] },
+      });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.imageUrl).toBe('detail.png');
+    });
+
+    it('productDetail 이미지가 없으면 roomData.product의 첫 이미지를 사용한다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, title: '상품', images: [{ imageUrl: 'room.png' }] } },
+      });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.productInfoConfig.imageUrl).toBe('room.png');
+    });
+  });
 });

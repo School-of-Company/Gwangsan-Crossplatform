@@ -1,4 +1,4 @@
-import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { memo, useMemo } from 'react';
 import Icon from '@expo/vector-icons/Ionicons';
 import {
@@ -12,9 +12,10 @@ import type { EnhancedChatMessage } from '~/entity/chat/model/useChatMessages';
 
 interface MyMessageProps {
   message: EnhancedChatMessage;
+  isLast?: boolean;
 }
 
-const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
+const MyMessageComponent: React.FC<MyMessageProps> = ({ message, isLast = false }) => {
   const imageLoader = useImageLoader();
   const retryMessage = useChatQueueStore((state) => state.retry);
 
@@ -30,20 +31,15 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
 
   const content = renderMessageContent(message, imageLoader, messageConfig);
 
-  const statusIcon = useMemo(() => {
-    const status = message.status;
-
-    if (status === MESSAGE_STATUS.PENDING) {
-      return <Icon name="time-outline" size={14} color="#B4B5B7" />;
-    }
-    if (status === MESSAGE_STATUS.SENDING) {
-      return <ActivityIndicator size="small" color="#B4B5B7" />;
-    }
-    if (status === MESSAGE_STATUS.FAILED) {
+  const statusIndicator = useMemo(() => {
+    if (message.status === MESSAGE_STATUS.FAILED) {
       return <Icon name="alert-circle-outline" size={14} color="#DF454A" />;
     }
-    return <Icon name="checkmark-outline" size={14} color="#10B981" />;
-  }, [message.status]);
+    if (!isLast) {
+      return null;
+    }
+    return <Text className="text-xs text-gray-500">{message.checked ? '읽음' : '전송됨'}</Text>;
+  }, [message.status, message.checked, isLast]);
 
   const handleRetry = () => {
     if (message.tempId && message.status === MESSAGE_STATUS.FAILED) {
@@ -56,11 +52,11 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message }) => {
   return (
     <View className="mb-4 items-end">
       <View className="flex-row items-end">
-        <View className="mr-2 flex-row items-center gap-1">
-          {statusIcon}
+        <View className="mr-2 items-end">
+          {statusIndicator}
           <Text className="text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
         </View>
-        <View className="max-w-[280px] rounded-xl bg-orange-400 px-4 py-3">{content}</View>
+        <View className="max-w-[280px] rounded-[100px] bg-orange-400 px-4 py-3">{content}</View>
       </View>
 
       {message.status === MESSAGE_STATUS.FAILED && (

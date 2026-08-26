@@ -1,16 +1,19 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
-import { AppState, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { AppState, Platform, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useRef } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/shared/ui/Toast';
 import QueryProvider from '../shared/lib/QueryProvider';
 import '@/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
 import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
+import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
 import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
@@ -27,19 +30,21 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function RootLayout() {
-  const fontsLoaded = useCustomFonts();
-  const isConnected = useNetworkStatus();
-  const pathname = usePathname();
+function ChatNotificationHandler() {
   const router = useRouter();
-  const { navigateToChat } = useChatEntry();
+  const { navigateToChat, navigateToRoom } = useChatEntry();
   const navigateToChatRef = useRef(navigateToChat);
+  const navigateToRoomRef = useRef(navigateToRoom);
   const routerRef = useRef(router);
   useGlobalChatNotifications();
 
   useEffect(() => {
     navigateToChatRef.current = navigateToChat;
   }, [navigateToChat]);
+
+  useEffect(() => {
+    navigateToRoomRef.current = navigateToRoom;
+  }, [navigateToRoom]);
 
   useEffect(() => {
     routerRef.current = router;
@@ -68,7 +73,7 @@ export default function RootLayout() {
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
         navigateToChatRef.current(data.sourceId);
       } else if (data?.roomId != null) {
-        routerRef.current.push(`/chatting/${data.roomId}`);
+        navigateToRoomRef.current(data.roomId);
       } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
         routerRef.current.push(`/post/${data.sourceId}?review=1`);
       } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
@@ -86,6 +91,14 @@ export default function RootLayout() {
     const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
     return () => sub.remove();
   }, []);
+
+  return null;
+}
+
+export default function RootLayout() {
+  const fontsLoaded = useCustomFonts();
+  const isConnected = useNetworkStatus();
+  const pathname = usePathname();
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
@@ -111,7 +124,9 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <View className="flex-1 bg-white">
+        <StatusBar style="dark" />
         <QueryProvider>
+          <ChatNotificationHandler />
           <SentryRN.ErrorBoundary fallback={<></>}>
             <Stack
               screenOptions={{
@@ -129,7 +144,8 @@ export default function RootLayout() {
               <Stack.Screen name="signin" options={{ animation: 'none' }} />
             </Stack>
           </SentryRN.ErrorBoundary>
-          <Toast />
+          <BottomSheetPortalOutlet />
+          <Toast config={toastConfig} topOffset={Platform.select({ ios: 70, default: 40 })} />
           <NoNetworkOverlay visible={!isConnected} />
         </QueryProvider>
       </View>
