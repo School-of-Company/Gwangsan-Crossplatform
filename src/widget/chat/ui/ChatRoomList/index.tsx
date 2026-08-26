@@ -12,11 +12,13 @@ import {
 } from '@/entity/chat';
 import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
+import { ErrorFallback } from '@/shared/ui/ErrorFallback';
 
 export function ChatRoomList() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
+  const hasRooms = (chatRooms?.length ?? 0) > 0;
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
@@ -61,14 +63,10 @@ export function ChatRoomList() {
     </View>
   );
 
-  const renderErrorState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <Text className="text-base text-red-500">채팅방 목록을 불러올 수 없습니다</Text>
-    </View>
-  );
-
-  if (isError) {
-    return renderErrorState();
+  // 30초 폴링 중 한 번만 실패해도 status는 error가 되지만 캐시된 목록은 남아 있다.
+  // 이미 받아둔 목록이 있으면 그대로 보여주고, 받아둔 목록이 없을 때만 에러 화면으로 대체한다.
+  if (isError && !hasRooms) {
+    return <ErrorFallback onRetry={refetch} />;
   }
 
   return (
@@ -77,7 +75,7 @@ export function ChatRoomList() {
       renderItem={renderChatRoomItem}
       keyExtractor={(item) => item.roomId.toString()}
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
-      ListEmptyComponent={renderEmptyState}
+      ListEmptyComponent={isLoading ? null : renderEmptyState}
       showsVerticalScrollIndicator={false}
       className="flex-1"
     />
