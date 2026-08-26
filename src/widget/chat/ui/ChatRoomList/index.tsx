@@ -1,5 +1,5 @@
 import { FlatList, View, Text, RefreshControl } from 'react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -13,13 +13,18 @@ import {
 } from '@/entity/chat';
 import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
-import { AlertModal } from '~/shared/ui/AlertModal';
+import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
+import { Button } from '~/shared/ui/Button';
 
 export function ChatRoomList() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
   const [deleteTargetRoomId, setDeleteTargetRoomId] = useState<RoomId | null>(null);
+  // 슬라이드 아웃 애니메이션이 진행 중인 채팅방 (목록 데이터에는 아직 남아있음)
+  const [exitingRoomId, setExitingRoomId] = useState<RoomId | null>(null);
+  // 슬라이드 아웃이 끝나 실제로 목록에서 제거된 채팅방 — 이 시점부터 위/아래 항목이 붙는 애니메이션이 재생된다
+  const [hiddenRoomIds, setHiddenRoomIds] = useState<Set<RoomId>>(() => new Set());
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
@@ -27,6 +32,11 @@ export function ChatRoomList() {
   });
 
   const deleteChatRoomMutation = useDeleteChatRoom();
+
+  const visibleChatRooms = useMemo(
+    () => (chatRooms ?? []).filter((room) => !hiddenRoomIds.has(room.roomId)),
+    [chatRooms, hiddenRoomIds]
+  );
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
@@ -63,9 +73,33 @@ export function ChatRoomList() {
 
   const handleConfirmDelete = useCallback(() => {
     if (deleteTargetRoomId === null) return;
-    deleteChatRoomMutation.mutate(deleteTargetRoomId);
+    const roomId = deleteTargetRoomId;
+
+    deleteChatRoomMutation.mutate(roomId, {
+      onError: () => {
+        // 나가기가 실패하면 슬라이드 아웃으로 숨겼던 항목을 다시 목록에 되돌린다
+        setHiddenRoomIds((prev) => {
+          if (!prev.has(roomId)) return prev;
+          const next = new Set(prev);
+          next.delete(roomId);
+          return next;
+        });
+      },
+    });
+
+    setExitingRoomId(roomId);
     setDeleteTargetRoomId(null);
   }, [deleteTargetRoomId, deleteChatRoomMutation]);
+
+  const handleChatRoomExited = useCallback((roomId: RoomId) => {
+    // 슬라이드 아웃이 끝난 뒤에만 목록에서 제거해야 위/아래 항목이 붙는 애니메이션이 이어서 재생된다
+    setHiddenRoomIds((prev) => {
+      const next = new Set(prev);
+      next.add(roomId);
+      return next;
+    });
+    setExitingRoomId(null);
+  }, []);
 
   const renderChatRoomItem = useCallback(
     ({ item }: { item: ChatRoomListItem }) => (
@@ -73,9 +107,11 @@ export function ChatRoomList() {
         room={item}
         onPress={handleChatRoomPress}
         onLongPress={handleChatRoomLongPress}
+        isExiting={item.roomId === exitingRoomId}
+        onExited={handleChatRoomExited}
       />
     ),
-    [handleChatRoomPress, handleChatRoomLongPress]
+    [handleChatRoomPress, handleChatRoomLongPress, exitingRoomId, handleChatRoomExited]
   );
 
   const renderEmptyState = () => (
@@ -97,7 +133,7 @@ export function ChatRoomList() {
   return (
     <>
       <FlatList
-        data={chatRooms || []}
+        data={visibleChatRooms}
         renderItem={renderChatRoomItem}
         keyExtractor={(item) => item.roomId.toString()}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
@@ -106,15 +142,33 @@ export function ChatRoomList() {
         className="flex-1"
       />
 
-      <AlertModal
+      <BottomSheetModalWrapper
         isVisible={deleteTargetRoomId !== null}
-        message={'채팅방을 삭제하시겠어요?\n삭제해도 거래 내역은 유지됩니다.'}
-        confirmText="삭제"
-        destructive
-        isLoading={deleteChatRoomMutation.isPending}
-        onCancel={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-      />
+        onClose={handleCancelDelete}
+        title=""
+        hasHeader={false}
+        height={220}>
+        <View className="flex-1 justify-center gap-3">
+          <Button
+            variant="neutral"
+            onPress={handleConfirmDelete}
+            disabled={deleteChatRoomMutation.isPending}
+            width="w-full">
+            <Text className="text-error-500">
+              {deleteChatRoomMutation.isPending ? '나가는 중...' : '채팅방 나가기'}
+            </Text>
+          </Button>
+          <View className="mb-3">
+            <Button
+              variant="neutral"
+              onPress={handleCancelDelete}
+              disabled={deleteChatRoomMutation.isPending}
+              width="w-full">
+              <Text className="text-gray-900">닫기</Text>
+            </Button>
+          </View>
+        </View>
+      </BottomSheetModalWrapper>
     </>
   );
 }

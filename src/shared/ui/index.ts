@@ -7,6 +7,7 @@ export { ErrorFallback } from './ErrorFallback';
 export { Footer } from './Footer';
 export { Header } from './Header';
 export { BottomSheetModalWrapper } from './BottomSheetModalWrapper';
+export { BottomSheetPortalOutlet } from './BottomSheetPortalOutlet';
 export { default as ProgressBar } from './ProgressBar';
 export { SlideIndicator } from './SlideIndicator';
 export { Card } from './Card';

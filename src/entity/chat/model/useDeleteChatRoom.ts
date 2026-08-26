@@ -17,7 +17,14 @@ export const useDeleteChatRoom = () => {
 
       Toast.show({
         type: 'success',
-        text1: '채팅방이 삭제되었습니다.',
+        text1: '채팅방을 나갔습니다.',
+        visibilityTime: 2000,
+      });
+    },
+    onError: () => {
+      Toast.show({
+        type: 'error',
+        text1: '채팅방 나가기에 실패했습니다.',
         visibilityTime: 2000,
       });
     },

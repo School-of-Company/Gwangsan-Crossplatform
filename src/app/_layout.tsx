@@ -1,4 +1,5 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { AppState, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useRef } from 'react';
@@ -6,11 +7,13 @@ import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/shared/ui/Toast';
 import QueryProvider from '../shared/lib/QueryProvider';
 import '@/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
 import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
+import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
 import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
@@ -111,6 +114,7 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <View className="flex-1 bg-white">
+        <StatusBar style="dark" />
         <QueryProvider>
           <SentryRN.ErrorBoundary fallback={<></>}>
             <Stack
@@ -129,7 +133,8 @@ export default function RootLayout() {
               <Stack.Screen name="signin" options={{ animation: 'none' }} />
             </Stack>
           </SentryRN.ErrorBoundary>
-          <Toast />
+          <BottomSheetPortalOutlet />
+          <Toast config={toastConfig} />
           <NoNetworkOverlay visible={!isConnected} />
         </QueryProvider>
       </View>

@@ -1,16 +1,56 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { memo } from 'react';
+import { View, Text, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { memo, useEffect } from 'react';
+import Animated, {
+  Easing,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { formatDate } from '@/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
+
+const EXIT_DURATION = 220;
+const EXIT_EASING = Easing.out(Easing.cubic);
+const REFLOW_DURATION = 220;
 
 interface ChatRoomItemProps {
   room: ChatRoomListItem;
   onPress: (roomId: RoomId) => void;
   onLongPress?: (roomId: RoomId) => void;
+  /** 채팅방 나가기 확인 후 왼쪽으로 슬라이드 아웃되는 중인지 여부 */
+  isExiting?: boolean;
+  /** 슬라이드 아웃 애니메이션이 끝난 뒤 호출 — 이 시점에 목록에서 실제로 제거해야 위/아래 항목이 붙는 애니메이션이 이어진다 */
+  onExited?: (roomId: RoomId) => void;
 }
 
-const ChatRoomItemComponent = ({ room, onPress, onLongPress }: ChatRoomItemProps) => {
+const ChatRoomItemComponent = ({
+  room,
+  onPress,
+  onLongPress,
+  isExiting = false,
+  onExited,
+}: ChatRoomItemProps) => {
+  const { width } = useWindowDimensions();
+  const translateX = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    if (!isExiting) return;
+
+    translateX.value = withTiming(-width, { duration: EXIT_DURATION, easing: EXIT_EASING });
+    opacity.value = withTiming(0, { duration: EXIT_DURATION, easing: EXIT_EASING });
+
+    const timer = setTimeout(() => onExited?.(room.roomId), EXIT_DURATION);
+    return () => clearTimeout(timer);
+  }, [isExiting, width, room.roomId, onExited, translateX, opacity]);
+
+  const exitStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateX: translateX.value }],
+  }));
+
   const handlePress = () => {
     onPress(room.roomId);
   };
@@ -31,41 +71,44 @@ const ChatRoomItemComponent = ({ room, onPress, onLongPress }: ChatRoomItemProps
   const productImage = room.product?.images?.[0]?.imageUrl;
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      className="flex-row items-center border-b border-gray-100 px-4 py-3 active:bg-gray-50"
-      activeOpacity={0.7}>
-      <Image
-        source={
-          productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')
-        }
-        className="mr-3 h-14 w-14 rounded-lg"
-        resizeMode="cover"
-      />
-      <View className="flex-1">
-        <View className="flex-row items-center gap-1.5">
-          <Text className="shrink text-base font-bold text-gray-900" numberOfLines={1}>
-            {room.product?.title}
-          </Text>
-          {room.product?.isCompleted && (
-            <Text testID="trade-completed-tag" className="text-xs text-gray-500">
-              거래 완료
+    <Animated.View layout={LinearTransition.duration(REFLOW_DURATION)} style={exitStyle}>
+      <TouchableOpacity
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        disabled={isExiting}
+        className="flex-row items-center px-4 py-3 active:bg-gray-50"
+        activeOpacity={0.7}>
+        <Image
+          source={
+            productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')
+          }
+          className="mr-3 h-14 w-14 rounded-lg"
+          resizeMode="cover"
+        />
+        <View className="flex-1">
+          <View className="flex-row items-center gap-1.5">
+            <Text className="shrink text-base font-bold text-gray-900" numberOfLines={1}>
+              {room.product?.title}
             </Text>
-          )}
+            {room.product?.isCompleted && (
+              <Text testID="trade-completed-tag" className="text-xs text-gray-500">
+                거래 완료
+              </Text>
+            )}
+          </View>
+          <Text className="text-sm text-gray-700" numberOfLines={1}>
+            {room.member?.nickname}
+          </Text>
+          <Text className="text-xs text-gray-500" numberOfLines={1}>
+            {room.lastMessageType === 'IMAGE' ? '📷 사진을 보냈습니다.' : room.lastMessage}
+          </Text>
         </View>
-        <Text className="text-sm text-gray-700" numberOfLines={1}>
-          {room.member?.nickname}
-        </Text>
-        <Text className="text-xs text-gray-500" numberOfLines={1}>
-          {room.lastMessageType === 'IMAGE' ? '📷 사진을 보냈습니다.' : room.lastMessage}
-        </Text>
-      </View>
-      <View className="ml-2 flex-col items-end">
-        <Text className="mb-1 text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
-        {renderUnreadBadge()}
-      </View>
-    </TouchableOpacity>
+        <View className="ml-2 flex-col items-end">
+          <Text className="mb-1 text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
+          {renderUnreadBadge()}
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
