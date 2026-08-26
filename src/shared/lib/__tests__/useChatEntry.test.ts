@@ -95,7 +95,7 @@ describe('useChatEntry', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('findChatRoom 실패(방 없음) + createChatRoom 실패 시 create error Toast를 표시한다', async () => {
+  it('findChatRoom 실패(방 없음) + createChatRoom 실패 시 error Toast를 표시한다', async () => {
     mockFindChatRoom.mockRejectedValue(new Error('해당하는 채팅방을 찾을 수 없습니다.'));
     mockCreateChatRoom.mockRejectedValue(new Error('채팅방 생성 실패'));
 
@@ -106,7 +106,7 @@ describe('useChatEntry', () => {
     });
 
     expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'create error', text1: '채팅방 생성 실패' })
+      expect.objectContaining({ type: 'error', text1: '채팅방 생성 실패' })
     );
     expect(mockPush).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(false);

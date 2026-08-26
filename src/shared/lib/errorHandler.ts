@@ -12,6 +12,13 @@ function isErrorResponse(data: unknown): data is ErrorResponse {
 
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof AxiosError) {
+    // 5xx 응답 본문에는 서버 예외 클래스명(FunctionCallException 등)이 그대로 담겨 오므로
+    // 사용자에게 노출하지 않고 상태 코드만 알린다.
+    const serverErrorStatus = error.response?.status;
+    if (serverErrorStatus !== undefined && serverErrorStatus >= 500) {
+      return `요청이 실패했습니다. (${serverErrorStatus})`;
+    }
+
     if (isErrorResponse(error.response?.data)) {
       const message: string = error.response.data.message;
       const matches: RegExpMatchArray | null = message.match(/default message \[([^\]]+)\]/g);

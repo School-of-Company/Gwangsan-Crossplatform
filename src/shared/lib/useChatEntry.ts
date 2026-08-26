@@ -41,7 +41,7 @@ export const useChatEntry = () => {
             await navigateToRoom(newRoom.roomId);
           } catch (error: any) {
             Toast.show({
-              type: 'create error',
+              type: 'error',
               text1: error.message,
             });
           }
