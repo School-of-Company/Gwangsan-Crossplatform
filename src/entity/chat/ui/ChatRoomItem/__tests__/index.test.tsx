@@ -109,4 +109,45 @@ describe('ChatRoomItem', () => {
 
     expect(() => fireEvent(getByText('상품 제목'), 'longPress')).not.toThrow();
   });
+
+  describe('슬라이드 아웃 애니메이션', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('isExiting이 true가 되면 애니메이션 시간이 지난 뒤 onExited를 roomId와 함께 호출한다', () => {
+      const onExited = jest.fn();
+      render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} isExiting onExited={onExited} />);
+
+      expect(onExited).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(220);
+
+      expect(onExited).toHaveBeenCalledWith(1);
+    });
+
+    it('isExiting이 아니면 시간이 지나도 onExited를 호출하지 않는다', () => {
+      const onExited = jest.fn();
+      render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} onExited={onExited} />);
+
+      jest.advanceTimersByTime(1000);
+
+      expect(onExited).not.toHaveBeenCalled();
+    });
+
+    it('isExiting이면 눌러도 onPress가 호출되지 않는다', () => {
+      const onPress = jest.fn();
+      const { getByText } = render(
+        <ChatRoomItem room={baseRoom} onPress={onPress} isExiting onExited={jest.fn()} />
+      );
+
+      fireEvent.press(getByText('상품 제목'));
+
+      expect(onPress).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -1,0 +1,25 @@
+diff --git a/node_modules/react-native-toast-message/lib/src/hooks/useSlideAnimation.js b/node_modules/react-native-toast-message/lib/src/hooks/useSlideAnimation.js
+index a780f88..d41de69 100644
+--- a/node_modules/react-native-toast-message/lib/src/hooks/useSlideAnimation.js
++++ b/node_modules/react-native-toast-message/lib/src/hooks/useSlideAnimation.js
+@@ -1,5 +1,5 @@
+ import React from 'react';
+-import { Animated, Platform } from 'react-native';
++import { Animated, Easing, Platform } from 'react-native';
+ import { additiveInverseArray } from '../utils/array';
+ import { useKeyboard } from './useKeyboard';
+ export function translateYOutputRangeFor({ position, height, topOffset, bottomOffset, keyboardHeight, keyboardOffset, avoidKeyboard }) {
+@@ -17,10 +17,11 @@ export function useSlideAnimation({ position, height, topOffset, bottomOffset, k
+     const animatedValue = React.useRef(new Animated.Value(0));
+     const { keyboardHeight } = useKeyboard();
+     const animate = React.useCallback((toValue) => {
+-        Animated.spring(animatedValue.current, {
++        Animated.timing(animatedValue.current, {
+             toValue,
+             useNativeDriver,
+-            friction: 8
++            duration: 400,
++            easing: Easing.out(Easing.cubic)
+         }).start();
+     }, []);
+     const translateY = React.useMemo(() => animatedValue.current.interpolate({

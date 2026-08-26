@@ -53,6 +53,7 @@ const Animated = {
   SlideInRight: createAnimationBuilderMock(),
   SlideInLeft: createAnimationBuilderMock(),
   SlideOutLeft: createAnimationBuilderMock(),
+  LinearTransition: createAnimationBuilderMock(),
   View: 'Animated.View',
   ScrollView: 'Animated.ScrollView',
   FlatList: 'Animated.FlatList',

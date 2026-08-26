@@ -80,7 +80,7 @@ describe('useDeleteChatRoom', () => {
 
     await waitFor(() => {
       expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', text1: '채팅방이 삭제되었습니다.' })
+        expect.objectContaining({ type: 'success', text1: '채팅방을 나갔습니다.' })
       );
     });
   });
