@@ -58,16 +58,6 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   const otherUserInfo = useMemo(() => {
     const roomsCache = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_QUERY_KEY);
     const currentRoom = roomsCache?.find((r) => r.roomId === roomId);
-     
-    console.log('[DEBUG otherUserInfo]', {
-      roomId,
-      roomIdType: typeof roomId,
-      cacheFound: !!roomsCache,
-      cacheRoomIds: roomsCache?.map((r) => ({ id: r.roomId, type: typeof r.roomId })),
-      currentRoomFound: !!currentRoom,
-      currentRoomMember: currentRoom?.member,
-      safeMessagesLength: safeMessages.length,
-    });
     if (currentRoom?.member) {
       return {
         nickname: currentRoom.member.nickname,

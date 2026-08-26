@@ -19,6 +19,7 @@ export const useChatEntry = () => {
         await queryClient.fetchQuery({
           queryKey: chatRoomKeys.list(),
           queryFn: getChatRooms,
+          staleTime: 0,
         });
       } catch {}
 

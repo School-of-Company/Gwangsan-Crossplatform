@@ -1709,7 +1709,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-keyboard-controller (1.21.6):
+  - react-native-keyboard-controller (1.22.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1721,7 +1721,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-keyboard-controller/common (= 1.21.6)
+    - react-native-keyboard-controller/common (= 1.22.4)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1732,7 +1732,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-keyboard-controller/common (1.21.6):
+  - react-native-keyboard-controller/common (1.22.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3067,7 +3067,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 3a42e75434099fd10030e36fe9f3b27e3811afd5
   React-mutationobservernativemodule: a7f3dc483d3e0e0fade0ea00e2cc95e2e462e023
   react-native-image-picker: 09cea417bef3ee25008ad21d4426f9a1fc54ad84
-  react-native-keyboard-controller: 83a9c546dbbfabed4cfbe0ca6d9c3964a08183f2
+  react-native-keyboard-controller: d07e8ba4e72859601941cc6c508fdd37a635ba04
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-pager-view: 4eb2faa444dc7caec9ed5749af4da2e0142e7ca7
   react-native-safe-area-context: ba7283e541a5f57c6b27a7e33f2c40b8977888c0
