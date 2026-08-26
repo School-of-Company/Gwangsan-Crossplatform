@@ -4,6 +4,7 @@ import { formatDate } from '~/shared/lib/formatDate';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import Toast from 'react-native-toast-message';
 
@@ -26,10 +27,10 @@ const NotificationItem = ({
   sendMemberId,
   sourceId,
   alertType,
-  raw,
 }: NotificationItemProps) => {
   const displayImage = require('~/shared/assets/png/gwangsanLogo.png');
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const shouldFetchPost = alertType === AlertType.OTHER_MEMBER_TRADE_COMPLETE && sourceId;
   const { data: postData } = useGetItem(shouldFetchPost ? sourceId.toString() : undefined);
@@ -43,19 +44,21 @@ const NotificationItem = ({
   const [isAccepted, setIsAccepted] = useState(false);
 
   const handleAcceptTrade = async () => {
-    setIsAccepted(true);
     setLoading(true);
-
-    Toast.show({
-      type: 'success',
-      text1: '거래 완료 수락 완료',
-      visibilityTime: 2000,
-    });
 
     try {
       await requestTrade({ productId: sourceId, otherMemberId: sendMemberId });
+      setIsAccepted(true);
+
+      Toast.show({
+        type: 'success',
+        text1: '거래 완료 수락 완료',
+        visibilityTime: 2000,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['post', sourceId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['alertList'] });
     } catch (e) {
-      setIsAccepted(false);
       Toast.show({
         type: 'error',
         text1: '거래 완료 수락 실패',
@@ -67,30 +70,27 @@ const NotificationItem = ({
     }
   };
 
-  const handlePress = () => {
-    if (alertType === AlertType.TRADE_COMPLETE && sourceId) {
-      router.push(`/post/${sourceId}?review=1`);
-      return;
-    }
-    if (alertType === AlertType.REVIEW && sourceId) {
-      router.push(`/cancelTrade/${sourceId}`);
-      return;
-    }
-  };
+  // 이동할 곳이 없는 알림(예: 거래 완료 수락 대기)은 카드를 터치 대상으로 만들지 않는다.
+  // 카드가 TouchableOpacity면 Android에서 내부 수락 버튼의 터치를 가로챈다.
+  const pressRoute =
+    sourceId && alertType === AlertType.TRADE_COMPLETE
+      ? `/post/${sourceId}?review=1`
+      : sourceId && alertType === AlertType.REVIEW
+        ? `/cancelTrade/${sourceId}`
+        : null;
+
+  const Card: React.ComponentType<any> = pressRoute ? TouchableOpacity : View;
+  const cardProps = pressRoute
+    ? { activeOpacity: 0.7, onPress: () => router.push(pressRoute) }
+    : {};
 
   const getButtonText = () => {
-    if (isAccepted) return '수락 완료';
     if (loading) return '처리 중...';
     return '거래 완료 수락';
   };
 
-  const getButtonStyle = () => {
-    if (isAccepted) return 'bg-gray-400';
-    return 'bg-green-500';
-  };
-
   return (
-    <TouchableOpacity className="mb-3 bg-white p-4" activeOpacity={0.7} onPress={handlePress}>
+    <Card className="mb-3 bg-white p-4" {...cardProps}>
       <View className="flex-row">
         <View className="mr-3">
           <Image source={displayImage} className="h-16 w-16 rounded-lg" resizeMode="cover" />
@@ -108,9 +108,9 @@ const NotificationItem = ({
 
           {shouldShowAcceptButton && !isAccepted && (
             <TouchableOpacity
-              className={`mt-2 rounded px-4 py-2 ${getButtonStyle()}`}
+              className="mt-2 rounded bg-green-500 px-4 py-2"
               onPress={handleAcceptTrade}
-              disabled={loading || isAccepted}>
+              disabled={loading}>
               <Text className="font-semibold text-white">{getButtonText()}</Text>
             </TouchableOpacity>
           )}
@@ -122,7 +122,7 @@ const NotificationItem = ({
           )}
         </View>
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 };
 

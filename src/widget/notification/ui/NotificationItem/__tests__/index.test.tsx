@@ -19,6 +19,10 @@ jest.mock('~/entity/post/model/useGetItem', () => ({
   useGetItem: jest.fn(),
 }));
 
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+}));
+
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -136,9 +140,11 @@ describe('NotificationItem — 거래 완료 수락 버튼', () => {
 
     fireEvent.press(getByText('거래 완료 수락'));
 
-    expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success', text1: '거래 완료 수락 완료' })
-    );
+    await waitFor(() => {
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래 완료 수락 완료' })
+      );
+    });
 
     await waitFor(() => {
       expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 7, otherMemberId: 3 });
