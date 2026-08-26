@@ -1,5 +1,4 @@
 import { act, waitFor } from '@testing-library/react-native';
-import { useRouter } from 'expo-router';
 import { renderHookWithProviders } from '~/test-utils';
 import Toast from 'react-native-toast-message';
 import { useTradeRequest } from '../useTradeRequest';
@@ -19,10 +18,6 @@ jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));
 
-jest.mock('expo-router', () => ({
-  useRouter: jest.fn(),
-}));
-
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -30,16 +25,18 @@ jest.mock('react-native-toast-message', () => ({
 
 const mockRequestTrade = requestTrade as jest.Mock;
 const mockUseChatEntry = useChatEntry as jest.Mock;
-const mockUseRouter = useRouter as jest.Mock;
 
 describe('useTradeRequest', () => {
-  const mockPush = jest.fn();
   const mockNavigateToChat = jest.fn();
+  const mockNavigateToRoom = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseRouter.mockReturnValue({ push: mockPush });
-    mockUseChatEntry.mockReturnValue({ navigateToChat: mockNavigateToChat, isLoading: false });
+    mockUseChatEntry.mockReturnValue({
+      navigateToChat: mockNavigateToChat,
+      navigateToRoom: mockNavigateToRoom,
+      isLoading: false,
+    });
   });
 
   describe('초기 상태', () => {
@@ -95,7 +92,7 @@ describe('useTradeRequest', () => {
         await result.current.handleTradeRequest();
       });
 
-      expect(mockPush).toHaveBeenCalledWith('/chatting/10');
+      expect(mockNavigateToRoom).toHaveBeenCalledWith(10);
       expect(mockNavigateToChat).not.toHaveBeenCalled();
     });
 
@@ -111,7 +108,7 @@ describe('useTradeRequest', () => {
       });
 
       expect(mockNavigateToChat).toHaveBeenCalledWith(1);
-      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockNavigateToRoom).not.toHaveBeenCalled();
     });
 
     it('요청 완료 후 isLoading이 false로 돌아온다', async () => {

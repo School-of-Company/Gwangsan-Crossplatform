@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '../api/requestTrade';
 import { useChatEntry } from '~/shared/lib/useChatEntry';
@@ -20,8 +19,7 @@ export const useTradeRequest = ({
   sellerId,
 }: UseTradeRequestOptions): UseTradeRequestReturn => {
   const [isLoading, setIsLoading] = useState(false);
-  const { navigateToChat } = useChatEntry();
-  const router = useRouter();
+  const { navigateToChat, navigateToRoom } = useChatEntry();
 
   const handleTradeRequest = useCallback(async () => {
     if (isLoading) return;
@@ -42,7 +40,7 @@ export const useTradeRequest = ({
 
       try {
         if (response.roomId) {
-          router.push(`/chatting/${response.roomId}`);
+          await navigateToRoom(response.roomId);
         } else {
           await navigateToChat(productId);
         }
@@ -67,7 +65,7 @@ export const useTradeRequest = ({
     } finally {
       setIsLoading(false);
     }
-  }, [productId, sellerId, isLoading, navigateToChat, router]);
+  }, [productId, sellerId, isLoading, navigateToChat, navigateToRoom]);
 
   return {
     handleTradeRequest,

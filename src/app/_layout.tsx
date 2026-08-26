@@ -30,19 +30,21 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function RootLayout() {
-  const fontsLoaded = useCustomFonts();
-  const isConnected = useNetworkStatus();
-  const pathname = usePathname();
+function ChatNotificationHandler() {
   const router = useRouter();
-  const { navigateToChat } = useChatEntry();
+  const { navigateToChat, navigateToRoom } = useChatEntry();
   const navigateToChatRef = useRef(navigateToChat);
+  const navigateToRoomRef = useRef(navigateToRoom);
   const routerRef = useRef(router);
   useGlobalChatNotifications();
 
   useEffect(() => {
     navigateToChatRef.current = navigateToChat;
   }, [navigateToChat]);
+
+  useEffect(() => {
+    navigateToRoomRef.current = navigateToRoom;
+  }, [navigateToRoom]);
 
   useEffect(() => {
     routerRef.current = router;
@@ -71,7 +73,7 @@ export default function RootLayout() {
       if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
         navigateToChatRef.current(data.sourceId);
       } else if (data?.roomId != null) {
-        routerRef.current.push(`/chatting/${data.roomId}`);
+        navigateToRoomRef.current(data.roomId);
       } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
         routerRef.current.push(`/post/${data.sourceId}?review=1`);
       } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
@@ -89,6 +91,14 @@ export default function RootLayout() {
     const sub = Notifications.addNotificationResponseReceivedListener(handleResponse);
     return () => sub.remove();
   }, []);
+
+  return null;
+}
+
+export default function RootLayout() {
+  const fontsLoaded = useCustomFonts();
+  const isConnected = useNetworkStatus();
+  const pathname = usePathname();
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
@@ -116,6 +126,7 @@ export default function RootLayout() {
       <View className="flex-1 bg-white">
         <StatusBar style="dark" />
         <QueryProvider>
+          <ChatNotificationHandler />
           <SentryRN.ErrorBoundary fallback={<></>}>
             <Stack
               screenOptions={{
