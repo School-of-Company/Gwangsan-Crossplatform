@@ -14,6 +14,8 @@ export {
 
 export {
   formatMessageTime,
+  getMessageDateKey,
+  formatDateDividerLabel,
   renderMessageContent,
   renderMessageImages,
   renderMessageText,

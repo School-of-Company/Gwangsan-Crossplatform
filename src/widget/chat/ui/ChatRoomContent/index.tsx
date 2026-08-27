@@ -2,8 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, Keyboard, Platform, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
-import { MyMessage, OtherMessage } from '~/widget/chat';
-import { TradeEmbed, formatMessageTime } from '~/entity/chat';
+import { MyMessage, OtherMessage, ChatDateDivider } from '~/widget/chat';
+import {
+  TradeEmbed,
+  formatMessageTime,
+  getMessageDateKey,
+  formatDateDividerLabel,
+} from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
 interface TradeEmbedConfig {
@@ -23,7 +28,12 @@ type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
 
 type ChatListItem =
   | { readonly type: 'message'; readonly timestamp: string; readonly data: EnhancedChatMessage }
-  | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed };
+  | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed }
+  | {
+      readonly type: 'dateDivider';
+      readonly timestamp: string;
+      readonly data: { readonly label: string };
+    };
 
 interface ChatRoomContentProps {
   readonly messages: readonly EnhancedChatMessage[];
@@ -37,8 +47,11 @@ interface ChatRoomContentProps {
   readonly showReviewButton?: boolean;
 }
 
-const keyExtractor = (item: ChatListItem): string =>
-  item.type === 'message' ? `m-${item.data.messageId}` : `t-${item.data.product.id}`;
+const keyExtractor = (item: ChatListItem): string => {
+  if (item.type === 'message') return `m-${item.data.messageId}`;
+  if (item.type === 'trade') return `t-${item.data.product.id}`;
+  return `d-${item.timestamp}`;
+};
 
 export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   messages,
@@ -83,24 +96,40 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       data: message,
     }));
 
-    if (!tradeEmbedConfig?.shouldShow || !tradeEmbedConfig.product?.createdAt) {
-      return items;
+    if (tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product?.createdAt) {
+      const tradeTimestamp = tradeEmbedConfig.product.createdAt;
+      const tradeItem: ChatListItem = {
+        type: 'trade',
+        timestamp: tradeTimestamp,
+        data: tradeEmbedConfig as ResolvedTradeEmbed,
+      };
+
+      const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
+      if (insertAt < 0) {
+        items.push(tradeItem);
+      } else {
+        items.splice(insertAt, 0, tradeItem);
+      }
     }
 
-    const tradeTimestamp = tradeEmbedConfig.product.createdAt;
-    const tradeItem: ChatListItem = {
-      type: 'trade',
-      timestamp: tradeTimestamp,
-      data: tradeEmbedConfig as ResolvedTradeEmbed,
-    };
+    // 날짜가 바뀌는 경계마다 구분선을 끼워 넣는다 — 이전 날짜 문구는 그대로 두고, 새 날짜는 그 아래에 추가된다
+    const itemsWithDateDividers: ChatListItem[] = [];
+    let lastDateKey: string | null = null;
 
-    const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
-    if (insertAt < 0) {
-      items.push(tradeItem);
-    } else {
-      items.splice(insertAt, 0, tradeItem);
-    }
-    return items;
+    items.forEach((item) => {
+      const dateKey = getMessageDateKey(item.timestamp);
+      if (dateKey !== lastDateKey) {
+        itemsWithDateDividers.push({
+          type: 'dateDivider',
+          timestamp: item.timestamp,
+          data: { label: formatDateDividerLabel(item.timestamp) },
+        });
+        lastDateKey = dateKey;
+      }
+      itemsWithDateDividers.push(item);
+    });
+
+    return itemsWithDateDividers;
   }, [messages, tradeEmbedConfig]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
@@ -145,6 +174,10 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
             showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
           />
         );
+      }
+
+      if (item.type === 'dateDivider') {
+        return <ChatDateDivider label={item.data.label} />;
       }
 
       const config = item.data;

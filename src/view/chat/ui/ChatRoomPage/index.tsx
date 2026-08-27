@@ -59,6 +59,8 @@ export default function ChatRoomPage() {
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
   const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
+  const isSeller = Boolean(roomData?.product?.isSeller);
+  const isReserved = Boolean(roomData?.product?.isReserved);
   const productId = roomData?.product?.id;
 
   // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
@@ -163,6 +165,11 @@ export default function ChatRoomPage() {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
       queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
+      Toast.show({
+        type: 'success',
+        text1: '게시물 작성자에게 거래를 요청했어요!',
+        text2: '예약을 잡을까요?',
+      });
     } catch (error) {
       logger.error('handleTradeRequest failed', error);
     }
@@ -227,17 +234,32 @@ export default function ChatRoomPage() {
     </View>
   );
 
-  const shouldShowTradeRequestButton =
-    menuConfig.shouldShowMenuButton && !hasTradeRequest && !isTradeCompleted;
+  const shouldShowTopTradeControl = menuConfig.shouldShowMenuButton && !isTradeCompleted;
 
-  const renderTradeRequestButton = () => (
-    <TouchableOpacity
-      testID="trade-request-button"
-      onPress={handleMenuPress}
-      className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
-      <Text className="text-label font-medium text-white">거래요청</Text>
-    </TouchableOpacity>
-  );
+  const renderTopTradeControl = () =>
+    isSeller ? (
+      <TouchableOpacity
+        testID="trade-seller-button"
+        onPress={isReserved ? handleTradeAccept : handleOpenReservationModal}
+        className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+        <Text className="text-label font-medium text-white">
+          {isReserved ? '거래완료' : '예약하기'}
+        </Text>
+      </TouchableOpacity>
+    ) : (
+      <TouchableOpacity
+        testID="trade-request-button"
+        onPress={handleMenuPress}
+        disabled={hasTradeRequest}
+        className={`shrink-0 rounded-lg px-5 py-2.5 ${
+          hasTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
+        }`}>
+        <Text
+          className={`text-label font-medium ${hasTradeRequest ? 'text-gray-500' : 'text-white'}`}>
+          거래요청
+        </Text>
+      </TouchableOpacity>
+    );
 
   if (isLoading) {
     return (
@@ -269,8 +291,8 @@ export default function ChatRoomPage() {
               trailing={
                 isTradeCompleted
                   ? renderTradeCompletedInfo()
-                  : shouldShowTradeRequestButton
-                    ? renderTradeRequestButton()
+                  : shouldShowTopTradeControl
+                    ? renderTopTradeControl()
                     : undefined
               }
               onPress={productId ? handleProductPress : undefined}

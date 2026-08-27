@@ -405,6 +405,62 @@ describe('ChatRoomPage', () => {
     await waitFor(() =>
       expect(getByTestId('trade-request-modal-visible').props.children).toBe('false')
     );
+    expect(mockToastShow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'success',
+        text1: '게시물 작성자에게 거래를 요청했어요!',
+        text2: '예약을 잡을까요?',
+      })
+    );
+  });
+
+  it('게시물 작성자에게는 예약하기 버튼이 노출되고, 누르면 예약 모달이 열린다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-request-button')).toBeNull();
+    expect(getByTestId('trade-seller-button')).toBeTruthy();
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+
+    expect(getByTestId('reservation-modal-visible').props.children).toBe('true');
+  });
+
+  it('예약이 잡히면 게시물 작성자의 버튼이 거래완료로 바뀌고 누르면 handleTradeAccept가 호출된다', () => {
+    const mockHandleTradeAccept = jest.fn();
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({ handleTradeAccept: mockHandleTradeAccept })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: true } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    const button = getByTestId('trade-seller-button');
+    expect(button).toHaveTextContent('거래완료');
+
+    fireEvent.press(button);
+
+    expect(mockHandleTradeAccept).toHaveBeenCalled();
+  });
+
+  it('상대방은 이미 거래를 요청했다면 거래요청 버튼이 비활성화된다', () => {
+    mockUseTradeHandlers.mockReturnValue(makeTradeHandlersReturn({ hasTradeRequest: true }));
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('trade-request-button').props.accessibilityState.disabled).toBe(true);
+
+    fireEvent.press(getByTestId('trade-request-button'));
+
+    expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
   });
 
   it('거래 요청 실패 시 모달을 닫지 않고 에러를 로깅한다', async () => {

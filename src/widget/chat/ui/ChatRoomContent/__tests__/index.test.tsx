@@ -29,6 +29,7 @@ jest.mock('~/widget/chat', () => {
       <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
     ),
     OtherMessage: ({ message }: any) => <Text testID={`other-message-${message.messageId}`} />,
+    ChatDateDivider: ({ label }: any) => <Text testID="date-divider">{label}</Text>,
   };
 });
 
@@ -40,6 +41,8 @@ jest.mock('~/entity/chat', () => {
   return {
     TradeEmbed: ({ product }: any) => <Text testID={`trade-embed-${product.id}`} />,
     formatMessageTime: (createdAt: string) => createdAt,
+    getMessageDateKey: (createdAt: string) => createdAt.slice(0, 10),
+    formatDateDividerLabel: (createdAt: string) => `날짜-${createdAt.slice(0, 10)}`,
   };
 });
 
@@ -121,9 +124,10 @@ describe('ChatRoomContent', () => {
 
     expect(
       list.props.data.map(
-        (item: any) => `${item.type}-${item.data.messageId ?? item.data.product.id}`
+        (item: any) =>
+          `${item.type}-${item.data.messageId ?? item.data.product?.id ?? item.data.label}`
       )
-    ).toEqual(['message-1', 'trade-30', 'message-2']);
+    ).toEqual(['dateDivider-날짜-2026-05-28', 'message-1', 'trade-30', 'message-2']);
     expect(getByTestId('other-message-1')).toBeTruthy();
     expect(getByTestId('trade-embed-30')).toBeTruthy();
     expect(getByTestId('my-message-2')).toBeTruthy();
@@ -147,8 +151,9 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data).toHaveLength(1);
-    expect(list.props.data[0].type).toBe('trade');
+    expect(list.props.data).toHaveLength(2);
+    expect(list.props.data[0].type).toBe('dateDivider');
+    expect(list.props.data[1].type).toBe('trade');
     expect(getByTestId('trade-embed-50')).toBeTruthy();
   });
 
@@ -173,8 +178,9 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.keyExtractor(list.props.data[0])).toBe('m-7');
-    expect(list.props.keyExtractor(list.props.data[1])).toBe('t-8');
+    expect(list.props.keyExtractor(list.props.data[0])).toBe(`d-${message.createdAt}`);
+    expect(list.props.keyExtractor(list.props.data[1])).toBe('m-7');
+    expect(list.props.keyExtractor(list.props.data[2])).toBe('t-8');
   });
 
   it('내가 보낸 마지막 메시지에만 isLast를 전달한다', () => {
