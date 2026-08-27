@@ -16,6 +16,7 @@ import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { ReservationModal } from '@/widget/chat/ui/ReservationModal';
+import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
@@ -34,6 +35,7 @@ export default function ChatRoomPage() {
   const router = useRouter();
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
+  const [isReservationConfirmVisible, setIsReservationConfirmVisible] = useState(false);
   const [isReservationModalVisible, setIsReservationModalVisible] = useState(false);
   const [isReservationLoading, setIsReservationLoading] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
@@ -99,6 +101,15 @@ export default function ChatRoomPage() {
   });
 
   const handleOpenReservationModal = useCallback(() => {
+    setIsReservationModalVisible(true);
+  }, []);
+
+  const handleOpenReservationConfirm = useCallback(() => {
+    setIsReservationConfirmVisible(true);
+  }, []);
+
+  const handleReservationConfirmProceed = useCallback(() => {
+    setIsReservationConfirmVisible(false);
     setIsReservationModalVisible(true);
   }, []);
 
@@ -240,7 +251,7 @@ export default function ChatRoomPage() {
     isSeller ? (
       <TouchableOpacity
         testID="trade-seller-button"
-        onPress={isReserved ? handleTradeAccept : handleOpenReservationModal}
+        onPress={isReserved ? handleTradeAccept : handleOpenReservationConfirm}
         className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
         <Text className="text-label font-medium text-white">
           {isReserved ? '거래완료' : '예약하기'}
@@ -328,6 +339,12 @@ export default function ChatRoomPage() {
         onClose={() => setIsTradeRequestModalVisible(false)}
         onTradeRequest={handleTradeRequest}
         isLoading={isTradeRequestLoading}
+      />
+
+      <ReservationConfirmModal
+        isVisible={isReservationConfirmVisible}
+        onClose={() => setIsReservationConfirmVisible(false)}
+        onConfirm={handleReservationConfirmProceed}
       />
 
       <ReservationModal

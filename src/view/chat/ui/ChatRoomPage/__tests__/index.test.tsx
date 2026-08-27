@@ -170,6 +170,23 @@ jest.mock('@/widget/chat/ui/ReservationModal', () => ({
   },
 }));
 
+jest.mock('@/widget/chat/ui/ReservationConfirmModal', () => ({
+  ReservationConfirmModal: ({ isVisible, onClose, onConfirm }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    return (
+      <View testID="reservation-confirm-modal">
+        <Text testID="reservation-confirm-modal-visible">{String(isVisible)}</Text>
+        <TouchableOpacity testID="reservation-confirm-modal-confirm" onPress={onConfirm}>
+          <Text>confirm</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="reservation-confirm-modal-close" onPress={onClose}>
+          <Text>close</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  },
+}));
+
 jest.mock('@/shared/ui/Header', () => ({
   Header: ({ headerTitle, connectionState }: any) => {
     const { View, Text } = require('react-native');
@@ -414,7 +431,7 @@ describe('ChatRoomPage', () => {
     );
   });
 
-  it('게시물 작성자에게는 예약하기 버튼이 노출되고, 누르면 예약 모달이 열린다', () => {
+  it('게시물 작성자에게는 예약하기 버튼이 노출되고, 누르면 예약 확인 바텀시트가 먼저 열린다', () => {
     mockUseChatRoomData.mockReturnValue({
       data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
     });
@@ -424,8 +441,17 @@ describe('ChatRoomPage', () => {
     expect(queryByTestId('trade-request-button')).toBeNull();
     expect(getByTestId('trade-seller-button')).toBeTruthy();
 
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
+    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
+
     fireEvent.press(getByTestId('trade-seller-button'));
 
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
+    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
+
+    fireEvent.press(getByTestId('reservation-confirm-modal-confirm'));
+
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
     expect(getByTestId('reservation-modal-visible').props.children).toBe('true');
   });
 

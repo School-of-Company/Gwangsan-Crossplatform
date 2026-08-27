@@ -103,7 +103,9 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
           <Text className="mb-4 text-sm text-gray-600">
             {product.isCompleted
               ? '거래가 완료되었습니다'
-              : `${requestorNickname}님께서 거래하기를 누르셨습니다`}
+              : showButtons
+                ? `${requestorNickname}님께서 거래하기를 누르셨습니다`
+                : '거래를 요청했어요'}
           </Text>
           {!product.isCompleted && product.isReserved && (
             <View className="mb-4 gap-1">
