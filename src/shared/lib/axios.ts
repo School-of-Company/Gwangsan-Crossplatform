@@ -137,6 +137,13 @@ instance.interceptors.response.use(
           },
         });
 
+        const isNetworkOrTimeoutFailure =
+          axios.isAxiosError(refreshError) && refreshError.response === undefined;
+
+        if (isNetworkOrTimeoutFailure) {
+          return Promise.reject(refreshError);
+        }
+
         await clearAuthTokens();
 
         if (queryClientInstance) {
