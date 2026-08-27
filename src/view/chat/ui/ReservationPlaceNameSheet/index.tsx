@@ -25,7 +25,7 @@ export function ReservationPlaceNameSheet({
       onClose={onClose}
       title="장소명 입력"
       hasHeader={false}
-      height={260}>
+      height={220}>
       <View className="flex-1 gap-4">
         <Text className="text-body5 text-gray-500">{address}</Text>
 
