@@ -35,19 +35,28 @@ describe('TradeEmbed', () => {
     jest.clearAllMocks();
   });
 
-  it('상품 제목과 요청자 안내 문구를 표시한다', () => {
+  it('showButtons가 true이면 상품 제목과 요청자 안내 문구를 표시한다', () => {
     const { getByText } = render(
-      <TradeEmbed product={createProduct()} requestorNickname="홍길동" />
+      <TradeEmbed product={createProduct()} requestorNickname="홍길동" showButtons />
     );
 
     expect(getByText('거래 상품')).toBeTruthy();
     expect(getByText('홍길동님께서 거래하기를 누르셨습니다')).toBeTruthy();
   });
 
-  it('requestorNickname이 없으면 기본값 "상대방"을 사용한다', () => {
-    const { getByText } = render(<TradeEmbed product={createProduct()} />);
+  it('showButtons가 true이고 requestorNickname이 없으면 기본값 "상대방"을 사용한다', () => {
+    const { getByText } = render(<TradeEmbed product={createProduct()} showButtons />);
 
     expect(getByText('상대방님께서 거래하기를 누르셨습니다')).toBeTruthy();
+  });
+
+  it('showButtons가 false이면 요청자 이름 없이 안내 문구를 표시한다', () => {
+    const { getByText, queryByText } = render(
+      <TradeEmbed product={createProduct()} requestorNickname="홍길동" showButtons={false} />
+    );
+
+    expect(getByText('거래를 요청했어요')).toBeTruthy();
+    expect(queryByText('홍길동님께서 거래하기를 누르셨습니다')).toBeNull();
   });
 
   it('isCompleted이면 완료 안내 문구를 표시한다', () => {
