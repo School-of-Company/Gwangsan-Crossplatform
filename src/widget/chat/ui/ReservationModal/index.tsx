@@ -1,12 +1,17 @@
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { View, Text } from 'react-native';
 import { BottomSheetModalWrapper, Button, Dropdown, Input } from '~/shared/ui';
-import type { ReservationDraft } from '~/shared/store/useReservationDraftStore';
+
+export interface ReservationConfirmPayload {
+  readonly scheduledAt: string;
+  readonly placeName: string;
+  readonly address: string;
+}
 
 interface ReservationModalProps {
   readonly isVisible: boolean;
   readonly onClose: () => void;
-  readonly onConfirm: (draft: ReservationDraft) => void;
+  readonly onConfirm: (payload: ReservationConfirmPayload) => void;
   readonly onAnimationComplete?: () => void;
   readonly isLoading?: boolean;
 }
@@ -54,26 +59,35 @@ const ReservationModalComponent: React.FC<ReservationModalProps> = ({
   const [date, setDate] = useState<string | undefined>(undefined);
   const [time, setTime] = useState<string | undefined>(undefined);
   const [place, setPlace] = useState('');
+  const [address, setAddress] = useState('');
 
   const dateOptions = useMemo(() => buildDateOptions(), []);
   const timeOptions = useMemo(() => buildTimeOptions(), []);
 
-  const canConfirm = Boolean(date) && Boolean(time) && place.trim().length > 0;
+  const canConfirm =
+    Boolean(date) && Boolean(time) && place.trim().length > 0 && address.trim().length > 0;
 
-  const handleClose = useCallback(() => {
+  const resetFields = useCallback(() => {
     setDate(undefined);
     setTime(undefined);
     setPlace('');
+    setAddress('');
+  }, []);
+
+  const handleClose = useCallback(() => {
+    resetFields();
     onClose();
-  }, [onClose]);
+  }, [onClose, resetFields]);
 
   const handleConfirm = useCallback(() => {
     if (!date || !time || !canConfirm) return;
-    onConfirm({ date, time, place: place.trim() });
-    setDate(undefined);
-    setTime(undefined);
-    setPlace('');
-  }, [date, time, place, canConfirm, onConfirm]);
+    onConfirm({
+      scheduledAt: `${date}T${time}:00`,
+      placeName: place.trim(),
+      address: address.trim(),
+    });
+    resetFields();
+  }, [date, time, place, address, canConfirm, onConfirm, resetFields]);
 
   return (
     <BottomSheetModalWrapper
@@ -81,11 +95,12 @@ const ReservationModalComponent: React.FC<ReservationModalProps> = ({
       onClose={handleClose}
       onAnimationComplete={onAnimationComplete}
       title="예약 정보 입력"
-      height={560}>
+      height={640}>
       <View className="flex-1 justify-between gap-4">
         <View className="gap-4">
           <Text className="text-sm text-gray-600">
-            거래 상대방과 만날 날짜, 시간, 장소를 선택해주세요.
+            거래 상대방과 만날 날짜, 시간, 장소를 선택해주세요. 예약 확정 시 현재 위치가 만날 장소의
+            좌표로 함께 저장됩니다.
           </Text>
 
           <Dropdown
@@ -109,6 +124,14 @@ const ReservationModalComponent: React.FC<ReservationModalProps> = ({
             value={place}
             onChangeText={setPlace}
             placeholder="예: 상무역 2번 출구"
+            returnKeyType="next"
+          />
+
+          <Input
+            label="주소"
+            value={address}
+            onChangeText={setAddress}
+            placeholder="예: 광주 서구 상무자유로 20"
             returnKeyType="done"
           />
         </View>
