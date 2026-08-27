@@ -95,7 +95,10 @@ export function Footer({ state, navigation, insets, onWritePress }: FooterProps)
     setFooterHeight(e.nativeEvent.layout.height);
   }, []);
 
-  const activeRouteName = state.routes[state.index].name as TabRouteName;
+  // expo-router의 js-tabs 구현은 첫 렌더에서 네비게이션 state가 아직 초기화되지
+  // 않은 채로 tabBar를 그릴 때가 있어(Cannot read property 'routes' of undefined),
+  // state/routes가 비어 있는 경우를 방어한다.
+  const activeRouteName = state?.routes?.[state?.index]?.name as TabRouteName | undefined;
 
   const homeScale = useIconPressScale();
   const chattingScale = useIconPressScale();
