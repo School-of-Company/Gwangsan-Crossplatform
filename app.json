@@ -25,9 +25,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./src/shared/assets/png/splash.png",
+          "image": "./src/shared/assets/png/adaptive-icon-foreground.png",
+          "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#6F9723"
         }
       ],
       [
@@ -61,9 +62,9 @@
     "icon": "./src/shared/assets/png/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/shared/assets/png/splash.png",
+      "image": "./src/shared/assets/png/adaptive-icon-foreground.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#6F9723"
     },
     "assetBundlePatterns": [
       "**/*"
