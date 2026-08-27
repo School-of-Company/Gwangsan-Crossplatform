@@ -18,6 +18,18 @@ const EXIT_DURATION = 220;
 const EXIT_EASING = Easing.out(Easing.cubic);
 const REFLOW_DURATION = 220;
 
+const TRADE_STATUS = {
+  completed: { label: '거래완료', bg: 'bg-gray-100', text: 'text-gray-600' },
+  reserved: { label: '예약중', bg: 'bg-sub2-100', text: 'text-sub2-700' },
+  ongoing: { label: '거래중', bg: 'bg-main-100', text: 'text-main-700' },
+} as const;
+
+const getTradeStatus = (product: ChatRoomListItem['product']) => {
+  if (product?.isCompleted) return TRADE_STATUS.completed;
+  if (product?.isReserved) return TRADE_STATUS.reserved;
+  return TRADE_STATUS.ongoing;
+};
+
 interface ChatRoomItemProps {
   room: ChatRoomListItem;
   onPress: (roomId: RoomId) => void;
@@ -86,6 +98,7 @@ const ChatRoomItemComponent = ({
   };
 
   const productImage = room.product?.images?.[0]?.imageUrl;
+  const tradeStatus = getTradeStatus(room.product);
 
   return (
     <Animated.View
@@ -111,11 +124,11 @@ const ChatRoomItemComponent = ({
             <Text className="shrink text-base font-bold text-gray-900" numberOfLines={1}>
               {room.product?.title}
             </Text>
-            {room.product?.isCompleted && (
-              <Text testID="trade-completed-tag" className="text-xs text-gray-500">
-                거래 완료
-              </Text>
-            )}
+            <View
+              testID="trade-status-tag"
+              className={`rounded-full px-2 py-0.5 ${tradeStatus.bg}`}>
+              <Text className={`text-xs font-medium ${tradeStatus.text}`}>{tradeStatus.label}</Text>
+            </View>
           </View>
           <Text className="text-sm text-gray-700" numberOfLines={1}>
             {room.member?.nickname}
