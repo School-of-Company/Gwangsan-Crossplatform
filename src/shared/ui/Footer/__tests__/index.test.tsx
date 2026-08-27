@@ -141,4 +141,16 @@ describe('Footer', () => {
     const { toJSON } = render(<Footer {...createProps('main')} />);
     expect(toJSON()).toMatchSnapshot();
   });
+
+  it('state가 아직 초기화되지 않아도(undefined) 에러 없이 렌더링한다', () => {
+    const { getByText } = render(<Footer {...createProps('main', { state: undefined })} />);
+    expect(getByText('홈')).toBeTruthy();
+  });
+
+  it('state.routes가 비어 있어도 에러 없이 렌더링한다', () => {
+    const { getByText } = render(
+      <Footer {...createProps('main', { state: { index: 0, routes: undefined } })} />
+    );
+    expect(getByText('홈')).toBeTruthy();
+  });
 });
