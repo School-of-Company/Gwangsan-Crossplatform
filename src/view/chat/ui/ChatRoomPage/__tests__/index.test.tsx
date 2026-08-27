@@ -171,17 +171,12 @@ jest.mock('@/widget/chat/ui/ReservationModal', () => ({
 }));
 
 jest.mock('@/shared/ui/Header', () => ({
-  Header: ({ headerTitle, onMenuPress, showMenuButton, connectionState }: any) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
+  Header: ({ headerTitle, connectionState }: any) => {
+    const { View, Text } = require('react-native');
     return (
       <View testID="header">
         <Text testID="header-title">{headerTitle}</Text>
         <Text testID="header-connection">{connectionState}</Text>
-        {showMenuButton && (
-          <TouchableOpacity testID="header-menu-button" onPress={onMenuPress}>
-            <Text>menu</Text>
-          </TouchableOpacity>
-        )}
       </View>
     );
   },
@@ -347,11 +342,11 @@ describe('ChatRoomPage', () => {
     expect(queryByTestId('received-reviews-link')).toBeNull();
   });
 
-  it('메뉴 버튼을 누르면 거래 요청 모달이 열린다', () => {
+  it('거래요청 버튼을 누르면 거래 요청 모달이 열린다', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
-    fireEvent.press(getByTestId('header-menu-button'));
+    fireEvent.press(getByTestId('trade-request-button'));
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
   });
 
@@ -403,7 +398,7 @@ describe('ChatRoomPage', () => {
 
     const { getByTestId } = render(<ChatRoomPage />);
 
-    fireEvent.press(getByTestId('header-menu-button'));
+    fireEvent.press(getByTestId('trade-request-button'));
     fireEvent.press(getByTestId('trade-request-confirm'));
 
     await waitFor(() => expect(mockHandleTradeRequest).toHaveBeenCalled());
@@ -421,7 +416,7 @@ describe('ChatRoomPage', () => {
 
     const { getByTestId } = render(<ChatRoomPage />);
 
-    fireEvent.press(getByTestId('header-menu-button'));
+    fireEvent.press(getByTestId('trade-request-button'));
     fireEvent.press(getByTestId('trade-request-confirm'));
 
     await waitFor(() => expect(mockHandleTradeRequest).toHaveBeenCalled());

@@ -39,6 +39,7 @@ jest.mock('~/entity/chat', () => {
   const { Text } = require('react-native');
   return {
     TradeEmbed: ({ product }: any) => <Text testID={`trade-embed-${product.id}`} />,
+    formatMessageTime: (createdAt: string) => createdAt,
   };
 });
 

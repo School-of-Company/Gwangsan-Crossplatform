@@ -3,7 +3,7 @@ import { View, Text, FlatList, Keyboard, Platform, type ListRenderItem } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
 import { MyMessage, OtherMessage } from '~/widget/chat';
-import { TradeEmbed } from '~/entity/chat';
+import { TradeEmbed, formatMessageTime } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
 interface TradeEmbedConfig {
@@ -104,12 +104,46 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   }, [messages, tradeEmbedConfig]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
-    ({ item }) => {
+    ({ item, index }) => {
       if (item.type === 'message') {
-        return item.data.isMine ? (
-          <MyMessage message={item.data} isLast={item.data.messageId === lastMyMessageId} />
-        ) : (
-          <OtherMessage message={item.data} onProfilePress={onProfilePress} />
+        const previousItem = combinedData[index - 1];
+        const nextItem = combinedData[index + 1];
+
+        // 다음 메시지와 시간(분 단위)이 같으면 현재 메시지의 시간 표시는 숨기고 아래쪽에만 노출한다
+        const hasSameTimeAsNext =
+          nextItem?.type === 'message' &&
+          formatMessageTime(nextItem.data.createdAt) === formatMessageTime(item.data.createdAt);
+
+        if (item.data.isMine) {
+          // 다음 메시지도 내가 연달아 보낸 것이면, '나와 다음 메시지 사이' 간격을 좁힌다
+          const isFollowedByGrouped = nextItem?.type === 'message' && nextItem.data.isMine;
+          return (
+            <MyMessage
+              message={item.data}
+              isLast={item.data.messageId === lastMyMessageId}
+              isFollowedByGrouped={isFollowedByGrouped}
+              showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+            />
+          );
+        }
+
+        const isSameSenderContinuation = (candidate: ChatListItem | undefined) =>
+          candidate?.type === 'message' &&
+          !candidate.data.isMine &&
+          candidate.data.senderId === item.data.senderId;
+
+        // 프로필/닉네임 노출 여부는 '이전' 메시지 기준, 간격은 '다음' 메시지 기준으로 판단한다
+        const isGrouped = isSameSenderContinuation(previousItem);
+        const isFollowedByGrouped = isSameSenderContinuation(nextItem);
+
+        return (
+          <OtherMessage
+            message={item.data}
+            onProfilePress={onProfilePress}
+            showProfile={!isGrouped}
+            isFollowedByGrouped={isFollowedByGrouped}
+            showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+          />
         );
       }
 
@@ -129,7 +163,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, showReviewButton, lastMyMessageId]
+    [onProfilePress, onReviewButtonPress, showReviewButton, lastMyMessageId, combinedData]
   );
 
   const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);
