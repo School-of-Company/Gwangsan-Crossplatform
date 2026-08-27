@@ -7,26 +7,41 @@ jest.mock('~/shared/lib/axios', () => ({
 
 const mockPatch = instance.patch as jest.Mock;
 
+const baseRequest = {
+  productId: 1,
+  roomId: 10,
+  scheduledAt: '2026-08-27T14:30:00',
+  placeName: '상무역 2번 출구',
+  address: '광주 서구 상무자유로',
+  latitude: 35.15,
+  longitude: 126.85,
+};
+
 beforeEach(() => jest.clearAllMocks());
 
 describe('makeReservation', () => {
   describe('성공 케이스', () => {
-    it('PATCH /post/reservation/:productId를 호출하고 응답 data를 반환한다', async () => {
-      const response = { message: '예약이 완료되었습니다.' };
-      mockPatch.mockResolvedValue({ data: response });
+    it('PATCH /post/reservation/:productId를 예약 정보와 함께 호출한다', async () => {
+      mockPatch.mockResolvedValue({ data: {} });
 
-      const result = await makeReservation({ productId: 1 });
+      await makeReservation(baseRequest);
 
-      expect(mockPatch).toHaveBeenCalledWith('/post/reservation/1');
-      expect(result).toEqual(response);
+      expect(mockPatch).toHaveBeenCalledWith('/post/reservation/1', {
+        roomId: 10,
+        scheduledAt: '2026-08-27T14:30:00',
+        placeName: '상무역 2번 출구',
+        address: '광주 서구 상무자유로',
+        latitude: 35.15,
+        longitude: 126.85,
+      });
     });
 
     it('다른 productId로 올바른 경로를 요청한다', async () => {
       mockPatch.mockResolvedValue({ data: {} });
 
-      await makeReservation({ productId: 42 });
+      await makeReservation({ ...baseRequest, productId: 42 });
 
-      expect(mockPatch).toHaveBeenCalledWith('/post/reservation/42');
+      expect(mockPatch).toHaveBeenCalledWith('/post/reservation/42', expect.any(Object));
     });
   });
 
@@ -34,19 +49,19 @@ describe('makeReservation', () => {
     it('API 실패 시 에러를 throw한다', async () => {
       mockPatch.mockRejectedValue(new Error('Conflict'));
 
-      await expect(makeReservation({ productId: 1 })).rejects.toThrow();
+      await expect(makeReservation(baseRequest)).rejects.toThrow();
     });
 
     it('에러 메시지가 전파된다', async () => {
       mockPatch.mockRejectedValue(new Error('Server error'));
 
-      await expect(makeReservation({ productId: 1 })).rejects.toThrow('Server error');
+      await expect(makeReservation(baseRequest)).rejects.toThrow('Server error');
     });
 
     it('네트워크 에러 시 에러를 throw한다', async () => {
       mockPatch.mockRejectedValue(new Error('Network Error'));
 
-      await expect(makeReservation({ productId: 1 })).rejects.toThrow('Network Error');
+      await expect(makeReservation(baseRequest)).rejects.toThrow('Network Error');
     });
   });
 });

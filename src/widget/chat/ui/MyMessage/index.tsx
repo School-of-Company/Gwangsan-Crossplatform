@@ -13,9 +13,16 @@ import type { EnhancedChatMessage } from '~/entity/chat/model/useChatMessages';
 interface MyMessageProps {
   message: EnhancedChatMessage;
   isLast?: boolean;
+  isFollowedByGrouped?: boolean;
+  showTime?: boolean;
 }
 
-const MyMessageComponent: React.FC<MyMessageProps> = ({ message, isLast = false }) => {
+const MyMessageComponent: React.FC<MyMessageProps> = ({
+  message,
+  isLast = false,
+  isFollowedByGrouped = false,
+  showTime = true,
+}) => {
   const imageLoader = useImageLoader();
   const retryMessage = useChatQueueStore((state) => state.retry);
 
@@ -50,13 +57,15 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({ message, isLast = false 
   if (!content) return null;
 
   return (
-    <View className="mb-4 items-end">
+    <View className={`items-end ${isFollowedByGrouped ? 'mb-1' : 'mb-4'}`}>
       <View className="flex-row items-end">
         <View className="mr-2 items-end">
           {statusIndicator}
-          <Text className="text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
+          {showTime && (
+            <Text className="text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
+          )}
         </View>
-        <View className="max-w-[280px] rounded-[100px] bg-orange-400 px-4 py-3">{content}</View>
+        <View className="max-w-[280px] rounded-3xl bg-orange-400 px-4 py-3">{content}</View>
       </View>
 
       {message.status === MESSAGE_STATUS.FAILED && (

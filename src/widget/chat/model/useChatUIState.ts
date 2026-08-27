@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { useGetItem } from '~/entity/post/model/useGetItem';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { MODE } from '~/widget/write/model/mode';
 import type { RoomId } from '~/shared/types/chatType';
 
@@ -10,21 +9,16 @@ interface UseChatUIStateParams {
   readonly otherUserInfo: { nickname: string; id?: number };
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
-  readonly handleTradeAccept: () => Promise<void>;
-  readonly handleReservation: () => Promise<void>;
-  readonly handleCancelReservation: () => Promise<void>;
+  readonly onOpenReservationModal: () => void;
 }
 
 interface UseChatUIStateReturn {
   readonly tradeEmbedConfig: {
     readonly shouldShow: boolean;
     readonly product: any;
-    readonly onTradeAccept?: () => Promise<void>;
-    readonly onReservation?: () => void;
-    readonly onCancelReservation?: () => void;
     readonly showButtons: boolean;
-    readonly isLoading: boolean;
-    readonly requestorNickname: string;
+    readonly otherPartyNickname: string;
+    readonly onOpenReservationModal?: () => void;
   };
   readonly menuConfig: {
     readonly shouldShowMenuButton: boolean;
@@ -53,12 +47,9 @@ export const useChatUIState = ({
   otherUserInfo,
   hasTradeRequest,
   shouldShowButtons,
-  handleTradeAccept,
-  handleReservation,
-  handleCancelReservation,
+  onOpenReservationModal,
 }: UseChatUIStateParams): UseChatUIStateReturn => {
   const { data: roomData } = useChatRoomData({ roomId });
-  const { data: myInfo } = useGetMyInformation();
 
   const productId = roomData?.product?.id?.toString();
   const { data: productDetail, isLoading: isProductLoading } = useGetItem(productId);
@@ -71,22 +62,16 @@ export const useChatUIState = ({
     () => ({
       shouldShow: hasTradeRequest,
       product: roomData?.product,
-      onTradeAccept: shouldShowButtons ? handleTradeAccept : undefined,
-      onReservation: shouldShowButtons ? handleReservation : undefined,
-      onCancelReservation: shouldShowButtons ? handleCancelReservation : undefined,
       showButtons: shouldShowButtons,
-      isLoading: false,
-      requestorNickname: shouldShowButtons ? otherUserInfo.nickname : myInfo?.nickname || '나',
+      otherPartyNickname: otherUserInfo.nickname,
+      onOpenReservationModal: shouldShowButtons ? onOpenReservationModal : undefined,
     }),
     [
       hasTradeRequest,
       roomData?.product,
       shouldShowButtons,
-      handleTradeAccept,
-      handleReservation,
-      handleCancelReservation,
       otherUserInfo.nickname,
-      myInfo?.nickname,
+      onOpenReservationModal,
     ]
   );
 

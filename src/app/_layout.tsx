@@ -1,6 +1,8 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { AppState, Platform, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useRef } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
@@ -19,6 +21,8 @@ import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
 import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -122,33 +126,35 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
   return (
-    <KeyboardProvider>
-      <View className="flex-1 bg-white">
-        <StatusBar style="dark" />
-        <QueryProvider>
-          <ChatNotificationHandler />
-          <SentryRN.ErrorBoundary fallback={<></>}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: 'fade',
-                gestureEnabled: true,
-                gestureDirection: 'horizontal',
-              }}>
-              {/* 하단 탭 전환은 (tabs) 레이아웃의 sceneStyleInterpolator가 전담하므로
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardProvider>
+        <View className="flex-1 bg-white">
+          <StatusBar style="dark" />
+          <QueryProvider>
+            <ChatNotificationHandler />
+            <SentryRN.ErrorBoundary fallback={<></>}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: 'fade',
+                  gestureEnabled: true,
+                  gestureDirection: 'horizontal',
+                }}>
+                {/* 하단 탭 전환은 (tabs) 레이아웃의 sceneStyleInterpolator가 전담하므로
                   네이티브 트랜지션은 끄고 중복 애니메이션을 방지한다. */}
-              <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
-              {/* 로그인(별칭 → 비밀번호) 화면은 SigninPage 내부의 SlideFadeTransition이
+                <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+                {/* 로그인(별칭 → 비밀번호) 화면은 SigninPage 내부의 SlideFadeTransition이
                   푸터 탭 전환과 동일한 애니메이션을 전담하므로, 네이티브 트랜지션은 끄고
                   중복 애니메이션을 방지한다. */}
-              <Stack.Screen name="signin" options={{ animation: 'none' }} />
-            </Stack>
-          </SentryRN.ErrorBoundary>
-          <BottomSheetPortalOutlet />
-          <Toast config={toastConfig} topOffset={Platform.select({ ios: 70, default: 40 })} />
-          <NoNetworkOverlay visible={!isConnected} />
-        </QueryProvider>
-      </View>
-    </KeyboardProvider>
+                <Stack.Screen name="signin" options={{ animation: 'none' }} />
+              </Stack>
+            </SentryRN.ErrorBoundary>
+            <BottomSheetPortalOutlet />
+            <Toast config={toastConfig} topOffset={Platform.select({ ios: 70, default: 40 })} />
+            <NoNetworkOverlay visible={!isConnected} />
+          </QueryProvider>
+        </View>
+      </KeyboardProvider>
+    </GestureHandlerRootView>
   );
 }
