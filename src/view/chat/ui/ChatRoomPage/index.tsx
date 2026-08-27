@@ -24,6 +24,7 @@ import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
+import type { ChatApiError } from '~/entity/chat';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,7 +55,7 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  const { data: roomData } = useChatRoomData({ roomId });
+  const { data: roomData, error: roomDataError } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
   const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
   const isSeller = Boolean(roomData?.product?.isSeller);
@@ -122,6 +123,19 @@ export default function ChatRoomPage() {
       markRoomAsRead(roomId).catch((e) => logger.error('markRoomAsRead failed', e));
     }
   }, [roomId, markRoomAsRead]);
+
+  useEffect(() => {
+    // 나가기(삭제)된 채팅방에 알림/딥링크/캐시된 목록으로 재진입하면 서버가 404를 준다.
+    // 빈 화면에 머무르며 계속 재요청하는 대신 목록으로 돌려보낸다.
+    if ((roomDataError as ChatApiError | null)?.status === 404) {
+      Toast.show({
+        type: 'info',
+        text1: '더 이상 존재하지 않는 채팅방입니다.',
+        visibilityTime: 2000,
+      });
+      router.replace('/chatting');
+    }
+  }, [roomDataError, router]);
 
   useEffect(() => {
     if (messages.length > 0) {

@@ -66,4 +66,17 @@ describe('useChatRoomData', () => {
 
     expect(result.current.error).toBeInstanceOf(Error);
   });
+
+  it('채팅방을 찾을 수 없는 404 에러가 나면 더 이상 폴링하지 않는다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockGetChatRoomData.mockRejectedValue(
+      Object.assign(new Error('해당하는 채팅방을 찾을 수 없습니다.'), { status: 404 })
+    );
+
+    const { result } = renderHookWithProviders(() => useChatRoomData({ roomId: 100 }));
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(mockGetChatRoomData).toHaveBeenCalledTimes(1);
+  });
 });

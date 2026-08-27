@@ -190,6 +190,7 @@ const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
 const mockRouterPush = jest.fn();
+const mockRouterReplace = jest.fn();
 const mockUseChatMessages = useChatMessages as jest.Mock;
 const mockUseChatAction = useChatAction as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
@@ -244,7 +245,7 @@ const makeChatUIStateReturn = (overrides = {}) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseLocalSearchParams.mockReturnValue({ id: '10' });
-  mockUseRouter.mockReturnValue({ push: mockRouterPush });
+  mockUseRouter.mockReturnValue({ push: mockRouterPush, replace: mockRouterReplace });
   mockUseGetMyInformation.mockReturnValue({ data: { memberId: 5 } });
   mockUseChatMessages.mockReturnValue(makeChatMessagesReturn());
   mockUseChatAction.mockReturnValue({
@@ -279,6 +280,20 @@ describe('ChatRoomPage', () => {
     const { getByText } = render(<ChatRoomPage />);
 
     expect(getByText('Failed to load chat room')).toBeTruthy();
+  });
+
+  it('채팅방 조회가 404면 토스트를 띄우고 채팅 목록으로 돌려보낸다', async () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: undefined,
+      error: Object.assign(new Error('해당하는 채팅방을 찾을 수 없습니다.'), { status: 404 }),
+    });
+
+    render(<ChatRoomPage />);
+
+    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/chatting'));
+    expect(mockToastShow).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'info', text1: '더 이상 존재하지 않는 채팅방입니다.' })
+    );
   });
 
   it('헤더에 componentState.headerTitle을 표시한다', () => {
