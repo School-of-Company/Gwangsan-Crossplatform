@@ -335,6 +335,29 @@ describe('response interceptor', () => {
     expect(count).toBe(3);
   });
 
+  it('/auth/reissue가 타임아웃/네트워크 오류로 응답 없이 실패하면 세션을 유지한다', async () => {
+    mockGetAccessToken.mockResolvedValue('old-token');
+    mockGetRefreshToken.mockResolvedValue('valid-refresh-token');
+    mockClearAuthTokens.mockResolvedValue(undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const queryClient = new QueryClient();
+    jest.spyOn(queryClient, 'clear');
+    setQueryClientInstance(queryClient);
+
+    server.use(
+      http.get(`${BASE}/reissue-timeout`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${BASE}/auth/reissue`, () => HttpResponse.error())
+    );
+
+    await expect(instance.get('/reissue-timeout')).rejects.toThrow();
+
+    expect(mockSentry.captureException).toHaveBeenCalled();
+    expect(mockClearAuthTokens).not.toHaveBeenCalled();
+    expect(queryClient.clear).not.toHaveBeenCalled();
+    expect(mockRouter.replace).not.toHaveBeenCalledWith('/signin');
+  });
+
   it('동시 401 발생 시 토큰 갱신 실패하면 두 번째 요청도 reject된다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh-token');
