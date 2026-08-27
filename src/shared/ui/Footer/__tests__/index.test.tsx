@@ -141,4 +141,13 @@ describe('Footer', () => {
     const { toJSON } = render(<Footer {...createProps('main')} />);
     expect(toJSON()).toMatchSnapshot();
   });
+
+  it('state가 undefined여도 크래시 없이 렌더링한다 (#505)', () => {
+    expect(() => render(<Footer {...createProps('main', { state: undefined })} />)).not.toThrow();
+  });
+
+  it('state가 undefined이면 어떤 탭도 활성 상태로 표시하지 않는다', () => {
+    const { getByText } = render(<Footer {...createProps('main', { state: undefined })} />);
+    expect(getByText('홈').props.className).toBe('text-gray-500');
+  });
 });

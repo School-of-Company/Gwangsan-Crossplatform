@@ -95,7 +95,10 @@ export function Footer({ state, navigation, insets, onWritePress }: FooterProps)
     setFooterHeight(e.nativeEvent.layout.height);
   }, []);
 
-  const activeRouteName = state.routes[state.index].name as TabRouteName;
+  // state는 BottomTabBarProps 상 필수 필드지만, 커스텀 tabBar가 네비게이터
+  // 언마운트/전환 도중 재렌더될 때 실제로는 undefined로 들어오는 경우가 있어
+  // (Sentry #505) 방어적으로 옵셔널 체이닝을 사용한다.
+  const activeRouteName = state?.routes?.[state.index]?.name as TabRouteName | undefined;
 
   const homeScale = useIconPressScale();
   const chattingScale = useIconPressScale();
