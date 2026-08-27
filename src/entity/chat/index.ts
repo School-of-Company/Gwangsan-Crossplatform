@@ -3,6 +3,7 @@ export { findChatRoom } from './api/findChatRoom';
 export { getChatRooms } from './api/getChatRooms';
 export { getChatMessages, getChatRoomData } from './api/getChatMessages';
 export { markChatAsRead } from './api/markChatAsRead';
+export { deleteChatRoom } from './api/deleteChatRoom';
 
 export {
   createChatSocketService,
@@ -13,6 +14,8 @@ export {
 
 export {
   formatMessageTime,
+  getMessageDateKey,
+  formatDateDividerLabel,
   renderMessageContent,
   renderMessageImages,
   renderMessageText,
@@ -26,6 +29,7 @@ export {
   type EnhancedChatMessage,
 } from './model/useChatMessages';
 export { useCreateChatRoom } from './model/useCreateChatRoom';
+export { useDeleteChatRoom } from './model/useDeleteChatRoom';
 export { useFindChatRoom } from './model/useFindChatRoom';
 export { useChatRoomData } from './model/useChatRoomData';
 export {

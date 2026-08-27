@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { getAccessToken } from '~/shared/lib/auth';
 
 export default function Index() {
@@ -18,6 +19,7 @@ export default function Index() {
       })
       .finally(() => {
         if (isMounted) setIsChecking(false);
+        SplashScreen.hideAsync().catch(() => {});
       });
 
     return () => {

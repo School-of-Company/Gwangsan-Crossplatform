@@ -36,6 +36,11 @@ export interface TradeProduct {
   readonly isCompletable: boolean;
   readonly isCompleted: boolean;
   readonly isReserved: boolean;
+  readonly reservationScheduledAt?: string | null;
+  readonly reservationPlaceName?: string | null;
+  readonly reservationAddress?: string | null;
+  readonly reservationLatitude?: number | null;
+  readonly reservationLongitude?: number | null;
 }
 
 export interface ChatRoomWithProduct {

@@ -23,11 +23,18 @@ export const useMessageSync = ({
 }: UseMessageSyncProps) => {
   const queryClient = useQueryClient();
   const userIdRef = useRef<number | null>(null);
+  const pendingMessagesRef = useRef<ChatMessageResponse[]>([]);
+  const processMessageRef = useRef<
+    ((message: ChatMessageResponse, userId: number) => void) | undefined
+  >(undefined);
 
   useEffect(() => {
     getCurrentUserId()
       .then((id) => {
         userIdRef.current = id;
+        const queued = pendingMessagesRef.current;
+        pendingMessagesRef.current = [];
+        queued.forEach((queuedMessage) => processMessageRef.current?.(queuedMessage, id));
       })
       .catch((error) => {
         logger.error('Failed to get current user ID', error);
@@ -38,16 +45,14 @@ export const useMessageSync = ({
     if (chatRoomQueryKey) {
       queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
     }
-  }, [queryClient, chatRoomQueryKey]);
+    if (currentRoomId !== undefined) {
+      queryClient.invalidateQueries({ queryKey: ['chatRoomData', currentRoomId] });
+    }
+  }, [queryClient, chatRoomQueryKey, currentRoomId]);
 
-  const handleReceiveMessage = useCallback(
-    (message: ChatMessageResponse) => {
+  const processMessage = useCallback(
+    (message: ChatMessageResponse, userId: number) => {
       try {
-        if (!message || typeof message !== 'object') return;
-
-        const userId = userIdRef.current;
-        if (!userId) return;
-
         const correctedMessage = {
           ...message,
           isMine: message.senderId === userId,
@@ -140,6 +145,22 @@ export const useMessageSync = ({
       }
     },
     [queryClient, currentRoomId, chatRoomQueryKey, chatMessageQueryKey]
+  );
+  processMessageRef.current = processMessage;
+
+  const handleReceiveMessage = useCallback(
+    (message: ChatMessageResponse) => {
+      if (!message || typeof message !== 'object') return;
+
+      const userId = userIdRef.current;
+      if (!userId) {
+        pendingMessagesRef.current.push(message);
+        return;
+      }
+
+      processMessage(message, userId);
+    },
+    [processMessage]
   );
 
   const handleUpdateRoomList = useCallback(

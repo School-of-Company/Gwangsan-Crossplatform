@@ -18,7 +18,17 @@ const mockRequestTrade = requestTrade as jest.Mock;
 const mockMakeReservation = makeReservation as jest.Mock;
 const mockCancelReservation = cancelReservation as jest.Mock;
 
-beforeEach(() => jest.clearAllMocks());
+const reservationInput = {
+  scheduledAt: '2026-08-27T14:30:00',
+  placeName: '상무역 2번 출구',
+  address: '광주 서구 상무자유로',
+  latitude: 35.15,
+  longitude: 126.85,
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 const makeRoomData = (overrides: Record<string, any> = {}) => ({
   product: {
@@ -210,18 +220,26 @@ describe('useTradeHandlers', () => {
   });
 
   describe('handleReservation', () => {
-    it('성공 시 makeReservation을 호출하고 성공 Toast를 표시한다', async () => {
-      mockMakeReservation.mockResolvedValue({});
+    it('성공 시 전달받은 좌표로 makeReservation을 호출하고 성공 Toast를 표시한다', async () => {
+      mockMakeReservation.mockResolvedValue(undefined);
 
       const { result } = renderHookWithProviders(() =>
         useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
       );
 
       await act(async () => {
-        await result.current.handleReservation();
+        await result.current.handleReservation(reservationInput);
       });
 
-      expect(mockMakeReservation).toHaveBeenCalledWith({ productId: 1 });
+      expect(mockMakeReservation).toHaveBeenCalledWith({
+        productId: 1,
+        roomId: 1,
+        scheduledAt: reservationInput.scheduledAt,
+        placeName: reservationInput.placeName,
+        address: reservationInput.address,
+        latitude: 35.15,
+        longitude: 126.85,
+      });
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success', text1: '예약이 완료되었습니다!' })
       );
@@ -235,7 +253,7 @@ describe('useTradeHandlers', () => {
       );
 
       await act(async () => {
-        await result.current.handleReservation();
+        await result.current.handleReservation(reservationInput).catch(() => undefined);
       });
 
       expect(Toast.show).toHaveBeenCalledWith(
@@ -243,8 +261,22 @@ describe('useTradeHandlers', () => {
       );
     });
 
-    it('성공 시 캐시된 product.isReserved를 true로 갱신한다', async () => {
-      mockMakeReservation.mockResolvedValue({});
+    it('실패 시 에러를 다시 throw한다', async () => {
+      mockMakeReservation.mockRejectedValue(new Error('예약 실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      await act(async () => {
+        await expect(result.current.handleReservation(reservationInput)).rejects.toThrow(
+          '예약 실패'
+        );
+      });
+    });
+
+    it('성공 시 캐시된 product에 예약 정보를 갱신한다', async () => {
+      mockMakeReservation.mockResolvedValue(undefined);
 
       const { result, queryClient } = renderHookWithProviders(() =>
         useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
@@ -255,7 +287,7 @@ describe('useTradeHandlers', () => {
       });
 
       await act(async () => {
-        await result.current.handleReservation();
+        await result.current.handleReservation(reservationInput);
       });
 
       const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
@@ -263,6 +295,11 @@ describe('useTradeHandlers', () => {
         1,
       ]);
       expect(cached?.product.isReserved).toBe(true);
+      expect(cached?.product.reservationScheduledAt).toBe(reservationInput.scheduledAt);
+      expect(cached?.product.reservationPlaceName).toBe(reservationInput.placeName);
+      expect(cached?.product.reservationAddress).toBe(reservationInput.address);
+      expect(cached?.product.reservationLatitude).toBe(35.15);
+      expect(cached?.product.reservationLongitude).toBe(126.85);
     });
 
     it('실패 시 캐시된 product.isReserved를 갱신하지 않는다', async () => {
@@ -277,7 +314,7 @@ describe('useTradeHandlers', () => {
       });
 
       await act(async () => {
-        await result.current.handleReservation();
+        await result.current.handleReservation(reservationInput).catch(() => undefined);
       });
 
       const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
@@ -293,7 +330,7 @@ describe('useTradeHandlers', () => {
       );
 
       await act(async () => {
-        await result.current.handleReservation();
+        await result.current.handleReservation(reservationInput);
       });
 
       expect(mockMakeReservation).not.toHaveBeenCalled();
@@ -334,7 +371,7 @@ describe('useTradeHandlers', () => {
       );
     });
 
-    it('성공 시 캐시된 product.isReserved를 false로 갱신한다', async () => {
+    it('성공 시 캐시된 예약 정보를 초기화한다', async () => {
       mockCancelReservation.mockResolvedValue({});
 
       const { result, queryClient } = renderHookWithProviders(() =>
@@ -342,7 +379,15 @@ describe('useTradeHandlers', () => {
       );
 
       queryClient.setQueryData(['chatRoomData', 1], {
-        product: { id: 1, isReserved: true },
+        product: {
+          id: 1,
+          isReserved: true,
+          reservationScheduledAt: '2026-08-27T14:30:00',
+          reservationPlaceName: '상무역 2번 출구',
+          reservationAddress: '광주 서구 상무자유로',
+          reservationLatitude: 35.15,
+          reservationLongitude: 126.85,
+        },
       });
 
       await act(async () => {
@@ -354,6 +399,11 @@ describe('useTradeHandlers', () => {
         1,
       ]);
       expect(cached?.product.isReserved).toBe(false);
+      expect(cached?.product.reservationScheduledAt).toBeNull();
+      expect(cached?.product.reservationPlaceName).toBeNull();
+      expect(cached?.product.reservationAddress).toBeNull();
+      expect(cached?.product.reservationLatitude).toBeNull();
+      expect(cached?.product.reservationLongitude).toBeNull();
     });
 
     it('productId가 없으면 cancelReservation을 호출하지 않는다', async () => {
@@ -416,7 +466,7 @@ describe('useTradeHandlers', () => {
       );
 
       await act(async () => {
-        await result.current.handleReservation();
+        await result.current.handleReservation(reservationInput).catch(() => undefined);
       });
 
       expect(Toast.show).toHaveBeenCalledWith(

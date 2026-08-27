@@ -3,7 +3,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text, View, TouchableOpacity, ActivityIndicator, Keyboard } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
@@ -12,8 +12,10 @@ import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
+import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
+import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
@@ -21,6 +23,7 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,6 +33,7 @@ export default function ChatRoomPage() {
   const router = useRouter();
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
+  const [isReservationConfirmVisible, setIsReservationConfirmVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
@@ -53,28 +57,56 @@ export default function ChatRoomPage() {
   const { data: roomData } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
   const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
+  const isSeller = Boolean(roomData?.product?.isSeller);
+  const isReserved = Boolean(roomData?.product?.isReserved);
+  const productId = roomData?.product?.id;
 
-  const {
-    handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
-    hasTradeRequest,
-    shouldShowButtons,
-  } = useTradeHandlers({
+  // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
+  const { data: myReceivedReviews } = useQuery({
+    queryKey: ['reviews', 'receive', 'current'],
+    queryFn: getMyReceivedReview,
+    enabled: isTradeCompleted && !!myInfo,
+  });
+  const tradeReview = myReceivedReviews?.find((review) => review.productId === productId);
+
+  const handleProductPress = useCallback(() => {
+    if (!productId) return;
+    router.push(`/post/${productId}`);
+  }, [router, productId]);
+
+  const handleReviewLinkPress = useCallback(() => {
+    if (tradeReview) {
+      router.push(`/cancelTrade/${tradeReview.reviewId}`);
+      return;
+    }
+    if (myInfo?.memberId != null) {
+      router.push(`/reviews/${myInfo.memberId}`);
+    }
+  }, [router, tradeReview, myInfo]);
+
+  const { handleCancelReservation, hasTradeRequest, shouldShowButtons } = useTradeHandlers({
     roomId,
     roomData: roomData || null,
     otherUserInfo,
   });
 
-  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState } = useChatUIState({
-    roomId,
-    otherUserInfo,
-    hasTradeRequest,
-    shouldShowButtons,
-    handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
-  });
+  const handleOpenReservationConfirm = useCallback(() => {
+    setIsReservationConfirmVisible(true);
+  }, []);
+
+  const handleReservationConfirmProceed = useCallback(() => {
+    setIsReservationConfirmVisible(false);
+    router.push(`/chatting/${roomId}/reservation`);
+  }, [router, roomId]);
+
+  const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState, productInfoConfig } =
+    useChatUIState({
+      roomId,
+      otherUserInfo,
+      hasTradeRequest,
+      shouldShowButtons,
+      onOpenReservationModal: handleOpenReservationConfirm,
+    });
 
   const updatedComponentState = useMemo(
     () => ({
@@ -113,6 +145,10 @@ export default function ChatRoomPage() {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
       queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
+      Toast.show({
+        type: 'success',
+        text1: '게시물 작성자에게 거래를 요청했어요!',
+      });
     } catch (error) {
       logger.error('handleTradeRequest failed', error);
     }
@@ -162,6 +198,48 @@ export default function ChatRoomPage() {
     />
   );
 
+  const renderTradeCompletedInfo = () => (
+    <View testID="trade-completed-banner" className="items-end gap-0.5">
+      <Text className="shrink-0 text-label text-gray-700" numberOfLines={1}>
+        거래 완료
+      </Text>
+      {myInfo?.memberId != null && (
+        <TouchableOpacity testID="received-reviews-link" onPress={handleReviewLinkPress}>
+          <Text className="shrink-0 text-caption text-main-500" numberOfLines={1}>
+            받은 후기 보기
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const shouldShowTopTradeControl = menuConfig.shouldShowMenuButton && !isTradeCompleted;
+
+  const renderTopTradeControl = () =>
+    isSeller ? (
+      <TouchableOpacity
+        testID="trade-seller-button"
+        onPress={isReserved ? handleCancelReservation : handleOpenReservationConfirm}
+        className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+        <Text className="text-label font-medium text-white">
+          {isReserved ? '예약 취소' : '예약하기'}
+        </Text>
+      </TouchableOpacity>
+    ) : (
+      <TouchableOpacity
+        testID="trade-request-button"
+        onPress={handleMenuPress}
+        disabled={hasTradeRequest}
+        className={`shrink-0 rounded-lg px-5 py-2.5 ${
+          hasTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
+        }`}>
+        <Text
+          className={`text-label font-medium ${hasTradeRequest ? 'text-gray-500' : 'text-white'}`}>
+          거래요청
+        </Text>
+      </TouchableOpacity>
+    );
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -180,24 +258,26 @@ export default function ChatRoomPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-      <Header
-        headerTitle={updatedComponentState.headerTitle}
-        onMenuPress={handleMenuPress}
-        showMenuButton={menuConfig.shouldShowMenuButton}
-        connectionState={connectionState}
-      />
+      <Header headerTitle={updatedComponentState.headerTitle} connectionState={connectionState} />
 
-      {isTradeCompleted && (
-        <View
-          testID="trade-completed-banner"
-          className="flex-row items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-          <Text className="text-label text-gray-700">거래 완료</Text>
-          {myInfo?.memberId != null && (
-            <TouchableOpacity
-              testID="received-reviews-link"
-              onPress={() => router.push(`/reviews/${myInfo.memberId}`)}>
-              <Text className="text-label text-main-500">내가 받은 후기 보기</Text>
-            </TouchableOpacity>
+      {(productInfoConfig.shouldShow || isTradeCompleted) && (
+        <View className="bg-[#F3F4F5]">
+          {productInfoConfig.shouldShow ? (
+            <ChatRoomProductInfo
+              title={productInfoConfig.title}
+              gwangsan={productInfoConfig.gwangsan}
+              imageUrl={productInfoConfig.imageUrl}
+              trailing={
+                isTradeCompleted
+                  ? renderTradeCompletedInfo()
+                  : shouldShowTopTradeControl
+                    ? renderTopTradeControl()
+                    : undefined
+              }
+              onPress={productId ? handleProductPress : undefined}
+            />
+          ) : (
+            isTradeCompleted && <View className="px-4 py-3">{renderTradeCompletedInfo()}</View>
           )}
         </View>
       )}
@@ -227,6 +307,12 @@ export default function ChatRoomPage() {
         onClose={() => setIsTradeRequestModalVisible(false)}
         onTradeRequest={handleTradeRequest}
         isLoading={isTradeRequestLoading}
+      />
+
+      <ReservationConfirmModal
+        isVisible={isReservationConfirmVisible}
+        onClose={() => setIsReservationConfirmVisible(false)}
+        onConfirm={handleReservationConfirmProceed}
       />
 
       <ReviewsModal

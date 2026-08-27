@@ -25,8 +25,11 @@ jest.mock('~/widget/chat', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    MyMessage: ({ message }: any) => <Text testID={`my-message-${message.messageId}`} />,
+    MyMessage: ({ message, isLast }: any) => (
+      <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
+    ),
     OtherMessage: ({ message }: any) => <Text testID={`other-message-${message.messageId}`} />,
+    ChatDateDivider: ({ label }: any) => <Text testID="date-divider">{label}</Text>,
   };
 });
 
@@ -37,6 +40,9 @@ jest.mock('~/entity/chat', () => {
   const { Text } = require('react-native');
   return {
     TradeEmbed: ({ product }: any) => <Text testID={`trade-embed-${product.id}`} />,
+    formatMessageTime: (createdAt: string) => createdAt,
+    getMessageDateKey: (createdAt: string) => createdAt.slice(0, 10),
+    formatDateDividerLabel: (createdAt: string) => `날짜-${createdAt.slice(0, 10)}`,
   };
 });
 
@@ -108,8 +114,7 @@ describe('ChatRoomContent', () => {
           shouldShow: true,
           product,
           showButtons: true,
-          isLoading: false,
-          requestorNickname: '요청자',
+          otherPartyNickname: '요청자',
         }}
       />
     );
@@ -118,9 +123,10 @@ describe('ChatRoomContent', () => {
 
     expect(
       list.props.data.map(
-        (item: any) => `${item.type}-${item.data.messageId ?? item.data.product.id}`
+        (item: any) =>
+          `${item.type}-${item.data.messageId ?? item.data.product?.id ?? item.data.label}`
       )
-    ).toEqual(['message-1', 'trade-30', 'message-2']);
+    ).toEqual(['dateDivider-날짜-2026-05-28', 'message-1', 'trade-30', 'message-2']);
     expect(getByTestId('other-message-1')).toBeTruthy();
     expect(getByTestId('trade-embed-30')).toBeTruthy();
     expect(getByTestId('my-message-2')).toBeTruthy();
@@ -136,16 +142,16 @@ describe('ChatRoomContent', () => {
           shouldShow: true,
           product,
           showButtons: false,
-          isLoading: false,
-          requestorNickname: '상대방',
+          otherPartyNickname: '상대방',
         }}
       />
     );
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data).toHaveLength(1);
-    expect(list.props.data[0].type).toBe('trade');
+    expect(list.props.data).toHaveLength(2);
+    expect(list.props.data[0].type).toBe('dateDivider');
+    expect(list.props.data[1].type).toBe('trade');
     expect(getByTestId('trade-embed-50')).toBeTruthy();
   });
 
@@ -162,15 +168,32 @@ describe('ChatRoomContent', () => {
           shouldShow: true,
           product,
           showButtons: false,
-          isLoading: false,
-          requestorNickname: '상대방',
+          otherPartyNickname: '상대방',
         }}
       />
     );
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.keyExtractor(list.props.data[0])).toBe('m-7');
-    expect(list.props.keyExtractor(list.props.data[1])).toBe('t-8');
+    expect(list.props.keyExtractor(list.props.data[0])).toBe(`d-${message.createdAt}`);
+    expect(list.props.keyExtractor(list.props.data[1])).toBe('m-7');
+    expect(list.props.keyExtractor(list.props.data[2])).toBe('t-8');
+  });
+
+  it('내가 보낸 마지막 메시지에만 isLast를 전달한다', () => {
+    const messages = [
+      createMessage({ messageId: 1, isMine: true }),
+      createMessage({ messageId: 2, isMine: false }),
+      createMessage({ messageId: 3, isMine: true }),
+      createMessage({ messageId: 4, isMine: true }),
+    ];
+
+    const { getByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+    );
+
+    expect(getByTestId('my-message-1').props.children).toBe('');
+    expect(getByTestId('my-message-3').props.children).toBe('');
+    expect(getByTestId('my-message-4').props.children).toBe('last');
   });
 });

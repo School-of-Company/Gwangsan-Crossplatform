@@ -57,7 +57,7 @@ describe('useChatRooms', () => {
       expect(mockGetChatRooms).not.toHaveBeenCalled();
     });
 
-    it('unreadMessageCount가 있는 방을 먼저 정렬한다', async () => {
+    it('unreadMessageCount와 무관하게 최신 메시지 시간 순으로 정렬한다', async () => {
       mockGetChatRooms.mockResolvedValue([
         makeRoom({ roomId: 1, unreadMessageCount: 0, lastMessageTime: '2024-01-02T00:00:00Z' }),
         makeRoom({ roomId: 2, unreadMessageCount: 3, lastMessageTime: '2024-01-01T00:00:00Z' }),
@@ -67,10 +67,10 @@ describe('useChatRooms', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data?.[0].roomId).toBe(2);
+      expect(result.current.data?.[0].roomId).toBe(1);
     });
 
-    it('unreadMessageCount가 동일하면 최신 메시지 시간 순으로 정렬한다', async () => {
+    it('최신 메시지 시간 순으로 정렬한다', async () => {
       mockGetChatRooms.mockResolvedValue([
         makeRoom({ roomId: 1, unreadMessageCount: 0, lastMessageTime: '2024-01-01T00:00:00Z' }),
         makeRoom({ roomId: 2, unreadMessageCount: 0, lastMessageTime: '2024-01-02T00:00:00Z' }),

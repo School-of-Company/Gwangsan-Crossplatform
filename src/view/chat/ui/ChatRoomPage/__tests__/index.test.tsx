@@ -10,6 +10,7 @@ import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { createReview } from '~/entity/post/api/createReview';
+import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
 
@@ -64,6 +65,10 @@ jest.mock('~/entity/post/api/createReview', () => ({
   createReview: jest.fn(),
 }));
 
+jest.mock('~/view/reviews/api/getReviews', () => ({
+  getMyReceivedReview: jest.fn(),
+}));
+
 jest.mock('~/entity/post/ui/ReviewsModal', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
   return {
@@ -88,6 +93,21 @@ jest.mock('@/widget/chat/ui/ChatRoomHeader', () => ({
   ChatRoomHeader: () => {
     const { View } = require('react-native');
     return <View testID="chat-room-header" />;
+  },
+}));
+
+jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
+  ChatRoomProductInfo: ({ title, gwangsan, trailing, onPress }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    return (
+      <View testID="chat-room-product-info">
+        <TouchableOpacity testID="chat-room-product-info-press" onPress={onPress}>
+          <Text testID="chat-room-product-info-title">{title}</Text>
+          <Text testID="chat-room-product-info-gwangsan">{gwangsan}</Text>
+        </TouchableOpacity>
+        {trailing}
+      </View>
+    );
   },
 }));
 
@@ -123,18 +143,30 @@ jest.mock('@/widget/chat/ui/TradeRequestModal', () => ({
   },
 }));
 
-jest.mock('@/shared/ui/Header', () => ({
-  Header: ({ headerTitle, onMenuPress, showMenuButton, connectionState }: any) => {
+jest.mock('@/widget/chat/ui/ReservationConfirmModal', () => ({
+  ReservationConfirmModal: ({ isVisible, onClose, onConfirm }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
+    return (
+      <View testID="reservation-confirm-modal">
+        <Text testID="reservation-confirm-modal-visible">{String(isVisible)}</Text>
+        <TouchableOpacity testID="reservation-confirm-modal-confirm" onPress={onConfirm}>
+          <Text>confirm</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="reservation-confirm-modal-close" onPress={onClose}>
+          <Text>close</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  },
+}));
+
+jest.mock('@/shared/ui/Header', () => ({
+  Header: ({ headerTitle, connectionState }: any) => {
+    const { View, Text } = require('react-native');
     return (
       <View testID="header">
         <Text testID="header-title">{headerTitle}</Text>
         <Text testID="header-connection">{connectionState}</Text>
-        {showMenuButton && (
-          <TouchableOpacity testID="header-menu-button" onPress={onMenuPress}>
-            <Text>menu</Text>
-          </TouchableOpacity>
-        )}
       </View>
     );
   },
@@ -165,6 +197,7 @@ const mockUseChatUIState = useChatUIState as jest.Mock;
 const mockUseTradeRequest = useTradeRequest as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockCreateReview = createReview as jest.Mock;
+const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
 
 const mockMarkRoomAsRead = jest.fn().mockResolvedValue(undefined);
@@ -199,11 +232,12 @@ const makeChatUIStateReturn = (overrides = {}) => ({
     product: null,
     showButtons: false,
     isLoading: false,
-    requestorNickname: '나',
+    otherPartyNickname: '상대방',
   },
   menuConfig: { shouldShowMenuButton: true, isProductLoading: false, isGiverMode: false },
   tradeRequestInfo: { productId: 1, sellerId: 7 },
   componentState: { hasMessages: false, canSendMessage: true, headerTitle: '상대방' },
+  productInfoConfig: { shouldShow: true, title: '상품', gwangsan: 3000, imageUrl: undefined },
   ...overrides,
 });
 
@@ -225,6 +259,7 @@ beforeEach(() => {
   });
   mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: false } } });
   mockCreateReview.mockResolvedValue(true);
+  mockGetMyReceivedReview.mockResolvedValue([]);
   mockMarkRoomAsRead.mockClear().mockResolvedValue(undefined);
 });
 
@@ -250,6 +285,23 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('header-title').props.children).toBe('상대방');
+  });
+
+  it('productInfoConfig.shouldShow가 true이면 물품 정보를 계속 표시한다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('chat-room-product-info-title').props.children).toBe('상품');
+    expect(getByTestId('chat-room-product-info-gwangsan').props.children).toBe(3000);
+  });
+
+  it('productInfoConfig.shouldShow가 false이면 물품 정보를 표시하지 않는다', () => {
+    mockUseChatUIState.mockReturnValue(
+      makeChatUIStateReturn({ productInfoConfig: { shouldShow: false, title: '' } })
+    );
+
+    const { queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('chat-room-product-info')).toBeNull();
   });
 
   it('거래가 완료되지 않으면 완료 배너를 표시하지 않는다', () => {
@@ -280,11 +332,11 @@ describe('ChatRoomPage', () => {
     expect(queryByTestId('received-reviews-link')).toBeNull();
   });
 
-  it('메뉴 버튼을 누르면 거래 요청 모달이 열린다', () => {
+  it('거래요청 버튼을 누르면 거래 요청 모달이 열린다', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
-    fireEvent.press(getByTestId('header-menu-button'));
+    fireEvent.press(getByTestId('trade-request-button'));
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
   });
 
@@ -297,13 +349,85 @@ describe('ChatRoomPage', () => {
 
     const { getByTestId } = render(<ChatRoomPage />);
 
-    fireEvent.press(getByTestId('header-menu-button'));
+    fireEvent.press(getByTestId('trade-request-button'));
     fireEvent.press(getByTestId('trade-request-confirm'));
 
     await waitFor(() => expect(mockHandleTradeRequest).toHaveBeenCalled());
     await waitFor(() =>
       expect(getByTestId('trade-request-modal-visible').props.children).toBe('false')
     );
+    expect(mockToastShow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'success',
+        text1: '게시물 작성자에게 거래를 요청했어요!',
+      })
+    );
+  });
+
+  it('게시물 작성자에게는 예약하기 버튼이 노출되고, 누르면 예약 확인 바텀시트가 먼저 열린다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-request-button')).toBeNull();
+    expect(getByTestId('trade-seller-button')).toBeTruthy();
+
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('예약 확인 바텀시트에서 예약하기를 누르면 바텀시트가 닫히고 예약하기 페이지로 이동한다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+    fireEvent.press(getByTestId('reservation-confirm-modal-confirm'));
+
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
+    expect(mockRouterPush).toHaveBeenCalledWith('/chatting/10/reservation');
+  });
+
+  it('예약이 잡히면 게시물 작성자의 버튼이 예약 취소로 바뀌고 누르면 handleCancelReservation이 호출된다', () => {
+    const mockHandleCancelReservation = jest.fn();
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({ handleCancelReservation: mockHandleCancelReservation })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: true } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    const button = getByTestId('trade-seller-button');
+    expect(button).toHaveTextContent('예약 취소');
+
+    fireEvent.press(button);
+
+    expect(mockHandleCancelReservation).toHaveBeenCalled();
+  });
+
+  it('상대방은 이미 거래를 요청했다면 거래요청 버튼이 비활성화된다', () => {
+    mockUseTradeHandlers.mockReturnValue(makeTradeHandlersReturn({ hasTradeRequest: true }));
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('trade-request-button').props.accessibilityState.disabled).toBe(true);
+
+    fireEvent.press(getByTestId('trade-request-button'));
+
+    expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
   });
 
   it('거래 요청 실패 시 모달을 닫지 않고 에러를 로깅한다', async () => {
@@ -315,7 +439,7 @@ describe('ChatRoomPage', () => {
 
     const { getByTestId } = render(<ChatRoomPage />);
 
-    fireEvent.press(getByTestId('header-menu-button'));
+    fireEvent.press(getByTestId('trade-request-button'));
     fireEvent.press(getByTestId('trade-request-confirm'));
 
     await waitFor(() => expect(mockHandleTradeRequest).toHaveBeenCalled());

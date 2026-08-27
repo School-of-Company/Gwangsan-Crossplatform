@@ -1,5 +1,11 @@
 {
   "expo.jsEngine": "hermes",
   "EX_DEV_CLIENT_NETWORK_INSPECTOR": "true",
-  "ios.deploymentTarget": "16.4"
+  "ios.deploymentTarget": "18.0",
+  "expo.inlineModules.watchedDirectories": "[]",
+  "expo.inlineModules.xcodeProjectTargets": "{\"mainTarget\":\"app\",\"targets\":[]}",
+  "expo-image.disable-libdav1d": "false",
+  "ios.forceStaticLinking": "[]",
+  "apple.privacyManifestAggregationEnabled": "true",
+  "EXPO_USE_PRECOMPILED_MODULES": "true"
 }
