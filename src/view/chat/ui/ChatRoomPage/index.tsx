@@ -227,6 +227,18 @@ export default function ChatRoomPage() {
     </View>
   );
 
+  const shouldShowTradeRequestButton =
+    menuConfig.shouldShowMenuButton && !hasTradeRequest && !isTradeCompleted;
+
+  const renderTradeRequestButton = () => (
+    <TouchableOpacity
+      testID="trade-request-button"
+      onPress={handleMenuPress}
+      className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+      <Text className="text-label font-medium text-white">거래요청</Text>
+    </TouchableOpacity>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -245,12 +257,7 @@ export default function ChatRoomPage() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
-      <Header
-        headerTitle={updatedComponentState.headerTitle}
-        onMenuPress={handleMenuPress}
-        showMenuButton={menuConfig.shouldShowMenuButton}
-        connectionState={connectionState}
-      />
+      <Header headerTitle={updatedComponentState.headerTitle} connectionState={connectionState} />
 
       {(productInfoConfig.shouldShow || isTradeCompleted) && (
         <View className="bg-[#F3F4F5]">
@@ -259,7 +266,13 @@ export default function ChatRoomPage() {
               title={productInfoConfig.title}
               gwangsan={productInfoConfig.gwangsan}
               imageUrl={productInfoConfig.imageUrl}
-              trailing={isTradeCompleted && renderTradeCompletedInfo()}
+              trailing={
+                isTradeCompleted
+                  ? renderTradeCompletedInfo()
+                  : shouldShowTradeRequestButton
+                    ? renderTradeRequestButton()
+                    : undefined
+              }
               onPress={productId ? handleProductPress : undefined}
             />
           ) : (

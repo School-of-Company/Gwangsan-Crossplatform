@@ -12,9 +12,18 @@ import Icon from '@expo/vector-icons/Ionicons';
 interface OtherMessageProps {
   message: ChatMessageResponse;
   onProfilePress?: (userId: number) => void;
+  showProfile?: boolean;
+  isFollowedByGrouped?: boolean;
+  showTime?: boolean;
 }
 
-const OtherMessageComponent: React.FC<OtherMessageProps> = ({ message, onProfilePress }) => {
+const OtherMessageComponent: React.FC<OtherMessageProps> = ({
+  message,
+  onProfilePress,
+  showProfile = true,
+  isFollowedByGrouped = false,
+  showTime = true,
+}) => {
   const imageLoader = useImageLoader();
 
   const messageConfig: MessageRenderConfig = {
@@ -38,24 +47,32 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({ message, onProfile
   };
 
   return (
-    <View className="mb-4 items-start">
+    <View className={`items-start ${isFollowedByGrouped ? 'mb-1' : 'mb-4'}`}>
       <View className="flex-row items-start">
-        <TouchableOpacity
-          className="mr-2 h-8 w-8 items-center justify-center rounded-full bg-gray-300"
-          onPress={handleProfilePress}
-          disabled={!onProfilePress}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Icon name="person" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <TouchableOpacity onPress={handleProfilePress} disabled={!onProfilePress}>
-            <Text className="mb-1 text-xs text-gray-600">{message.senderNickname}</Text>
+        {showProfile ? (
+          <TouchableOpacity
+            className="mr-2 h-8 w-8 items-center justify-center rounded-full bg-gray-300"
+            onPress={handleProfilePress}
+            disabled={!onProfilePress}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Icon name="person" size={16} color="#9CA3AF" />
           </TouchableOpacity>
+        ) : (
+          <View className="mr-2 h-8 w-8" />
+        )}
+        <View className="flex-1">
+          {showProfile && (
+            <TouchableOpacity onPress={handleProfilePress} disabled={!onProfilePress}>
+              <Text className="mb-1 text-xs text-gray-600">{message.senderNickname}</Text>
+            </TouchableOpacity>
+          )}
           <View className="flex-row items-end">
             <View className="max-w-[280px] rounded-[100px] bg-gray-100 px-4 py-3">{content}</View>
-            <Text className="ml-2 text-xs text-gray-500">
-              {formatMessageTime(message.createdAt)}
-            </Text>
+            {showTime && (
+              <Text className="ml-2 text-xs text-gray-500">
+                {formatMessageTime(message.createdAt)}
+              </Text>
+            )}
           </View>
         </View>
       </View>
