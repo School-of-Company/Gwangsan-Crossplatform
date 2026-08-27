@@ -65,7 +65,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({
             <Text className="text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
           )}
         </View>
-        <View className="max-w-[280px] rounded-[100px] bg-orange-400 px-4 py-3">{content}</View>
+        <View className="max-w-[280px] rounded-3xl bg-orange-400 px-4 py-3">{content}</View>
       </View>
 
       {message.status === MESSAGE_STATUS.FAILED && (

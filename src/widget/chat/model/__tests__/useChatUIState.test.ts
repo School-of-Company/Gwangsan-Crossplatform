@@ -3,7 +3,6 @@ import { useChatUIState } from '../useChatUIState';
 
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { useGetItem } from '~/entity/post/model/useGetItem';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 
 jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
@@ -13,22 +12,16 @@ jest.mock('~/entity/post/model/useGetItem', () => ({
   useGetItem: jest.fn(),
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
-  useGetMyInformation: jest.fn(),
-}));
-
 jest.mock('~/widget/write/model/mode', () => ({
   MODE: { GIVER: 'GIVER', RECEIVER: 'RECEIVER' },
 }));
 
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockUseGetItem = useGetItem as jest.Mock;
-const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
 
-const setupMocks = (overrides: { roomData?: any; productDetail?: any; myInfo?: any } = {}) => {
+const setupMocks = (overrides: { roomData?: any; productDetail?: any } = {}) => {
   mockUseChatRoomData.mockReturnValue({ data: overrides.roomData ?? null });
   mockUseGetItem.mockReturnValue({ data: overrides.productDetail ?? null, isLoading: false });
-  mockUseGetMyInformation.mockReturnValue({ data: overrides.myInfo ?? { nickname: '내닉네임' } });
 };
 
 beforeEach(() => {
@@ -41,8 +34,6 @@ const defaultProps = {
   otherUserInfo: { nickname: '상대방', id: 42 },
   hasTradeRequest: false,
   shouldShowButtons: false,
-  handleTradeAccept: jest.fn(),
-  handleCancelReservation: jest.fn(),
   onOpenReservationModal: jest.fn(),
 };
 
@@ -120,53 +111,44 @@ describe('useChatUIState', () => {
       expect(result.current.tradeEmbedConfig.shouldShow).toBe(false);
     });
 
-    it('shouldShowButtons=false이면 핸들러들이 undefined이다', () => {
+    it('shouldShowButtons 값을 그대로 반영한다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, shouldShowButtons: true })
+      );
+
+      expect(result.current.tradeEmbedConfig.showButtons).toBe(true);
+    });
+
+    it('shouldShowButtons=true이면 otherPartyNickname이 otherUserInfo.nickname이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, shouldShowButtons: true })
+      );
+
+      expect(result.current.tradeEmbedConfig.otherPartyNickname).toBe('상대방');
+    });
+
+    it('shouldShowButtons=false여도 otherPartyNickname이 otherUserInfo.nickname이다', () => {
       const { result } = renderHookWithProviders(() =>
         useChatUIState({ ...defaultProps, shouldShowButtons: false })
       );
 
-      expect(result.current.tradeEmbedConfig.onTradeAccept).toBeUndefined();
+      expect(result.current.tradeEmbedConfig.otherPartyNickname).toBe('상대방');
+    });
+
+    it('shouldShowButtons=false이면 onOpenReservationModal이 undefined이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, shouldShowButtons: false })
+      );
+
       expect(result.current.tradeEmbedConfig.onOpenReservationModal).toBeUndefined();
-      expect(result.current.tradeEmbedConfig.onCancelReservation).toBeUndefined();
     });
 
-    it('shouldShowButtons=true이면 핸들러들이 제공된다', () => {
+    it('shouldShowButtons=true이면 onOpenReservationModal이 제공된다', () => {
       const { result } = renderHookWithProviders(() =>
         useChatUIState({ ...defaultProps, shouldShowButtons: true })
       );
 
-      expect(result.current.tradeEmbedConfig.onTradeAccept).toBeDefined();
       expect(result.current.tradeEmbedConfig.onOpenReservationModal).toBeDefined();
-      expect(result.current.tradeEmbedConfig.onCancelReservation).toBeDefined();
-    });
-
-    it('shouldShowButtons=true이면 requestorNickname이 otherUserInfo.nickname이다', () => {
-      const { result } = renderHookWithProviders(() =>
-        useChatUIState({ ...defaultProps, shouldShowButtons: true })
-      );
-
-      expect(result.current.tradeEmbedConfig.requestorNickname).toBe('상대방');
-    });
-
-    it('shouldShowButtons=false이면 requestorNickname이 myInfo.nickname이다', () => {
-      setupMocks({ myInfo: { nickname: '나의닉네임' } });
-
-      const { result } = renderHookWithProviders(() =>
-        useChatUIState({ ...defaultProps, shouldShowButtons: false })
-      );
-
-      expect(result.current.tradeEmbedConfig.requestorNickname).toBe('나의닉네임');
-    });
-
-    it('shouldShowButtons=false이고 myInfo가 없으면 requestorNickname이 "나"이다', () => {
-      setupMocks({ myInfo: null });
-      mockUseGetMyInformation.mockReturnValue({ data: null });
-
-      const { result } = renderHookWithProviders(() =>
-        useChatUIState({ ...defaultProps, shouldShowButtons: false })
-      );
-
-      expect(result.current.tradeEmbedConfig.requestorNickname).toBe('나');
     });
   });
 

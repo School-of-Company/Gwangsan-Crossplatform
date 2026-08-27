@@ -114,8 +114,7 @@ describe('ChatRoomContent', () => {
           shouldShow: true,
           product,
           showButtons: true,
-          isLoading: false,
-          requestorNickname: '요청자',
+          otherPartyNickname: '요청자',
         }}
       />
     );
@@ -143,8 +142,7 @@ describe('ChatRoomContent', () => {
           shouldShow: true,
           product,
           showButtons: false,
-          isLoading: false,
-          requestorNickname: '상대방',
+          otherPartyNickname: '상대방',
         }}
       />
     );
@@ -170,8 +168,7 @@ describe('ChatRoomContent', () => {
           shouldShow: true,
           product,
           showButtons: false,
-          isLoading: false,
-          requestorNickname: '상대방',
+          otherPartyNickname: '상대방',
         }}
       />
     );

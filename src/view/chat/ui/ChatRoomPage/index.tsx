@@ -15,7 +15,6 @@ import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
 import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
 import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
-import { ReservationModal } from '@/widget/chat/ui/ReservationModal';
 import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
@@ -24,7 +23,6 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
-import type { ReservationConfirmPayload } from '@/widget/chat/ui/ReservationModal';
 import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
 
 export default function ChatRoomPage() {
@@ -36,8 +34,6 @@ export default function ChatRoomPage() {
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReservationConfirmVisible, setIsReservationConfirmVisible] = useState(false);
-  const [isReservationModalVisible, setIsReservationModalVisible] = useState(false);
-  const [isReservationLoading, setIsReservationLoading] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
@@ -88,21 +84,11 @@ export default function ChatRoomPage() {
     }
   }, [router, tradeReview, myInfo]);
 
-  const {
-    handleTradeAccept,
-    handleReservation,
-    handleCancelReservation,
-    hasTradeRequest,
-    shouldShowButtons,
-  } = useTradeHandlers({
+  const { handleCancelReservation, hasTradeRequest, shouldShowButtons } = useTradeHandlers({
     roomId,
     roomData: roomData || null,
     otherUserInfo,
   });
-
-  const handleOpenReservationModal = useCallback(() => {
-    setIsReservationModalVisible(true);
-  }, []);
 
   const handleOpenReservationConfirm = useCallback(() => {
     setIsReservationConfirmVisible(true);
@@ -110,23 +96,8 @@ export default function ChatRoomPage() {
 
   const handleReservationConfirmProceed = useCallback(() => {
     setIsReservationConfirmVisible(false);
-    setIsReservationModalVisible(true);
-  }, []);
-
-  const handleReservationConfirm = useCallback(
-    async (payload: ReservationConfirmPayload) => {
-      try {
-        setIsReservationLoading(true);
-        await handleReservation(payload);
-        setIsReservationModalVisible(false);
-      } catch (error) {
-        logger.error('handleReservationConfirm failed', error);
-      } finally {
-        setIsReservationLoading(false);
-      }
-    },
-    [handleReservation]
-  );
+    router.push(`/chatting/${roomId}/reservation`);
+  }, [router, roomId]);
 
   const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState, productInfoConfig } =
     useChatUIState({
@@ -134,9 +105,7 @@ export default function ChatRoomPage() {
       otherUserInfo,
       hasTradeRequest,
       shouldShowButtons,
-      handleTradeAccept,
-      handleCancelReservation,
-      onOpenReservationModal: handleOpenReservationModal,
+      onOpenReservationModal: handleOpenReservationConfirm,
     });
 
   const updatedComponentState = useMemo(
@@ -179,7 +148,6 @@ export default function ChatRoomPage() {
       Toast.show({
         type: 'success',
         text1: '게시물 작성자에게 거래를 요청했어요!',
-        text2: '예약을 잡을까요?',
       });
     } catch (error) {
       logger.error('handleTradeRequest failed', error);
@@ -251,10 +219,10 @@ export default function ChatRoomPage() {
     isSeller ? (
       <TouchableOpacity
         testID="trade-seller-button"
-        onPress={isReserved ? handleTradeAccept : handleOpenReservationConfirm}
+        onPress={isReserved ? handleCancelReservation : handleOpenReservationConfirm}
         className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
         <Text className="text-label font-medium text-white">
-          {isReserved ? '거래완료' : '예약하기'}
+          {isReserved ? '예약 취소' : '예약하기'}
         </Text>
       </TouchableOpacity>
     ) : (
@@ -345,13 +313,6 @@ export default function ChatRoomPage() {
         isVisible={isReservationConfirmVisible}
         onClose={() => setIsReservationConfirmVisible(false)}
         onConfirm={handleReservationConfirmProceed}
-      />
-
-      <ReservationModal
-        isVisible={isReservationModalVisible}
-        onClose={() => setIsReservationModalVisible(false)}
-        onConfirm={handleReservationConfirm}
-        isLoading={isReservationLoading}
       />
 
       <ReviewsModal

@@ -1,20 +1,13 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
-import { BottomSheetModalWrapper, Button, Dropdown, Input } from '~/shared/ui';
-
-export interface ReservationConfirmPayload {
-  readonly scheduledAt: string;
-  readonly placeName: string;
-  readonly address: string;
-}
-
-interface ReservationModalProps {
-  readonly isVisible: boolean;
-  readonly onClose: () => void;
-  readonly onConfirm: (payload: ReservationConfirmPayload) => void;
-  readonly onAnimationComplete?: () => void;
-  readonly isLoading?: boolean;
-}
+import { useCallback, useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, View } from 'react-native';
+import { Button, Dropdown, Header, Input } from '~/shared/ui';
+import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
+import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
+import { logger } from '~/shared/lib/logger';
+import type { RoomId } from '~/shared/types/chatType';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const DATE_OPTION_COUNT = 14;
@@ -49,17 +42,24 @@ const buildTimeOptions = () => {
   return options;
 };
 
-const ReservationModalComponent: React.FC<ReservationModalProps> = ({
-  isVisible,
-  onClose,
-  onConfirm,
-  onAnimationComplete,
-  isLoading = false,
-}) => {
+export default function ReservationPage() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const roomId = Number(id) as RoomId;
+  const router = useRouter();
+
+  const { data: roomData } = useChatRoomData({ roomId });
+  const { otherUserInfo } = useChatMessages({ roomId });
+  const { handleReservation } = useTradeHandlers({
+    roomId,
+    roomData: roomData || null,
+    otherUserInfo,
+  });
+
   const [date, setDate] = useState<string | undefined>(undefined);
   const [time, setTime] = useState<string | undefined>(undefined);
   const [place, setPlace] = useState('');
   const [address, setAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const dateOptions = useMemo(() => buildDateOptions(), []);
   const timeOptions = useMemo(() => buildTimeOptions(), []);
@@ -67,37 +67,35 @@ const ReservationModalComponent: React.FC<ReservationModalProps> = ({
   const canConfirm =
     Boolean(date) && Boolean(time) && place.trim().length > 0 && address.trim().length > 0;
 
-  const resetFields = useCallback(() => {
-    setDate(undefined);
-    setTime(undefined);
-    setPlace('');
-    setAddress('');
-  }, []);
-
-  const handleClose = useCallback(() => {
-    resetFields();
-    onClose();
-  }, [onClose, resetFields]);
-
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback(async () => {
     if (!date || !time || !canConfirm) return;
-    onConfirm({
-      scheduledAt: `${date}T${time}:00`,
-      placeName: place.trim(),
-      address: address.trim(),
-    });
-    resetFields();
-  }, [date, time, place, address, canConfirm, onConfirm, resetFields]);
+
+    try {
+      setIsLoading(true);
+      await handleReservation({
+        scheduledAt: `${date}T${time}:00`,
+        placeName: place.trim(),
+        address: address.trim(),
+      });
+      router.back();
+    } catch (error) {
+      logger.error('handleReservationConfirm failed', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [date, time, place, address, canConfirm, handleReservation, router]);
 
   return (
-    <BottomSheetModalWrapper
-      isVisible={isVisible}
-      onClose={handleClose}
-      onAnimationComplete={onAnimationComplete}
-      title="예약 정보 입력"
-      height={640}>
-      <View className="flex-1 justify-between gap-4">
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+      <Header headerTitle="예약하기" />
+      <View className="flex-1 justify-between gap-4 px-4 py-4">
         <View className="gap-4">
+          {otherUserInfo.nickname ? (
+            <Text className="titleMedium text-gray-900">
+              {otherUserInfo.nickname}님과의 거래 약속
+            </Text>
+          ) : null}
+
           <Text className="text-sm text-gray-600">
             거래 상대방과 만날 날짜, 시간, 장소를 선택해주세요. 예약 확정 시 현재 위치가 만날 장소의
             좌표로 함께 저장됩니다.
@@ -136,23 +134,14 @@ const ReservationModalComponent: React.FC<ReservationModalProps> = ({
           />
         </View>
 
-        <View className="gap-3">
-          <Button
-            variant="primary"
-            onPress={handleConfirm}
-            disabled={!canConfirm || isLoading}
-            width="w-full">
-            <Text className="text-white">{isLoading ? '예약 중...' : '예약하기'}</Text>
-          </Button>
-
-          <Button variant="neutral" onPress={handleClose} disabled={isLoading} width="w-full">
-            <Text className="text-gray-900">닫기</Text>
-          </Button>
-        </View>
+        <Button
+          variant="primary"
+          onPress={handleConfirm}
+          disabled={!canConfirm || isLoading}
+          width="w-full">
+          <Text className="text-white">{isLoading ? '예약 중...' : '예약하기'}</Text>
+        </Button>
       </View>
-    </BottomSheetModalWrapper>
+    </SafeAreaView>
   );
-};
-
-export const ReservationModal = memo(ReservationModalComponent);
-ReservationModal.displayName = 'ReservationModal';
+}

@@ -14,12 +14,9 @@ import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 interface TradeEmbedConfig {
   readonly shouldShow: boolean;
   readonly product?: TradeProduct | null;
-  readonly onTradeAccept?: () => Promise<void>;
-  readonly onOpenReservationModal?: () => void;
-  readonly onCancelReservation?: () => void;
   readonly showButtons: boolean;
-  readonly isLoading: boolean;
-  readonly requestorNickname: string;
+  readonly otherPartyNickname: string;
+  readonly onOpenReservationModal?: () => void;
 }
 
 type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
@@ -184,15 +181,12 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       return (
         <TradeEmbed
           product={config.product}
-          onTradeAccept={config.onTradeAccept}
-          onOpenReservationModal={config.onOpenReservationModal}
-          onCancelReservation={config.onCancelReservation}
           showButtons={config.showButtons}
-          isLoading={config.isLoading}
-          requestorNickname={config.requestorNickname}
+          otherPartyNickname={config.otherPartyNickname}
           alignment={config.showButtons ? 'left' : 'right'}
           onReviewButtonPress={onReviewButtonPress}
           showReviewButton={showReviewButton}
+          onOpenReservationModal={config.onOpenReservationModal}
         />
       );
     },

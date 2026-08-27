@@ -67,7 +67,7 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({
             </TouchableOpacity>
           )}
           <View className="flex-row items-end">
-            <View className="max-w-[280px] rounded-[100px] bg-gray-100 px-4 py-3">{content}</View>
+            <View className="max-w-[280px] rounded-3xl bg-gray-100 px-4 py-3">{content}</View>
             {showTime && (
               <Text className="ml-2 text-xs text-gray-500">
                 {formatMessageTime(message.createdAt)}

@@ -11,7 +11,6 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { createReview } from '~/entity/post/api/createReview';
 import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
-import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
 
@@ -144,32 +143,6 @@ jest.mock('@/widget/chat/ui/TradeRequestModal', () => ({
   },
 }));
 
-jest.mock('@/widget/chat/ui/ReservationModal', () => ({
-  ReservationModal: ({ isVisible, onClose, onConfirm, isLoading }: any) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
-    return (
-      <View testID="reservation-modal">
-        <Text testID="reservation-modal-visible">{String(isVisible)}</Text>
-        <Text testID="reservation-modal-loading">{String(isLoading)}</Text>
-        <TouchableOpacity
-          testID="reservation-modal-confirm"
-          onPress={() =>
-            onConfirm({
-              scheduledAt: '2026-08-28T14:00:00',
-              placeName: '상무역 2번 출구',
-              address: '광주 서구 상무자유로',
-            })
-          }>
-          <Text>confirm</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="reservation-modal-close" onPress={onClose}>
-          <Text>close</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  },
-}));
-
 jest.mock('@/widget/chat/ui/ReservationConfirmModal', () => ({
   ReservationConfirmModal: ({ isVisible, onClose, onConfirm }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
@@ -259,7 +232,7 @@ const makeChatUIStateReturn = (overrides = {}) => ({
     product: null,
     showButtons: false,
     isLoading: false,
-    requestorNickname: '나',
+    otherPartyNickname: '상대방',
   },
   menuConfig: { shouldShowMenuButton: true, isProductLoading: false, isGiverMode: false },
   tradeRequestInfo: { productId: 1, sellerId: 7 },
@@ -367,45 +340,6 @@ describe('ChatRoomPage', () => {
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
   });
 
-  it('예약 확인 시 handleReservation이 예약 정보와 함께 호출되고 모달이 닫힌다', async () => {
-    const mockHandleReservation = jest.fn().mockResolvedValue(undefined);
-    mockUseTradeHandlers.mockReturnValue(
-      makeTradeHandlersReturn({ handleReservation: mockHandleReservation })
-    );
-
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
-
-    fireEvent.press(getByTestId('reservation-modal-confirm'));
-
-    await waitFor(() =>
-      expect(mockHandleReservation).toHaveBeenCalledWith({
-        scheduledAt: '2026-08-28T14:00:00',
-        placeName: '상무역 2번 출구',
-        address: '광주 서구 상무자유로',
-      })
-    );
-    await waitFor(() =>
-      expect(getByTestId('reservation-modal-visible').props.children).toBe('false')
-    );
-  });
-
-  it('예약 실패 시 모달을 닫지 않고 에러를 로깅한다', async () => {
-    const mockHandleReservation = jest.fn().mockRejectedValue(new Error('예약 실패'));
-    mockUseTradeHandlers.mockReturnValue(
-      makeTradeHandlersReturn({ handleReservation: mockHandleReservation })
-    );
-
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    fireEvent.press(getByTestId('reservation-modal-confirm'));
-
-    await waitFor(() => expect(mockHandleReservation).toHaveBeenCalled());
-    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
-    expect(logger.error).toHaveBeenCalledWith('handleReservationConfirm failed', expect.any(Error));
-  });
-
   it('거래 요청 확인 시 handleTradeRequest가 호출되고 모달이 닫힌다', async () => {
     const mockHandleTradeRequest = jest.fn().mockResolvedValue(undefined);
     mockUseTradeRequest.mockReturnValue({
@@ -426,7 +360,6 @@ describe('ChatRoomPage', () => {
       expect.objectContaining({
         type: 'success',
         text1: '게시물 작성자에게 거래를 요청했어요!',
-        text2: '예약을 잡을까요?',
       })
     );
   });
@@ -442,23 +375,31 @@ describe('ChatRoomPage', () => {
     expect(getByTestId('trade-seller-button')).toBeTruthy();
 
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
-    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
 
     fireEvent.press(getByTestId('trade-seller-button'));
 
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
-    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
 
+  it('예약 확인 바텀시트에서 예약하기를 누르면 바텀시트가 닫히고 예약하기 페이지로 이동한다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-seller-button'));
     fireEvent.press(getByTestId('reservation-confirm-modal-confirm'));
 
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
-    expect(getByTestId('reservation-modal-visible').props.children).toBe('true');
+    expect(mockRouterPush).toHaveBeenCalledWith('/chatting/10/reservation');
   });
 
-  it('예약이 잡히면 게시물 작성자의 버튼이 거래완료로 바뀌고 누르면 handleTradeAccept가 호출된다', () => {
-    const mockHandleTradeAccept = jest.fn();
+  it('예약이 잡히면 게시물 작성자의 버튼이 예약 취소로 바뀌고 누르면 handleCancelReservation이 호출된다', () => {
+    const mockHandleCancelReservation = jest.fn();
     mockUseTradeHandlers.mockReturnValue(
-      makeTradeHandlersReturn({ handleTradeAccept: mockHandleTradeAccept })
+      makeTradeHandlersReturn({ handleCancelReservation: mockHandleCancelReservation })
     );
     mockUseChatRoomData.mockReturnValue({
       data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: true } },
@@ -467,11 +408,11 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     const button = getByTestId('trade-seller-button');
-    expect(button).toHaveTextContent('거래완료');
+    expect(button).toHaveTextContent('예약 취소');
 
     fireEvent.press(button);
 
-    expect(mockHandleTradeAccept).toHaveBeenCalled();
+    expect(mockHandleCancelReservation).toHaveBeenCalled();
   });
 
   it('상대방은 이미 거래를 요청했다면 거래요청 버튼이 비활성화된다', () => {
