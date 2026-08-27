@@ -15,6 +15,12 @@ export default ({ config }: { config: ExpoConfig }) => {
     android: {
       ...androidConfig,
       ...(hasGoogleServices ? { googleServicesFile } : {}),
+      config: {
+        ...androidConfig.config,
+        googleMaps: {
+          apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY,
+        },
+      },
     },
     plugins: [
       ...(config.plugins ?? []),

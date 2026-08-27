@@ -24,6 +24,10 @@ interface BottomSheetModalWrapperProps {
   height?: number;
   hasHeader?: boolean;
   showCloseButton?: boolean;
+  // 시트 내부에 세로 스크롤/드래그 콘텐츠(휠 피커 등)가 있을 때, 해당 콘텐츠를
+  // 터치하는 동안 true로 세팅해 아래로 끌어 닫는 제스처가 그 터치를 가로채지
+  // 않게 한다. 값이 바뀌어도 리렌더가 필요 없도록 ref로 전달한다.
+  dragLockRef?: React.MutableRefObject<boolean>;
 }
 
 // iOS 시트 프레젠테이션에서 쓰이는 곡선
@@ -42,6 +46,7 @@ export function BottomSheetModalWrapper({
   height,
   hasHeader = true,
   showCloseButton = true,
+  dragLockRef,
 }: BottomSheetModalWrapperProps) {
   const id = useId();
   const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
@@ -64,7 +69,9 @@ export function BottomSheetModalWrapper({
         onStartShouldSetPanResponder: () => false,
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
+          !dragLockRef?.current &&
+          gestureState.dy > 8 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
         onPanResponderGrant: () => {
           translateY.stopAnimation((value) => {
             dragStartValue.current = value;
@@ -91,7 +98,7 @@ export function BottomSheetModalWrapper({
         },
         onPanResponderTerminationRequest: () => false,
       }),
-    [modalHeight, onClose, translateY]
+    [modalHeight, onClose, translateY, dragLockRef]
   );
 
   useEffect(() => {

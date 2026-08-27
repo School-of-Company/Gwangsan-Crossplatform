@@ -16,6 +16,14 @@
       "expo-router",
       "expo-image",
       [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "18.0"
+          }
+        }
+      ],
+      [
         "expo-navigation-bar",
         {
           "enforceContrast": false,
@@ -49,6 +57,7 @@
           "locationWhenInUsePermission": "거래 예약 장소의 좌표를 기록하기 위해 현재 위치에 접근합니다."
         }
       ],
+      "expo-maps",
       [
         "@sentry/react-native/expo",
         {

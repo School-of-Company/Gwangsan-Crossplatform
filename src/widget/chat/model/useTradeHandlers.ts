@@ -4,7 +4,6 @@ import Toast from 'react-native-toast-message';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
-import { getCurrentLocation } from '~/shared/lib/getCurrentLocation';
 import type { RoomId } from '~/shared/types/chatType';
 
 interface UseTradeHandlersParams {
@@ -23,6 +22,8 @@ export interface ReservationInput {
   readonly scheduledAt: string;
   readonly placeName: string;
   readonly address: string;
+  readonly latitude: number;
+  readonly longitude: number;
 }
 
 interface UseTradeHandlersReturn {
@@ -80,12 +81,10 @@ export const useTradeHandlers = ({
   }, [roomData, otherUserInfo.id, patchProduct]);
 
   const handleReservation = useCallback(
-    async ({ scheduledAt, placeName, address }: ReservationInput) => {
+    async ({ scheduledAt, placeName, address, latitude, longitude }: ReservationInput) => {
       if (!roomData?.product?.id) return;
 
       try {
-        const { latitude, longitude } = await getCurrentLocation();
-
         await makeReservation({
           productId: roomData.product.id,
           roomId: Number(roomId),

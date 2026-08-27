@@ -1,45 +1,27 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, View } from 'react-native';
-import { Button, Dropdown, Header, Input } from '~/shared/ui';
+import { Text, TouchableOpacity, View } from 'react-native';
+import Icon from '@expo/vector-icons/Ionicons';
+import { Button, Header } from '~/shared/ui';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
+import { ReservationCalendarSheet } from '~/view/chat/ui/ReservationCalendarSheet';
+import { ReservationTimeSheet } from '~/view/chat/ui/ReservationTimeSheet';
+import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
 import { logger } from '~/shared/lib/logger';
 import type { RoomId } from '~/shared/types/chatType';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const DATE_OPTION_COUNT = 14;
-const TIME_START_HOUR = 9;
-const TIME_END_HOUR = 21;
+const DATE_OPTION_COUNT = 21;
 
-const buildDateOptions = () => {
-  const options: { value: string; label: string }[] = [];
-  const today = new Date();
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-  for (let i = 0; i < DATE_OPTION_COUNT; i += 1) {
-    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
-    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const label = `${date.getMonth() + 1}월 ${date.getDate()}일 (${WEEKDAY_LABELS[date.getDay()]})${i === 0 ? ' · 오늘' : ''}`;
-    options.push({ value, label });
-  }
-
-  return options;
-};
-
-const buildTimeOptions = () => {
-  const options: { value: string; label: string }[] = [];
-
-  for (let hour = TIME_START_HOUR; hour <= TIME_END_HOUR; hour += 1) {
-    for (const minute of [0, 30]) {
-      if (hour === TIME_END_HOUR && minute === 30) continue;
-      const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-      options.push({ value, label: value });
-    }
-  }
-
-  return options;
+const formatDateLabel = (value: string) => {
+  const date = new Date(`${value}T00:00:00`);
+  const isToday = startOfDay(date).getTime() === startOfDay(new Date()).getTime();
+  return `${date.getMonth() + 1}월 ${date.getDate()}일 (${WEEKDAY_LABELS[date.getDay()]})${isToday ? ' · 오늘' : ''}`;
 };
 
 export default function ReservationPage() {
@@ -57,33 +39,60 @@ export default function ReservationPage() {
 
   const [date, setDate] = useState<string | undefined>(undefined);
   const [time, setTime] = useState<string | undefined>(undefined);
-  const [place, setPlace] = useState('');
-  const [address, setAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+  const [isTimeSheetVisible, setIsTimeSheetVisible] = useState(false);
 
-  const dateOptions = useMemo(() => buildDateOptions(), []);
-  const timeOptions = useMemo(() => buildTimeOptions(), []);
+  const {
+    latitude,
+    longitude,
+    address,
+    placeName,
+    reset: resetLocation,
+  } = useReservationLocationStore();
 
-  const canConfirm =
-    Boolean(date) && Boolean(time) && place.trim().length > 0 && address.trim().length > 0;
+  const minDate = useMemo(() => startOfDay(new Date()), []);
+  const maxDate = useMemo(() => {
+    const today = new Date();
+    return startOfDay(
+      new Date(today.getFullYear(), today.getMonth(), today.getDate() + DATE_OPTION_COUNT - 1)
+    );
+  }, []);
+
+  const hasLocation = latitude !== null && longitude !== null && placeName.trim().length > 0;
+  const canConfirm = Boolean(date) && Boolean(time) && hasLocation;
 
   const handleConfirm = useCallback(async () => {
-    if (!date || !time || !canConfirm) return;
+    if (!date || !time || !canConfirm || latitude === null || longitude === null) return;
 
     try {
       setIsLoading(true);
       await handleReservation({
         scheduledAt: `${date}T${time}:00`,
-        placeName: place.trim(),
+        placeName: placeName.trim(),
         address: address.trim(),
+        latitude,
+        longitude,
       });
+      resetLocation();
       router.back();
     } catch (error) {
       logger.error('handleReservationConfirm failed', error);
     } finally {
       setIsLoading(false);
     }
-  }, [date, time, place, address, canConfirm, handleReservation, router]);
+  }, [
+    date,
+    time,
+    canConfirm,
+    latitude,
+    longitude,
+    placeName,
+    address,
+    handleReservation,
+    resetLocation,
+    router,
+  ]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
@@ -96,42 +105,42 @@ export default function ReservationPage() {
             </Text>
           ) : null}
 
-          <Text className="text-sm text-gray-600">
-            거래 상대방과 만날 날짜, 시간, 장소를 선택해주세요. 예약 확정 시 현재 위치가 만날 장소의
-            좌표로 함께 저장됩니다.
-          </Text>
+          <View className="w-full gap-2">
+            <Text className="text-label text-black">날짜</Text>
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-xl border border-gray-400 px-4 py-5"
+              onPress={() => setIsCalendarVisible(true)}>
+              <Text>{date ? formatDateLabel(date) : '날짜를 선택해주세요'}</Text>
+              <Icon name="calendar-outline" size={18} color="#000" />
+            </TouchableOpacity>
+          </View>
 
-          <Dropdown
-            label="날짜"
-            items={dateOptions}
-            selectedItem={date}
-            onSelect={setDate}
-            placeholder="날짜를 선택해주세요"
-          />
+          <View className="w-full gap-2">
+            <Text className="text-label text-black">시간</Text>
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-xl border border-gray-400 px-4 py-5"
+              onPress={() => setIsTimeSheetVisible(true)}>
+              <Text>{time || '시간을 선택해주세요'}</Text>
+              <Icon name="time-outline" size={18} color="#000" />
+            </TouchableOpacity>
+          </View>
 
-          <Dropdown
-            label="시간"
-            items={timeOptions}
-            selectedItem={time}
-            onSelect={setTime}
-            placeholder="시간을 선택해주세요"
-          />
-
-          <Input
-            label="장소"
-            value={place}
-            onChangeText={setPlace}
-            placeholder="예: 상무역 2번 출구"
-            returnKeyType="next"
-          />
-
-          <Input
-            label="주소"
-            value={address}
-            onChangeText={setAddress}
-            placeholder="예: 광주 서구 상무자유로 20"
-            returnKeyType="done"
-          />
+          <View className="w-full gap-2">
+            <Text className="text-label text-black">장소</Text>
+            <TouchableOpacity
+              className="flex-row items-center justify-between rounded-xl border border-gray-400 px-4 py-5"
+              onPress={() => router.push(`/chatting/${id}/reservation/map`)}>
+              <View className="flex-1 gap-1">
+                <Text numberOfLines={1}>{placeName || '장소를 선택해주세요'}</Text>
+                {hasLocation ? (
+                  <Text className="caption text-gray-500" numberOfLines={1}>
+                    {address}
+                  </Text>
+                ) : null}
+              </View>
+              <Icon name="location-outline" size={18} color="#000" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <Button
@@ -142,6 +151,22 @@ export default function ReservationPage() {
           <Text className="text-white">{isLoading ? '예약 중...' : '예약하기'}</Text>
         </Button>
       </View>
+
+      <ReservationCalendarSheet
+        isVisible={isCalendarVisible}
+        onClose={() => setIsCalendarVisible(false)}
+        selectedDate={date}
+        onSelect={setDate}
+        minDate={minDate}
+        maxDate={maxDate}
+      />
+
+      <ReservationTimeSheet
+        isVisible={isTimeSheetVisible}
+        onClose={() => setIsTimeSheetVisible(false)}
+        selectedTime={time}
+        onSelect={setTime}
+      />
     </SafeAreaView>
   );
 }

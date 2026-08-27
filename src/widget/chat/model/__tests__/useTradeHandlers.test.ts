@@ -4,13 +4,11 @@ import { useTradeHandlers } from '../useTradeHandlers';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
-import { getCurrentLocation } from '~/shared/lib/getCurrentLocation';
 import Toast from 'react-native-toast-message';
 
 jest.mock('~/entity/post/api/requestTrade', () => ({ requestTrade: jest.fn() }));
 jest.mock('~/entity/post/api/makeReservation', () => ({ makeReservation: jest.fn() }));
 jest.mock('~/entity/post/api/cancelReservation', () => ({ cancelReservation: jest.fn() }));
-jest.mock('~/shared/lib/getCurrentLocation', () => ({ getCurrentLocation: jest.fn() }));
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -19,17 +17,17 @@ jest.mock('react-native-toast-message', () => ({
 const mockRequestTrade = requestTrade as jest.Mock;
 const mockMakeReservation = makeReservation as jest.Mock;
 const mockCancelReservation = cancelReservation as jest.Mock;
-const mockGetCurrentLocation = getCurrentLocation as jest.Mock;
 
 const reservationInput = {
   scheduledAt: '2026-08-27T14:30:00',
   placeName: '상무역 2번 출구',
   address: '광주 서구 상무자유로',
+  latitude: 35.15,
+  longitude: 126.85,
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockGetCurrentLocation.mockResolvedValue({ latitude: 35.15, longitude: 126.85 });
 });
 
 const makeRoomData = (overrides: Record<string, any> = {}) => ({
@@ -222,7 +220,7 @@ describe('useTradeHandlers', () => {
   });
 
   describe('handleReservation', () => {
-    it('성공 시 현재 위치를 조회해 makeReservation을 호출하고 성공 Toast를 표시한다', async () => {
+    it('성공 시 전달받은 좌표로 makeReservation을 호출하고 성공 Toast를 표시한다', async () => {
       mockMakeReservation.mockResolvedValue(undefined);
 
       const { result } = renderHookWithProviders(() =>
@@ -233,7 +231,6 @@ describe('useTradeHandlers', () => {
         await result.current.handleReservation(reservationInput);
       });
 
-      expect(mockGetCurrentLocation).toHaveBeenCalled();
       expect(mockMakeReservation).toHaveBeenCalledWith({
         productId: 1,
         roomId: 1,
@@ -276,22 +273,6 @@ describe('useTradeHandlers', () => {
           '예약 실패'
         );
       });
-    });
-
-    it('위치 조회 실패 시 makeReservation을 호출하지 않고 에러를 throw한다', async () => {
-      mockGetCurrentLocation.mockRejectedValue(new Error('위치 권한이 필요합니다.'));
-
-      const { result } = renderHookWithProviders(() =>
-        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
-      );
-
-      await act(async () => {
-        await expect(result.current.handleReservation(reservationInput)).rejects.toThrow(
-          '위치 권한이 필요합니다.'
-        );
-      });
-
-      expect(mockMakeReservation).not.toHaveBeenCalled();
     });
 
     it('성공 시 캐시된 product에 예약 정보를 갱신한다', async () => {
