@@ -2,6 +2,11 @@ import { ImageType } from './imageType';
 import { ModeType } from './mode';
 import { ProductType } from './type';
 
+export interface TradeCounterpart {
+  memberId: number;
+  nickname: string;
+}
+
 export interface PostType {
   id: number;
   type: ProductType;
@@ -14,4 +19,6 @@ export interface PostType {
   isCompleted: boolean;
   isReserved: boolean;
   images?: ImageType[];
+  seller?: TradeCounterpart;
+  buyer?: TradeCounterpart;
 }

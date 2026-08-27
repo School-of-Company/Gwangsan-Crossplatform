@@ -11,6 +11,8 @@ export default function Post({
   isReserved,
   imageUrls = [],
   images = [],
+  seller,
+  buyer,
 }: PostType) {
   const router = useRouter();
 
@@ -78,6 +80,16 @@ export default function Post({
         <Text className={`text-sm text-gray-600 ${isTemporary ? 'opacity-70' : ''}`}>
           {gwangsan} 광산
         </Text>
+        {seller && (
+          <Text testID="post-seller" className="text-xs text-gray-500">
+            판매자: {seller.nickname}
+          </Text>
+        )}
+        {buyer && (
+          <Text testID="post-buyer" className="text-xs text-gray-500">
+            구매자: {buyer.nickname}
+          </Text>
+        )}
         {isTemporary && <Text className="mt-1 text-xs text-gray-400">업로드 중...</Text>}
       </View>
     </TouchableOpacity>
