@@ -11,6 +11,7 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { createReview } from '~/entity/post/api/createReview';
 import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
+import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
 
@@ -144,15 +145,20 @@ jest.mock('@/widget/chat/ui/TradeRequestModal', () => ({
 }));
 
 jest.mock('@/widget/chat/ui/ReservationModal', () => ({
-  ReservationModal: ({ isVisible, onClose, onConfirm }: any) => {
+  ReservationModal: ({ isVisible, onClose, onConfirm, isLoading }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="reservation-modal">
         <Text testID="reservation-modal-visible">{String(isVisible)}</Text>
+        <Text testID="reservation-modal-loading">{String(isLoading)}</Text>
         <TouchableOpacity
           testID="reservation-modal-confirm"
           onPress={() =>
-            onConfirm({ date: '2026-08-28', time: '14:00', place: '상무역 2번 출구' })
+            onConfirm({
+              scheduledAt: '2026-08-28T14:00:00',
+              placeName: '상무역 2번 출구',
+              address: '광주 서구 상무자유로',
+            })
           }>
           <Text>confirm</Text>
         </TouchableOpacity>
@@ -349,7 +355,7 @@ describe('ChatRoomPage', () => {
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
   });
 
-  it('예약 확인 시 handleReservation이 호출되고 모달이 닫힌다', async () => {
+  it('예약 확인 시 handleReservation이 예약 정보와 함께 호출되고 모달이 닫힌다', async () => {
     const mockHandleReservation = jest.fn().mockResolvedValue(undefined);
     mockUseTradeHandlers.mockReturnValue(
       makeTradeHandlersReturn({ handleReservation: mockHandleReservation })
@@ -361,10 +367,31 @@ describe('ChatRoomPage', () => {
 
     fireEvent.press(getByTestId('reservation-modal-confirm'));
 
-    await waitFor(() => expect(mockHandleReservation).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(mockHandleReservation).toHaveBeenCalledWith({
+        scheduledAt: '2026-08-28T14:00:00',
+        placeName: '상무역 2번 출구',
+        address: '광주 서구 상무자유로',
+      })
+    );
     await waitFor(() =>
       expect(getByTestId('reservation-modal-visible').props.children).toBe('false')
     );
+  });
+
+  it('예약 실패 시 모달을 닫지 않고 에러를 로깅한다', async () => {
+    const mockHandleReservation = jest.fn().mockRejectedValue(new Error('예약 실패'));
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({ handleReservation: mockHandleReservation })
+    );
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('reservation-modal-confirm'));
+
+    await waitFor(() => expect(mockHandleReservation).toHaveBeenCalled());
+    expect(getByTestId('reservation-modal-visible').props.children).toBe('false');
+    expect(logger.error).toHaveBeenCalledWith('handleReservationConfirm failed', expect.any(Error));
   });
 
   it('거래 요청 확인 시 handleTradeRequest가 호출되고 모달이 닫힌다', async () => {
