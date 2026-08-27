@@ -2,16 +2,17 @@ import React, { memo, useCallback, useState } from 'react';
 import { View, Text, Image, ActivityIndicator } from 'react-native';
 import { Card, Button } from '~/shared/ui';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
-import { useReservationDraftStore } from '~/shared/store/useReservationDraftStore';
 import { logger } from '~/shared/lib/logger';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-const formatReservationDate = (isoDate: string) => {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  if (!year || !month || !day) return isoDate;
+const formatReservationSchedule = (isoDateTime: string) => {
+  const [datePart, timePart] = isoDateTime.split('T');
+  const [year, month, day] = (datePart || '').split('-').map(Number);
+  if (!year || !month || !day) return isoDateTime;
   const date = new Date(year, month - 1, day);
-  return `${month}월 ${day}일 (${WEEKDAY_LABELS[date.getDay()]})`;
+  const time = timePart ? timePart.slice(0, 5) : '';
+  return `${month}월 ${day}일 (${WEEKDAY_LABELS[date.getDay()]}) ${time}`.trim();
 };
 
 export interface TradeEmbedProps {
@@ -40,7 +41,6 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
   showReviewButton = false,
 }) => {
   const [localLoading, setLocalLoading] = useState(false);
-  const reservationDraft = useReservationDraftStore((state) => state.drafts[product.id]);
 
   const handleTradeAccept = useCallback(async () => {
     if (!onTradeAccept || localLoading || isLoading) return;
@@ -72,8 +72,10 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
 
   const alignmentClass = alignment === 'right' ? 'self-end' : 'self-start';
 
-  const reservationDetailLabel = reservationDraft
-    ? `${formatReservationDate(reservationDraft.date)} · ${reservationDraft.time} · ${reservationDraft.place}`
+  const reservationDetailLabel = product.reservationScheduledAt
+    ? [formatReservationSchedule(product.reservationScheduledAt), product.reservationPlaceName]
+        .filter(Boolean)
+        .join(' · ')
     : null;
 
   return (

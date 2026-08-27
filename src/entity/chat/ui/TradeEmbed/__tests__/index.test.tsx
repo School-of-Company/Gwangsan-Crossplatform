@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { TradeEmbed } from '../index';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
 import { logger } from '~/shared/lib/logger';
-import { useReservationDraftStore } from '~/shared/store/useReservationDraftStore';
 
 jest.mock('~/shared/lib/logger', () => ({
   logger: {
@@ -180,21 +179,20 @@ describe('TradeEmbed', () => {
     await waitFor(() => expect(onCancelReservation).toHaveBeenCalledTimes(1));
   });
 
-  it('예약 중이고 예약 정보가 저장되어 있으면 날짜/시간/장소를 함께 보여준다', () => {
-    useReservationDraftStore.getState().setDraft(100, {
-      date: '2026-08-28',
-      time: '14:00',
-      place: '상무역 2번 출구',
-    });
-
+  it('예약 중이고 서버에서 예약 정보를 내려주면 날짜/시간/장소를 함께 보여준다', () => {
     const { getByTestId } = render(
-      <TradeEmbed product={createProduct({ isReserved: true })} showButtons={false} />
+      <TradeEmbed
+        product={createProduct({
+          isReserved: true,
+          reservationScheduledAt: '2026-08-28T14:00:00',
+          reservationPlaceName: '상무역 2번 출구',
+        })}
+        showButtons={false}
+      />
     );
 
     expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
     expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
-
-    act(() => useReservationDraftStore.getState().clearDraft(100));
   });
 
   it('거래 완료하기를 누르면 onTradeAccept를 호출한다', async () => {
