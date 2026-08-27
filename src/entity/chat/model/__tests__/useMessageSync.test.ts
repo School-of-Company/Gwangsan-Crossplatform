@@ -94,7 +94,14 @@ describe('useMessageSync', () => {
       expect(mockGetCurrentUserId).toHaveBeenCalledTimes(1);
     });
 
-    it('userId가 초기화되기 전에는 메시지를 처리하지 않는다', () => {
+    it('userId가 초기화되기 전에 수신한 메시지는 유실하지 않고 큐에 저장했다가 확인 후 반영한다', async () => {
+      let resolveUserId: (id: number) => void = () => {};
+      mockGetCurrentUserId.mockReturnValue(
+        new Promise<number>((resolve) => {
+          resolveUserId = resolve;
+        })
+      );
+
       const rendered = renderHookWithProviders(() =>
         useMessageSync({
           currentRoomId: ROOM_ID,
@@ -108,8 +115,19 @@ describe('useMessageSync', () => {
         rendered.result.current.handleReceiveMessage(makeMessage());
       });
 
+      // userId 확인 전에는 아직 반영되지 않는다
+      expect(rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)).toHaveLength(
+        0
+      );
+
+      await act(async () => {
+        resolveUserId(MY_USER_ID);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
       const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
-      expect(cached).toHaveLength(0);
+      expect(cached).toHaveLength(1);
     });
 
     it('getCurrentUserId 실패 시 메시지를 처리하지 않는다', async () => {
@@ -129,7 +147,7 @@ describe('useMessageSync', () => {
   });
 
   describe('handleConnect', () => {
-    it('chatRoomQueryKey를 invalidate한다', async () => {
+    it('chatRoomQueryKey와 현재 방의 chatRoomData를 invalidate한다', async () => {
       const { result, queryClient } = await renderSync();
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -138,9 +156,10 @@ describe('useMessageSync', () => {
       });
 
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chatRoomData', ROOM_ID] });
     });
 
-    it('chatRoomQueryKey가 없으면 invalidate하지 않는다', async () => {
+    it('chatRoomQueryKey가 없어도 currentRoomId의 chatRoomData는 invalidate한다', async () => {
       const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
       await act(async () => {});
       const invalidateSpy = jest.spyOn(rendered.queryClient, 'invalidateQueries');
@@ -149,7 +168,23 @@ describe('useMessageSync', () => {
         rendered.result.current.handleConnect();
       });
 
-      expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chatRoomData', ROOM_ID] });
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('currentRoomId가 없으면 chatRoomData를 invalidate하지 않는다', async () => {
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
+      );
+      await act(async () => {});
+      const invalidateSpy = jest.spyOn(rendered.queryClient, 'invalidateQueries');
+
+      act(() => {
+        rendered.result.current.handleConnect();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
     });
   });
 
