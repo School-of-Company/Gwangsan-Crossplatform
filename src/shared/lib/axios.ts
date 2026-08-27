@@ -96,7 +96,7 @@ instance.interceptors.response.use(
         try {
           const token = await refreshPromise;
           originalRequest.headers.Authorization = `Bearer ${token}`;
-          return instance(originalRequest);
+          return await instance(originalRequest);
         } catch (refreshError) {
           return Promise.reject(refreshError);
         }
@@ -126,16 +126,29 @@ instance.interceptors.response.use(
       try {
         const newAccessToken = await refreshPromise;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return instance(originalRequest);
+        return await instance(originalRequest);
       } catch (refreshError) {
-        Sentry.captureException(refreshError, {
-          extra: {
-            context: 'token_refresh_failed',
-            url: originalRequest.url,
-            errorMessage:
-              refreshError instanceof Error ? refreshError.message : String(refreshError),
-          },
-        });
+        const isMissingRefreshToken =
+          refreshError instanceof Error && refreshError.message === 'No refresh token';
+
+        if (isMissingRefreshToken) {
+          // 이미 로그아웃되어 리프레시 토큰이 없는 상태에서의 잔여 요청 401은
+          // 예상된 흐름이므로 Sentry 예외로 남기지 않고 breadcrumb만 남긴다.
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'Token refresh skipped: no refresh token available',
+            level: 'info',
+          });
+        } else {
+          Sentry.captureException(refreshError, {
+            extra: {
+              context: 'token_refresh_failed',
+              url: originalRequest.url,
+              errorMessage:
+                refreshError instanceof Error ? refreshError.message : String(refreshError),
+            },
+          });
+        }
 
         const isNetworkOrTimeoutFailure =
           axios.isAxiosError(refreshError) && refreshError.response === undefined;

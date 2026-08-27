@@ -151,7 +151,7 @@ describe('response interceptor', () => {
     await expect(instance.get('/auth-reissue-401')).rejects.toThrow();
   });
 
-  it('refreshToken이 없으면 토큰을 초기화하고 로그인으로 이동한다', async () => {
+  it('refreshToken이 없으면 Sentry 예외 없이(breadcrumb만 남기고) 토큰을 초기화하고 로그인으로 이동한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue(null);
     mockClearAuthTokens.mockResolvedValue(undefined);
@@ -165,7 +165,14 @@ describe('response interceptor', () => {
 
     await expect(instance.get('/no-refresh-token')).rejects.toThrow();
 
-    expect(mockSentry.captureException).toHaveBeenCalled();
+    expect(mockSentry.captureException).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'auth',
+        level: 'info',
+        message: expect.stringContaining('no refresh token'),
+      })
+    );
     expect(mockClearAuthTokens).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
@@ -356,6 +363,31 @@ describe('response interceptor', () => {
     expect(mockClearAuthTokens).not.toHaveBeenCalled();
     expect(queryClient.clear).not.toHaveBeenCalled();
     expect(mockRouter.replace).not.toHaveBeenCalledWith('/signin');
+  });
+
+  it('토큰 갱신 후 재시도 요청이 다시 401이면 로그인으로 이동한다', async () => {
+    mockGetAccessToken.mockResolvedValue('old-token');
+    mockGetRefreshToken.mockResolvedValue('refresh-token');
+    mockSetData.mockResolvedValue(undefined);
+    mockClearAuthTokens.mockResolvedValue(undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const queryClient = new QueryClient();
+    jest.spyOn(queryClient, 'clear');
+    setQueryClientInstance(queryClient);
+
+    server.use(
+      http.get(`${BASE}/still-unauthorized`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${BASE}/auth/reissue`, () =>
+        HttpResponse.json({ accessToken: 'new-but-invalid-token' })
+      )
+    );
+
+    await expect(instance.get('/still-unauthorized')).rejects.toThrow();
+
+    expect(mockClearAuthTokens).toHaveBeenCalled();
+    expect(queryClient.clear).toHaveBeenCalled();
+    expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
   });
 
   it('동시 401 발생 시 토큰 갱신 실패하면 두 번째 요청도 reject된다', async () => {
