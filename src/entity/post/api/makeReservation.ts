@@ -3,20 +3,20 @@ import { toAppError } from '~/shared/lib/errorHandler';
 
 export interface MakeReservationRequest {
   readonly productId: number;
+  readonly roomId: number;
+  readonly scheduledAt: string;
+  readonly placeName: string;
+  readonly address: string;
+  readonly latitude: number;
+  readonly longitude: number;
 }
 
-export interface MakeReservationResponse {
-  readonly message?: string;
-}
-
-export const makeReservation = async (
-  data: MakeReservationRequest
-): Promise<MakeReservationResponse> => {
+export const makeReservation = async ({
+  productId,
+  ...body
+}: MakeReservationRequest): Promise<void> => {
   try {
-    const response = await instance.patch<MakeReservationResponse>(
-      `/post/reservation/${data.productId}`
-    );
-    return response.data;
+    await instance.patch(`/post/reservation/${productId}`, body);
   } catch (error) {
     throw toAppError(error);
   }
