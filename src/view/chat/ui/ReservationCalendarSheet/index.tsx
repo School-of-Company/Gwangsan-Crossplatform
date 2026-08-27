@@ -73,7 +73,12 @@ export function ReservationCalendarSheet({
   };
 
   return (
-    <BottomSheetModalWrapper isVisible={isVisible} onClose={onClose} title="날짜 선택" height={500}>
+    <BottomSheetModalWrapper
+      isVisible={isVisible}
+      onClose={onClose}
+      title="날짜 선택"
+      height={500}
+      showCloseButton={false}>
       <View className="flex-1 gap-4">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={handlePrevMonth} disabled={!canGoPrev} hitSlop={8}>

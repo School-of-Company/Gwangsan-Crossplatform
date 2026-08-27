@@ -5,7 +5,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
@@ -16,6 +16,8 @@ const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_COUNT;
 const SIDE_PADDING = ITEM_HEIGHT * Math.floor(VISIBLE_COUNT / 2);
 // 손을 뗄 때 속도를 살짝 반영해 목표 인덱스를 앞으로 밀어준다 (플릭 시 관성 느낌)
 const VELOCITY_PROJECTION = 0.15;
+// 정착 애니메이션 — 기계적으로 딱 멈추지 않고 스프링처럼 자연스럽게 감속하며 안착시킨다
+const SETTLE_SPRING_CONFIG = { damping: 26, stiffness: 260, mass: 0.6 };
 
 const PERIOD_ITEMS = ['오전', '오후'] as const;
 const HOUR_ITEMS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -71,23 +73,20 @@ function WheelColumn<T>({ items, initialIndex, onChangeIndex, renderLabel }: Whe
     () =>
       Gesture.Pan()
         .onStart(() => {
-          console.log('[wheel-debug] gesture onStart');
           // eslint-disable-next-line react-hooks/immutability -- Reanimated SharedValue: .value assignment is the intended API
           startOffset.value = offset.value;
         })
         .onUpdate((e) => {
-          console.log('[wheel-debug] gesture onUpdate translationY=', e.translationY);
           const next = startOffset.value - e.translationY;
           // eslint-disable-next-line react-hooks/immutability -- Reanimated SharedValue: .value assignment is the intended API
           offset.value = Math.min(Math.max(next, 0), maxOffset);
         })
         .onEnd((e) => {
-          console.log('[wheel-debug] gesture onEnd velocityY=', e.velocityY);
           const projected = offset.value - e.velocityY * VELOCITY_PROJECTION;
           const clamped = Math.min(Math.max(projected, 0), maxOffset);
           const targetIndex = Math.round(clamped / ITEM_HEIGHT);
           // eslint-disable-next-line react-hooks/immutability -- Reanimated SharedValue: .value assignment is the intended API
-          offset.value = withTiming(targetIndex * ITEM_HEIGHT, { duration: 200 });
+          offset.value = withSpring(targetIndex * ITEM_HEIGHT, SETTLE_SPRING_CONFIG);
           runOnJS(commitIndex)(targetIndex);
         }),
     [maxOffset, offset, startOffset, commitIndex]
@@ -131,7 +130,7 @@ function TimeWheels({ initial, onConfirm }: TimeWheelsProps) {
   };
 
   return (
-    <View className="flex-1 gap-6">
+    <View className="flex-1 gap-4">
       <View style={{ height: PICKER_HEIGHT }} className="relative">
         <View
           pointerEvents="none"
@@ -199,7 +198,7 @@ export function ReservationTimeSheet({
       isVisible={isVisible}
       onClose={onClose}
       title="시작 시간 선택"
-      height={PICKER_HEIGHT + 200}>
+      height={PICKER_HEIGHT + 220}>
       {isVisible ? <TimeWheels initial={initial} onConfirm={handleConfirm} /> : null}
     </BottomSheetModalWrapper>
   );

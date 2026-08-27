@@ -1,18 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { AppleMaps, GoogleMaps } from 'expo-maps';
+import { AppleMaps } from 'expo-maps';
 import type { CameraPosition, Coordinates } from 'expo-maps';
-import * as Location from 'expo-location';
 import Icon from '@expo/vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
 import { Button, Header } from '~/shared/ui';
 import { getCurrentLocation } from '~/shared/lib/getCurrentLocation';
 import { reverseGeocode } from '~/shared/lib/reverseGeocode';
+import { searchPlaces, type KakaoPlace } from '~/shared/api/kakaoLocalSearch';
 import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
 import { logger } from '~/shared/lib/logger';
 import { ReservationPlaceNameSheet } from '~/view/chat/ui/ReservationPlaceNameSheet';
+import { KakaoMapWebView } from '~/view/chat/ui/ReservationMapPage/KakaoMapWebView';
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 // 광산구청 좌표 — 지도의 기준(초기) 위치
 const DEFAULT_CENTER = { latitude: 35.1397, longitude: 126.7938 };
@@ -40,6 +51,8 @@ export function ReservationMapPage() {
     mapRef.current = instance;
   }, []);
   const centerCoordinateRef = useRef<SelectedCoordinate | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequestIdRef = useRef(0);
 
   const [cameraCenter, setCameraCenter] = useState<SelectedCoordinate | null>(null);
   const [address, setAddress] = useState('');
@@ -47,6 +60,7 @@ export function ReservationMapPage() {
   const [isPlaceNameSheetVisible, setIsPlaceNameSheetVisible] = useState(false);
   const [placeNameDraft, setPlaceNameDraft] = useState(storedPlaceName);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<KakaoPlace[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
@@ -71,34 +85,54 @@ export function ReservationMapPage() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
+
   const handleCameraMove = useCallback((event: { coordinates: Coordinates }) => {
     const { latitude, longitude } = event.coordinates;
     if (latitude === undefined || longitude === undefined) return;
     centerCoordinateRef.current = { latitude, longitude };
   }, []);
 
-  const handleSearch = useCallback(async () => {
-    const query = searchQuery.trim();
-    if (!query) return;
+  const handleChangeSearchQuery = useCallback((text: string) => {
+    setSearchQuery(text);
 
-    try {
-      setIsSearching(true);
-      const [result] = await Location.geocodeAsync(query);
-      if (!result) {
-        Toast.show({ type: 'error', text1: '검색 결과가 없습니다.' });
-        return;
-      }
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
-      const coordinate = { latitude: result.latitude, longitude: result.longitude };
-      centerCoordinateRef.current = coordinate;
-      mapRef.current?.setCameraPosition({ coordinates: coordinate, zoom: 16 });
-    } catch (error) {
-      logger.error('geocodeAsync failed', error);
-      Toast.show({ type: 'error', text1: '장소 검색에 실패했습니다.' });
-    } finally {
-      setIsSearching(false);
+    const query = text.trim();
+    if (!query) {
+      setSuggestions([]);
+      return;
     }
-  }, [searchQuery]);
+
+    searchTimeoutRef.current = setTimeout(() => {
+      const requestId = (searchRequestIdRef.current += 1);
+      setIsSearching(true);
+      searchPlaces(query)
+        .then((results) => {
+          if (searchRequestIdRef.current === requestId) setSuggestions(results);
+        })
+        .catch((error) => {
+          logger.error('searchPlaces failed', error);
+          if (searchRequestIdRef.current === requestId) setSuggestions([]);
+        })
+        .finally(() => {
+          if (searchRequestIdRef.current === requestId) setIsSearching(false);
+        });
+    }, SEARCH_DEBOUNCE_MS);
+  }, []);
+
+  const handleSelectSuggestion = useCallback((place: KakaoPlace) => {
+    const coordinate = { latitude: Number(place.y), longitude: Number(place.x) };
+    centerCoordinateRef.current = coordinate;
+    mapRef.current?.setCameraPosition({ coordinates: coordinate, zoom: 17 });
+    setSearchQuery(place.place_name);
+    setSuggestions([]);
+    Keyboard.dismiss();
+  }, []);
 
   const handleNext = useCallback(async () => {
     const coordinate = centerCoordinateRef.current;
@@ -136,14 +170,32 @@ export function ReservationMapPage() {
           <TextInput
             className="flex-1 text-body5 text-gray-900"
             value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
+            onChangeText={handleChangeSearchQuery}
             placeholder="장소나 주소로 검색"
             returnKeyType="search"
-            editable={!isSearching}
           />
           {isSearching ? <ActivityIndicator size="small" /> : null}
         </View>
+
+        {suggestions.length > 0 ? (
+          <View className="mt-2 max-h-60 rounded-xl border border-gray-400">
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {suggestions.map((place) => (
+                <TouchableOpacity
+                  key={place.id}
+                  className="border-b border-gray-100 px-4 py-3 last:border-b-0"
+                  onPress={() => handleSelectSuggestion(place)}>
+                  <Text className="text-body5 text-gray-900" numberOfLines={1}>
+                    {place.place_name}
+                  </Text>
+                  <Text className="caption text-gray-500" numberOfLines={1}>
+                    {place.road_address_name || place.address_name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
 
       <View className="flex-1">
@@ -156,10 +208,9 @@ export function ReservationMapPage() {
               onCameraMove={handleCameraMove}
             />
           ) : (
-            <GoogleMaps.View
+            <KakaoMapWebView
               ref={assignMapRef}
-              style={{ flex: 1 }}
-              cameraPosition={{ coordinates: cameraCenter, zoom: 15 }}
+              initialCenter={cameraCenter}
               onCameraMove={handleCameraMove}
             />
           )

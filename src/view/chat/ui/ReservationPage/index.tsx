@@ -95,7 +95,7 @@ export default function ReservationPage() {
   ]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
       <Header headerTitle="예약하기" />
       <View className="flex-1 justify-between gap-4 px-4 py-4">
         <View className="gap-4">
