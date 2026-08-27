@@ -99,4 +99,30 @@ describe('Post', () => {
 
     expect(queryByText(/^\+\d+/)).toBeNull();
   });
+
+  it('seller가 있으면 판매자 닉네임을 표시한다', () => {
+    const seller = { memberId: 1, nickname: '홍길동' };
+    const { getByTestId } = render(<Post {...makePost({ seller })} />);
+
+    expect(getByTestId('post-seller')).toHaveTextContent('판매자: 홍길동');
+  });
+
+  it('seller가 없으면 판매자 정보를 표시하지 않는다', () => {
+    const { queryByTestId } = render(<Post {...makePost()} />);
+
+    expect(queryByTestId('post-seller')).toBeNull();
+  });
+
+  it('buyer가 있으면 구매자 닉네임을 표시한다', () => {
+    const buyer = { memberId: 2, nickname: '김철수' };
+    const { getByTestId } = render(<Post {...makePost({ buyer })} />);
+
+    expect(getByTestId('post-buyer')).toHaveTextContent('구매자: 김철수');
+  });
+
+  it('buyer가 없으면 구매자 정보를 표시하지 않는다', () => {
+    const { queryByTestId } = render(<Post {...makePost()} />);
+
+    expect(queryByTestId('post-buyer')).toBeNull();
+  });
 });
