@@ -24,14 +24,22 @@ function createAnimationBuilderMock() {
     'stiffness',
     'withInitialValues',
     'withCallback',
+    'reduceMotion',
   ].forEach((method) => {
     builder[method] = () => builder;
   });
   return builder;
 }
 
+const ReduceMotion = {
+  System: 'system',
+  Always: 'always',
+  Never: 'never',
+};
+
 const Animated = {
   Easing,
+  ReduceMotion,
   Value: () => ({ value: 0 }),
   SharedValue: noop,
   useSharedValue: (v) => ({ value: v }),
@@ -53,6 +61,7 @@ const Animated = {
   SlideInRight: createAnimationBuilderMock(),
   SlideInLeft: createAnimationBuilderMock(),
   SlideOutLeft: createAnimationBuilderMock(),
+  LinearTransition: createAnimationBuilderMock(),
   View: 'Animated.View',
   ScrollView: 'Animated.ScrollView',
   FlatList: 'Animated.FlatList',

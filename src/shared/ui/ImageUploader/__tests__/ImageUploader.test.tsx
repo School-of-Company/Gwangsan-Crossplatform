@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { fireEvent, waitFor, act } from '@testing-library/react-native';
-import { ActionSheetIOS, TouchableOpacity } from 'react-native';
+import { ActionSheetIOS, Alert, Platform, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { renderWithProviders } from '~/test-utils';
 import ImageUploader from '../index';
 import { useUploadImage } from '@/shared/model/useUploadImage';
+import { logger } from '@/shared/lib/logger';
+import type { ImageType } from '@/shared/types/imageType';
 
 jest.mock('@/shared/model/useUploadImage', () => ({
   useUploadImage: jest.fn(),
@@ -19,6 +21,10 @@ jest.mock('expo-image-picker', () => ({
 
 jest.mock('react-native-toast-message', () => ({
   show: jest.fn(),
+}));
+
+jest.mock('@/shared/lib/logger', () => ({
+  logger: { error: jest.fn(), warn: jest.fn() },
 }));
 
 const mockUseUploadImage = useUploadImage as jest.Mock;
@@ -58,15 +64,20 @@ const StatefulImageUploader = ({
   onImagesChange,
   onImageIdsChange,
   onUploadStateChange,
+  initialImages,
 }: {
   onImagesChange?: jest.Mock;
   onImageIdsChange?: jest.Mock;
   onUploadStateChange?: jest.Mock;
+  initialImages?: ImageType[];
 }) => {
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>(
+    () => initialImages?.map((img) => img.imageUrl) ?? []
+  );
   return (
     <ImageUploader
       images={images}
+      initialImages={initialImages}
       onImagesChange={(newImages) => {
         setImages(newImages);
         onImagesChange?.(newImages);
@@ -213,6 +224,18 @@ describe('ImageUploader', () => {
 
       await waitFor(() => expect(onImageIdsChange).toHaveBeenCalledWith([20]));
     });
+
+    it('선택 취소 시 onImagesChange가 호출되지 않는다', async () => {
+      mockRequestCameraPermission.mockResolvedValue({ granted: true });
+      mockLaunchCamera.mockResolvedValue({ canceled: true, assets: [] });
+
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(<ImageUploader onImagesChange={onImagesChange} />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(mockLaunchCamera).toHaveBeenCalled());
+      expect(onImagesChange).not.toHaveBeenCalled();
+    });
   });
 
   describe('업로드 실패', () => {
@@ -234,6 +257,112 @@ describe('ImageUploader', () => {
       await waitFor(() =>
         expect(onUploadStateChange).toHaveBeenCalledWith(
           expect.objectContaining({ hasFailedImages: true, hasUploadingImages: false })
+        )
+      );
+    });
+
+    it('업로드 실패 시 1.5초 뒤 실패한 이미지를 자동으로 제거한다', async () => {
+      setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://photo.jpg' }],
+      });
+
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onImagesChange={onImagesChange} />
+      );
+
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith(['file://photo.jpg']));
+      onImagesChange.mockClear();
+
+      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith([]), { timeout: 3000 });
+    });
+
+    it('자동 제거 전에 실패한 이미지를 수동으로 이미 제거했다면 다시 제거를 시도하지 않는다', async () => {
+      setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://photo.jpg' }],
+      });
+
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onImagesChange={onImagesChange} />
+      );
+
+      fireEvent.press(getButtons(container)[0]);
+      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith(['file://photo.jpg']));
+
+      // 업로드 실패로 상태가 'failed'가 될 때까지 대기한 뒤, 자동 제거 타이머(1.5초)가
+      // 실행되기 전에 사용자가 직접 이미지를 탭해 제거한다.
+      await waitFor(() => expect(getButtons(container)).toHaveLength(2));
+      onImagesChange.mockClear();
+      fireEvent.press(getButtons(container)[0]);
+      expect(onImagesChange).toHaveBeenCalledWith([]);
+      onImagesChange.mockClear();
+
+      // 자동 제거 타이머가 실행되어도(imagesRef에 이미 uri가 없으므로) 더 이상
+      // onImagesChange가 호출되지 않는다.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1700));
+      });
+      expect(onImagesChange).not.toHaveBeenCalled();
+    });
+
+    it('Error 인스턴스가 아닌 값으로 거부되면 기본 에러 메시지로 상태를 기록한다', async () => {
+      setupUploadMock(jest.fn().mockRejectedValue('문자열 거부 사유'));
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://photo.jpg' }],
+      });
+
+      const onUploadStateChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onUploadStateChange={onUploadStateChange} />
+      );
+
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() =>
+        expect(onUploadStateChange).toHaveBeenCalledWith(
+          expect.objectContaining({ hasFailedImages: true })
+        )
+      );
+      expect(logger.error).toHaveBeenCalledWith('Image upload failed', '문자열 거부 사유');
+    });
+
+    it('이미 다른 이미지가 존재할 때 새 이미지 업로드가 실패해도 기존 이미지 상태는 그대로 유지된다', async () => {
+      setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://c.jpg' }],
+      });
+
+      const initialImages: ImageType[] = [
+        { imageId: 1, imageUrl: 'file://a.jpg' },
+        { imageId: 2, imageUrl: 'file://b.jpg' },
+      ];
+      const onUploadStateChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader
+          initialImages={initialImages}
+          onUploadStateChange={onUploadStateChange}
+        />
+      );
+
+      const buttons = getButtons(container);
+      fireEvent.press(buttons[buttons.length - 1]);
+
+      await waitFor(() =>
+        expect(onUploadStateChange).toHaveBeenCalledWith(
+          expect.objectContaining({ uploadedCount: 2, hasFailedImages: true })
         )
       );
     });
@@ -286,6 +415,122 @@ describe('ImageUploader', () => {
         expect(onUploadStateChange).toHaveBeenCalledWith(
           expect.objectContaining({ uploadedCount: 1, hasUploadingImages: false })
         )
+      );
+    });
+  });
+
+  describe('initialImages 지연 업데이트', () => {
+    it('마운트 이후 initialImages가 비동기로 채워지면 imageStatuses를 초기화한다', () => {
+      const onUploadStateChange = jest.fn();
+      const { rerender } = renderWithProviders(
+        <ImageUploader initialImages={[]} onUploadStateChange={onUploadStateChange} />
+      );
+
+      const laterImages: ImageType[] = [{ imageId: 1, imageUrl: 'https://example.com/x.jpg' }];
+      rerender(
+        <ImageUploader initialImages={laterImages} onUploadStateChange={onUploadStateChange} />
+      );
+
+      expect(onUploadStateChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({ uploadedCount: 1 })
+      );
+    });
+
+    it('imageStatuses가 이미 채워져 있으면 initialImages 갱신을 다시 반영하지 않는다', () => {
+      const onUploadStateChange = jest.fn();
+      const initial: ImageType[] = [{ imageId: 1, imageUrl: 'https://example.com/a.jpg' }];
+      const { rerender } = renderWithProviders(
+        <ImageUploader initialImages={initial} onUploadStateChange={onUploadStateChange} />
+      );
+
+      const changed: ImageType[] = [
+        { imageId: 1, imageUrl: 'https://example.com/a.jpg' },
+        { imageId: 2, imageUrl: 'https://example.com/b.jpg' },
+      ];
+      rerender(<ImageUploader initialImages={changed} onUploadStateChange={onUploadStateChange} />);
+
+      // 최초 마운트에서 이미 imageStatuses.length > 0이었으므로 effect의 재초기화 조건이 성립하지 않는다.
+      expect(onUploadStateChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({ uploadedCount: 1 })
+      );
+    });
+  });
+
+  describe('파일 크기 초과', () => {
+    it('갤러리에서 선택한 파일이 10MB를 초과하면 Toast 에러를 표시하고 업로드하지 않는다', async () => {
+      const Toast = require('react-native-toast-message');
+      const mutateAsync = setupUploadMock();
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://big.jpg', fileSize: 11 * 1024 * 1024 }],
+      });
+
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(<ImageUploader onImagesChange={onImagesChange} />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() =>
+        expect(Toast.show).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'error', text1: '파일 크기 초과' })
+        )
+      );
+      expect(mutateAsync).not.toHaveBeenCalled();
+      expect(onImagesChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('선택/촬영 중 예외 처리', () => {
+    it('갤러리 실행 중 오류가 발생하면 logger.error로 기록한다', async () => {
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      const galleryError = new Error('gallery boom');
+      mockLaunchGallery.mockRejectedValue(galleryError);
+
+      const container = renderWithProviders(<ImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() =>
+        expect(logger.error).toHaveBeenCalledWith('이미지 선택 중 오류', galleryError)
+      );
+    });
+
+    it('카메라 실행 중 오류가 발생하면 logger.error로 기록한다', async () => {
+      mockActionSheetCamera();
+      mockRequestCameraPermission.mockResolvedValue({ granted: true });
+      const cameraError = new Error('camera boom');
+      mockLaunchCamera.mockRejectedValue(cameraError);
+
+      const container = renderWithProviders(<ImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() =>
+        expect(logger.error).toHaveBeenCalledWith('카메라 촬영 중 오류', cameraError)
+      );
+    });
+  });
+
+  describe('안드로이드 사진 선택', () => {
+    const originalOS = Platform.OS;
+
+    afterEach(() => {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    });
+
+    it('안드로이드에서는 Alert.alert로 선택지를 표시한다', () => {
+      Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+      const container = renderWithProviders(<ImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      expect(alertSpy).toHaveBeenCalledWith(
+        '사진 선택',
+        undefined,
+        expect.arrayContaining([
+          expect.objectContaining({ text: '취소' }),
+          expect.objectContaining({ text: '갤러리에서 선택' }),
+          expect.objectContaining({ text: '카메라로 촬영' }),
+        ])
       );
     });
   });

@@ -88,6 +88,15 @@ describe('getErrorMessage', () => {
       expect(getErrorMessage(error)).toBe('요청이 실패했습니다. (500)');
     });
 
+    it('5xx는 응답 본문에 message가 있어도 서버 예외 내용을 노출하지 않는다', () => {
+      const error = makeAxiosError(
+        'server error',
+        { message: 'FunctionCallException: could not execute query' },
+        500
+      );
+      expect(getErrorMessage(error)).toBe('요청이 실패했습니다. (500)');
+    });
+
     it('status 403도 동일한 형태로 반환한다', () => {
       const error = makeAxiosError('forbidden', undefined, 403);
       expect(getErrorMessage(error)).toBe('요청이 실패했습니다. (403)');

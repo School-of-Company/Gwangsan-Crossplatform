@@ -18,9 +18,17 @@ interface UseTradeHandlersParams {
   readonly otherUserInfo: { nickname: string; id?: number };
 }
 
+export interface ReservationInput {
+  readonly scheduledAt: string;
+  readonly placeName: string;
+  readonly address: string;
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
 interface UseTradeHandlersReturn {
   readonly handleTradeAccept: () => Promise<void>;
-  readonly handleReservation: () => Promise<void>;
+  readonly handleReservation: (input: ReservationInput) => Promise<void>;
   readonly handleCancelReservation: () => Promise<void>;
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
@@ -72,26 +80,45 @@ export const useTradeHandlers = ({
     }
   }, [roomData, otherUserInfo.id, patchProduct]);
 
-  const handleReservation = useCallback(async () => {
-    if (!roomData?.product?.id) return;
+  const handleReservation = useCallback(
+    async ({ scheduledAt, placeName, address, latitude, longitude }: ReservationInput) => {
+      if (!roomData?.product?.id) return;
 
-    try {
-      await makeReservation({ productId: roomData.product.id });
+      try {
+        await makeReservation({
+          productId: roomData.product.id,
+          roomId: Number(roomId),
+          scheduledAt,
+          placeName,
+          address,
+          latitude,
+          longitude,
+        });
 
-      patchProduct({ isReserved: true });
+        patchProduct({
+          isReserved: true,
+          reservationScheduledAt: scheduledAt,
+          reservationPlaceName: placeName,
+          reservationAddress: address,
+          reservationLatitude: latitude,
+          reservationLongitude: longitude,
+        });
 
-      Toast.show({
-        type: 'success',
-        text1: '예약이 완료되었습니다!',
-      });
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: '예약 실패',
-        text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
-      });
-    }
-  }, [roomData, patchProduct]);
+        Toast.show({
+          type: 'success',
+          text1: '예약이 완료되었습니다!',
+        });
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: '예약 실패',
+          text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        });
+        throw error;
+      }
+    },
+    [roomData, roomId, patchProduct]
+  );
 
   const handleCancelReservation = useCallback(async () => {
     if (!roomData?.product?.id) return;
@@ -99,7 +126,14 @@ export const useTradeHandlers = ({
     try {
       await cancelReservation({ productId: roomData.product.id });
 
-      patchProduct({ isReserved: false });
+      patchProduct({
+        isReserved: false,
+        reservationScheduledAt: null,
+        reservationPlaceName: null,
+        reservationAddress: null,
+        reservationLatitude: null,
+        reservationLongitude: null,
+      });
 
       Toast.show({
         type: 'success',

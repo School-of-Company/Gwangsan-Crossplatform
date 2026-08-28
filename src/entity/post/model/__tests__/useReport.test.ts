@@ -159,6 +159,23 @@ describe('useReport', () => {
   });
 
   describe('handleSubmit', () => {
+    it('신고 유형이 빈 문자열이면 잘못된 신고 유형 Toast를 표시하고 신고를 실행하지 않는다', async () => {
+      const { result } = renderHookWithProviders(() => useReport({ memberId: 42 }));
+
+      await act(async () => {
+        await result.current.handleSubmit('', '내용');
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '잘못된 신고 유형',
+          text2: '올바른 신고 유형을 선택해주세요.',
+        })
+      );
+      expect(mockReport).not.toHaveBeenCalled();
+    });
+
     it('productId가 있으면 PRODUCT 타입으로 신고한다', async () => {
       mockReport.mockResolvedValue({});
       const { result } = renderHookWithProviders(() => useReport({ productId: 5, memberId: 42 }));

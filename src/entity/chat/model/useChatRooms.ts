@@ -39,11 +39,9 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
             : room;
         });
 
-        const sortedData = [...withReadOverride].sort((a, b) => {
-          if (a.unreadMessageCount > 0 && b.unreadMessageCount === 0) return -1;
-          if (a.unreadMessageCount === 0 && b.unreadMessageCount > 0) return 1;
-          return (b.lastMessageTime ?? '').localeCompare(a.lastMessageTime ?? '');
-        });
+        const sortedData = [...withReadOverride].sort((a, b) =>
+          (b.lastMessageTime ?? '').localeCompare(a.lastMessageTime ?? '')
+        );
         return sortedData;
       },
       [readMessageIds]

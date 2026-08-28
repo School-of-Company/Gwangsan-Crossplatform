@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { Text, ActivityIndicator } from 'react-native';
+import { Text } from 'react-native';
 import { MyMessage } from '../index';
 import { renderMessageContent } from '@/entity/chat';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
@@ -81,20 +81,20 @@ describe('MyMessage', () => {
     expect(getByText('오후 3:00')).toBeTruthy();
   });
 
-  it('status가 PENDING이면 시계 아이콘을 표시한다', () => {
-    const { getByTestId } = render(
-      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.PENDING })} />
+  it('status가 PENDING이어도 낙관적으로 전송됨을 표시한다', () => {
+    const { getByText } = render(
+      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.PENDING, checked: false })} isLast />
     );
 
-    expect(getByTestId('icon-time-outline')).toBeTruthy();
+    expect(getByText('전송됨')).toBeTruthy();
   });
 
-  it('status가 SENDING이면 ActivityIndicator를 표시한다', () => {
-    const { UNSAFE_getByType } = render(
-      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.SENDING })} />
+  it('status가 SENDING이어도 낙관적으로 전송됨을 표시한다', () => {
+    const { getByText } = render(
+      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.SENDING, checked: false })} isLast />
     );
 
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    expect(getByText('전송됨')).toBeTruthy();
   });
 
   it('status가 FAILED이면 에러 아이콘과 재전송 버튼을 표시한다', () => {
@@ -106,13 +106,33 @@ describe('MyMessage', () => {
     expect(getByText('재전송')).toBeTruthy();
   });
 
-  it('status가 SENT이면 체크 아이콘을 표시하고 재전송 버튼이 없다', () => {
-    const { getByTestId, queryByText } = render(
-      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.SENT })} />
+  it('status가 SENT이고 읽지 않았으면 전송됨을 표시하고 재전송 버튼이 없다', () => {
+    const { getByText, queryByText } = render(
+      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.SENT, checked: false })} isLast />
     );
 
-    expect(getByTestId('icon-checkmark-outline')).toBeTruthy();
+    expect(getByText('전송됨')).toBeTruthy();
     expect(queryByText('재전송')).toBeNull();
+  });
+
+  it('status가 SENT이고 읽었으면 읽음을 표시한다', () => {
+    const { getByText } = render(
+      <MyMessage message={makeMessage({ status: MESSAGE_STATUS.SENT, checked: true })} isLast />
+    );
+
+    expect(getByText('읽음')).toBeTruthy();
+  });
+
+  it('마지막 메시지가 아니면 전송됨/읽음을 표시하지 않는다', () => {
+    const { queryByText } = render(
+      <MyMessage
+        message={makeMessage({ status: MESSAGE_STATUS.SENT, checked: true })}
+        isLast={false}
+      />
+    );
+
+    expect(queryByText('읽음')).toBeNull();
+    expect(queryByText('전송됨')).toBeNull();
   });
 
   it('재전송 버튼을 누르면 tempId로 retry가 호출된다', () => {

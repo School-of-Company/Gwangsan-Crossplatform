@@ -2,19 +2,21 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, Keyboard, Platform, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
-import { MyMessage, OtherMessage } from '~/widget/chat';
-import { TradeEmbed } from '~/entity/chat';
+import { MyMessage, OtherMessage, ChatDateDivider } from '~/widget/chat';
+import {
+  TradeEmbed,
+  formatMessageTime,
+  getMessageDateKey,
+  formatDateDividerLabel,
+} from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
 interface TradeEmbedConfig {
   readonly shouldShow: boolean;
   readonly product?: TradeProduct | null;
-  readonly onTradeAccept?: () => Promise<void>;
-  readonly onReservation?: () => void;
-  readonly onCancelReservation?: () => void;
   readonly showButtons: boolean;
-  readonly isLoading: boolean;
-  readonly requestorNickname: string;
+  readonly otherPartyNickname: string;
+  readonly onOpenReservationModal?: () => void;
 }
 
 type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
@@ -23,7 +25,12 @@ type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
 
 type ChatListItem =
   | { readonly type: 'message'; readonly timestamp: string; readonly data: EnhancedChatMessage }
-  | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed };
+  | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed }
+  | {
+      readonly type: 'dateDivider';
+      readonly timestamp: string;
+      readonly data: { readonly label: string };
+    };
 
 interface ChatRoomContentProps {
   readonly messages: readonly EnhancedChatMessage[];
@@ -37,8 +44,11 @@ interface ChatRoomContentProps {
   readonly showReviewButton?: boolean;
 }
 
-const keyExtractor = (item: ChatListItem): string =>
-  item.type === 'message' ? `m-${item.data.messageId}` : `t-${item.data.product.id}`;
+const keyExtractor = (item: ChatListItem): string => {
+  if (item.type === 'message') return `m-${item.data.messageId}`;
+  if (item.type === 'trade') return `t-${item.data.product.id}`;
+  return `d-${item.timestamp}`;
+};
 
 export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   messages,
@@ -71,6 +81,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     };
   }, []);
 
+  const lastMyMessageId = useMemo(() => {
+    const lastMyMessage = [...messages].reverse().find((message) => message.isMine);
+    return lastMyMessage?.messageId ?? null;
+  }, [messages]);
+
   const combinedData = useMemo<ChatListItem[]>(() => {
     const items: ChatListItem[] = messages.map((message) => ({
       type: 'message',
@@ -78,53 +93,104 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       data: message,
     }));
 
-    if (!tradeEmbedConfig?.shouldShow || !tradeEmbedConfig.product?.createdAt) {
-      return items;
+    if (tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product?.createdAt) {
+      const tradeTimestamp = tradeEmbedConfig.product.createdAt;
+      const tradeItem: ChatListItem = {
+        type: 'trade',
+        timestamp: tradeTimestamp,
+        data: tradeEmbedConfig as ResolvedTradeEmbed,
+      };
+
+      const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
+      if (insertAt < 0) {
+        items.push(tradeItem);
+      } else {
+        items.splice(insertAt, 0, tradeItem);
+      }
     }
 
-    const tradeTimestamp = tradeEmbedConfig.product.createdAt;
-    const tradeItem: ChatListItem = {
-      type: 'trade',
-      timestamp: tradeTimestamp,
-      data: tradeEmbedConfig as ResolvedTradeEmbed,
-    };
+    // 날짜가 바뀌는 경계마다 구분선을 끼워 넣는다 — 이전 날짜 문구는 그대로 두고, 새 날짜는 그 아래에 추가된다
+    const itemsWithDateDividers: ChatListItem[] = [];
+    let lastDateKey: string | null = null;
 
-    const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
-    if (insertAt < 0) {
-      items.push(tradeItem);
-    } else {
-      items.splice(insertAt, 0, tradeItem);
-    }
-    return items;
+    items.forEach((item) => {
+      const dateKey = getMessageDateKey(item.timestamp);
+      if (dateKey !== lastDateKey) {
+        itemsWithDateDividers.push({
+          type: 'dateDivider',
+          timestamp: item.timestamp,
+          data: { label: formatDateDividerLabel(item.timestamp) },
+        });
+        lastDateKey = dateKey;
+      }
+      itemsWithDateDividers.push(item);
+    });
+
+    return itemsWithDateDividers;
   }, [messages, tradeEmbedConfig]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
-    ({ item }) => {
+    ({ item, index }) => {
       if (item.type === 'message') {
-        return item.data.isMine ? (
-          <MyMessage message={item.data} />
-        ) : (
-          <OtherMessage message={item.data} onProfilePress={onProfilePress} />
+        const previousItem = combinedData[index - 1];
+        const nextItem = combinedData[index + 1];
+
+        // 다음 메시지와 시간(분 단위)이 같으면 현재 메시지의 시간 표시는 숨기고 아래쪽에만 노출한다
+        const hasSameTimeAsNext =
+          nextItem?.type === 'message' &&
+          formatMessageTime(nextItem.data.createdAt) === formatMessageTime(item.data.createdAt);
+
+        if (item.data.isMine) {
+          // 다음 메시지도 내가 연달아 보낸 것이면, '나와 다음 메시지 사이' 간격을 좁힌다
+          const isFollowedByGrouped = nextItem?.type === 'message' && nextItem.data.isMine;
+          return (
+            <MyMessage
+              message={item.data}
+              isLast={item.data.messageId === lastMyMessageId}
+              isFollowedByGrouped={isFollowedByGrouped}
+              showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+            />
+          );
+        }
+
+        const isSameSenderContinuation = (candidate: ChatListItem | undefined) =>
+          candidate?.type === 'message' &&
+          !candidate.data.isMine &&
+          candidate.data.senderId === item.data.senderId;
+
+        // 프로필/닉네임 노출 여부는 '이전' 메시지 기준, 간격은 '다음' 메시지 기준으로 판단한다
+        const isGrouped = isSameSenderContinuation(previousItem);
+        const isFollowedByGrouped = isSameSenderContinuation(nextItem);
+
+        return (
+          <OtherMessage
+            message={item.data}
+            onProfilePress={onProfilePress}
+            showProfile={!isGrouped}
+            isFollowedByGrouped={isFollowedByGrouped}
+            showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+          />
         );
+      }
+
+      if (item.type === 'dateDivider') {
+        return <ChatDateDivider label={item.data.label} />;
       }
 
       const config = item.data;
       return (
         <TradeEmbed
           product={config.product}
-          onTradeAccept={config.onTradeAccept}
-          onReservation={config.onReservation}
-          onCancelReservation={config.onCancelReservation}
           showButtons={config.showButtons}
-          isLoading={config.isLoading}
-          requestorNickname={config.requestorNickname}
+          otherPartyNickname={config.otherPartyNickname}
           alignment={config.showButtons ? 'left' : 'right'}
           onReviewButtonPress={onReviewButtonPress}
           showReviewButton={showReviewButton}
+          onOpenReservationModal={config.onOpenReservationModal}
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, showReviewButton]
+    [onProfilePress, onReviewButtonPress, showReviewButton, lastMyMessageId, combinedData]
   );
 
   const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);

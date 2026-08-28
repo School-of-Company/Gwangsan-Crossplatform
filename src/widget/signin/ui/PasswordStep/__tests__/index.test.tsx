@@ -208,4 +208,124 @@ describe('PasswordStep — 로그인 실패', () => {
 
     expect(mockSigninWithDeviceInfo).not.toHaveBeenCalled();
   });
+
+  it('saveCredentialsForBiometric이 실패해도 로그인은 계속 진행되고 에러를 로깅한다', async () => {
+    const { logger } = jest.requireMock('~/shared/lib/logger');
+    mockSigninWithDeviceInfo.mockResolvedValue({
+      accessToken: 'acc-token',
+      refreshToken: 'ref-token',
+    });
+    mockSaveCredentials.mockRejectedValue(new Error('키체인 저장 실패'));
+
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/main'));
+    await waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        'saveCredentialsForBiometric failed',
+        expect.any(Error)
+      )
+    );
+  });
+});
+
+describe('PasswordStep — 채팅 소켓 연결 실패', () => {
+  it('로그인 후 채팅 소켓 연결이 실패해도 /main으로 이동하고 에러를 로깅한다', async () => {
+    const { logger } = jest.requireMock('~/shared/lib/logger');
+    const { chatSocket } = jest.requireMock('~/shared/lib/socket');
+    mockSigninWithDeviceInfo.mockResolvedValue({
+      accessToken: 'acc-token',
+      refreshToken: 'ref-token',
+    });
+    chatSocket.connect.mockRejectedValueOnce(new Error('소켓 연결 실패'));
+
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/main'));
+    await waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        'chat socket connect after login failed',
+        expect.any(Error)
+      )
+    );
+  });
+});
+
+describe('PasswordStep — 중복 제출 방지', () => {
+  it('이미 로그인 요청 중이면 버튼이 비활성화되어 추가 요청을 보내지 않는다', async () => {
+    let resolvePromise!: (v: any) => void;
+    mockSigninWithDeviceInfo.mockReturnValue(
+      new Promise((resolve) => {
+        resolvePromise = resolve;
+      })
+    );
+
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(mockSigninWithDeviceInfo).toHaveBeenCalledTimes(1));
+
+    // 로딩 중에는 next-button이 disabled 상태가 되어 재클릭해도 onPress가 호출되지 않는다
+    expect(getByTestId('next-button').props.accessibilityState.disabled).toBe(true);
+    fireEvent.press(getByTestId('next-button'));
+
+    expect(mockSigninWithDeviceInfo).toHaveBeenCalledTimes(1);
+
+    resolvePromise({ accessToken: 'a', refreshToken: 'b' });
+    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/main'));
+  });
+});
+
+describe('PasswordStep — 에러 초기화', () => {
+  it('에러가 표시된 상태에서 비밀번호를 다시 입력하면 에러가 사라진다', async () => {
+    mockSigninWithDeviceInfo.mockRejectedValue(new Error('로그인 실패'));
+
+    const { getByTestId, queryByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getByTestId('error-message')).toBeTruthy());
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password2!');
+
+    expect(queryByTestId('error-message')).toBeNull();
+  });
+});
+
+describe('PasswordStep — 키보드 제출(onSubmitEditing)', () => {
+  it('비밀번호 입력 후 키보드에서 제출하면 로그인을 시도한다', async () => {
+    mockSigninWithDeviceInfo.mockResolvedValue({
+      accessToken: 'acc-token',
+      refreshToken: 'ref-token',
+    });
+
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent(getByTestId('PasswordStep-password-input'), 'submitEditing');
+
+    await waitFor(() => {
+      expect(mockSigninWithDeviceInfo).toHaveBeenCalledWith({
+        nickname: '홍길동',
+        password: 'password1!',
+      });
+    });
+  });
+
+  it('빈 비밀번호로 키보드 제출 시 로그인을 시도하지 않는다', () => {
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent(getByTestId('PasswordStep-password-input'), 'submitEditing');
+
+    expect(mockSigninWithDeviceInfo).not.toHaveBeenCalled();
+  });
 });

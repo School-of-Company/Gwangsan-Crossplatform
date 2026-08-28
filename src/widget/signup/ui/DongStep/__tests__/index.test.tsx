@@ -109,6 +109,85 @@ describe('DongStep — 유효성 검사', () => {
   });
 });
 
+describe('DongStep — 키보드 제출 및 포커스', () => {
+  it('검색 결과가 1개일 때 제출하면 해당 동네가 자동 선택된다', () => {
+    const { getByPlaceholderText } = render(<DongStep />);
+
+    const input = getByPlaceholderText('동네를 검색해주세요');
+    fireEvent.changeText(input, '평');
+    fireEvent(input, 'onSubmitEditing');
+
+    expect(input.props.value).toBe('평동');
+  });
+
+  it('검색 결과가 여러 개일 때 제출하면 결과 목록이 계속 표시된다', () => {
+    const { getByPlaceholderText, getByText } = render(<DongStep />);
+
+    const input = getByPlaceholderText('동네를 검색해주세요');
+    fireEvent.changeText(input, '첨단');
+    fireEvent(input, 'onSubmitEditing');
+
+    expect(getByText('첨단1동')).toBeTruthy();
+    expect(getByText('첨단2동')).toBeTruthy();
+  });
+
+  it('검색 결과가 없을 때 제출해도 아무 항목도 선택되지 않는다', () => {
+    const { getByPlaceholderText } = render(<DongStep />);
+
+    const input = getByPlaceholderText('동네를 검색해주세요');
+    fireEvent.changeText(input, '존재하지않는동');
+    fireEvent(input, 'onSubmitEditing');
+
+    expect(input.props.value).toBe('존재하지않는동');
+  });
+
+  it('에러가 표시된 상태에서 목록에서 동네를 선택하면 에러가 초기화된다', async () => {
+    const { getByPlaceholderText, getByText, getByTestId, queryByText } = render(<DongStep />);
+
+    // 검색어만 입력한 상태(dongName은 아직 비어있음)에서 다음 버튼을 눌러 에러를 표시시킨다.
+    // 이때 검색 결과 목록은 여전히 표시되어 있다.
+    fireEvent.changeText(getByPlaceholderText('동네를 검색해주세요'), '평');
+    fireEvent.press(getByTestId('next-button'));
+    await waitFor(() => {
+      expect(getByText('동네를 입력해주세요')).toBeTruthy();
+    });
+
+    fireEvent.press(getByText('평동'));
+
+    expect(queryByText('동네를 입력해주세요')).toBeNull();
+  });
+
+  it('선택된 동네와 동일한 텍스트를 다시 입력하면 선택값이 초기화되지 않는다', () => {
+    const { getByPlaceholderText, getByText, getByTestId } = render(<DongStep />);
+
+    const input = getByPlaceholderText('동네를 검색해주세요');
+    fireEvent.changeText(input, '평');
+    fireEvent.press(getByText('평동'));
+
+    // 선택된 값과 동일한 텍스트를 다시 입력 — dongName이 초기화되지 않아야 한다.
+    fireEvent.changeText(input, '평동');
+    fireEvent.press(getByTestId('next-button'));
+
+    expect(mockUpdateField).toHaveBeenCalledWith('평동');
+    expect(mockNextStep).toHaveBeenCalled();
+  });
+
+  it('입력창에 포커스하면 검색 결과 목록이 다시 표시된다', () => {
+    const { getByPlaceholderText, getByText, queryAllByText } = render(<DongStep />);
+
+    const input = getByPlaceholderText('동네를 검색해주세요');
+    fireEvent.changeText(input, '평');
+    fireEvent.press(getByText('평동'));
+
+    // 선택 직후에는 결과 목록이 닫혀 텍스트 항목이 존재하지 않는다 (입력값은 TextInput의 value prop일 뿐).
+    expect(queryAllByText('평동')).toHaveLength(0);
+
+    fireEvent(input, 'onFocus');
+
+    expect(queryAllByText('평동')).toHaveLength(1);
+  });
+});
+
 describe('DongStep — 다음 단계로 이동', () => {
   it('동네를 선택한 뒤 다음 클릭 시 updateField와 nextStep이 호출된다', () => {
     const { getByPlaceholderText, getByText, getByTestId } = render(<DongStep />);

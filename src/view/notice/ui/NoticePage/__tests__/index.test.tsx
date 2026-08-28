@@ -1,4 +1,5 @@
 import React from 'react';
+import { act } from '@testing-library/react-native';
 import { renderWithProviders } from '~/test-utils';
 import NoticePage from '../index';
 
@@ -155,5 +156,46 @@ describe('NoticePage', () => {
 
     const scrollViews = UNSAFE_getAllByType(require('react-native').ScrollView);
     expect(scrollViews.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('당겨서 새로고침 시 refetch를 호출하고 완료 후 refreshing 상태를 해제한다', async () => {
+    mockUseGetNoticeList.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+
+    const { UNSAFE_getByType } = renderWithProviders(<NoticePage />);
+
+    const { RefreshControl } = require('react-native');
+    const refreshControl = UNSAFE_getByType(RefreshControl);
+
+    await act(async () => {
+      refreshControl.props.onRefresh();
+    });
+
+    expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  it('새로고침 중 refetch가 실패해도 refreshing 상태를 해제한다', async () => {
+    mockUseGetNoticeList.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    mockRefetch.mockRejectedValueOnce(new Error('refetch failed'));
+
+    const { UNSAFE_getByType } = renderWithProviders(<NoticePage />);
+
+    const { RefreshControl } = require('react-native');
+    const refreshControl = UNSAFE_getByType(RefreshControl);
+
+    await act(async () => {
+      await expect(refreshControl.props.onRefresh()).rejects.toThrow('refetch failed');
+    });
+
+    expect(mockRefetch).toHaveBeenCalled();
   });
 });

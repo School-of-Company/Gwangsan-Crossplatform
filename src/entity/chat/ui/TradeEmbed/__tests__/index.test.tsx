@@ -1,19 +1,9 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { TradeEmbed } from '../index';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
-import { logger } from '~/shared/lib/logger';
-
-jest.mock('~/shared/lib/logger', () => ({
-  logger: {
-    error: jest.fn(),
-    warn: jest.fn(),
-  },
-}));
 
 jest.mock('~/shared/ui', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  Card: require('~/shared/ui/Card').Card,
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   Button: require('~/shared/ui/Button').Button,
 }));
@@ -35,19 +25,31 @@ describe('TradeEmbed', () => {
     jest.clearAllMocks();
   });
 
-  it('상품 제목과 요청자 안내 문구를 표시한다', () => {
-    const { getByText } = render(
-      <TradeEmbed product={createProduct()} requestorNickname="홍길동" />
+  it('showButtons가 true이면 요청자 안내 문구를 표시한다', () => {
+    const { getByText, queryByText } = render(
+      <TradeEmbed product={createProduct()} otherPartyNickname="홍길동" showButtons />
     );
 
-    expect(getByText('거래 상품')).toBeTruthy();
-    expect(getByText('홍길동님께서 거래하기를 누르셨습니다')).toBeTruthy();
+    expect(getByText('홍길동님이 거래하기를 원합니다')).toBeTruthy();
+    expect(queryByText('거래 상품')).toBeNull();
   });
 
-  it('requestorNickname이 없으면 기본값 "상대방"을 사용한다', () => {
-    const { getByText } = render(<TradeEmbed product={createProduct()} />);
+  it('showButtons가 true이고 otherPartyNickname이 없으면 기본값 "상대방"을 사용한다', () => {
+    const { getByText } = render(<TradeEmbed product={createProduct()} showButtons />);
 
-    expect(getByText('상대방님께서 거래하기를 누르셨습니다')).toBeTruthy();
+    expect(getByText('상대방님이 거래하기를 원합니다')).toBeTruthy();
+  });
+
+  it('showButtons가 false이면 사진/제목 없이 상대방에게 요청했다는 문구만 표시한다', () => {
+    const { getByText, queryByText, UNSAFE_queryByType } = render(
+      <TradeEmbed product={createProduct()} otherPartyNickname="홍길동" showButtons={false} />
+    );
+    const { Image } = require('react-native');
+
+    expect(getByText('홍길동님에게 거래를 요청했어요')).toBeTruthy();
+    expect(queryByText('거래 상품')).toBeNull();
+    expect(queryByText('홍길동님이 거래하기를 원합니다')).toBeNull();
+    expect(UNSAFE_queryByType(Image)).toBeNull();
   });
 
   it('isCompleted이면 완료 안내 문구를 표시한다', () => {
@@ -68,16 +70,42 @@ describe('TradeEmbed', () => {
         { imageId: 3, imageUrl: 'https://example.com/3.png' },
       ],
     });
-    const { getByText } = render(<TradeEmbed product={product} />);
+    const { getByText } = render(<TradeEmbed product={product} showButtons />);
 
     expect(getByText('+2')).toBeTruthy();
   });
 
-  it('showButtons가 true이고 미완료면 예약하기/거래 완료하기 버튼을 표시한다', () => {
-    const { getByText } = render(<TradeEmbed product={createProduct()} showButtons />);
+  it('showButtons가 true이고 게시물 작성자이며 미예약/미완료면 예약하기 버튼을 표시하고 누르면 onOpenReservationModal을 호출한다', () => {
+    const onOpenReservationModal = jest.fn();
+    const { getByText, queryByText } = render(
+      <TradeEmbed
+        product={createProduct({ isSeller: true, isReserved: false })}
+        showButtons
+        onOpenReservationModal={onOpenReservationModal}
+      />
+    );
 
-    expect(getByText('예약하기')).toBeTruthy();
-    expect(getByText('거래 완료하기')).toBeTruthy();
+    expect(queryByText('거래 완료하기')).toBeNull();
+
+    fireEvent.press(getByText('예약하기'));
+
+    expect(onOpenReservationModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('게시물 작성자가 아니면 예약하기 버튼을 표시하지 않는다', () => {
+    const { queryByText } = render(
+      <TradeEmbed product={createProduct({ isSeller: false })} showButtons />
+    );
+
+    expect(queryByText('예약하기')).toBeNull();
+  });
+
+  it('이미 예약 중이면 예약하기 버튼을 표시하지 않는다', () => {
+    const { queryByText } = render(
+      <TradeEmbed product={createProduct({ isSeller: true, isReserved: true })} showButtons />
+    );
+
+    expect(queryByText('예약하기')).toBeNull();
   });
 
   it('showButtons가 false면 액션 버튼을 표시하지 않는다', () => {
@@ -134,70 +162,70 @@ describe('TradeEmbed', () => {
     expect(queryByTestId('trade-reserved-notice')).toBeNull();
   });
 
-  it('product.isReserved가 false면 예약하기 버튼을 보여주고 누르면 onReservation을 호출한다', async () => {
-    const onReservation = jest.fn().mockResolvedValue(undefined);
-    const { getByText, queryByText } = render(
+  it('예약 중이고 서버에서 예약 정보를 내려주면 날짜/시간/장소를 함께 보여준다', () => {
+    const { getByTestId } = render(
       <TradeEmbed
-        product={createProduct({ isReserved: false })}
-        showButtons
-        onReservation={onReservation}
+        product={createProduct({
+          isReserved: true,
+          reservationScheduledAt: '2026-08-28T14:00:00',
+          reservationPlaceName: '상무역 2번 출구',
+        })}
+        showButtons={false}
       />
     );
 
-    expect(queryByText('예약 취소')).toBeNull();
-
-    fireEvent.press(getByText('예약하기'));
-
-    await waitFor(() => expect(onReservation).toHaveBeenCalledTimes(1));
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
   });
 
-  it('product.isReserved가 true면 예약 취소 버튼을 보여주고 누르면 onCancelReservation을 호출한다', async () => {
-    const onCancelReservation = jest.fn().mockResolvedValue(undefined);
-    const { getByText, queryByText } = render(
+  it('showButtons가 true이고 예약 정보가 있으면 예약 상세를 함께 보여준다', () => {
+    const { getByTestId } = render(
       <TradeEmbed
-        product={createProduct({ isReserved: true })}
+        product={createProduct({
+          isSeller: true,
+          isReserved: true,
+          reservationScheduledAt: '2026-08-28T14:00:00',
+          reservationPlaceName: '상무역 2번 출구',
+        })}
         showButtons
-        onCancelReservation={onCancelReservation}
       />
     );
 
-    expect(queryByText('예약하기')).toBeNull();
-
-    fireEvent.press(getByText('예약 취소'));
-
-    await waitFor(() => expect(onCancelReservation).toHaveBeenCalledTimes(1));
+    expect(getByTestId('trade-reserved-notice')).toBeTruthy();
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
   });
 
-  it('거래 완료하기를 누르면 onTradeAccept를 호출한다', async () => {
-    const onTradeAccept = jest.fn().mockResolvedValue(undefined);
-    const { getByText } = render(
-      <TradeEmbed product={createProduct()} showButtons onTradeAccept={onTradeAccept} />
+  it('예약 일시 형식이 올바르지 않으면 원본 문자열을 그대로 보여준다', () => {
+    const { getByTestId } = render(
+      <TradeEmbed
+        product={createProduct({
+          isReserved: true,
+          reservationScheduledAt: 'invalid-date-string',
+        })}
+        showButtons={false}
+      />
     );
 
-    fireEvent.press(getByText('거래 완료하기'));
-
-    await waitFor(() => expect(onTradeAccept).toHaveBeenCalledTimes(1));
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('invalid-date-string');
   });
 
-  it('onTradeAccept가 실패하면 logger.error를 호출하고 예외를 전파하지 않는다', async () => {
-    const onTradeAccept = jest.fn().mockRejectedValue(new Error('실패'));
-    const { getByText } = render(
-      <TradeEmbed product={createProduct()} showButtons onTradeAccept={onTradeAccept} />
+  it('alignment가 right이면 우측 정렬 클래스를 적용한다', () => {
+    const { toJSON } = render(
+      <TradeEmbed product={createProduct()} showButtons alignment="right" />
     );
 
-    fireEvent.press(getByText('거래 완료하기'));
-
-    await waitFor(() =>
-      expect(logger.error).toHaveBeenCalledWith('TradeEmbed action failed', expect.any(Error))
-    );
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain('self-end');
+    expect(tree).not.toContain('self-start ml-10');
   });
 
-  it('isLoading이 true면 버튼 대신 로딩 인디케이터를 표시한다', () => {
-    const { UNSAFE_getAllByType } = render(
-      <TradeEmbed product={createProduct()} showButtons isLoading onTradeAccept={jest.fn()} />
+  it('alignment가 left(기본값)이면 좌측 정렬 클래스를 적용한다', () => {
+    const { toJSON } = render(
+      <TradeEmbed product={createProduct()} showButtons alignment="left" />
     );
-    const { ActivityIndicator } = require('react-native');
 
-    expect(UNSAFE_getAllByType(ActivityIndicator).length).toBeGreaterThan(0);
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain('self-start ml-10');
   });
 });

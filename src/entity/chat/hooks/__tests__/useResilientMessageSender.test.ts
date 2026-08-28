@@ -105,6 +105,66 @@ describe('useResilientMessageSender', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text1: '메시지 전송 실패' })
     );
+
+    const tempId = messages[0].tempId;
+    const toastCall = (Toast.show as jest.Mock).mock.calls[0][0];
+    act(() => {
+      toastCall.onPress();
+    });
+
+    // retry()가 재연결 상태에서 즉시 재전송을 시도하므로 SENDING으로 전환된다
+    const retried = useChatQueueStore.getState().pendingMessages[0];
+    expect(retried.tempId).toBe(tempId);
+    expect(retried.retryCount).toBe(1);
+    expect(retried.status).toBe(MESSAGE_STATUS.SENDING);
+  });
+
+  it('타임아웃 전에 상태가 SENDING이 아니게 바뀌면 FAILED로 전환하지 않는다', async () => {
+    const socketSendMessage = jest.fn();
+    const { result } = renderHook(() =>
+      useResilientMessageSender({ roomId: 1, isSocketConnected: true, socketSendMessage })
+    );
+
+    await act(async () => {
+      result.current.sendMessage('hello', 'TEXT');
+      await Promise.resolve();
+    });
+
+    const tempId = useChatQueueStore.getState().pendingMessages[0].tempId;
+    act(() => {
+      useChatQueueStore.getState().setStatus(tempId, MESSAGE_STATUS.SENT);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(10000);
+    });
+
+    const message = useChatQueueStore.getState().pendingMessages[0];
+    expect(message.status).toBe(MESSAGE_STATUS.SENT);
+    expect(Toast.show).not.toHaveBeenCalled();
+  });
+
+  it('타임아웃 전에 메시지가 큐에서 제거되면 FAILED 처리를 하지 않는다', async () => {
+    const socketSendMessage = jest.fn();
+    const { result } = renderHook(() =>
+      useResilientMessageSender({ roomId: 1, isSocketConnected: true, socketSendMessage })
+    );
+
+    await act(async () => {
+      result.current.sendMessage('hello', 'TEXT');
+      await Promise.resolve();
+    });
+
+    act(() => {
+      resetStore();
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(10000);
+    });
+
+    expect(useChatQueueStore.getState().pendingMessages).toHaveLength(0);
+    expect(Toast.show).not.toHaveBeenCalled();
   });
 
   it('socketSendMessage가 동기 예외를 던지면 FAILED 처리하고 logger.error를 호출한다', () => {
@@ -125,6 +185,19 @@ describe('useResilientMessageSender', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text1: '메시지 전송 실패' })
     );
+
+    const tempId = messages[0].tempId;
+    const toastCall = (Toast.show as jest.Mock).mock.calls[0][0];
+    act(() => {
+      toastCall.onPress();
+    });
+
+    // retry()가 재전송을 시도하지만 socketSendMessage가 다시 동기 예외를 던져 FAILED로 남는다
+    const retried = useChatQueueStore.getState().pendingMessages[0];
+    expect(retried.tempId).toBe(tempId);
+    expect(retried.retryCount).toBe(1);
+    expect(retried.status).toBe(MESSAGE_STATUS.FAILED);
+    expect(logger.error).toHaveBeenCalledTimes(2);
   });
 
   it('재연결되면(false→true) 재시도 가능한 메시지를 모두 retry하고 안내 토스트를 띄운다', () => {

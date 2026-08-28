@@ -22,6 +22,27 @@ export const formatMessageTime = (createdAt: string): string => {
   });
 };
 
+export const getMessageDateKey = (createdAt: string): string => {
+  const date = new Date(createdAt);
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+};
+
+export const formatDateDividerLabel = (createdAt: string): string => {
+  const date = new Date(createdAt);
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(date)) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return '오늘';
+  if (diffDays === 1) return '어제';
+
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  });
+};
+
 export const renderMessageImages = (
   message: ChatMessageResponse,
   imageLoader: UseImageLoaderReturn,

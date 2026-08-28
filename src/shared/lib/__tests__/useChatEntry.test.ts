@@ -1,12 +1,14 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatEntry } from '../useChatEntry';
-import { findChatRoom, createChatRoom } from '@/entity/chat';
+import { findChatRoom, createChatRoom, getChatRooms, chatRoomKeys } from '@/entity/chat';
 import Toast from 'react-native-toast-message';
 
 jest.mock('@/entity/chat', () => ({
   findChatRoom: jest.fn(),
   createChatRoom: jest.fn(),
+  getChatRooms: jest.fn(),
+  chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
 }));
 
 jest.mock('react-native-toast-message', () => ({
@@ -21,8 +23,12 @@ jest.mock('expo-router', () => ({
 
 const mockFindChatRoom = findChatRoom as jest.Mock;
 const mockCreateChatRoom = createChatRoom as jest.Mock;
+const mockGetChatRooms = getChatRooms as jest.Mock;
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockGetChatRooms.mockResolvedValue([]);
+});
 
 describe('useChatEntry', () => {
   it('초기 상태: isLoading이 false이다', () => {
@@ -45,6 +51,35 @@ describe('useChatEntry', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('채팅방 이동 전 채팅목록 캐시를 채워 상대방 정보가 정확히 표시되도록 한다', async () => {
+    const rooms = [{ roomId: 'room-42', member: { memberId: 7, nickname: '판매자' } }];
+    mockFindChatRoom.mockResolvedValue({ roomId: 'room-42' });
+    mockGetChatRooms.mockResolvedValue(rooms);
+
+    const { result, queryClient } = renderHookWithProviders(() => useChatEntry());
+
+    await act(async () => {
+      await result.current.navigateToChat(1);
+    });
+
+    expect(mockGetChatRooms).toHaveBeenCalled();
+    expect(queryClient.getQueryData(chatRoomKeys.list())).toEqual(rooms);
+    expect(mockPush).toHaveBeenCalledWith('/chatting/room-42');
+  });
+
+  it('채팅목록 캐시 채우기가 실패해도 채팅방 이동은 계속 진행된다', async () => {
+    mockFindChatRoom.mockResolvedValue({ roomId: 'room-42' });
+    mockGetChatRooms.mockRejectedValue(new Error('네트워크 오류'));
+
+    const { result } = renderHookWithProviders(() => useChatEntry());
+
+    await act(async () => {
+      await result.current.navigateToChat(1);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/chatting/room-42');
+  });
+
   it('findChatRoom 실패(방 없음) 시 createChatRoom을 호출한다', async () => {
     mockFindChatRoom.mockRejectedValue(new Error('해당하는 채팅방을 찾을 수 없습니다.'));
     mockCreateChatRoom.mockResolvedValue({ roomId: 'new-room-1' });
@@ -60,7 +95,7 @@ describe('useChatEntry', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('findChatRoom 실패(방 없음) + createChatRoom 실패 시 create error Toast를 표시한다', async () => {
+  it('findChatRoom 실패(방 없음) + createChatRoom 실패 시 error Toast를 표시한다', async () => {
     mockFindChatRoom.mockRejectedValue(new Error('해당하는 채팅방을 찾을 수 없습니다.'));
     mockCreateChatRoom.mockRejectedValue(new Error('채팅방 생성 실패'));
 
@@ -71,7 +106,7 @@ describe('useChatEntry', () => {
     });
 
     expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'create error', text1: '채팅방 생성 실패' })
+      expect.objectContaining({ type: 'error', text1: '채팅방 생성 실패' })
     );
     expect(mockPush).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(false);
