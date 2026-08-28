@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { PillTabs } from '../index';
 
@@ -30,5 +31,19 @@ describe('PillTabs', () => {
 
     expect(getByTestId('my-tab-a')).toBeTruthy();
     expect(getByTestId('my-tab-b')).toBeTruthy();
+  });
+
+  it('레이아웃 측정 후 활성 탭 인디케이터를 렌더링한다', () => {
+    const { UNSAFE_getAllByType, toJSON } = render(
+      <PillTabs tabs={TABS} value="a" onChange={jest.fn()} />
+    );
+    const root = UNSAFE_getAllByType(View)[0];
+
+    expect(() =>
+      fireEvent(root, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 200, height: 40 } },
+      })
+    ).not.toThrow();
+    expect(toJSON()).toBeTruthy();
   });
 });

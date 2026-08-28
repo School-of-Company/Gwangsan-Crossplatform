@@ -1,5 +1,176 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Button 스냅샷 - disabled + error variant 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": true,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={false}
+  onClick={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    {
+      "opacity": 1,
+    }
+  }
+>
+  <View
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#CDCDCF] "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
+  >
+    <Text
+      className="text-lg font-medium text-gray-500 "
+    >
+      확인
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`Button 스냅샷 - disabled + neutral variant 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": true,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={false}
+  onClick={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    {
+      "opacity": 1,
+    }
+  }
+>
+  <View
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#CDCDCF] "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
+  >
+    <Text
+      className="text-lg font-medium text-gray-500 "
+    >
+      확인
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`Button 스냅샷 - disabled + secondary variant 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": true,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={false}
+  onClick={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    {
+      "opacity": 1,
+    }
+  }
+>
+  <View
+    className="h-full items-center justify-center rounded-xl px-8 py-3 border-2 border-[#CDCDCF] bg-white "
+    collapsable={false}
+    style={
+      {
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
+  >
+    <Text
+      className="text-lg font-medium text-gray-500 "
+    >
+      확인
+    </Text>
+  </View>
+</View>
+`;
+
 exports[`Button 스냅샷 - disabled 상태 1`] = `
 <View
   accessibilityState={

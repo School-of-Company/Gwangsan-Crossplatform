@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, act } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import ProfilePageView from '../index';
@@ -208,6 +208,75 @@ describe('ProfilePageView', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', text1: '프로필을 불러오는데 실패했습니다.' })
       );
+    });
+
+    it('에러 메시지가 없으면 기본 안내 문구로 Toast를 표시한다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+      mockUseGetProfile.mockReturnValue({
+        data: undefined,
+        error: new Error(''),
+        isError: true,
+        refetch: refetchProfile,
+      });
+
+      render(<ProfilePageView />);
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '잠시 후 다시 시도해주세요.' })
+      );
+    });
+  });
+
+  describe('새로고침', () => {
+    it('본인 프로필에서 새로고침하면 refetchMyProfile을 호출한다', async () => {
+      const { UNSAFE_getByType } = render(<ProfilePageView />);
+
+      const { RefreshControl } = require('react-native');
+      const refreshControl = UNSAFE_getByType(RefreshControl);
+
+      await act(async () => {
+        await refreshControl.props.onRefresh();
+      });
+
+      expect(refetchMyProfile).toHaveBeenCalled();
+      expect(refetchProfile).not.toHaveBeenCalled();
+    });
+
+    it('상대방 프로필에서 새로고침하면 refetchProfile을 호출한다', async () => {
+      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+      mockUseGetProfile.mockReturnValue({
+        data: { memberId: 5, nickname: '상대방', description: '설명', specialties: [], light: 3 },
+        error: null,
+        isError: false,
+        refetch: refetchProfile,
+      });
+
+      const { UNSAFE_getByType } = render(<ProfilePageView />);
+
+      const { RefreshControl } = require('react-native');
+      const refreshControl = UNSAFE_getByType(RefreshControl);
+
+      await act(async () => {
+        await refreshControl.props.onRefresh();
+      });
+
+      expect(refetchProfile).toHaveBeenCalled();
+      expect(refetchMyProfile).not.toHaveBeenCalled();
+    });
+
+    it('새로고침이 실패해도 refreshing 상태를 해제한다', async () => {
+      refetchMyProfile.mockRejectedValueOnce(new Error('새로고침 실패'));
+
+      const { UNSAFE_getByType } = render(<ProfilePageView />);
+
+      const { RefreshControl } = require('react-native');
+      const refreshControl = UNSAFE_getByType(RefreshControl);
+
+      await act(async () => {
+        await expect(refreshControl.props.onRefresh()).rejects.toThrow('새로고침 실패');
+      });
+
+      expect(refetchMyProfile).toHaveBeenCalled();
     });
   });
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, Platform } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
 import SigninForm from '../index';
 
@@ -108,5 +109,27 @@ describe('SigninForm', () => {
 
     expect(getByText('Android')).toBeTruthy();
     (Platform as any).OS = original;
+  });
+
+  it('별칭 찾기 클릭 시 /findNickname으로 이동한다', () => {
+    const { getByText } = render(
+      <SigninForm title="T" description="D" onNext={jest.fn()}>
+        <Text>child</Text>
+      </SigninForm>
+    );
+
+    fireEvent.press(getByText('별칭 찾기'));
+    expect(router.push).toHaveBeenCalledWith('/findNickname');
+  });
+
+  it('비밀번호 변경하기 클릭 시 /resetPassword로 이동한다', () => {
+    const { getByText } = render(
+      <SigninForm title="T" description="D" onNext={jest.fn()}>
+        <Text>child</Text>
+      </SigninForm>
+    );
+
+    fireEvent.press(getByText('비밀번호 변경하기'));
+    expect(router.push).toHaveBeenCalledWith('/resetPassword');
   });
 });

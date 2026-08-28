@@ -141,4 +141,48 @@ describe('useCreateItem', () => {
       expect.objectContaining({ type: 'error', text1: '등록 실패', text2: '서버 오류' })
     );
   });
+
+  it('Error 인스턴스가 아닌 값으로 실패해도 기본 에러 메시지를 표시한다', async () => {
+    const body = makeRequestBody();
+    mockCreateItem.mockRejectedValue('문자열 에러');
+
+    const { result } = renderHookWithProviders(() => useCreateItem());
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync(body);
+      } catch {
+        // expected
+      }
+    });
+
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        text1: '등록 실패',
+        text2: '거래글 등록 중 오류가 발생했습니다.',
+      })
+    );
+  });
+
+  it('기존 캐시가 없으면 실패해도 캐시 롤백을 시도하지 않는다', async () => {
+    const body = makeRequestBody();
+    mockCreateItem.mockRejectedValue(new Error('등록 실패'));
+
+    const { result, queryClient } = renderHookWithProviders(() => useCreateItem());
+    const setQueryDataSpy = jest.spyOn(queryClient, 'setQueryData');
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync(body);
+      } catch {
+        // expected
+      }
+    });
+
+    expect(setQueryDataSpy).not.toHaveBeenCalledWith(
+      ['posts', body.mode, body.type],
+      expect.anything()
+    );
+  });
 });

@@ -73,9 +73,11 @@ jest.mock('~/entity/post/ui/ReviewsModal', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: ({ isVisible, onClose, onSubmit }: any) => (
+    default: ({ isVisible, onClose, onSubmit, light, contents, onAnimationComplete }: any) => (
       <View testID="reviews-modal">
         <Text testID="reviews-modal-visible">{String(isVisible)}</Text>
+        <Text testID="reviews-modal-light">{String(light)}</Text>
+        <Text testID="reviews-modal-contents">{contents}</Text>
         <TouchableOpacity
           testID="reviews-modal-submit"
           onPress={() => onSubmit(80, '좋은 거래였어요')}>
@@ -83,6 +85,9 @@ jest.mock('~/entity/post/ui/ReviewsModal', () => {
         </TouchableOpacity>
         <TouchableOpacity testID="reviews-modal-close" onPress={onClose}>
           <Text>close</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="reviews-modal-animation-complete" onPress={onAnimationComplete}>
+          <Text>animation-complete</Text>
         </TouchableOpacity>
       </View>
     ),
@@ -112,13 +117,22 @@ jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
 }));
 
 jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
-  ChatRoomContent: ({ onReviewButtonPress, showReviewButton }: any) => {
+  ChatRoomContent: ({
+    onReviewButtonPress,
+    showReviewButton,
+    renderHeader,
+    onScrollToEnd,
+  }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-room-content">
+        {renderHeader()}
         <Text testID="show-review-button">{String(showReviewButton)}</Text>
         <TouchableOpacity testID="review-button" onPress={onReviewButtonPress}>
           <Text>review</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="content-scroll-to-end" onPress={onScrollToEnd}>
+          <Text>scrollToEnd</Text>
         </TouchableOpacity>
       </View>
     );
@@ -173,13 +187,16 @@ jest.mock('@/shared/ui/Header', () => ({
 }));
 
 jest.mock('@/widget/chat', () => ({
-  ChatInput: ({ onSendMessage, disabled }: any) => {
+  ChatInput: ({ onSendMessage, disabled, onFocus }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-input">
         <Text testID="chat-input-disabled">{String(disabled)}</Text>
         <TouchableOpacity testID="chat-input-send" onPress={() => onSendMessage('hi', [])}>
           <Text>send</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="chat-input-focus" onPress={onFocus}>
+          <Text>focus</Text>
         </TouchableOpacity>
       </View>
     );
@@ -540,5 +557,94 @@ describe('ChatRoomPage', () => {
     fireEvent.press(getByTestId('chat-input-send'));
 
     expect(mockSendMessage).toHaveBeenCalledWith('hi', []);
+  });
+
+  it('상품 정보를 누르면 상품 상세 페이지로 이동한다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('chat-room-product-info-press'));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/post/1');
+  });
+
+  it('해당 거래로 받은 후기가 있으면 후기 취소/상세 페이지로 이동한다', async () => {
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
+    mockGetMyReceivedReview.mockResolvedValue([{ productId: 1, reviewId: 99 }]);
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    await waitFor(() => {
+      fireEvent.press(getByTestId('received-reviews-link'));
+      expect(mockRouterPush).toHaveBeenCalledWith('/cancelTrade/99');
+    });
+  });
+
+  it('메시지가 있으면 마운트 후 스크롤을 맨 아래로 이동시킨다', async () => {
+    mockUseChatMessages.mockReturnValue(
+      makeChatMessagesReturn({ messages: [{ id: 1, content: 'hi' }] })
+    );
+
+    render(<ChatRoomPage />);
+
+    await waitFor(() => expect(mockScrollToEnd).toHaveBeenCalledWith(true), { timeout: 1000 });
+  });
+
+  it('채팅 목록에서 스크롤 요청 시 scrollToEnd가 호출된다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('content-scroll-to-end'));
+
+    expect(mockScrollToEnd).toHaveBeenCalledWith(true);
+  });
+
+  it('채팅 입력창에 포커스되면 scrollToEnd가 호출된다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('chat-input-focus'));
+
+    expect(mockScrollToEnd).toHaveBeenCalledWith(true);
+  });
+
+  it('거래 요청 모달을 닫으면 다시 숨겨진다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-request-button'));
+    expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
+
+    fireEvent.press(getByTestId('trade-request-close'));
+    expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
+  });
+
+  it('예약 확인 바텀시트를 닫으면 다시 숨겨진다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
+
+    fireEvent.press(getByTestId('reservation-confirm-modal-close'));
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
+  });
+
+  it('리뷰 모달을 닫으면 다시 숨겨진다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('review-button'));
+    expect(getByTestId('reviews-modal-visible').props.children).toBe('true');
+
+    fireEvent.press(getByTestId('reviews-modal-close'));
+    expect(getByTestId('reviews-modal-visible').props.children).toBe('false');
+  });
+
+  it('리뷰 모달 애니메이션 종료 시 리뷰 입력값이 초기화된다', () => {
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('reviews-modal-animation-complete'));
+
+    expect(getByTestId('reviews-modal-light').props.children).toBe('60');
+    expect(getByTestId('reviews-modal-contents').props.children).toBe('');
   });
 });

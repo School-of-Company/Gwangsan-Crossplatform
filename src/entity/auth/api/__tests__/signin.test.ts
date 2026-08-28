@@ -7,6 +7,7 @@ import {
   signinWithDeviceInfo,
   saveCredentialsForBiometric,
   getCredentialsForBiometric,
+  clearCredentialsForBiometric,
 } from '../signin';
 
 jest.mock('@/shared/lib/axios', () => ({
@@ -30,6 +31,7 @@ jest.mock('react-native-keychain', () => ({
   getSupportedBiometryType: jest.fn(),
   setGenericPassword: jest.fn(),
   getGenericPassword: jest.fn(),
+  resetGenericPassword: jest.fn(),
   ACCESS_CONTROL: { BIOMETRY_ANY: 'BiometryAny' },
   ACCESSIBLE: { WHEN_UNLOCKED: 'WhenUnlocked' },
 }));
@@ -193,6 +195,23 @@ describe('getCredentialsForBiometric', () => {
     const result = await getCredentialsForBiometric();
 
     expect(result).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
+  });
+});
+
+describe('clearCredentialsForBiometric', () => {
+  it('키체인 자격 증명을 초기화한다', async () => {
+    mockKeychain.resetGenericPassword.mockResolvedValue(true as never);
+
+    await expect(clearCredentialsForBiometric()).resolves.toBeUndefined();
+    expect(mockKeychain.resetGenericPassword).toHaveBeenCalled();
+  });
+
+  it('초기화 실패 시 에러를 억제하고 console.error를 호출한다', async () => {
+    mockKeychain.resetGenericPassword.mockRejectedValue(new Error('reset failed'));
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(clearCredentialsForBiometric()).resolves.toBeUndefined();
     expect(errorSpy).toHaveBeenCalled();
   });
 });

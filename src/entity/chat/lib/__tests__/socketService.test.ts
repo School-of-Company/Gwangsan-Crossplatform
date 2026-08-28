@@ -108,6 +108,43 @@ describe('createChatSocketService', () => {
     expect(disconnectHandler).toHaveBeenCalledWith('io server disconnect');
   });
 
+  it('connect_error 이벤트를 그대로 전달한다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const connectErrorHandler = jest.fn();
+    service.on('connect_error', connectErrorHandler);
+
+    const error = new Error('connection failed');
+    socketManager.__trigger('connect_error', error);
+
+    expect(connectErrorHandler).toHaveBeenCalledWith(error);
+  });
+
+  it('동일 이벤트에 핸들러를 여러 개 등록하면 모두 호출된다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const firstHandler = jest.fn();
+    const secondHandler = jest.fn();
+    service.on('connect', firstHandler);
+    service.on('connect', secondHandler);
+
+    socketManager.__trigger('connect');
+
+    expect(firstHandler).toHaveBeenCalledTimes(1);
+    expect(secondHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('off()는 등록된 적 없는 이벤트에 대해 호출해도 에러를 던지지 않는다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const handler = jest.fn();
+
+    expect(() => service.off('connect', handler)).not.toThrow();
+  });
+
   it('receiveMessage / updateRoomList / transactionStateChanged 이벤트를 그대로 전달한다', () => {
     const socketManager = createMockSocketManager();
     const service = createChatSocketService(socketManager);

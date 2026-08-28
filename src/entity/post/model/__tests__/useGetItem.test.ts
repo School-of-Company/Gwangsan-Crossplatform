@@ -99,4 +99,19 @@ describe('useGetItem', () => {
       expect(result.current.isLoading).toBe(true);
     });
   });
+
+  describe('비활성화 상태에서 강제 refetch', () => {
+    it('postId가 없을 때 refetch를 호출하면 need ID 에러가 발생한다', async () => {
+      const { result } = renderHookWithProviders(() => useGetItem(undefined));
+
+      // enabled:false인 쿼리를 강제로 refetch하면 queryFn은 실행되어 결과가 나오지만,
+      // react-query가 disabled 쿼리 옵저버에는 그 결과를 반영해 리렌더하지 않으므로
+      // (result.current는 idle로 남는다), refetch()가 반환하는 결과 자체를 검증한다.
+      const refetchResult = await result.current.refetch();
+
+      expect(refetchResult.isError).toBe(true);
+      expect(refetchResult.error?.message).toBe('need ID.');
+      expect(mockGetItem).not.toHaveBeenCalled();
+    });
+  });
 });

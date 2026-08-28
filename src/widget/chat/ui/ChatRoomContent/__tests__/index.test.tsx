@@ -1,6 +1,6 @@
 import React from 'react';
-import { FlatList, Text } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { DeviceEventEmitter, FlatList, Text } from 'react-native';
+import { act, render } from '@testing-library/react-native';
 import { ChatRoomContent } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
@@ -195,5 +195,28 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('my-message-1').props.children).toBe('');
     expect(getByTestId('my-message-3').props.children).toBe('');
     expect(getByTestId('my-message-4').props.children).toBe('last');
+  });
+
+  it('키보드가 나타나고 사라짐에 따라 리스트 하단 여백을 조정한다', () => {
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent {...defaultProps} messages={[createMessage()]} hasMessages />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.contentContainerStyle.paddingBottom).toBe(10);
+
+    act(() => {
+      DeviceEventEmitter.emit('keyboardWillShow', { endCoordinates: { height: 300 } });
+    });
+
+    const listAfterShow = UNSAFE_getByType(FlatList);
+    expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(310);
+
+    act(() => {
+      DeviceEventEmitter.emit('keyboardWillHide');
+    });
+
+    const listAfterHide = UNSAFE_getByType(FlatList);
+    expect(listAfterHide.props.contentContainerStyle.paddingBottom).toBe(10);
   });
 });

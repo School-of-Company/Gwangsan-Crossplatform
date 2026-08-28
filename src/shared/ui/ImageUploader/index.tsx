@@ -109,17 +109,27 @@ const ImageUploader = ({
     );
   }, []);
 
+  // handleImageSelected가 실패 후 1.5초 뒤 예약하는 자동 제거 호출은 uri가 images에
+  // 추가되기 "전" 시점의 클로저를 캡처하기 때문에, images를 직접 의존성으로 참조하면
+  // 항상 images.indexOf(uri) === -1이 되어 제거가 조용히 무시된다. ref로 최신 images를
+  // 읽어 이 문제를 피한다.
+  const imagesRef = useRef(images);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
   const removeImageByUri = useCallback(
     (uri: string) => {
-      const imageIndex = images.indexOf(uri);
+      const currentImages = imagesRef.current;
+      const imageIndex = currentImages.indexOf(uri);
       if (imageIndex === -1) return;
 
-      const newImages = images.filter((img) => img !== uri);
+      const newImages = currentImages.filter((img) => img !== uri);
       onImagesChange?.(newImages);
 
       setImageStatuses((prev) => prev.filter((item) => item.uri !== uri));
     },
-    [images, onImagesChange]
+    [onImagesChange]
   );
 
   const handleImageSelected = useCallback(

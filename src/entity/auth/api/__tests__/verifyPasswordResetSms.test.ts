@@ -41,4 +41,39 @@ describe('verifyPasswordResetSms', () => {
       verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
     ).rejects.toThrow();
   });
+
+  it('실패 응답이 JSON이 아니면 응답 본문 일부를 에러 메시지로 throw한다', async () => {
+    mockFetch('Bad Gateway - upstream error', 502);
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
+    ).rejects.toThrow('Bad Gateway - upstream error');
+  });
+
+  it('성공 응답 본문이 비어있으면 에러 없이 완료된다', async () => {
+    mockFetch('', 200);
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
+    ).resolves.toBeUndefined();
+  });
+
+  it('실패 응답이 객체가 아닌 JSON(문자열)이면 HTTP 상태 메시지로 에러를 throw한다', async () => {
+    mockFetch('"단순 문자열 응답"', 400, 'Bad Request');
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
+    ).rejects.toThrow('HTTP 400: Bad Request');
+  });
+
+  it('실패 응답 본문이 JSON null이면 HTTP 상태 메시지로 에러를 throw한다', async () => {
+    mockFetch('null', 400, 'Bad Request');
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
+    ).rejects.toThrow('HTTP 400: Bad Request');
+  });
+
+  it('실패 응답 본문에 message 필드가 있으면 서버 메시지로 에러를 throw한다', async () => {
+    mockFetch({ message: '인증번호가 일치하지 않습니다' }, 400);
+    await expect(
+      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
+    ).rejects.toThrow('인증번호가 일치하지 않습니다');
+  });
 });

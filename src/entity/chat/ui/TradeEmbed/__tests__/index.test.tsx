@@ -177,4 +177,55 @@ describe('TradeEmbed', () => {
     expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
     expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
   });
+
+  it('showButtons가 true이고 예약 정보가 있으면 예약 상세를 함께 보여준다', () => {
+    const { getByTestId } = render(
+      <TradeEmbed
+        product={createProduct({
+          isSeller: true,
+          isReserved: true,
+          reservationScheduledAt: '2026-08-28T14:00:00',
+          reservationPlaceName: '상무역 2번 출구',
+        })}
+        showButtons
+      />
+    );
+
+    expect(getByTestId('trade-reserved-notice')).toBeTruthy();
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
+  });
+
+  it('예약 일시 형식이 올바르지 않으면 원본 문자열을 그대로 보여준다', () => {
+    const { getByTestId } = render(
+      <TradeEmbed
+        product={createProduct({
+          isReserved: true,
+          reservationScheduledAt: 'invalid-date-string',
+        })}
+        showButtons={false}
+      />
+    );
+
+    expect(getByTestId('trade-reservation-detail').props.children).toContain('invalid-date-string');
+  });
+
+  it('alignment가 right이면 우측 정렬 클래스를 적용한다', () => {
+    const { toJSON } = render(
+      <TradeEmbed product={createProduct()} showButtons alignment="right" />
+    );
+
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain('self-end');
+    expect(tree).not.toContain('self-start ml-10');
+  });
+
+  it('alignment가 left(기본값)이면 좌측 정렬 클래스를 적용한다', () => {
+    const { toJSON } = render(
+      <TradeEmbed product={createProduct()} showButtons alignment="left" />
+    );
+
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain('self-start ml-10');
+  });
 });

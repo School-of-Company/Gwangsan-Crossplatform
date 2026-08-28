@@ -8,6 +8,7 @@ import {
   CHAT_BACKGROUND_TASK,
   registerChatBackgroundTask,
   unregisterChatBackgroundTask,
+  clearChatUnreadState,
 } from '../chatBackgroundTask';
 
 jest.mock('expo-background-fetch', () => ({
@@ -340,5 +341,19 @@ describe('unregisterChatBackgroundTask', () => {
     mockIsTaskRegisteredAsync.mockRejectedValue(new Error('fail'));
 
     await expect(unregisterChatBackgroundTask()).resolves.toBeUndefined();
+  });
+});
+
+describe('clearChatUnreadState', () => {
+  it('removes the stored unread state', async () => {
+    await clearChatUnreadState();
+
+    expect(mockAsyncRemoveItem).toHaveBeenCalledWith('chatLastUnreadState');
+  });
+
+  it('does not throw when removal fails', async () => {
+    mockAsyncRemoveItem.mockRejectedValue(new Error('fail'));
+
+    await expect(clearChatUnreadState()).resolves.toBeUndefined();
   });
 });

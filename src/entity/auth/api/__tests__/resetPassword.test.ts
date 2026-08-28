@@ -45,4 +45,39 @@ describe('resetPassword', () => {
       resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
     ).rejects.toThrow();
   });
+
+  it('실패 응답이 JSON이 아니면 응답 본문 일부를 에러 메시지로 throw한다', async () => {
+    mockFetch('Internal Server Error - something went wrong', 500);
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
+    ).rejects.toThrow('Internal Server Error - something went wrong');
+  });
+
+  it('성공 응답 본문이 비어있으면 에러 없이 완료된다', async () => {
+    mockFetch('', 200);
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
+    ).resolves.toBeUndefined();
+  });
+
+  it('실패 응답이 객체가 아닌 JSON(문자열)이면 HTTP 상태 메시지로 에러를 throw한다', async () => {
+    mockFetch('"단순 문자열 응답"', 400, 'Bad Request');
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
+    ).rejects.toThrow('HTTP 400: Bad Request');
+  });
+
+  it('실패 응답 본문이 JSON null이면 HTTP 상태 메시지로 에러를 throw한다', async () => {
+    mockFetch('null', 400, 'Bad Request');
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
+    ).rejects.toThrow('HTTP 400: Bad Request');
+  });
+
+  it('실패 응답 본문에 message 필드가 있으면 서버 메시지로 에러를 throw한다', async () => {
+    mockFetch({ message: '이미 사용중인 전화번호입니다' }, 409);
+    await expect(
+      resetPassword({ phoneNumber: '01012345678', newPassword: 'pass' })
+    ).rejects.toThrow('이미 사용중인 전화번호입니다');
+  });
 });

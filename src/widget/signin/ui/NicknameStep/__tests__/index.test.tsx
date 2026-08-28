@@ -4,6 +4,9 @@ import { router } from 'expo-router';
 import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
 import { setData } from '~/shared/lib/setData';
 import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { nicknameSchema } from '~/entity/auth/model/authSchema';
+import { chatSocket } from '~/shared/lib/socket';
+import { logger } from '~/shared/lib/logger';
 import NicknameStep from '../index';
 
 jest.mock('expo-router', () => ({
@@ -80,6 +83,8 @@ const mockSetData = jest.mocked(setData);
 const mockUseSigninFormField = jest.mocked(useSigninFormField);
 const mockUseSigninStepNavigation = jest.mocked(useSigninStepNavigation);
 const mockRouterReplace = jest.mocked(router.replace);
+const mockCanDismiss = jest.mocked(router.canDismiss);
+const mockDismissAll = jest.mocked(router.dismissAll);
 
 const mockNextStep = jest.fn();
 const mockResetStore = jest.fn();
@@ -97,6 +102,7 @@ beforeEach(() => {
   });
   mockGetCredentials.mockResolvedValue(null);
   mockSetData.mockResolvedValue();
+  mockCanDismiss.mockReturnValue(false);
 });
 
 describe('NicknameStep — 생체인증 자동 로그인', () => {
@@ -177,6 +183,32 @@ describe('NicknameStep — 생체인증 자동 로그인', () => {
     expect(mockResetStore).not.toHaveBeenCalled();
     expect(mockRouterReplace).not.toHaveBeenCalledWith('/main');
   });
+
+  it('dismiss 가능한 화면 스택이 있으면 생체 로그인 후 dismissAll을 호출한다', async () => {
+    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
+    mockCanDismiss.mockReturnValue(true);
+
+    render(<NicknameStep />);
+
+    await waitFor(() => expect(mockDismissAll).toHaveBeenCalled());
+    expect(mockRouterReplace).toHaveBeenCalledWith('/main');
+  });
+
+  it('생체 로그인 후 채팅 소켓 연결이 실패해도 /main으로 이동하고 에러를 로깅한다', async () => {
+    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
+    const mockChatSocketConnect = jest.mocked(chatSocket.connect);
+    mockChatSocketConnect.mockRejectedValue(new Error('소켓 연결 실패'));
+
+    render(<NicknameStep />);
+
+    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/main'));
+    await waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        'chat socket connect after biometric login failed',
+        expect.any(Error)
+      )
+    );
+  });
 });
 
 describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
@@ -221,6 +253,56 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
 
     fireEvent.changeText(getByTestId('NicknameStep-nickname-input'), '홍길동');
     expect(queryByTestId('error-message')).toBeNull();
+  });
+
+  it('ZodError가 아닌 일반 Error가 발생하면 해당 에러 메시지를 표시한다', async () => {
+    const parseSpy = jest.spyOn(nicknameSchema, 'parse').mockImplementation(() => {
+      throw new Error('일반 에러 메시지');
+    });
+
+    const { getByTestId, getByText } = render(<NicknameStep />);
+
+    fireEvent.changeText(getByTestId('NicknameStep-nickname-input'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getByText('일반 에러 메시지')).toBeTruthy());
+    expect(mockNextStep).not.toHaveBeenCalled();
+
+    parseSpy.mockRestore();
+  });
+
+  it('Error 인스턴스가 아닌 예외가 발생하면 기본 에러 메시지를 표시한다', async () => {
+    const parseSpy = jest.spyOn(nicknameSchema, 'parse').mockImplementation(() => {
+      throw '문자열 예외';
+    });
+
+    const { getByTestId, getByText } = render(<NicknameStep />);
+
+    fireEvent.changeText(getByTestId('NicknameStep-nickname-input'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getByText('유효하지 않은 별칭입니다')).toBeTruthy());
+    expect(mockNextStep).not.toHaveBeenCalled();
+
+    parseSpy.mockRestore();
+  });
+
+  it('닉네임 입력 후 키보드에서 제출하면 다음 단계로 이동한다', () => {
+    const { getByTestId } = render(<NicknameStep />);
+
+    fireEvent.changeText(getByTestId('NicknameStep-nickname-input'), '홍길동');
+    fireEvent(getByTestId('NicknameStep-nickname-input'), 'submitEditing');
+
+    expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
+    expect(mockNextStep).toHaveBeenCalled();
+  });
+
+  it('빈 닉네임으로 키보드 제출 시 다음 단계로 이동하지 않는다', () => {
+    const { getByTestId } = render(<NicknameStep />);
+
+    fireEvent(getByTestId('NicknameStep-nickname-input'), 'submitEditing');
+
+    expect(mockNextStep).not.toHaveBeenCalled();
   });
 });
 

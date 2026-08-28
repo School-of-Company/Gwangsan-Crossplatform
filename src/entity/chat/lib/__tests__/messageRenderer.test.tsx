@@ -2,6 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import {
   formatMessageTime,
+  getMessageDateKey,
+  formatDateDividerLabel,
   renderMessageImages,
   renderMessageText,
   renderMessageContent,
@@ -56,6 +58,45 @@ describe('formatMessageTime', () => {
     });
 
     expect(formatMessageTime(createdAt)).toBe(expected);
+  });
+});
+
+describe('getMessageDateKey', () => {
+  it('createdAt으로부터 연-월-일 형식의 키를 생성한다', () => {
+    const createdAt = '2026-05-28T01:00:00.000Z';
+    const date = new Date(createdAt);
+
+    expect(getMessageDateKey(createdAt)).toBe(
+      `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    );
+  });
+});
+
+describe('formatDateDividerLabel', () => {
+  it('오늘 날짜이면 "오늘"을 반환한다', () => {
+    const today = new Date();
+
+    expect(formatDateDividerLabel(today.toISOString())).toBe('오늘');
+  });
+
+  it('어제 날짜이면 "어제"를 반환한다', () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    expect(formatDateDividerLabel(yesterday.toISOString())).toBe('어제');
+  });
+
+  it('오늘/어제가 아니면 전체 날짜 형식을 반환한다', () => {
+    const createdAt = '2020-01-01T00:00:00.000Z';
+    const date = new Date(createdAt);
+    const expected = date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+
+    expect(formatDateDividerLabel(createdAt)).toBe(expected);
   });
 });
 
@@ -143,6 +184,24 @@ describe('renderMessageImages', () => {
     const { queryByText } = renderNode(renderMessageImages(message, createImageLoader(), config));
 
     expect(queryByText('사진 설명')).toBeNull();
+  });
+
+  it('Image의 onLoadStart/onLoadEnd/onError가 imageLoader 핸들러를 호출한다', () => {
+    const imageLoader = createImageLoader();
+    const { UNSAFE_getAllByType } = renderNode(
+      renderMessageImages(imageMessage, imageLoader, config)
+    );
+
+    const { Image } = require('react-native');
+    const images = UNSAFE_getAllByType(Image);
+
+    images[0].props.onLoadStart();
+    images[0].props.onLoadEnd();
+    images[0].props.onError();
+
+    expect(imageLoader.handleImageLoadStart).toHaveBeenCalledWith(1);
+    expect(imageLoader.handleImageLoadEnd).toHaveBeenCalledWith(1);
+    expect(imageLoader.handleImageError).toHaveBeenCalledWith(1);
   });
 });
 
