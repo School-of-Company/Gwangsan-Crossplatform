@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import { TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import ProfileMenu from '../index';
 import { useSignout, useWithdrawal } from '~/entity/auth';
@@ -78,6 +79,13 @@ describe('ProfileMenu', () => {
     expect(queryByText('로그아웃')).toBeNull();
   });
 
+  it('상대방 프로필에서 name이 없으면 "님의 거래"/"님의 글"로 표시한다', () => {
+    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} />);
+
+    expect(getByText('님의 거래')).toBeTruthy();
+    expect(getByText('님의 글')).toBeTruthy();
+  });
+
   it('내 글/거래 내역/후기 행 각각에 chevron 아이콘을 표시한다', () => {
     const { getAllByTestId } = render(<ProfileMenu isMe memberId={1} />);
 
@@ -128,6 +136,16 @@ describe('ProfileMenu', () => {
     const { getByText } = render(<ProfileMenu isMe />);
 
     fireEvent.press(getByText('후기'));
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('memberId가 없을 때 후기 행의 onPress를 직접 호출해도 push하지 않는다', () => {
+    const { UNSAFE_getAllByType } = render(<ProfileMenu isMe />);
+
+    // 행 순서: 내 글(0), 거래 내역(1), 후기(2)
+    const reviewRow = UNSAFE_getAllByType(TouchableOpacity)[2];
+    reviewRow.props.onPress();
 
     expect(push).not.toHaveBeenCalled();
   });
@@ -197,6 +215,18 @@ describe('ProfileMenu', () => {
 
     expect(getByText('버전')).toBeTruthy();
     expect(getByText('1.0.28')).toBeTruthy();
+  });
+
+  it('행을 누르고 있다가 떼면 pressIn/pressOut 애니메이션 핸들러가 오류 없이 실행된다', () => {
+    const { getByText } = render(<ProfileMenu isMe memberId={1} />);
+
+    const row = getByText('내 글').parent?.parent;
+    if (!row) throw new Error('row not found');
+
+    expect(() => {
+      fireEvent(row, 'pressIn');
+      fireEvent(row, 'pressOut');
+    }).not.toThrow();
   });
 
   it('로그아웃 진행 중이면 "로그아웃 중..." 텍스트를 표시하고 비활성화한다', () => {

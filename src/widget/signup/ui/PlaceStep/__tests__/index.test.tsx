@@ -98,6 +98,24 @@ describe('PlaceStep — 유효성 검사', () => {
   });
 });
 
+describe('PlaceStep — 에러 초기화', () => {
+  it('에러가 표시된 상태에서 지점을 다시 선택하면 에러가 초기화된다', async () => {
+    const { getByTestId, getAllByText, getByText } = render(<PlaceStep />);
+
+    fireEvent.press(getByTestId('next-button'));
+    await waitFor(() => {
+      expect(getAllByText('지점을 선택해주세요')).toHaveLength(3);
+    });
+
+    fireEvent.press(getAllByText('지점을 선택해주세요')[1]);
+    fireEvent.press(getByText('평동'));
+
+    // 지점 선택 후 드롭다운 라벨이 '평동'으로 바뀌어 description 문구만 남는다.
+    expect(getAllByText('지점을 선택해주세요')).toHaveLength(1);
+    expect(getByText('평동')).toBeTruthy();
+  });
+});
+
 describe('PlaceStep — 다음 단계로 이동', () => {
   it('지점을 선택한 뒤 다음 클릭 시 updateField와 nextStep이 호출된다', () => {
     const { getAllByText, getByText, getByTestId } = render(<PlaceStep />);

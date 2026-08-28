@@ -125,6 +125,23 @@ describe('FindNicknamePage', () => {
     );
   });
 
+  it('별칭 찾기 실패 시 Error가 아닌 값이 던져지면 기본 에러 메시지를 표시한다', async () => {
+    mockUseFindNicknamePhoneVerification.mockReturnValue(
+      makeHookReturn({ isVerificationComplete: true })
+    );
+    mockFindNickname.mockRejectedValue('unexpected failure');
+
+    const { getAllByText } = render(<FindNicknamePage />);
+
+    fireEvent.press(getAllByText('별칭 찾기')[1]);
+
+    await waitFor(() =>
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '별칭을 찾을 수 없습니다.' })
+      )
+    );
+  });
+
   it('뒤로 버튼 클릭 시 로그인 화면으로 이동한다', () => {
     const { getByText } = render(<FindNicknamePage />);
 
@@ -144,6 +161,21 @@ describe('FindNicknamePage', () => {
     await waitFor(() => expect(getByText('로그인하러 가기')).toBeTruthy());
 
     fireEvent.press(getByText('로그인하러 가기'));
+
+    expect(router.replace).toHaveBeenCalledWith('/signin');
+  });
+
+  it('완료 화면에서 뒤로 버튼 클릭 시 로그인 화면으로 이동한다', async () => {
+    mockUseFindNicknamePhoneVerification.mockReturnValue(
+      makeHookReturn({ isVerificationComplete: true })
+    );
+    mockFindNickname.mockResolvedValue('테스트닉네임');
+
+    const { getAllByText, getByText } = render(<FindNicknamePage />);
+    fireEvent.press(getAllByText('별칭 찾기')[1]);
+    await waitFor(() => expect(getByText('별칭 찾기 완료')).toBeTruthy());
+
+    fireEvent.press(getByText('뒤로'));
 
     expect(router.replace).toHaveBeenCalledWith('/signin');
   });

@@ -222,6 +222,42 @@ describe('useChatMessages', () => {
 
       result.current.scrollToEnd(false);
     });
+
+    it('메시지가 도착하면 100ms 후 자동으로 scrollToEnd를 호출한다', () => {
+      jest.useFakeTimers();
+      mockUseChatMessagesEntity.mockReturnValue({
+        data: [{ messageId: 1, content: 'hi' }],
+        isLoading: false,
+        isError: false,
+      });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+      const scrollToEndSpy = jest.fn();
+      (result.current.flatListRef as any).current = { scrollToEnd: scrollToEndSpy };
+
+      jest.advanceTimersByTime(100);
+
+      expect(scrollToEndSpy).toHaveBeenCalledWith({ animated: true });
+      jest.useRealTimers();
+    });
+
+    it('메시지가 없으면 자동 스크롤을 예약하지 않는다', () => {
+      jest.useFakeTimers();
+      mockUseChatMessagesEntity.mockReturnValue({ data: [], isLoading: false, isError: false });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+      const scrollToEndSpy = jest.fn();
+      (result.current.flatListRef as any).current = { scrollToEnd: scrollToEndSpy };
+
+      jest.advanceTimersByTime(200);
+
+      expect(scrollToEndSpy).not.toHaveBeenCalled();
+      jest.useRealTimers();
+    });
   });
 
   describe('isLoading / isError', () => {

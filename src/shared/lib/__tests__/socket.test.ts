@@ -235,6 +235,69 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(socket.emit).not.toHaveBeenCalledWith('connect');
   });
 
+  it('rejects with a timeout error if "connect" never fires within 20s', async () => {
+    jest.useFakeTimers();
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    mockGetData.mockResolvedValue('token');
+
+    const promise = chatSocket.connect();
+    // Attach the rejection handler before advancing timers, otherwise the
+    // promise can reject before anything observes it — flagged as an
+    // unhandled rejection instead of a clean assertion failure.
+    const assertion = expect(promise).rejects.toThrow('Connection timeout');
+    // getData('accessToken') resolves as a real microtask before the 20s
+    // setTimeout is even registered — flush it before advancing fake timers.
+    await Promise.resolve();
+    await Promise.resolve();
+    await jest.advanceTimersByTimeAsync(20000);
+
+    await assertion;
+    jest.useRealTimers();
+  });
+
+  it('forwards socket "updateRoomList" events to local handlers', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    await connectSuccessfully(socket);
+
+    const handler = jest.fn();
+    chatSocket.on('updateRoomList', handler);
+    socket.__trigger('updateRoomList', { roomId: '1' });
+
+    expect(handler).toHaveBeenCalledWith({ roomId: '1' });
+  });
+
+  it('forwards socket "transactionStateChanged" events to local handlers', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    await connectSuccessfully(socket);
+
+    const handler = jest.fn();
+    chatSocket.on('transactionStateChanged', handler);
+    socket.__trigger('transactionStateChanged', { state: 'DONE' });
+
+    expect(handler).toHaveBeenCalledWith({ state: 'DONE' });
+  });
+
+  it('logs and continues when a local event handler throws', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    await connectSuccessfully(socket);
+
+    const throwingHandler = jest.fn(() => {
+      throw new Error('handler boom');
+    });
+    const okHandler = jest.fn();
+    chatSocket.on('customEvent', throwingHandler);
+    chatSocket.on('customEvent', okHandler);
+
+    expect(() => chatSocket.emit('customEvent', 1)).not.toThrow();
+
+    expect(logger.error).toHaveBeenCalledWith('Error in customEvent handler', expect.any(Error));
+    expect(okHandler).toHaveBeenCalledWith(1);
+  });
+
   it('disconnect tears down the socket and resets state', async () => {
     const socket = createMockSocket();
     mockIo.mockReturnValue(socket);

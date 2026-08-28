@@ -1,4 +1,5 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import Post from '../index';
 
@@ -54,6 +55,22 @@ describe('Post', () => {
     const { getByText } = render(<Post {...makePost({ id: -1 })} />);
 
     fireEvent.press(getByText('테스트 게시글'));
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('임시 게시글은 TouchableOpacity가 비활성화되어 있다', () => {
+    const { UNSAFE_getByType } = render(<Post {...makePost({ id: -1 })} />);
+
+    expect(UNSAFE_getByType(TouchableOpacity).props.disabled).toBe(true);
+  });
+
+  it('id가 0 미만이면 핸들러를 직접 호출해도 이동하지 않는다 (early return 분기)', () => {
+    const { UNSAFE_getByType } = render(<Post {...makePost({ id: -1 })} />);
+
+    // disabled 상태에서는 실제 press가 onPress를 트리거하지 않으므로,
+    // handlePress 내부의 id < 0 조기 반환 분기를 직접 검증한다.
+    UNSAFE_getByType(TouchableOpacity).props.onPress();
 
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -124,5 +141,45 @@ describe('Post', () => {
     const { queryByTestId } = render(<Post {...makePost()} />);
 
     expect(queryByTestId('post-buyer')).toBeNull();
+  });
+
+  it('imageUrls, images를 전달하지 않으면 기본값 []으로 처리한다', () => {
+    const props = makePost();
+    delete (props as any).imageUrls;
+    delete (props as any).images;
+
+    expect(() => render(<Post {...props} />)).not.toThrow();
+  });
+
+  it('imageUrls가 비어있고 images가 문자열 배열이면 첫 문자열을 이미지로 사용한다', () => {
+    const { getByText } = render(
+      <Post
+        {...makePost({
+          imageUrls: [],
+          images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+        })}
+      />
+    );
+
+    expect(getByText('+1')).toBeTruthy();
+  });
+
+  it('imageUrls가 비어있고 images가 객체 배열이면 imageUrl 필드를 사용한다', () => {
+    const { queryByText } = render(
+      <Post
+        {...makePost({
+          imageUrls: [],
+          images: [{ imageUrl: 'https://example.com/a.jpg' }],
+        })}
+      />
+    );
+
+    expect(queryByText(/^\+\d+/)).toBeNull();
+  });
+
+  it('images가 배열이 아니면 additionalImagesCount 계산에서 0으로 처리한다', () => {
+    const { queryByText } = render(<Post {...makePost({ imageUrls: [], images: null as any })} />);
+
+    expect(queryByText(/^\+\d+/)).toBeNull();
   });
 });

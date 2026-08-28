@@ -56,9 +56,25 @@ jest.mock('~/shared/ui/Button', () => ({
 
 jest.mock('~/shared/ui/ImageUploader', () => ({
   __esModule: true,
-  default: () => {
-    const { View } = require('react-native');
-    return <View testID="image-uploader" />;
+  default: ({ onImageIdsChange, onUploadStateChange }: any) => {
+    const { View, TouchableOpacity } = require('react-native');
+    return (
+      <View testID="image-uploader">
+        <TouchableOpacity testID="image-ids-trigger" onPress={() => onImageIdsChange([1, 2])} />
+        <TouchableOpacity
+          testID="upload-state-trigger"
+          onPress={() =>
+            onUploadStateChange({
+              hasUploadingImages: false,
+              hasFailedImages: false,
+              totalImages: 0,
+              uploadingCount: 0,
+              uploadedCount: 0,
+            })
+          }
+        />
+      </View>
+    );
   },
 }));
 
@@ -184,5 +200,83 @@ describe('ReportModal', () => {
     fireEvent.press(getByTestId('dropdown'));
 
     expect(setReportType).toHaveBeenCalledWith('SPAM_AD');
+  });
+
+  it('reportType과 contents가 모두 있으면 제출 시 handleSubmit이 trim된 내용으로 호출된다', () => {
+    const handleSubmit = jest.fn();
+    mockUseReport.mockReturnValue(
+      makeUseReportReturn({
+        reportType: 'SPAM_AD',
+        contents: '  신고 내용입니다  ',
+        canSubmit: true,
+        handleSubmit,
+      })
+    );
+
+    const { getByTestId } = render(<ReportModal {...defaultProps} />);
+
+    fireEvent.press(getByTestId('report-submit-button'));
+
+    expect(handleSubmit).toHaveBeenCalledWith('SPAM_AD', '신고 내용입니다');
+  });
+
+  it('reportType이 없으면 제출해도 handleSubmit이 호출되지 않는다', () => {
+    const handleSubmit = jest.fn();
+    mockUseReport.mockReturnValue(
+      makeUseReportReturn({
+        reportType: null,
+        contents: '내용',
+        canSubmit: true,
+        handleSubmit,
+      })
+    );
+
+    const { getByTestId } = render(<ReportModal {...defaultProps} />);
+
+    fireEvent.press(getByTestId('report-submit-button'));
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
+
+  it('contents가 공백뿐이면 제출해도 handleSubmit이 호출되지 않는다', () => {
+    const handleSubmit = jest.fn();
+    mockUseReport.mockReturnValue(
+      makeUseReportReturn({
+        reportType: 'SPAM_AD',
+        contents: '   ',
+        canSubmit: true,
+        handleSubmit,
+      })
+    );
+
+    const { getByTestId } = render(<ReportModal {...defaultProps} />);
+
+    fireEvent.press(getByTestId('report-submit-button'));
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
+
+  it('이미지 ID 변경 시 setImageIds가 호출된다', () => {
+    const setImageIds = jest.fn();
+    mockUseReport.mockReturnValue(makeUseReportReturn({ setImageIds }));
+
+    const { getByTestId } = render(<ReportModal {...defaultProps} />);
+
+    fireEvent.press(getByTestId('image-ids-trigger'));
+
+    expect(setImageIds).toHaveBeenCalledWith([1, 2]);
+  });
+
+  it('업로드 상태 변경 시 setImageUploadState가 호출된다', () => {
+    const setImageUploadState = jest.fn();
+    mockUseReport.mockReturnValue(makeUseReportReturn({ setImageUploadState }));
+
+    const { getByTestId } = render(<ReportModal {...defaultProps} />);
+
+    fireEvent.press(getByTestId('upload-state-trigger'));
+
+    expect(setImageUploadState).toHaveBeenCalledWith(
+      expect.objectContaining({ hasUploadingImages: false, hasFailedImages: false })
+    );
   });
 });

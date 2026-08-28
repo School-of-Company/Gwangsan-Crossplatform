@@ -56,7 +56,12 @@ jobs:
         run: npm install -g npm@11
 
       - name: Create env file for tests
-        run: echo "EXPO_PUBLIC_SENTRY_DSN=https://test-placeholder@sentry.io/0" > .env
+        run: |
+          cat <<'EOF' > .env
+          EXPO_PUBLIC_SENTRY_DSN=https://test-placeholder@sentry.io/0
+          EXPO_PUBLIC_KAKAO_REST_API_KEY=test-placeholder-kakao-rest-key
+          EXPO_PUBLIC_KAKAO_JS_KEY=test-placeholder-kakao-js-key
+          EOF
 
       - name: Report unit test coverage
         uses: ArtiomTr/jest-coverage-report-action@v2

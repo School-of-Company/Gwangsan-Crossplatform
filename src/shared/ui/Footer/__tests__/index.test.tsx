@@ -1,6 +1,6 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
+import { Animated, TouchableOpacity } from 'react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import { useChatRooms } from '~/entity/chat/model/useChatRooms';
 import { useFooterVisibilityStore } from '~/shared/store/useFooterVisibilityStore';
@@ -152,5 +152,38 @@ describe('Footer', () => {
       <Footer {...createProps('main', { state: { index: 0, routes: undefined } })} />
     );
     expect(getByText('홈')).toBeTruthy();
+  });
+
+  it('마운트 이후 숨김으로 전환되면 pointerEvents가 none으로 바뀐다', () => {
+    const { toJSON } = render(<Footer {...createProps('main')} />);
+
+    act(() => {
+      useFooterVisibilityStore.getState().hide();
+    });
+
+    expect((toJSON() as any).props.pointerEvents).toBe('none');
+  });
+
+  it('마운트 이후 다시 보임으로 전환되면 pointerEvents가 auto로 복귀한다', () => {
+    useFooterVisibilityStore.getState().hide();
+    const { toJSON } = render(<Footer {...createProps('main')} />);
+
+    act(() => {
+      useFooterVisibilityStore.getState().show();
+    });
+
+    expect((toJSON() as any).props.pointerEvents).toBe('auto');
+  });
+
+  it('레이아웃 측정 후 footerHeight가 반영되어도 에러 없이 렌더링된다', () => {
+    const { UNSAFE_getAllByType } = render(<Footer {...createProps('main')} />);
+    const animatedViews = UNSAFE_getAllByType(Animated.View);
+    const innerView = animatedViews.find((node) => typeof node.props.onLayout === 'function');
+
+    act(() => {
+      innerView?.props.onLayout({ nativeEvent: { layout: { height: 90 } } });
+    });
+
+    expect(innerView?.props.onLayout).toBeInstanceOf(Function);
   });
 });

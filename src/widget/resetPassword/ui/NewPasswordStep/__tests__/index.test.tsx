@@ -7,6 +7,8 @@ import {
   useResetPasswordFormField,
   useResetPasswordStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
+import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
+import * as authSchemaModule from '~/entity/auth/model/authSchema';
 import NewPasswordStep from '../index';
 
 jest.mock('expo-router', () => ({
@@ -138,6 +140,70 @@ describe('NewPasswordStep — 유효성 검사', () => {
     });
     expect(mockResetPassword).not.toHaveBeenCalled();
   });
+
+  it('비밀번호 에러가 표시된 후 다시 입력하면 비밀번호 에러가 사라진다', async () => {
+    const { getByTestId, getAllByTestId, queryAllByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'abc');
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'abc');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getAllByTestId('error-message').length).toBeGreaterThan(0));
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+
+    expect(queryAllByTestId('error-message').length).toBe(0);
+  });
+
+  it('비밀번호 검증에서 ZodError가 아닌 예외가 발생해도 확인란 검증이 통과하면 재설정을 시도한다', async () => {
+    mockResetPassword.mockResolvedValue({});
+    const parseSpy = jest.spyOn(passwordSchema, 'parse').mockImplementation(() => {
+      throw new Error('일반 에러');
+    });
+
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(mockResetPassword).toHaveBeenCalled());
+
+    parseSpy.mockRestore();
+  });
+
+  it('확인란 검증에서 ZodError가 아닌 예외가 발생해도 비밀번호 검증이 통과하면 재설정을 시도한다', async () => {
+    mockResetPassword.mockResolvedValue({});
+    const confirmSpy = jest.spyOn(authSchemaModule, 'passwordConfirmSchema').mockReturnValue({
+      parse: () => {
+        throw new Error('일반 에러');
+      },
+    } as unknown as ReturnType<typeof passwordConfirmSchema>);
+
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(mockResetPassword).toHaveBeenCalled());
+
+    confirmSpy.mockRestore();
+  });
+
+  it('확인란 불일치 에러가 표시된 후 다시 입력하면 확인란 에러가 사라진다', async () => {
+    const { getByTestId, getAllByTestId, queryAllByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password2!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getAllByTestId('error-message').length).toBeGreaterThan(0));
+
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
+
+    expect(queryAllByTestId('error-message').length).toBe(0);
+  });
 });
 
 describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
@@ -199,6 +265,23 @@ describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
     expect(mockResetStore).not.toHaveBeenCalled();
   });
 
+  it('Error 인스턴스가 아닌 값으로 실패해도 기본 실패 메시지를 표시한다', async () => {
+    mockResetPassword.mockRejectedValue('문자열 거부 사유');
+
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        '비밀번호 재설정 실패',
+        '비밀번호 재설정에 실패했습니다. 다시 시도해주세요.'
+      );
+    });
+  });
+
   it('제출 중에는 버튼 텍스트가 "설정 중..."으로 바뀐다', async () => {
     let resolvePromise!: (value?: unknown) => void;
     mockResetPassword.mockReturnValue(
@@ -218,5 +301,49 @@ describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
     resolvePromise();
 
     await waitFor(() => expect(getByText('비밀번호 재설정')).toBeTruthy());
+  });
+});
+
+describe('NewPasswordStep — 키보드 제출(onSubmitEditing)', () => {
+  it('새 비밀번호 입력 후 제출하면 비밀번호 재입력 필드로 포커스를 이동시킨다', () => {
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    expect(() => fireEvent(getByTestId('새 비밀번호'), 'submitEditing')).not.toThrow();
+  });
+
+  it('비밀번호와 확인란을 모두 입력 후 확인란에서 제출하면 재설정을 시도한다', async () => {
+    mockResetPassword.mockResolvedValue({});
+
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
+    fireEvent(getByTestId('비밀번호 재입력'), 'submitEditing');
+
+    await waitFor(() => {
+      expect(mockResetPassword).toHaveBeenCalledWith({
+        phoneNumber: '01012345678',
+        newPassword: 'password1!',
+      });
+    });
+  });
+
+  it('확인란이 비어있는 상태로 제출하면 재설정을 시도하지 않는다', () => {
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
+    fireEvent(getByTestId('비밀번호 재입력'), 'submitEditing');
+
+    expect(mockResetPassword).not.toHaveBeenCalled();
+  });
+
+  it('비밀번호 필드가 비어있는 상태로 확인란에서 제출하면 재설정을 시도하지 않는다', () => {
+    const { getByTestId } = render(<NewPasswordStep />);
+
+    fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
+    fireEvent(getByTestId('비밀번호 재입력'), 'submitEditing');
+
+    expect(mockResetPassword).not.toHaveBeenCalled();
   });
 });

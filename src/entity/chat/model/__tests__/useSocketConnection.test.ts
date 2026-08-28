@@ -181,6 +181,40 @@ describe('useSocketConnection', () => {
     });
   });
 
+  it('앱이 background에서 active로 전환되어도 이미 연결되어 있으면 재연결을 시도하지 않는다', () => {
+    const socketService = createMockSocketService({ isConnected: true });
+    renderHook(() => useSocketConnection({ socketService, autoConnect: true }));
+    (socketService.connect as jest.Mock).mockClear();
+
+    act(() => {
+      appStateListener?.('background');
+    });
+    act(() => {
+      appStateListener?.('active');
+    });
+
+    expect(socketService.connect).not.toHaveBeenCalled();
+  });
+
+  it('앱 상태 전환에 의한 재연결이 실패하면 logger.error를 호출한다', async () => {
+    const socketService = createMockSocketService({ isConnected: false });
+    renderHook(() => useSocketConnection({ socketService, autoConnect: true }));
+    (socketService.connect as jest.Mock).mockClear();
+    (logger.error as jest.Mock).mockClear();
+    (socketService.connect as jest.Mock).mockRejectedValue(new Error('reconnect boom'));
+
+    act(() => {
+      appStateListener?.('background');
+    });
+    act(() => {
+      appStateListener?.('active');
+    });
+
+    await waitFor(() => {
+      expect(logger.error).toHaveBeenCalledWith('Socket connect failed', expect.any(Error));
+    });
+  });
+
   it('앱 상태 변화 리스너는 언마운트 시 해제된다', () => {
     const socketService = createMockSocketService();
     const { unmount } = renderHook(() => useSocketConnection({ socketService }));

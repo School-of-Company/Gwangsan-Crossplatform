@@ -110,6 +110,28 @@ describe('ChatRoomItem', () => {
     expect(() => fireEvent(getByText('상품 제목'), 'longPress')).not.toThrow();
   });
 
+  it('메뉴 버튼을 누르면 onMenuPress에 roomId를 전달한다', () => {
+    const onMenuPress = jest.fn();
+    const { UNSAFE_getAllByType } = render(
+      <ChatRoomItem room={baseRoom} onPress={jest.fn()} onMenuPress={onMenuPress} />
+    );
+    const { TouchableOpacity } = require('react-native');
+
+    const buttons = UNSAFE_getAllByType(TouchableOpacity);
+    fireEvent.press(buttons[1]);
+
+    expect(onMenuPress).toHaveBeenCalledWith(1);
+  });
+
+  it('onMenuPress가 없어도 메뉴 버튼을 눌렀을 때 에러가 발생하지 않는다', () => {
+    const { UNSAFE_getAllByType } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
+    const { TouchableOpacity } = require('react-native');
+
+    const buttons = UNSAFE_getAllByType(TouchableOpacity);
+
+    expect(() => fireEvent.press(buttons[1])).not.toThrow();
+  });
+
   describe('슬라이드 아웃 애니메이션', () => {
     beforeEach(() => {
       jest.useFakeTimers();

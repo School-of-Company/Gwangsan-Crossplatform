@@ -111,4 +111,56 @@ describe('RecommenderStep — 다음 단계로 이동', () => {
     expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
     expect(mockNextStep).toHaveBeenCalled();
   });
+
+  it('키보드 제출(onSubmitEditing) 시 유효한 값이면 다음 단계로 이동한다', () => {
+    const { getByPlaceholderText } = render(<RecommenderStep />);
+
+    const input = getByPlaceholderText('추천인 별칭을 입력해주세요');
+    fireEvent.changeText(input, '홍길동');
+    fireEvent(input, 'onSubmitEditing');
+
+    expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
+    expect(mockNextStep).toHaveBeenCalled();
+  });
+
+  it('키보드 제출(onSubmitEditing) 시 빈 값이면 다음 단계로 이동하지 않는다', () => {
+    const { getByPlaceholderText } = render(<RecommenderStep />);
+
+    const input = getByPlaceholderText('추천인 별칭을 입력해주세요');
+    fireEvent(input, 'onSubmitEditing');
+
+    expect(mockNextStep).not.toHaveBeenCalled();
+  });
+});
+
+describe('RecommenderStep — 예외 처리', () => {
+  it('updateField에서 일반 Error가 발생하면 해당 메시지를 표시한다', async () => {
+    mockUpdateField.mockImplementation(() => {
+      throw new Error('일반 에러 메시지');
+    });
+    const { getByTestId, getByText, getByPlaceholderText } = render(<RecommenderStep />);
+
+    fireEvent.changeText(getByPlaceholderText('추천인 별칭을 입력해주세요'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(getByText('일반 에러 메시지')).toBeTruthy();
+    });
+    expect(mockNextStep).not.toHaveBeenCalled();
+  });
+
+  it('updateField에서 Error가 아닌 값이 throw되면 기본 에러 메시지를 표시한다', async () => {
+    mockUpdateField.mockImplementation(() => {
+      throw 'string error';
+    });
+    const { getByTestId, getByText, getByPlaceholderText } = render(<RecommenderStep />);
+
+    fireEvent.changeText(getByPlaceholderText('추천인 별칭을 입력해주세요'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(getByText('유효하지 않은 별칭입니다')).toBeTruthy();
+    });
+    expect(mockNextStep).not.toHaveBeenCalled();
+  });
 });

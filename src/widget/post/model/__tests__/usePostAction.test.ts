@@ -1,4 +1,5 @@
 import { act, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { usePostAction } from '../usePostAction';
 import { useGetItem } from '~/entity/post/model/useGetItem';
@@ -15,7 +16,8 @@ jest.mock('~/entity/post/hooks/useTradeRequest', () => ({ useTradeRequest: jest.
 jest.mock('~/shared/lib/useChatEntry', () => ({ useChatEntry: jest.fn() }));
 jest.mock('~/shared/lib/userUtils', () => ({ checkIsMyPost: jest.fn() }));
 jest.mock('~/entity/post/api/createReview', () => ({ createReview: jest.fn() }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -144,6 +146,19 @@ describe('usePostAction', () => {
 
       expect(result.current.computedValues.canTrade).toBe(false);
     });
+
+    it('tradeRequest.isLoading가 true이면 tradeButtonText가 "신청 중..."이고 버튼이 비활성화된다', async () => {
+      setupMocks();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: jest.fn(),
+        isLoading: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.tradeButtonText).toBe('신청 중...');
+      expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
+    });
   });
 
   describe('modalHandlers', () => {
@@ -212,6 +227,41 @@ describe('usePostAction', () => {
       );
     });
 
+    it('data가 없으면 onSubmit이 createReview를 호출하지 않는다', async () => {
+      mockUseGetItem.mockReturnValue({
+        data: null,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      await act(async () => {
+        await result.current.reviewHandlers.onSubmit(80, '좋았어요');
+      });
+
+      expect(mockCreateReview).not.toHaveBeenCalled();
+    });
+
+    it('onSubmit 실패 시 Error가 아닌 값이 reject되면 기본 에러 메시지를 표시한다', async () => {
+      mockCreateReview.mockRejectedValue('알 수 없는 문자열 에러');
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      await act(async () => {
+        await result.current.reviewHandlers.onSubmit(80, '좋았어요');
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '리뷰 작성 실패',
+          text2: '리뷰 작성 중 오류가 발생했습니다.',
+        })
+      );
+    });
+
     it('onLightChange / onContentsChange로 값을 업데이트한다', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
@@ -235,10 +285,20 @@ describe('usePostAction', () => {
   });
 
   describe('navigationHandlers', () => {
-    it('goToEdit를 호출해도 오류가 발생하지 않는다', () => {
+    it('goToEdit가 id로 write 페이지로 이동한다', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.navigationHandlers.goToEdit());
+
+      expect(mockPush).toHaveBeenCalledWith('/write?id=1');
+    });
+
+    it('id가 없으면 goToEdit이 router.push를 호출하지 않는다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '' }));
+
+      act(() => result.current.navigationHandlers.goToEdit());
+
+      expect(mockPush).not.toHaveBeenCalled();
     });
 
     it('goToChat이 navigateToChat을 data.id로 호출한다', async () => {
@@ -279,6 +339,25 @@ describe('usePostAction', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
+    });
+
+    it('삭제 확인 Alert에서 삭제를 누르면 deletePost를 data.id, data.type, data.mode로 호출한다', () => {
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      const mockDeletePost = jest.fn();
+      mockUseDeletePost.mockReturnValue({ deletePost: mockDeletePost, isLoading: false });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+
+      const alertCall = alertSpy.mock.calls[0];
+      const buttons = alertCall[2] as { text: string; onPress?: () => void }[];
+      const confirmButton = buttons.find((b) => b.text === '삭제');
+      confirmButton?.onPress?.();
+
+      expect(mockDeletePost).toHaveBeenCalledWith(1, 'OBJECT', 'GIVER');
+
+      alertSpy.mockRestore();
     });
 
     it('data가 없으면 아무것도 하지 않는다', () => {

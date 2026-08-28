@@ -162,6 +162,20 @@ describe('ChatRoomList', () => {
     await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
   });
 
+  it('미리 받아오기가 실패해도 조용히 무시하고 화면 이동은 그대로 진행한다', async () => {
+    mockGetChatRoomData.mockRejectedValueOnce(new Error('network error'));
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+    );
+
+    const { getByTestId } = render(<ChatRoomList />);
+
+    fireEvent.press(getByTestId('room-7'));
+
+    expect(mockPush).toHaveBeenCalledWith('/chatting/7');
+    await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+  });
+
   it('isLoading=true이면 RefreshControl의 refreshing이 true이다', () => {
     mockUseChatRooms.mockReturnValue(
       makeChatRoomsReturn({ data: [{ roomId: 1, nickname: '방장' }], isLoading: true })
@@ -308,6 +322,68 @@ describe('ChatRoomList', () => {
         options.onError();
       });
 
+      expect(queryByTestId('room-7')).toBeTruthy();
+    });
+
+    it('삭제 진행 중(isPending)에는 버튼에 진행 중 문구를 표시한다', () => {
+      mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: true });
+
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+
+      expect(getByText('나가는 중...')).toBeTruthy();
+      expect(queryByText('채팅방 나가기')).toBeNull();
+    });
+
+    it('이미 취소되어 삭제 대상이 없는 상태에서 확인을 다시 눌러도 아무 일도 일어나지 않는다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      // 애니메이션이 끝나기 전 바텀시트 컨텐츠가 남아있는 동안, 확인 버튼을 두 번 누른다.
+      // 두 번째 클릭 시점에는 이미 deleteTargetRoomId가 null이므로 조기 반환되어야 한다.
+      fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('채팅방 나가기'));
+
+      expect(mockDeleteMutate).not.toHaveBeenCalled();
+      // exitingRoomId가 최초 클릭 값 그대로 유지되어 여전히 슬라이드 아웃 중이어야 한다.
+      expect(getByTestId('exit-complete-7')).toBeTruthy();
+    });
+
+    it('나가기 실패 콜백이 두 번 호출되어도(이미 복원된 뒤) 목록 상태가 안전하게 유지된다', () => {
+      const { getByTestId, getByText, queryByTestId } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByTestId('exit-complete-7'));
+      expect(queryByTestId('room-7')).toBeNull();
+
+      const [, options] = mockDeleteMutate.mock.calls[0];
+      act(() => {
+        options.onError();
+      });
+      expect(queryByTestId('room-7')).toBeTruthy();
+
+      // 이미 복원되어 hiddenRoomIds에 해당 roomId가 없는 상태에서 onError가 다시 호출되어도
+      // (예: 재시도 실패 등) 상태가 그대로 유지되어야 한다.
+      act(() => {
+        options.onError();
+      });
       expect(queryByTestId('room-7')).toBeTruthy();
     });
   });

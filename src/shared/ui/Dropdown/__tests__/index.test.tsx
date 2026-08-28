@@ -49,6 +49,15 @@ describe('Dropdown', () => {
     expect(queryByText('항목 A')).toBeNull();
   });
 
+  it('내부 선택 상태가 없을 때 selectedItem prop이 리렌더링으로 바뀌면 새 라벨을 표시한다', () => {
+    const { getByText, rerender } = render(<Dropdown items={items} />);
+    expect(getByText('선택해주세요')).toBeTruthy();
+
+    rerender(<Dropdown items={items} selectedItem="b" />);
+
+    expect(getByText('항목 B')).toBeTruthy();
+  });
+
   it('스냅샷 - 닫힌 상태', () => {
     const { toJSON } = render(<Dropdown label="선택" items={items} />);
     expect(toJSON()).toMatchSnapshot();

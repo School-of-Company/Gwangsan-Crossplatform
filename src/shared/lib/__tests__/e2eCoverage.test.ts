@@ -9,10 +9,19 @@ jest.mock('expo-file-system', () => ({
 const MockFile = File as unknown as jest.Mock;
 const mockWrite = jest.fn();
 
+// Jest's own coverage instrumentation stores real coverage data on this same
+// global. Overwriting it with a fake value and leaving it set would corrupt
+// coverage collection for every test file that runs afterward in this worker.
+const realCoverage = (global as any).__coverage__;
+
 beforeEach(() => {
   jest.clearAllMocks();
   MockFile.mockImplementation(() => ({ write: mockWrite }));
   delete (global as any).__coverage__;
+});
+
+afterEach(() => {
+  (global as any).__coverage__ = realCoverage;
 });
 
 describe('saveE2ECoverage', () => {

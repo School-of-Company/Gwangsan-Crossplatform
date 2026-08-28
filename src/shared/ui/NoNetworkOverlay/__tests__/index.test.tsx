@@ -1,9 +1,24 @@
 import React from 'react';
 import { Modal } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { NoNetworkOverlay } from '../index';
 
+jest.mock('@react-native-community/netinfo', () => ({
+  fetch: jest.fn(),
+}));
+
 describe('NoNetworkOverlay', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('재시도 버튼을 누르면 NetInfo.fetch를 호출한다', () => {
+    const { getByText } = render(<NoNetworkOverlay visible />);
+
+    fireEvent.press(getByText('재시도'));
+
+    expect(NetInfo.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('visible이 true이면 안내 텍스트와 재시도 버튼을 렌더링한다', () => {
     const { getByText } = render(<NoNetworkOverlay visible />);
     expect(getByText('인터넷에 연결되어 있지 않아요.')).toBeTruthy();

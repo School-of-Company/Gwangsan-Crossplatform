@@ -276,6 +276,38 @@ describe('useTradeRequest', () => {
     });
   });
 
+  describe('중복 요청 방지', () => {
+    it('요청이 진행 중일 때 다시 호출하면 requestTrade를 재호출하지 않는다', async () => {
+      let resolveRequest!: (value: { success: boolean; roomId: number }) => void;
+      mockRequestTrade.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          })
+      );
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      act(() => {
+        result.current.handleTradeRequest();
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(true));
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveRequest({ success: true, roomId: 10 });
+      });
+    });
+  });
+
   describe('로딩 상태', () => {
     it('요청 진행 중 isLoading이 true이다', async () => {
       let resolveRequest!: (value: { success: boolean; roomId: number }) => void;

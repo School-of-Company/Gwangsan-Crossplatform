@@ -50,9 +50,20 @@ jest.mock('~/shared/ui/Button', () => ({
 
 jest.mock('~/shared/ui/ImageUploader', () => ({
   __esModule: true,
-  default: () => {
-    const { View } = require('react-native');
-    return <View testID="image-uploader" />;
+  default: ({ onImageIdsChange, onUploadStateChange }: any) => {
+    const { View, TouchableOpacity } = require('react-native');
+    return (
+      <View testID="image-uploader">
+        <TouchableOpacity
+          testID="trigger-image-ids-change"
+          onPress={() => onImageIdsChange([1, 2, 3])}
+        />
+        <TouchableOpacity
+          testID="trigger-upload-state-change"
+          onPress={() => onUploadStateChange({ hasUploadingImages: false, hasFailedImages: false })}
+        />
+      </View>
+    );
   },
 }));
 
@@ -202,5 +213,30 @@ describe('CancelTradeBottomSheet', () => {
     expect(mockUseCancelTrade).toHaveBeenCalledWith(
       expect.objectContaining({ productId: 7, onSuccess: onClose })
     );
+  });
+
+  it('이미지 ID가 변경되면 setImageIds가 호출된다', () => {
+    const setImageIds = jest.fn();
+    mockUseCancelTrade.mockReturnValue(makeUseCancelTradeReturn({ setImageIds }));
+
+    const { getByTestId } = render(<CancelTradeBottomSheet {...defaultProps} />);
+
+    fireEvent.press(getByTestId('trigger-image-ids-change'));
+
+    expect(setImageIds).toHaveBeenCalledWith([1, 2, 3]);
+  });
+
+  it('이미지 업로드 상태가 변경되면 setImageUploadState가 호출된다', () => {
+    const setImageUploadState = jest.fn();
+    mockUseCancelTrade.mockReturnValue(makeUseCancelTradeReturn({ setImageUploadState }));
+
+    const { getByTestId } = render(<CancelTradeBottomSheet {...defaultProps} />);
+
+    fireEvent.press(getByTestId('trigger-upload-state-change'));
+
+    expect(setImageUploadState).toHaveBeenCalledWith({
+      hasUploadingImages: false,
+      hasFailedImages: false,
+    });
   });
 });

@@ -1,6 +1,12 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
-import { useQuery, useQueryClient, QueryClient, focusManager } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClient,
+  focusManager,
+} from '@tanstack/react-query';
 import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
 import QueryProvider from '../QueryProvider';
@@ -151,6 +157,36 @@ describe('QueryProvider', () => {
       expect.any(Error),
       expect.objectContaining({
         extra: expect.objectContaining({ context: 'react_query_error' }),
+      })
+    );
+  });
+
+  it('reports mutation failures to Sentry', async () => {
+    function FailingMutation() {
+      const { mutate, isError } = useMutation({
+        mutationFn: () => Promise.reject(new Error('mutation failed')),
+      });
+      return (
+        <>
+          <Text onPress={() => mutate()}>trigger</Text>
+          <Text>{isError ? 'errored' : 'idle'}</Text>
+        </>
+      );
+    }
+
+    const { getByText } = render(
+      <QueryProvider>
+        <FailingMutation />
+      </QueryProvider>
+    );
+
+    getByText('trigger').props.onPress();
+
+    await waitFor(() => expect(getByText('errored')).toBeTruthy());
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: expect.objectContaining({ context: 'react_mutation_error' }),
       })
     );
   });

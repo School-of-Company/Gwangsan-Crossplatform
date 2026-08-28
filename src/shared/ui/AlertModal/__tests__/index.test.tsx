@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { AlertModal } from '../index';
 
 describe('AlertModal', () => {
@@ -167,6 +167,31 @@ describe('AlertModal', () => {
     );
     fireEvent.press(UNSAFE_getByProps({ className: 'flex-1' }));
     expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('isVisible이 true에서 false로 바뀌면 닫힘 애니메이션 후 렌더링을 멈춘다', async () => {
+    const { queryByText, rerender } = render(
+      <AlertModal
+        isVisible
+        message="메시지"
+        confirmText="확인"
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+      />
+    );
+    expect(queryByText('메시지')).toBeTruthy();
+
+    rerender(
+      <AlertModal
+        isVisible={false}
+        message="메시지"
+        confirmText="확인"
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+      />
+    );
+
+    await waitFor(() => expect(queryByText('메시지')).toBeNull(), { timeout: 3000 });
   });
 
   it('스냅샷 - 기본 상태', () => {
