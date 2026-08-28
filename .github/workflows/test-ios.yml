@@ -194,6 +194,8 @@ jobs:
           echo "expo-modules-jsi patch verified OK"
 
       - name: Build app for Detox
+        env:
+          SENTRY_DISABLE_AUTO_UPLOAD: true
         run: |
           if [ "${{ steps.coverage-flag.outputs.enabled }}" = "true" ]; then
             E2E_COVERAGE=true npm run e2e:build:ios:coverage 2>&1 | tee /tmp/detox-build.log; exit ${PIPESTATUS[0]}
