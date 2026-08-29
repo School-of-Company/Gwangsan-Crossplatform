@@ -45,8 +45,10 @@ class SocketManager implements ISocketManager {
       }
 
       this.socket = io(this.config.url, {
-        auth: {
-          token: `Bearer ${accessToken}`,
+        auth: (cb: (data: Record<string, unknown>) => void) => {
+          getData('accessToken')
+            .then((latestToken) => cb({ token: `Bearer ${latestToken ?? accessToken}` }))
+            .catch(() => cb({ token: `Bearer ${accessToken}` }));
         },
         transports: this.config.transports as any,
         timeout: this.config.timeout,
