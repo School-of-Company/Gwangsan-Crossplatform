@@ -35,6 +35,7 @@ export interface IChatSocketService {
 
   connect(): Promise<void>;
   disconnect(): void;
+  destroy(): void;
   sendMessage(payload: ChatSendMessagePayload): void;
   joinRoom(roomId: RoomId): void;
   leaveRoom(roomId: RoomId): void;
@@ -59,30 +60,30 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     }
   };
 
+  const FORWARDED_EVENTS: readonly (keyof ChatSocketEvents)[] = [
+    'connect',
+    'disconnect',
+    'connect_error',
+    'receiveMessage',
+    'updateRoomList',
+    'transactionStateChanged',
+  ];
+
+  const forwardingHandlers = new Map<string, (...args: any[]) => void>();
+
   const setupSocketEventForwarding = (): void => {
-    socketManager.on('connect', () => {
-      emit('connect');
+    FORWARDED_EVENTS.forEach((event) => {
+      const handler = (...args: any[]) => emit(event, ...args);
+      forwardingHandlers.set(event, handler);
+      socketManager.on(event, handler);
     });
+  };
 
-    socketManager.on('disconnect', (reason: string) => {
-      emit('disconnect', reason);
+  const teardownSocketEventForwarding = (): void => {
+    forwardingHandlers.forEach((handler, event) => {
+      socketManager.off(event, handler);
     });
-
-    socketManager.on('connect_error', (error: Error) => {
-      emit('connect_error', error);
-    });
-
-    socketManager.on('receiveMessage', (message: ChatMessageResponse) => {
-      emit('receiveMessage', message);
-    });
-
-    socketManager.on('updateRoomList', (data: any) => {
-      emit('updateRoomList', data);
-    });
-
-    socketManager.on('transactionStateChanged', (data: any) => {
-      emit('transactionStateChanged', data);
-    });
+    forwardingHandlers.clear();
   };
 
   setupSocketEventForwarding();
@@ -93,6 +94,11 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
 
   const disconnect = (): void => {
     socketManager.disconnect();
+    eventHandlers.clear();
+  };
+
+  const destroy = (): void => {
+    teardownSocketEventForwarding();
     eventHandlers.clear();
   };
 
@@ -146,6 +152,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     },
     connect,
     disconnect,
+    destroy,
     sendMessage,
     joinRoom,
     leaveRoom,

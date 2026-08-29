@@ -57,6 +57,47 @@ describe('createChatSocketService', () => {
     expect(socketManager.on).toHaveBeenCalledTimes(6);
   });
 
+  it('destroy()는 socketManager에 등록한 forwarding 핸들러를 모두 제거한다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const handler = jest.fn();
+    service.on('receiveMessage', handler);
+
+    service.destroy();
+
+    expect(socketManager.off).toHaveBeenCalledTimes(6);
+
+    socketManager.__trigger('receiveMessage', { messageId: 1 });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('destroy()는 소켓 연결을 끊지 않는다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    service.destroy();
+
+    expect(socketManager.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('한 서비스를 destroy해도 다른 서비스의 구독은 유지된다', () => {
+    const socketManager = createMockSocketManager();
+    const serviceA = createChatSocketService(socketManager);
+    const serviceB = createChatSocketService(socketManager);
+
+    const handlerA = jest.fn();
+    const handlerB = jest.fn();
+    serviceA.on('receiveMessage', handlerA);
+    serviceB.on('receiveMessage', handlerB);
+
+    serviceA.destroy();
+    socketManager.__trigger('receiveMessage', { messageId: 1 });
+
+    expect(handlerA).not.toHaveBeenCalled();
+    expect(handlerB).toHaveBeenCalledTimes(1);
+  });
+
   it('connect()는 socketManager.connect()를 호출한다', async () => {
     const socketManager = createMockSocketManager();
     const service = createChatSocketService(socketManager);
