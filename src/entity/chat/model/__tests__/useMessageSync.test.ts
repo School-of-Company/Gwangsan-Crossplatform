@@ -949,6 +949,126 @@ describe('useMessageSync', () => {
       const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
       expect(cached?.product.createdAt).toBe('2024-01-01T00:00:00Z');
     });
+
+    it('현재 보고 있지 않은 방(currentRoomId와 다른 roomId)이어도 그 방의 chatRoomData 캐시는 갱신한다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(['chatRoomData', OTHER_ROOM_ID], {
+        product: { id: 1, isCompleted: false },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: OTHER_ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        OTHER_ROOM_ID,
+      ]);
+      expect(cached?.product.isCompleted).toBe(true);
+    });
+
+    it('채팅 목록 캐시에서 해당 방의 product.isCompleted/isReserved를 갱신한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          product: { productId: 1, title: '상품', isCompleted: false, images: [] },
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          isReserved: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(cached?.[0].product?.isCompleted).toBe(true);
+      expect(cached?.[0].product?.isReserved).toBe(true);
+    });
+
+    it('채팅 목록 캐시에서 다른 방은 그대로 유지한다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          roomId: OTHER_ROOM_ID,
+          product: { productId: 1, title: '상품', isCompleted: false, images: [] },
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(cached?.[0].product?.isCompleted).toBe(false);
+    });
+
+    it('목록 캐시의 방에 product가 없으면 그대로 둔다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ product: undefined as never })]);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(cached?.[0].product).toBeUndefined();
+    });
+
+    it('chatRoomQueryKey를 invalidate하여 새로 생긴 거래 정보(title/images 등)를 다시 받아온다', async () => {
+      const { result, queryClient } = await renderSync();
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+    });
+
+    it('chatRoomQueryKey가 없으면 목록 캐시 처리를 하지 않는다', async () => {
+      const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
+      await act(async () => {});
+      const invalidateSpy = jest.spyOn(rendered.queryClient, 'invalidateQueries');
+
+      expect(() => {
+        act(() => {
+          rendered.result.current.handleTransactionStateChanged({
+            roomId: ROOM_ID,
+            productId: 1,
+            isCompleted: true,
+            createdAt: '2024-01-01T00:00:00Z',
+          });
+        });
+      }).not.toThrow();
+      expect(invalidateSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('markRoomAsRead', () => {

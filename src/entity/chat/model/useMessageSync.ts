@@ -199,9 +199,9 @@ export const useMessageSync = ({
 
   const handleTransactionStateChanged = useCallback(
     (data: TransactionStateChangedPayload) => {
-      if (!currentRoomId || data.roomId !== currentRoomId) return;
-
-      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', currentRoomId], (old) => {
+      // 이 방을 지금 보고 있지 않아도(채팅 목록 화면이거나 다른 방을 보는 중이어도) 반영되어야 하므로
+      // currentRoomId 일치 여부로 걸러내지 않는다.
+      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', data.roomId], (old) => {
         if (!old?.product) return old;
         return {
           ...old,
@@ -214,8 +214,28 @@ export const useMessageSync = ({
           },
         };
       });
+
+      if (chatRoomQueryKey) {
+        queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((room) => {
+            if (room.roomId !== data.roomId || !room.product) return room;
+            return {
+              ...room,
+              product: {
+                ...room.product,
+                isCompleted: data.isCompleted,
+                ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
+              },
+            };
+          });
+        });
+
+        // 새로 생성된 거래 요청처럼 캐시에 없는 필드(title/images 등)는 목록을 다시 받아와 채운다.
+        queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
+      }
     },
-    [queryClient, currentRoomId]
+    [queryClient, chatRoomQueryKey]
   );
 
   const markRoomAsRead = useCallback(
