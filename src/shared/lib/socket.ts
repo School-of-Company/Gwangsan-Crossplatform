@@ -2,7 +2,12 @@ import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
 import { baseURL } from './axios';
 import Toast from 'react-native-toast-message';
-import type { ISocketManager, SocketConnectionConfig } from '@/shared/types/chatType';
+import {
+  CHAT_SOCKET_EVENTS,
+  CHAT_SOCKET_SERVER_EVENTS,
+  type ISocketManager,
+  type SocketConnectionConfig,
+} from '@/shared/types/chatType';
 import { logger } from './logger';
 
 const SOCKET_URL = (baseURL ?? '').replace(/\/$/, '') + '/chat';
@@ -45,10 +50,9 @@ class SocketManager implements ISocketManager {
       }
 
       this.socket = io(this.config.url, {
-        auth: (cb: (data: Record<string, unknown>) => void) => {
-          getData('accessToken')
-            .then((latestToken) => cb({ token: `Bearer ${latestToken ?? accessToken}` }))
-            .catch(() => cb({ token: `Bearer ${accessToken}` }));
+        auth: async (cb: (data: Record<string, unknown>) => void) => {
+          const latestToken = await getData('accessToken').catch(() => null);
+          cb({ token: `Bearer ${latestToken ?? accessToken}` });
         },
         transports: this.config.transports as any,
         timeout: this.config.timeout,
@@ -94,31 +98,17 @@ class SocketManager implements ISocketManager {
   }
 
   private setupBasicEventListeners(): void {
-    if (!this.socket) return;
+    const socket = this.socket;
+    if (!socket) return;
 
-    this.socket.on('disconnect', (reason) => {
-      this.emit('disconnect', reason);
+    CHAT_SOCKET_SERVER_EVENTS.forEach((event) => {
+      socket.on(event, (...args: any[]) => {
+        this.emit(event, ...args);
+      });
     });
 
-    this.socket.on('connect_error', (error) => {
-      this.emit('connect_error', error);
-    });
-
-    this.socket.on('receiveMessage', (...args) => {
-      this.emit('receiveMessage', ...args);
-    });
-
-    this.socket.on('updateRoomList', (...args) => {
-      this.emit('updateRoomList', ...args);
-    });
-
-    this.socket.on('transactionStateChanged', (...args) => {
-      this.emit('transactionStateChanged', ...args);
-    });
-
-    this.socket.on('error', (...args) => {
-      logger.error('Socket server error', args[0]);
-      this.emit('error', ...args);
+    socket.on('error', (error) => {
+      logger.error('Socket server error', error);
     });
   }
 
@@ -142,15 +132,7 @@ class SocketManager implements ISocketManager {
     });
   }
 
-  private static readonly RESERVED_EVENTS = new Set([
-    'connect',
-    'connect_error',
-    'disconnect',
-    'receiveMessage',
-    'updateRoomList',
-    'transactionStateChanged',
-    'error',
-  ]);
+  private static readonly RESERVED_EVENTS = new Set<string>(CHAT_SOCKET_EVENTS);
 
   emit(event: string, ...args: any[]): void {
     if (this.socket?.connected && !SocketManager.RESERVED_EVENTS.has(event)) {

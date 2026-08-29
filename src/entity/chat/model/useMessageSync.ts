@@ -199,7 +199,7 @@ export const useMessageSync = ({
 
   const handleTransactionStateChanged = useCallback(
     (data: TransactionStateChangedPayload) => {
-      if (!data || data.roomId === undefined || data.roomId === null) return;
+      if (data?.roomId == null) return;
 
       queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', data.roomId], (old) => {
         if (!old?.product) return old;
@@ -209,11 +209,7 @@ export const useMessageSync = ({
             ...old.product,
             isCompleted: data.isCompleted,
             isCompletable:
-              typeof data.isCompletable === 'boolean'
-                ? data.isCompletable
-                : data.isCompleted
-                  ? false
-                  : old.product.isCompletable,
+              data.isCompletable ?? (data.isCompleted ? false : old.product.isCompletable),
             ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
             ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
           },
@@ -227,7 +223,7 @@ export const useMessageSync = ({
 
         let hasChange = false;
         const nextData = oldData.map((room) => {
-          if (String(room.roomId) !== String(data.roomId)) return room;
+          if (room.roomId !== data.roomId) return room;
           if (room.product?.isCompleted === data.isCompleted) return room;
 
           hasChange = true;

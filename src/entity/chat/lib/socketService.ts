@@ -1,4 +1,9 @@
-import type { ISocketManager, BaseSocketMessage, RoomId } from '@/shared/types/chatType';
+import {
+  CHAT_SOCKET_EVENTS,
+  type ISocketManager,
+  type BaseSocketMessage,
+  type RoomId,
+} from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import { logger } from '@/shared/lib/logger';
 
@@ -69,34 +74,13 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     }
   };
 
-  const FORWARDED_EVENTS: readonly (keyof ChatSocketEvents)[] = [
-    'connect',
-    'disconnect',
-    'connect_error',
-    'receiveMessage',
-    'updateRoomList',
-    'transactionStateChanged',
-    'error',
-  ];
+  const forwardedEvents: readonly (keyof ChatSocketEvents)[] = CHAT_SOCKET_EVENTS;
 
-  const forwardingHandlers = new Map<string, (...args: any[]) => void>();
-
-  const setupSocketEventForwarding = (): void => {
-    FORWARDED_EVENTS.forEach((event) => {
-      const handler = (...args: any[]) => emit(event, ...args);
-      forwardingHandlers.set(event, handler);
-      socketManager.on(event, handler);
-    });
-  };
-
-  const teardownSocketEventForwarding = (): void => {
-    forwardingHandlers.forEach((handler, event) => {
-      socketManager.off(event, handler);
-    });
-    forwardingHandlers.clear();
-  };
-
-  setupSocketEventForwarding();
+  const stopForwarding = forwardedEvents.map((event) => {
+    const handler = (...args: any[]) => emit(event, ...args);
+    socketManager.on(event, handler);
+    return () => socketManager.off(event, handler);
+  });
 
   const connect = async (): Promise<void> => {
     return socketManager.connect();
@@ -108,7 +92,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
   };
 
   const destroy = (): void => {
-    teardownSocketEventForwarding();
+    stopForwarding.forEach((stop) => stop());
     eventHandlers.clear();
   };
 

@@ -17,6 +17,8 @@ import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
 
+const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
+
 export function ChatRoomList() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -30,7 +32,7 @@ export function ChatRoomList() {
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
-    chatRoomQueryKey: chatRoomKeys.list(),
+    chatRoomQueryKey: CHAT_ROOM_QUERY_KEY,
   });
 
   const deleteChatRoomMutation = useDeleteChatRoom();
