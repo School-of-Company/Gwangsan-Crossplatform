@@ -54,7 +54,8 @@ describe('createChatSocketService', () => {
     expect(socketManager.on).toHaveBeenCalledWith('receiveMessage', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('updateRoomList', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('transactionStateChanged', expect.any(Function));
-    expect(socketManager.on).toHaveBeenCalledTimes(6);
+    expect(socketManager.on).toHaveBeenCalledWith('error', expect.any(Function));
+    expect(socketManager.on).toHaveBeenCalledTimes(7);
   });
 
   it('destroy()는 socketManager에 등록한 forwarding 핸들러를 모두 제거한다', () => {
@@ -66,7 +67,7 @@ describe('createChatSocketService', () => {
 
     service.destroy();
 
-    expect(socketManager.off).toHaveBeenCalledTimes(6);
+    expect(socketManager.off).toHaveBeenCalledTimes(7);
 
     socketManager.__trigger('receiveMessage', { messageId: 1 });
     expect(handler).not.toHaveBeenCalled();
@@ -147,6 +148,18 @@ describe('createChatSocketService', () => {
 
     expect(connectHandler).toHaveBeenCalledTimes(1);
     expect(disconnectHandler).toHaveBeenCalledWith('io server disconnect');
+  });
+
+  it('서버가 보낸 error 이벤트를 그대로 전달한다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const errorHandler = jest.fn();
+    service.on('error', errorHandler);
+
+    socketManager.__trigger('error', { message: '전송 실패' });
+
+    expect(errorHandler).toHaveBeenCalledWith({ message: '전송 실패' });
   });
 
   it('connect_error 이벤트를 그대로 전달한다', () => {

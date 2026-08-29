@@ -11,6 +11,12 @@ export interface TransactionStateChangedPayload {
   createdAt: string;
 }
 
+export interface SocketErrorPayload {
+  message?: string;
+  code?: string;
+  [key: string]: unknown;
+}
+
 export interface ChatSocketEvents {
   connect: () => void;
   disconnect: (reason: string) => void;
@@ -23,6 +29,7 @@ export interface ChatSocketEvents {
     lastMessageTime: string;
   }) => void;
   transactionStateChanged: (data: TransactionStateChangedPayload) => void;
+  error: (error: SocketErrorPayload) => void;
 }
 
 export interface ChatSendMessagePayload extends BaseSocketMessage {
@@ -67,6 +74,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     'receiveMessage',
     'updateRoomList',
     'transactionStateChanged',
+    'error',
   ];
 
   const forwardingHandlers = new Map<string, (...args: any[]) => void>();
