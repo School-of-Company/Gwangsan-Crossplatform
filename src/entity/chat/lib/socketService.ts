@@ -9,6 +9,8 @@ export interface TransactionStateChangedPayload {
   isCompleted: boolean;
   isReserved?: boolean;
   createdAt: string;
+  isCompletable?: boolean;
+  requestedBySeller?: boolean;
 }
 
 export interface SocketErrorPayload {

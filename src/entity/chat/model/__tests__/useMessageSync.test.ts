@@ -950,6 +950,26 @@ describe('useMessageSync', () => {
       expect(cached?.product.createdAt).toBe('2024-01-01T00:00:00Z');
     });
 
+    it('payload에 isCompletable이 있으면 그 값을 그대로 반영한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: true, isCompletable: false },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isCompletable: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.isCompletable).toBe(true);
+    });
+
     it('목록 캐시의 product.isCompleted도 함께 갱신한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_ROOM_KEY, [
