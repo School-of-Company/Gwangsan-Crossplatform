@@ -1,6 +1,10 @@
 import { render, fireEvent } from '@testing-library/react-native';
 import { AppFooter } from '../index';
 
+jest.mock('~/entity/chat', () => ({
+  useChatRooms: jest.fn(() => ({ totalUnreadCount: 0 })),
+}));
+
 jest.mock('~/shared/ui/Footer', () => ({
   Footer: ({ onWritePress }: any) => {
     const { TouchableOpacity, Text } = require('react-native');

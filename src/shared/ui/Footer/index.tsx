@@ -11,11 +11,11 @@ import { useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Svg, Path } from 'react-native-svg';
 import { useRef, useCallback, useEffect, useState } from 'react';
-import { useChatRooms } from '~/entity/chat/model/useChatRooms';
 import { useFooterVisibilityStore } from '~/shared/store/useFooterVisibilityStore';
 
 interface FooterProps extends BottomTabBarProps {
   onWritePress?: () => void;
+  totalUnreadCount?: number;
 }
 
 const TAB_ROUTE_NAMES = ['main', 'chatting', 'notice', 'profile'] as const;
@@ -81,9 +81,14 @@ function useIconPressScale() {
   return { scale, handlePressIn, handlePressOut };
 }
 
-export function Footer({ state, navigation, insets, onWritePress }: FooterProps) {
+export function Footer({
+  state,
+  navigation,
+  insets,
+  onWritePress,
+  totalUnreadCount = 0,
+}: FooterProps) {
   const router = useRouter();
-  const { totalUnreadCount } = useChatRooms();
   const isHidden = useFooterVisibilityStore((s) => s.isHidden);
 
   const [footerHeight, setFooterHeight] = useState(0);
