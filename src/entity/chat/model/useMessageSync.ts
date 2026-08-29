@@ -199,9 +199,9 @@ export const useMessageSync = ({
 
   const handleTransactionStateChanged = useCallback(
     (data: TransactionStateChangedPayload) => {
-      if (!currentRoomId || data.roomId !== currentRoomId) return;
+      if (!data || data.roomId === undefined || data.roomId === null) return;
 
-      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', currentRoomId], (old) => {
+      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', data.roomId], (old) => {
         if (!old?.product) return old;
         return {
           ...old,
@@ -214,8 +214,25 @@ export const useMessageSync = ({
           },
         };
       });
+
+      if (!chatRoomQueryKey) return;
+
+      queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+        if (!oldData) return oldData;
+
+        let hasChange = false;
+        const nextData = oldData.map((room) => {
+          if (String(room.roomId) !== String(data.roomId)) return room;
+          if (room.product?.isCompleted === data.isCompleted) return room;
+
+          hasChange = true;
+          return { ...room, product: { ...room.product, isCompleted: data.isCompleted } };
+        });
+
+        return hasChange ? nextData : oldData;
+      });
     },
-    [queryClient, currentRoomId]
+    [queryClient, chatRoomQueryKey]
   );
 
   const markRoomAsRead = useCallback(
