@@ -182,7 +182,6 @@ class SocketManager implements ISocketManager {
       this.socket = null;
     }
     this.isConnecting = false;
-    this.eventHandlers.clear();
   }
 
   get isConnected(): boolean {
