@@ -22,6 +22,17 @@ export interface BaseSocketMessage {
   readonly messageType: MessageType;
 }
 
+export const CHAT_SOCKET_SERVER_EVENTS = [
+  'disconnect',
+  'connect_error',
+  'receiveMessage',
+  'updateRoomList',
+  'transactionStateChanged',
+  'error',
+] as const;
+
+export const CHAT_SOCKET_EVENTS = ['connect', ...CHAT_SOCKET_SERVER_EVENTS] as const;
+
 export interface BaseSocketEvents {
   connect: () => void;
   disconnect: (reason: string) => void;

@@ -54,7 +54,49 @@ describe('createChatSocketService', () => {
     expect(socketManager.on).toHaveBeenCalledWith('receiveMessage', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('updateRoomList', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('transactionStateChanged', expect.any(Function));
-    expect(socketManager.on).toHaveBeenCalledTimes(6);
+    expect(socketManager.on).toHaveBeenCalledWith('error', expect.any(Function));
+    expect(socketManager.on).toHaveBeenCalledTimes(7);
+  });
+
+  it('destroy()는 socketManager에 등록한 forwarding 핸들러를 모두 제거한다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const handler = jest.fn();
+    service.on('receiveMessage', handler);
+
+    service.destroy();
+
+    expect(socketManager.off).toHaveBeenCalledTimes(7);
+
+    socketManager.__trigger('receiveMessage', { messageId: 1 });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('destroy()는 소켓 연결을 끊지 않는다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    service.destroy();
+
+    expect(socketManager.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('한 서비스를 destroy해도 다른 서비스의 구독은 유지된다', () => {
+    const socketManager = createMockSocketManager();
+    const serviceA = createChatSocketService(socketManager);
+    const serviceB = createChatSocketService(socketManager);
+
+    const handlerA = jest.fn();
+    const handlerB = jest.fn();
+    serviceA.on('receiveMessage', handlerA);
+    serviceB.on('receiveMessage', handlerB);
+
+    serviceA.destroy();
+    socketManager.__trigger('receiveMessage', { messageId: 1 });
+
+    expect(handlerA).not.toHaveBeenCalled();
+    expect(handlerB).toHaveBeenCalledTimes(1);
   });
 
   it('connect()는 socketManager.connect()를 호출한다', async () => {
@@ -106,6 +148,18 @@ describe('createChatSocketService', () => {
 
     expect(connectHandler).toHaveBeenCalledTimes(1);
     expect(disconnectHandler).toHaveBeenCalledWith('io server disconnect');
+  });
+
+  it('서버가 보낸 error 이벤트를 그대로 전달한다', () => {
+    const socketManager = createMockSocketManager();
+    const service = createChatSocketService(socketManager);
+
+    const errorHandler = jest.fn();
+    service.on('error', errorHandler);
+
+    socketManager.__trigger('error', { message: '전송 실패' });
+
+    expect(errorHandler).toHaveBeenCalledWith({ message: '전송 실패' });
   });
 
   it('connect_error 이벤트를 그대로 전달한다', () => {
