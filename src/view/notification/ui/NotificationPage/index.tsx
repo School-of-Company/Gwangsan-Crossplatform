@@ -56,7 +56,6 @@ const NotificationPage = () => {
             content={alert.content}
             alertType={alert.alertType}
             createdAt={alert.createdAt}
-            sendMemberId={alert.sendMemberId}
             sourceId={alert.sourceId}
             images={alert.images}
             raw={alert}
