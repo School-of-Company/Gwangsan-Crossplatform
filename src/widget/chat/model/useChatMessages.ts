@@ -68,7 +68,11 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
   }, [queryClient, roomId, safeMessages]);
 
   const scrollToEnd = useCallback((animated = true) => {
-    flatListRef.current?.scrollToEnd({ animated });
+    // getItemLayout 없이 가변 높이 아이템을 쓰는 FlatList에서는 scrollToEnd()가 참조하는
+    // JS 트래킹 contentLength가 최신 레이아웃(막 추가된 padding/메시지)을 반영하기 전이면
+    // 실제 끝보다 짧게 스크롤된다. 네이티브 스크롤뷰가 알아서 clamp하는 매우 큰 offset으로
+    // 스크롤하면 항상 진짜 끝에 도달한다.
+    flatListRef.current?.scrollToOffset({ offset: 10_000_000, animated });
   }, []);
 
   useEffect(() => {

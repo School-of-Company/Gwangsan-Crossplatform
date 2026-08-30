@@ -234,12 +234,12 @@ describe('useChatMessages', () => {
       const { result } = renderHookWithProviders(() =>
         useChatMessages({ roomId: 'room-1' as any })
       );
-      const scrollToEndSpy = jest.fn();
-      (result.current.flatListRef as any).current = { scrollToEnd: scrollToEndSpy };
+      const scrollToOffsetSpy = jest.fn();
+      (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
 
       jest.advanceTimersByTime(100);
 
-      expect(scrollToEndSpy).toHaveBeenCalledWith({ animated: true });
+      expect(scrollToOffsetSpy).toHaveBeenCalledWith({ offset: 10_000_000, animated: true });
       jest.useRealTimers();
     });
 
@@ -250,12 +250,12 @@ describe('useChatMessages', () => {
       const { result } = renderHookWithProviders(() =>
         useChatMessages({ roomId: 'room-1' as any })
       );
-      const scrollToEndSpy = jest.fn();
-      (result.current.flatListRef as any).current = { scrollToEnd: scrollToEndSpy };
+      const scrollToOffsetSpy = jest.fn();
+      (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
 
       jest.advanceTimersByTime(200);
 
-      expect(scrollToEndSpy).not.toHaveBeenCalled();
+      expect(scrollToOffsetSpy).not.toHaveBeenCalled();
       jest.useRealTimers();
     });
   });
