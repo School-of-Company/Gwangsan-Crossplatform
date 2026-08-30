@@ -132,6 +132,51 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('my-message-2')).toBeTruthy();
   });
 
+  it('WS(UTC)와 REST(로컬, 오프셋 없음) 타임스탬프가 섞여도 epoch 기준으로 정렬한다', () => {
+    // REST는 오프셋 없는 로컬(KST) 시간 문자열, WS는 UTC(Z) 문자열이라 raw string 비교로는
+    // 나중에 도착한 WS 메시지("02...Z")가 REST 거래 카드("11...")보다 사전식으로 앞선 것처럼
+    // 잘못 판정되어 거래 카드가 findIndex(-1)로 맨 끝에 밀려난다. epoch 비교여야 정상 위치로 삽입된다.
+    const originalTz = process.env.TZ;
+    process.env.TZ = 'Asia/Seoul';
+
+    try {
+      const messages = [
+        createMessage({ messageId: 1, createdAt: '2026-08-30T10:00:00.000000' }), // REST, KST 10:00 (UTC 01:00)
+        createMessage({
+          messageId: 2,
+          createdAt: '2026-08-30T02:23:50.000Z', // WS, UTC 02:23:50 (거래보다 5초 뒤)
+          isMine: true,
+        }),
+      ];
+      const product = createProduct({ id: 30, createdAt: '2026-08-30T11:23:45.000000' }); // REST, KST 11:23:45 (UTC 02:23:45)
+
+      const { UNSAFE_getByType } = render(
+        <ChatRoomContent
+          {...defaultProps}
+          messages={messages}
+          hasMessages
+          tradeEmbedConfig={{
+            shouldShow: true,
+            product,
+            showButtons: true,
+            otherPartyNickname: '요청자',
+          }}
+        />
+      );
+
+      const list = UNSAFE_getByType(FlatList);
+
+      expect(
+        list.props.data.map(
+          (item: any) =>
+            `${item.type}-${item.data.messageId ?? item.data.product?.id ?? item.data.label}`
+        )
+      ).toEqual(['dateDivider-날짜-2026-08-30', 'message-1', 'trade-30', 'message-2']);
+    } finally {
+      process.env.TZ = originalTz;
+    }
+  });
+
   it('거래 임베드만 있어도 목록을 렌더링한다', () => {
     const product = createProduct({ id: 50 });
 
