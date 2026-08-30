@@ -48,9 +48,13 @@ module.exports = function (api) {
     // inside react-native-worklets, permanently flipping its IS_JEST flag to true and causing
     // "[Worklets] Tried to synchronously call a non-worklet function" crashes at runtime.
     // Scoping it to app source (which is the only place `@env` is imported) avoids that.
+    // `exclude` must be a function rather than a RegExp: Metro computes a Babel cache key by
+    // resolving this config with no filename, and Babel throws
+    // "Configuration contains string/RegExp pattern, but no filename was passed to Babel"
+    // when an overrides pattern is a RegExp/string in that filename-less call.
     overrides: [
       {
-        exclude: /node_modules/,
+        exclude: (path) => typeof path === 'string' && path.includes('node_modules'),
         plugins: [
           [
             'module:react-native-dotenv',
