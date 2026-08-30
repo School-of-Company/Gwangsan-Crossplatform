@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { ReportModal } from '~/entity/post/ui';
 import { BottomSheetModalWrapper } from '~/shared/ui';
-import { useBlockUser } from '~/view/profile/model/useBlockUser';
+import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import ProfileHeader from '../ProfileHeader';
 
 interface InformationProps {

@@ -85,6 +85,7 @@
       "**/*"
     ],
     "ios": {
+      "icon": "./src/shared/assets/icons/AppIcon.icon",
       "supportsTablet": false,
       "bundleIdentifier": "kr.hs.gsm.gwangsan",
       "buildNumber": "60",

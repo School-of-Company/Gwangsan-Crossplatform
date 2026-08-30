@@ -840,7 +840,7 @@ describe('useMessageSync', () => {
       expect(cached?.product.isReserved).toBe(true);
     });
 
-    it('현재 roomId와 다르면 캐시를 변경하지 않는다', async () => {
+    it('다른 방의 이벤트는 현재 방의 캐시를 변경하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, { product: { id: 1, isCompleted: false } });
 
@@ -948,6 +948,119 @@ describe('useMessageSync', () => {
 
       const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
       expect(cached?.product.createdAt).toBe('2024-01-01T00:00:00Z');
+    });
+
+    it('payload에 isCompletable이 있으면 그 값을 그대로 반영한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: true, isCompletable: false },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isCompletable: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.isCompletable).toBe(true);
+    });
+
+    it('목록 캐시의 product.isCompleted도 함께 갱신한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          product: { productId: 1, title: '상품', isCompleted: false, images: [] },
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[0].product.isCompleted).toBe(true);
+    });
+
+    it('currentRoomId가 없는 목록 화면에서도 목록 캐시를 갱신한다', async () => {
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
+      );
+      await act(async () => {});
+
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          product: { productId: 1, title: '상품', isCompleted: false, images: [] },
+        }),
+      ]);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[0].product.isCompleted).toBe(true);
+    });
+
+    it('목록에서 이벤트와 무관한 방은 참조까지 그대로 유지한다', async () => {
+      const { result, queryClient } = await renderSync();
+      const otherRoom = makeRoomListItem({
+        roomId: 999,
+        product: { productId: 2, title: '다른 상품', isCompleted: false, images: [] },
+      });
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({
+          product: { productId: 1, title: '상품', isCompleted: false, images: [] },
+        }),
+        otherRoom,
+      ]);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(rooms?.[1]).toBe(otherRoom);
+    });
+
+    it('목록 캐시에 바뀔 값이 없으면 기존 배열 참조를 그대로 반환한다', async () => {
+      const { result, queryClient } = await renderSync();
+      const rooms = [
+        makeRoomListItem({
+          product: { productId: 1, title: '상품', isCompleted: true, images: [] },
+        }),
+      ];
+      queryClient.setQueryData(CHAT_ROOM_KEY, rooms);
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData(CHAT_ROOM_KEY)).toBe(rooms);
     });
   });
 

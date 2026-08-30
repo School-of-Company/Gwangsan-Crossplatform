@@ -199,23 +199,41 @@ export const useMessageSync = ({
 
   const handleTransactionStateChanged = useCallback(
     (data: TransactionStateChangedPayload) => {
-      if (!currentRoomId || data.roomId !== currentRoomId) return;
+      if (data?.roomId == null) return;
 
-      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', currentRoomId], (old) => {
+      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', data.roomId], (old) => {
         if (!old?.product) return old;
         return {
           ...old,
           product: {
             ...old.product,
             isCompleted: data.isCompleted,
-            isCompletable: data.isCompleted ? false : old.product.isCompletable,
+            isCompletable:
+              data.isCompletable ?? (data.isCompleted ? false : old.product.isCompletable),
             ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
             ...(data.createdAt && !old.product.createdAt ? { createdAt: data.createdAt } : {}),
           },
         };
       });
+
+      if (!chatRoomQueryKey) return;
+
+      queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
+        if (!oldData) return oldData;
+
+        let hasChange = false;
+        const nextData = oldData.map((room) => {
+          if (room.roomId !== data.roomId) return room;
+          if (room.product?.isCompleted === data.isCompleted) return room;
+
+          hasChange = true;
+          return { ...room, product: { ...room.product, isCompleted: data.isCompleted } };
+        });
+
+        return hasChange ? nextData : oldData;
+      });
     },
-    [queryClient, currentRoomId]
+    [queryClient, chatRoomQueryKey]
   );
 
   const markRoomAsRead = useCallback(

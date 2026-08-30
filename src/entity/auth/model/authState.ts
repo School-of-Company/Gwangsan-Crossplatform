@@ -34,7 +34,7 @@ export type SignupFormData = {
 export type SigninFormData = {
   nickname: string;
   password: string;
-  deviceToken: string;
+  deviceToken?: string;
   deviceId: string;
   osType: 'ANDROID' | 'IOS';
 };

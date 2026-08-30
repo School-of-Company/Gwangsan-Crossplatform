@@ -126,20 +126,22 @@ describe('getDeviceInfo', () => {
     expect(mockNotifications.requestPermissionsAsync).toHaveBeenCalled();
   });
 
-  it('권한 요청 후에도 거부되면 에러를 throw한다', async () => {
+  it('권한 요청 후에도 거부되면 deviceToken 없이 로그인을 진행한다', async () => {
     mockNotifications.getPermissionsAsync.mockResolvedValue(deniedPermission);
     mockNotifications.requestPermissionsAsync.mockResolvedValue(deniedPermission);
 
-    await expect(getDeviceInfo()).rejects.toThrow(
-      '로그인하려면 푸시 알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.'
-    );
+    const result = await getDeviceInfo();
+
+    expect(result.deviceToken).toBeUndefined();
   });
 
-  it('getExpoPushTokenAsync 실패 시 Sentry에 캡처하고 에러를 throw한다', async () => {
+  it('getExpoPushTokenAsync 실패 시 Sentry에 캡처하고 deviceToken 없이 반환한다', async () => {
     const tokenError = new Error('Token fetch failed');
     mockNotifications.getExpoPushTokenAsync.mockRejectedValue(tokenError);
 
-    await expect(getDeviceInfo()).rejects.toThrow('Token fetch failed');
+    const result = await getDeviceInfo();
+
+    expect(result.deviceToken).toBeUndefined();
     expect(mockSentry.captureException).toHaveBeenCalledWith(
       tokenError,
       expect.objectContaining({
@@ -148,25 +150,27 @@ describe('getDeviceInfo', () => {
     );
   });
 
-  it('getExpoPushTokenAsync가 15초 내에 응답 없으면 timeout 에러를 throw한다', async () => {
+  it('getExpoPushTokenAsync가 15초 내에 응답 없으면 deviceToken 없이 반환한다', async () => {
     jest.useFakeTimers();
     mockNotifications.getExpoPushTokenAsync.mockImplementation(
       () => new Promise(() => {}) // never resolves
     );
 
-    // Attach rejection handler before advancing timers to prevent unhandled rejection
-    const assertion =
-      expect(getDeviceInfo()).rejects.toThrow('푸시 토큰 발급 시간이 초과되었습니다.');
+    const resultPromise = getDeviceInfo();
     await jest.runAllTimersAsync();
-    await assertion;
+    const result = await resultPromise;
+
+    expect(result.deviceToken).toBeUndefined();
 
     jest.useRealTimers();
   });
 
-  it('deviceToken이 빈 문자열이면 에러를 throw한다', async () => {
+  it('deviceToken이 빈 문자열이면 그대로 반환한다', async () => {
     mockNotifications.getExpoPushTokenAsync.mockResolvedValue({ data: '' } as any);
 
-    await expect(getDeviceInfo()).rejects.toThrow('푸시 알림 권한이 필요합니다');
+    const result = await getDeviceInfo();
+
+    expect(result.deviceToken).toBe('');
   });
 });
 

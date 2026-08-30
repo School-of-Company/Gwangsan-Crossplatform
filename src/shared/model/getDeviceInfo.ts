@@ -30,7 +30,7 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   }
 
   if (finalStatus !== 'granted') {
-    throw new Error('로그인하려면 푸시 알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.');
+    return null;
   }
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
@@ -65,7 +65,7 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
         projectId: Constants.expoConfig?.extra?.eas?.projectId,
       },
     });
-    throw error;
+    return null;
   }
 };
 
@@ -107,13 +107,9 @@ export const getDeviceInfo = async () => {
     registerForPushNotificationsAsync(),
   ]);
 
-  if (!deviceToken) {
-    throw new Error('푸시 알림 권한이 필요합니다. 설정에서 알림을 허용해주세요.');
-  }
-
   return {
     osType: osType as 'IOS' | 'ANDROID',
-    deviceToken,
+    deviceToken: deviceToken ?? undefined,
     deviceId,
   };
 };

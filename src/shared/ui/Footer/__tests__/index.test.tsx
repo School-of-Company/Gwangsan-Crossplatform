@@ -2,7 +2,6 @@ import React from 'react';
 import { Animated, TouchableOpacity } from 'react-native';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
-import { useChatRooms } from '~/entity/chat/model/useChatRooms';
 import { useFooterVisibilityStore } from '~/shared/store/useFooterVisibilityStore';
 import { Footer } from '../index';
 
@@ -10,12 +9,7 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('~/entity/chat/model/useChatRooms', () => ({
-  useChatRooms: jest.fn(),
-}));
-
 const mockUseRouter = useRouter as jest.Mock;
-const mockUseChatRooms = useChatRooms as jest.Mock;
 
 const mockPush = jest.fn();
 const mockNavigate = jest.fn();
@@ -40,7 +34,6 @@ beforeEach(() => {
   jest.clearAllMocks();
   useFooterVisibilityStore.getState().reset();
   mockUseRouter.mockReturnValue({ push: mockPush });
-  mockUseChatRooms.mockReturnValue({ totalUnreadCount: 0 });
 });
 
 describe('Footer', () => {
@@ -101,8 +94,7 @@ describe('Footer', () => {
   });
 
   it('읽지 않은 채팅이 있으면 배지를 렌더링한다', () => {
-    mockUseChatRooms.mockReturnValue({ totalUnreadCount: 3 });
-    const { UNSAFE_getByProps } = render(<Footer {...createProps('main')} />);
+    const { UNSAFE_getByProps } = render(<Footer {...createProps('main')} totalUnreadCount={3} />);
     expect(
       UNSAFE_getByProps({
         className: 'absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-main-500',
@@ -111,7 +103,6 @@ describe('Footer', () => {
   });
 
   it('읽지 않은 채팅이 없으면 배지를 렌더링하지 않는다', () => {
-    mockUseChatRooms.mockReturnValue({ totalUnreadCount: 0 });
     const { UNSAFE_queryAllByProps } = render(<Footer {...createProps('main')} />);
     expect(
       UNSAFE_queryAllByProps({
@@ -137,8 +128,7 @@ describe('Footer', () => {
   });
 
   it('스냅샷 - 읽지 않은 채팅 있음', () => {
-    mockUseChatRooms.mockReturnValue({ totalUnreadCount: 5 });
-    const { toJSON } = render(<Footer {...createProps('main')} />);
+    const { toJSON } = render(<Footer {...createProps('main')} totalUnreadCount={5} />);
     expect(toJSON()).toMatchSnapshot();
   });
 
