@@ -42,6 +42,7 @@ const makeProduct = () => ({
   isSeller: false,
   isCompletable: false,
   isCompleted: false,
+  isReserved: false,
 });
 
 describe('getChatRoomData', () => {

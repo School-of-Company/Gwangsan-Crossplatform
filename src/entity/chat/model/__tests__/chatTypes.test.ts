@@ -9,6 +9,7 @@ describe('isTradeProduct', () => {
     isSeller: false,
     isCompletable: true,
     isCompleted: false,
+    isReserved: false,
   };
 
   it('유효한 TradeProduct이면 true를 반환한다', () => {
@@ -52,6 +53,15 @@ describe('isTradeProduct', () => {
 
   it('isCompleted가 boolean이 아니면 false를 반환한다', () => {
     expect(isTradeProduct({ ...validProduct, isCompleted: 0 })).toBe(false);
+  });
+
+  it('isReserved가 없으면 false를 반환한다', () => {
+    const { isReserved, ...withoutIsReserved } = validProduct;
+    expect(isTradeProduct(withoutIsReserved)).toBe(false);
+  });
+
+  it('isReserved가 boolean이 아니면 false를 반환한다', () => {
+    expect(isTradeProduct({ ...validProduct, isReserved: 1 })).toBe(false);
   });
 });
 

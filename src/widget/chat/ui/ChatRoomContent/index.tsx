@@ -103,7 +103,15 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         data: tradeEmbedConfig as ResolvedTradeEmbed,
       };
 
-      const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
+      // WS 메시지는 UTC(Z 접미사), REST 메시지는 로컬 오프셋 없는 문자열이라 raw string 비교로는
+      // 정렬 순서가 뒤집힐 수 있다 — items 정렬(useChatMessages.ts)과 동일하게 epoch 기준으로 비교한다
+      const tradeMs = new Date(tradeTimestamp).getTime();
+      const insertAt = Number.isNaN(tradeMs)
+        ? -1
+        : items.findIndex((item) => {
+            const itemMs = new Date(item.timestamp).getTime();
+            return !Number.isNaN(itemMs) && itemMs > tradeMs;
+          });
       if (insertAt < 0) {
         items.push(tradeItem);
       } else {

@@ -64,12 +64,14 @@ export const isTradeProduct = (value: unknown): value is TradeProduct => {
     'isSeller' in obj &&
     'isCompletable' in obj &&
     'isCompleted' in obj &&
+    'isReserved' in obj &&
     typeof obj.id === 'number' &&
     typeof obj.title === 'string' &&
     Array.isArray(obj.images) &&
     typeof obj.isSeller === 'boolean' &&
     typeof obj.isCompletable === 'boolean' &&
-    typeof obj.isCompleted === 'boolean'
+    typeof obj.isCompleted === 'boolean' &&
+    typeof obj.isReserved === 'boolean'
   );
 };
 
