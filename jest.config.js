@@ -1,3 +1,8 @@
+// 서버 REST 응답은 오프셋 없는 KST 문자열이라 Date 파싱 결과가 실행 환경 TZ에 따라 달라진다.
+// (로컬은 KST, CI 러너는 UTC) 여기서 고정해야 워커가 fork되기 전에 적용된다 —
+// 테스트 안에서 process.env.TZ를 바꾸는 것은 이미 초기화된 Date에 반영되지 않는다.
+process.env.TZ = 'Asia/Seoul';
+
 module.exports = {
   preset: 'jest-expo',
   setupFiles: ['./jest.setup.js'],
