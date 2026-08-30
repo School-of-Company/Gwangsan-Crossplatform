@@ -1,14 +1,14 @@
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import { Alert, TouchableOpacity } from 'react-native';
-import { useBlockUser } from '~/view/profile/model/useBlockUser';
+import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Information from '../index';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('~/view/profile/model/useBlockUser', () => ({
+jest.mock('~/entity/profile/model/useBlockUser', () => ({
   useBlockUser: jest.fn(),
 }));
 
