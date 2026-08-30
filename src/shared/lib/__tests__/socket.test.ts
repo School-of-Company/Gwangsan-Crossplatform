@@ -70,13 +70,45 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(mockIo).toHaveBeenCalledWith(
       expect.stringContaining('/chat'),
       expect.objectContaining({
-        auth: { token: 'Bearer abc-token' },
+        auth: expect.any(Function),
         transports: ['polling', 'websocket'],
         forceNew: true,
       })
     );
     expect(chatSocket.isConnected).toBe(true);
     expect(chatSocket.connectionState).toBe('connected');
+  });
+
+  it('auth 콜백은 호출 시점의 액세스 토큰을 다시 읽어 전달한다', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+
+    await connectSuccessfully(socket, 'old-token');
+
+    const { auth } = mockIo.mock.calls[0][1];
+    mockGetData.mockResolvedValue('new-token');
+
+    const cb = jest.fn();
+    auth(cb);
+    await flush();
+
+    expect(cb).toHaveBeenCalledWith({ token: 'Bearer new-token' });
+  });
+
+  it('auth 콜백은 토큰을 읽지 못하면 최초 연결 토큰으로 대체한다', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+
+    await connectSuccessfully(socket, 'abc-token');
+
+    const { auth } = mockIo.mock.calls[0][1];
+    mockGetData.mockRejectedValue(new Error('storage unavailable'));
+
+    const cb = jest.fn();
+    auth(cb);
+    await flush();
+
+    expect(cb).toHaveBeenCalledWith({ token: 'Bearer abc-token' });
   });
 
   it('reports a "connecting" state while the connection is in flight', async () => {

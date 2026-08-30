@@ -56,10 +56,13 @@ jest.mock('~/view/chat/ui/ReservationCalendarSheet', () => ({
     const { View, Text, TouchableOpacity } = require('react-native');
     const today = new Date();
     const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    // 실행 시점의 "오늘"과 겹치지 않도록 항상 오늘로부터 5일 뒤 날짜를 사용한다.
+    const notToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5);
+    const notTodayValue = `${notToday.getFullYear()}-${String(notToday.getMonth() + 1).padStart(2, '0')}-${String(notToday.getDate()).padStart(2, '0')}`;
     return (
       <View testID="calendar-sheet">
         <Text testID="calendar-sheet-visible">{String(isVisible)}</Text>
-        <TouchableOpacity testID="calendar-sheet-select" onPress={() => onSelect('2026-08-30')}>
+        <TouchableOpacity testID="calendar-sheet-select" onPress={() => onSelect(notTodayValue)}>
           <Text>select-date</Text>
         </TouchableOpacity>
         <TouchableOpacity testID="calendar-sheet-select-today" onPress={() => onSelect(todayValue)}>
@@ -98,6 +101,17 @@ const mockUseChatMessages = useChatMessages as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseReservationLocationStore = useReservationLocationStore as unknown as jest.Mock;
 const mockLoggerError = logger.error as jest.Mock;
+
+// calendar-sheet-select 목이 고르는 "오늘이 아닌 날짜"(오늘 + 5일)와 동일한 계산으로
+// 기대값을 만든다. 특정 날짜를 하드코딩하면 실제 실행일이 그 날짜와 겹치는 순간 깨진다.
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const notTodayDate = (() => {
+  const today = new Date();
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5);
+})();
+const pad2 = (value: number) => String(value).padStart(2, '0');
+const NOT_TODAY_DATE_LABEL = `${notTodayDate.getMonth() + 1}월 ${notTodayDate.getDate()}일 (${WEEKDAY_LABELS[notTodayDate.getDay()]})`;
+const NOT_TODAY_SCHEDULED_AT = `${notTodayDate.getFullYear()}-${pad2(notTodayDate.getMonth() + 1)}-${pad2(notTodayDate.getDate())}T14:30:00`;
 
 const mockRouterPush = jest.fn();
 const mockRouterBack = jest.fn();
@@ -224,8 +238,8 @@ describe('ReservationPage', () => {
     fireEvent.press(getByText('날짜를 선택해주세요'));
     fireEvent.press(getByTestId('calendar-sheet-select'));
 
-    // 2026-08-30 -> 일요일, 오늘(2026-08-28)이 아니므로 "· 오늘" 접미사가 없다
-    expect(getByText('8월 30일 (일)')).toBeTruthy();
+    // 오늘 + 5일은 오늘일 수 없으므로 "· 오늘" 접미사가 없다
+    expect(getByText(NOT_TODAY_DATE_LABEL)).toBeTruthy();
   });
 
   it('오늘 날짜를 선택하면 라벨에 "· 오늘"이 붙는다', () => {
@@ -335,7 +349,7 @@ describe('ReservationPage', () => {
 
       await waitFor(() =>
         expect(mockHandleReservation).toHaveBeenCalledWith({
-          scheduledAt: '2026-08-30T14:30:00',
+          scheduledAt: NOT_TODAY_SCHEDULED_AT,
           placeName: '스타벅스',
           address: '광산구 어딘가',
           latitude: 37.1234,
@@ -345,7 +359,7 @@ describe('ReservationPage', () => {
 
       expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining('예약을 했어요'), []);
       expect(mockSendMessage).toHaveBeenCalledWith(
-        expect.stringContaining('8월 30일 (일) 14:30'),
+        expect.stringContaining(`${NOT_TODAY_DATE_LABEL} 14:30`),
         []
       );
       expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining('스타벅스'), []);

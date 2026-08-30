@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, Keyboard, Platform, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
-import { MyMessage, OtherMessage, ChatDateDivider } from '~/widget/chat';
+import { MyMessage } from '../MyMessage';
+import { OtherMessage } from '../OtherMessage';
+import { ChatDateDivider } from '../ChatDateDivider';
 import {
   TradeEmbed,
   formatMessageTime,

@@ -1,4 +1,9 @@
-import type { ISocketManager, BaseSocketMessage, RoomId } from '@/shared/types/chatType';
+import {
+  CHAT_SOCKET_EVENTS,
+  type ISocketManager,
+  type BaseSocketMessage,
+  type RoomId,
+} from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import { logger } from '@/shared/lib/logger';
 
@@ -10,8 +15,15 @@ export interface TransactionStateChangedPayload {
   isReserved?: boolean;
   createdAt: string | null;
   // 완료 가능 여부는 보는 사람의 isSeller에 따라 달라져 방 전체 broadcast로 보낼 수 없으므로,
-  // 서버는 "누구 쪽에서 요청했는지"만 보내고 클라이언트가 isCompletable을 계산한다
+  // 서버가 isCompletable을 보내지 않으면 "누구 쪽에서 요청했는지"로 클라이언트가 계산한다
+  isCompletable?: boolean;
   requestedBySeller?: boolean | null;
+}
+
+export interface SocketErrorPayload {
+  message?: string;
+  code?: string;
+  [key: string]: unknown;
 }
 
 export interface ChatSocketEvents {
@@ -26,6 +38,7 @@ export interface ChatSocketEvents {
     lastMessageTime: string;
   }) => void;
   transactionStateChanged: (data: TransactionStateChangedPayload) => void;
+  error: (error: SocketErrorPayload) => void;
 }
 
 export interface ChatSendMessagePayload extends BaseSocketMessage {
@@ -38,6 +51,7 @@ export interface IChatSocketService {
 
   connect(): Promise<void>;
   disconnect(): void;
+  destroy(): void;
   sendMessage(payload: ChatSendMessagePayload): void;
   joinRoom(roomId: RoomId): void;
   leaveRoom(roomId: RoomId): void;
@@ -62,33 +76,13 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     }
   };
 
-  const setupSocketEventForwarding = (): void => {
-    socketManager.on('connect', () => {
-      emit('connect');
-    });
+  const forwardedEvents: readonly (keyof ChatSocketEvents)[] = CHAT_SOCKET_EVENTS;
 
-    socketManager.on('disconnect', (reason: string) => {
-      emit('disconnect', reason);
-    });
-
-    socketManager.on('connect_error', (error: Error) => {
-      emit('connect_error', error);
-    });
-
-    socketManager.on('receiveMessage', (message: ChatMessageResponse) => {
-      emit('receiveMessage', message);
-    });
-
-    socketManager.on('updateRoomList', (data: any) => {
-      emit('updateRoomList', data);
-    });
-
-    socketManager.on('transactionStateChanged', (data: any) => {
-      emit('transactionStateChanged', data);
-    });
-  };
-
-  setupSocketEventForwarding();
+  const stopForwarding = forwardedEvents.map((event) => {
+    const handler = (...args: any[]) => emit(event, ...args);
+    socketManager.on(event, handler);
+    return () => socketManager.off(event, handler);
+  });
 
   const connect = async (): Promise<void> => {
     return socketManager.connect();
@@ -96,6 +90,11 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
 
   const disconnect = (): void => {
     socketManager.disconnect();
+    eventHandlers.clear();
+  };
+
+  const destroy = (): void => {
+    stopForwarding.forEach((stop) => stop());
     eventHandlers.clear();
   };
 
@@ -149,6 +148,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     },
     connect,
     disconnect,
+    destroy,
     sendMessage,
     joinRoom,
     leaveRoom,

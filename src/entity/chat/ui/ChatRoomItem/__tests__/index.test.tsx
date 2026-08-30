@@ -71,17 +71,38 @@ describe('ChatRoomItem', () => {
     expect(typeof images[0].props.source).not.toBe('string');
   });
 
-  it('isCompleted면 거래 완료 태그를 표시한다', () => {
+  it('isCompleted면 거래완료 태그를 표시한다', () => {
     const room = { ...baseRoom, product: { ...baseRoom.product, isCompleted: true } };
-    const { getByTestId } = render(<ChatRoomItem room={room} onPress={jest.fn()} />);
+    const { getByTestId, getByText } = render(<ChatRoomItem room={room} onPress={jest.fn()} />);
 
-    expect(getByTestId('trade-completed-tag')).toBeTruthy();
+    expect(getByTestId('trade-status-tag')).toBeTruthy();
+    expect(getByText('거래완료')).toBeTruthy();
   });
 
-  it('isCompleted가 아니면 거래 완료 태그를 표시하지 않는다', () => {
-    const { queryByTestId } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
+  it('isReserved면 예약중 태그를 표시한다', () => {
+    const room = { ...baseRoom, product: { ...baseRoom.product, isReserved: true } };
+    const { getByText } = render(<ChatRoomItem room={room} onPress={jest.fn()} />);
 
-    expect(queryByTestId('trade-completed-tag')).toBeNull();
+    expect(getByText('예약중')).toBeTruthy();
+  });
+
+  it('isCompleted도 isReserved도 아니면 거래중 태그를 표시한다', () => {
+    const { getByText, queryByText } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
+
+    expect(getByText('거래중')).toBeTruthy();
+    expect(queryByText('예약중')).toBeNull();
+    expect(queryByText('거래완료')).toBeNull();
+  });
+
+  it('isCompleted가 isReserved보다 우선한다', () => {
+    const room = {
+      ...baseRoom,
+      product: { ...baseRoom.product, isCompleted: true, isReserved: true },
+    };
+    const { getByText, queryByText } = render(<ChatRoomItem room={room} onPress={jest.fn()} />);
+
+    expect(getByText('거래완료')).toBeTruthy();
+    expect(queryByText('예약중')).toBeNull();
   });
 
   it('누르면 onPress에 roomId를 전달한다', () => {
