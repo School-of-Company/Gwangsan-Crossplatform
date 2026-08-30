@@ -94,6 +94,12 @@ class SocketManager implements ISocketManager {
   private setupBasicEventListeners(): void {
     if (!this.socket) return;
 
+    if (__DEV__) {
+      this.socket.onAny((event, ...args) => {
+        console.log(`[socket:onAny] ${event}`, ...args);
+      });
+    }
+
     this.socket.on('disconnect', (reason) => {
       this.emit('disconnect', reason);
     });
@@ -111,6 +117,9 @@ class SocketManager implements ISocketManager {
     });
 
     this.socket.on('transactionStateChanged', (...args) => {
+      if (__DEV__) {
+        console.log('[socket] transactionStateChanged', ...args);
+      }
       this.emit('transactionStateChanged', ...args);
     });
   }
