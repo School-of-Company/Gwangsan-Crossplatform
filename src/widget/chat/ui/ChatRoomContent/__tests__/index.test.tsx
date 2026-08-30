@@ -19,7 +19,7 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
   };
 });
 
-jest.mock('~/widget/chat', () => {
+jest.mock('../../MyMessage', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -28,7 +28,25 @@ jest.mock('~/widget/chat', () => {
     MyMessage: ({ message, isLast }: any) => (
       <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
     ),
+  };
+});
+
+jest.mock('../../OtherMessage', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Text } = require('react-native');
+  return {
     OtherMessage: ({ message }: any) => <Text testID={`other-message-${message.messageId}`} />,
+  };
+});
+
+jest.mock('../../ChatDateDivider', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Text } = require('react-native');
+  return {
     ChatDateDivider: ({ label }: any) => <Text testID="date-divider">{label}</Text>,
   };
 });

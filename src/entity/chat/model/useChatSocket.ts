@@ -76,6 +76,12 @@ export const useChatSocket = ({
     };
   }, [currentRoomId, chatSocketService, joinCurrentRoom]);
 
+  useEffect(() => {
+    return () => {
+      chatSocketService.destroy();
+    };
+  }, [chatSocketService]);
+
   const sendMessage = useCallback(
     async (
       roomId: RoomId,

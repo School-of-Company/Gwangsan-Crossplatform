@@ -7,6 +7,7 @@ const createMockSocketService = (): IChatSocketService => ({
   connectionState: 'disconnected',
   connect: jest.fn(),
   disconnect: jest.fn(),
+  destroy: jest.fn(),
   sendMessage: jest.fn(),
   joinRoom: jest.fn(),
   leaveRoom: jest.fn(),
