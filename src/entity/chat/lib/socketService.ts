@@ -8,7 +8,10 @@ export interface TransactionStateChangedPayload {
   productId: number;
   isCompleted: boolean;
   isReserved?: boolean;
-  createdAt: string;
+  createdAt: string | null;
+  // 완료 가능 여부는 보는 사람의 isSeller에 따라 달라져 방 전체 broadcast로 보낼 수 없으므로,
+  // 서버는 "누구 쪽에서 요청했는지"만 보내고 클라이언트가 isCompletable을 계산한다
+  requestedBySeller?: boolean | null;
 }
 
 export interface ChatSocketEvents {

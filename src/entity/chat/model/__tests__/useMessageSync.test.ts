@@ -931,7 +931,7 @@ describe('useMessageSync', () => {
       expect(cached?.product.isCompletable).toBe(true);
     });
 
-    it('기존 createdAt이 이미 있으면 payload의 createdAt으로 덮어쓰지 않는다', async () => {
+    it('기존 createdAt이 이미 있어도 payload의 createdAt으로 덮어쓴다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
         product: { id: 1, isCompleted: false, createdAt: '2024-01-01T00:00:00Z' },
@@ -947,7 +947,66 @@ describe('useMessageSync', () => {
       });
 
       const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
-      expect(cached?.product.createdAt).toBe('2024-01-01T00:00:00Z');
+      expect(cached?.product.createdAt).toBe('2024-06-01T00:00:00Z');
+    });
+
+    it('payload의 createdAt이 null이면(거래 철회) 기존 createdAt을 지운다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, createdAt: '2024-01-01T00:00:00Z' },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: null,
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.createdAt).toBeNull();
+    });
+
+    it('requestedBySeller가 판매자와 일치하면(본인이 요청) isCompletable을 false로 계산한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isSeller: true, isCompletable: false },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+          requestedBySeller: true,
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.isCompletable).toBe(false);
+    });
+
+    it('requestedBySeller가 판매자와 다르면(상대방이 요청) isCompletable을 true로 계산한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isSeller: true, isCompletable: false },
+      });
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+          requestedBySeller: false,
+        });
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>(ROOM_DATA_KEY);
+      expect(cached?.product.isCompletable).toBe(true);
     });
 
     it('현재 보고 있지 않은 방(currentRoomId와 다른 roomId)이어도 그 방의 chatRoomData 캐시는 갱신한다', async () => {
