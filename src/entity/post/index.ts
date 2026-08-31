@@ -3,6 +3,8 @@ export { useGetItem } from './model/useGetItem';
 export { useTradeRequest } from './hooks/useTradeRequest';
 
 export { requestTrade } from './api/requestTrade';
+export { withdrawTrade } from './api/withdrawTrade';
 export { createReview } from './api/createReview';
 
 export type { RequestTradeRequest, RequestTradeResponse } from './api/requestTrade';
+export type { WithdrawTradeRequest } from './api/withdrawTrade';

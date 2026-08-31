@@ -239,8 +239,10 @@ const makeTradeHandlersReturn = (overrides = {}) => ({
   handleTradeAccept: jest.fn(),
   handleReservation: jest.fn(),
   handleCancelReservation: jest.fn(),
+  handleWithdrawTradeRequest: jest.fn(),
   hasTradeRequest: false,
   shouldShowButtons: false,
+  canWithdrawTradeRequest: false,
   ...overrides,
 });
 
@@ -489,6 +491,30 @@ describe('ChatRoomPage', () => {
     fireEvent.press(getByTestId('trade-request-button'));
 
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
+  });
+
+  it('내가 보낸 요청이 대기중이면 거래요청 버튼이 요청 취소로 바뀌고 누르면 handleWithdrawTradeRequest가 호출된다', () => {
+    const mockHandleWithdrawTradeRequest = jest.fn();
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({
+        hasTradeRequest: true,
+        canWithdrawTradeRequest: true,
+        handleWithdrawTradeRequest: mockHandleWithdrawTradeRequest,
+      })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    const button = getByTestId('trade-request-button');
+    expect(button.props.accessibilityState.disabled).toBe(false);
+    expect(button).toHaveTextContent('요청 취소');
+
+    fireEvent.press(button);
+
+    expect(mockHandleWithdrawTradeRequest).toHaveBeenCalled();
   });
 
   it('거래 요청 실패 시 모달을 닫지 않고 에러를 로깅한다', async () => {

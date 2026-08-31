@@ -85,12 +85,18 @@ export default function ChatRoomPage() {
     }
   }, [router, tradeReview, myInfo]);
 
-  const { handleTradeAccept, handleCancelReservation, hasTradeRequest, shouldShowButtons } =
-    useTradeHandlers({
-      roomId,
-      roomData: roomData || null,
-      otherUserInfo,
-    });
+  const {
+    handleTradeAccept,
+    handleCancelReservation,
+    handleWithdrawTradeRequest,
+    hasTradeRequest,
+    shouldShowButtons,
+    canWithdrawTradeRequest,
+  } = useTradeHandlers({
+    roomId,
+    roomData: roomData || null,
+    otherUserInfo,
+  });
 
   const handleOpenReservationConfirm = useCallback(() => {
     setIsReservationConfirmVisible(true);
@@ -253,14 +259,24 @@ export default function ChatRoomPage() {
     ) : (
       <TouchableOpacity
         testID="trade-request-button"
-        onPress={handleMenuPress}
-        disabled={hasTradeRequest}
+        onPress={canWithdrawTradeRequest ? handleWithdrawTradeRequest : handleMenuPress}
+        disabled={hasTradeRequest && !canWithdrawTradeRequest}
         className={`shrink-0 rounded-lg px-5 py-2.5 ${
-          hasTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
+          hasTradeRequest && !canWithdrawTradeRequest
+            ? 'bg-[#CDCDCF]'
+            : canWithdrawTradeRequest
+              ? 'bg-white'
+              : 'bg-main-500'
         }`}>
         <Text
-          className={`text-label font-medium ${hasTradeRequest ? 'text-gray-500' : 'text-white'}`}>
-          거래요청
+          className={`text-label font-medium ${
+            hasTradeRequest && !canWithdrawTradeRequest
+              ? 'text-gray-500'
+              : canWithdrawTradeRequest
+                ? 'text-gray-700'
+                : 'text-white'
+          }`}>
+          {canWithdrawTradeRequest ? '요청 취소' : '거래요청'}
         </Text>
       </TouchableOpacity>
     );

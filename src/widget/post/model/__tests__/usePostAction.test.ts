@@ -52,8 +52,10 @@ const setupMocks = (dataOverrides = {}) => {
   mockUseDeletePost.mockReturnValue({ deletePost: jest.fn(), isLoading: false });
   mockUseTradeRequest.mockReturnValue({
     handleTradeRequest: jest.fn(),
+    handleWithdrawTradeRequest: jest.fn(),
     isLoading: false,
-    hasSentToday: false,
+    isWithdrawing: false,
+    hasPendingRequest: false,
   });
   mockUseChatEntry.mockReturnValue({ navigateToChat: jest.fn(), isLoading: false });
   mockCheckIsMyPost.mockResolvedValue(false);
@@ -152,8 +154,10 @@ describe('usePostAction', () => {
       setupMocks();
       mockUseTradeRequest.mockReturnValue({
         handleTradeRequest: jest.fn(),
+        handleWithdrawTradeRequest: jest.fn(),
         isLoading: true,
-        hasSentToday: false,
+        isWithdrawing: false,
+        hasPendingRequest: false,
       });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
@@ -162,18 +166,70 @@ describe('usePostAction', () => {
       expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
     });
 
-    it('tradeRequest.hasSentToday가 true이면 tradeButtonText가 "오늘 요청 완료"이고 버튼이 비활성화된다', async () => {
+    it('tradeRequest.isWithdrawing이 true이면 tradeButtonText가 "취소 중..."이고 버튼이 비활성화된다', async () => {
       setupMocks();
       mockUseTradeRequest.mockReturnValue({
         handleTradeRequest: jest.fn(),
+        handleWithdrawTradeRequest: jest.fn(),
         isLoading: false,
-        hasSentToday: true,
+        isWithdrawing: true,
+        hasPendingRequest: true,
       });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
-      expect(result.current.computedValues.tradeButtonText).toBe('오늘 요청 완료');
+      expect(result.current.computedValues.tradeButtonText).toBe('취소 중...');
       expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
+    });
+
+    it('tradeRequest.hasPendingRequest가 true이면 tradeButtonText가 "요청 취소"이고 버튼은 활성화된 채 유지된다', async () => {
+      setupMocks({ isCompletable: false });
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: jest.fn(),
+        handleWithdrawTradeRequest: jest.fn(),
+        isLoading: false,
+        isWithdrawing: false,
+        hasPendingRequest: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.tradeButtonText).toBe('요청 취소');
+      expect(result.current.computedValues.isTradeButtonDisabled).toBe(false);
+    });
+
+    it('actionHandlers.onTradeRequest는 hasPendingRequest가 true이면 handleWithdrawTradeRequest를 사용한다', async () => {
+      setupMocks({ isCompletable: false });
+      const mockHandleTradeRequest = jest.fn();
+      const mockHandleWithdrawTradeRequest = jest.fn();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: mockHandleTradeRequest,
+        handleWithdrawTradeRequest: mockHandleWithdrawTradeRequest,
+        isLoading: false,
+        isWithdrawing: false,
+        hasPendingRequest: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.actionHandlers.onTradeRequest).toBe(mockHandleWithdrawTradeRequest);
+    });
+
+    it('actionHandlers.onTradeRequest는 hasPendingRequest가 false이면 handleTradeRequest를 사용한다', async () => {
+      setupMocks();
+      const mockHandleTradeRequest = jest.fn();
+      const mockHandleWithdrawTradeRequest = jest.fn();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: mockHandleTradeRequest,
+        handleWithdrawTradeRequest: mockHandleWithdrawTradeRequest,
+        isLoading: false,
+        isWithdrawing: false,
+        hasPendingRequest: false,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.actionHandlers.onTradeRequest).toBe(mockHandleTradeRequest);
     });
   });
 

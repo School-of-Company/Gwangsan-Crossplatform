@@ -4,11 +4,16 @@ import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTradeRequest } from '../useTradeRequest';
 import { requestTrade } from '../../api/requestTrade';
+import { withdrawTrade } from '../../api/withdrawTrade';
 import { useChatEntry } from '~/shared/lib/useChatEntry';
 import { logger } from '~/shared/lib/logger';
 
 jest.mock('../../api/requestTrade', () => ({
   requestTrade: jest.fn(),
+}));
+
+jest.mock('../../api/withdrawTrade', () => ({
+  withdrawTrade: jest.fn(),
 }));
 
 jest.mock('~/shared/lib/useChatEntry', () => ({
@@ -27,12 +32,15 @@ jest.mock('react-native-toast-message', () => ({
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
+  removeItem: jest.fn(),
 }));
 
 const mockRequestTrade = requestTrade as jest.Mock;
+const mockWithdrawTrade = withdrawTrade as jest.Mock;
 const mockUseChatEntry = useChatEntry as jest.Mock;
 const mockGetItem = AsyncStorage.getItem as jest.Mock;
 const mockSetItem = AsyncStorage.setItem as jest.Mock;
+const mockRemoveItem = AsyncStorage.removeItem as jest.Mock;
 
 describe('useTradeRequest', () => {
   const mockNavigateToChat = jest.fn();
@@ -47,6 +55,7 @@ describe('useTradeRequest', () => {
     });
     mockGetItem.mockResolvedValue(null);
     mockSetItem.mockResolvedValue(undefined);
+    mockRemoveItem.mockResolvedValue(undefined);
   });
 
   describe('초기 상태', () => {
@@ -346,8 +355,8 @@ describe('useTradeRequest', () => {
     });
   });
 
-  describe('하루 1회 제한', () => {
-    it('요청 성공 후 hasSentToday가 true가 되고 저장소에 기록한다', async () => {
+  describe('대기중 요청 상태', () => {
+    it('요청 성공 후 hasPendingRequest가 true가 되고 저장소에 기록한다', async () => {
       mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
 
       const { result } = renderHookWithProviders(() =>
@@ -358,46 +367,125 @@ describe('useTradeRequest', () => {
         await result.current.handleTradeRequest();
       });
 
-      expect(result.current.hasSentToday).toBe(true);
-      expect(mockSetItem).toHaveBeenCalledWith('tradeRequestLastSentAt:1', expect.any(String));
+      expect(result.current.hasPendingRequest).toBe(true);
+      expect(mockSetItem).toHaveBeenCalledWith('tradeRequestPending:1', 'true');
     });
 
-    it('오늘 이미 보낸 기록이 있으면 hasSentToday가 true로 시작하고 재요청 시 requestTrade를 호출하지 않는다', async () => {
-      mockGetItem.mockResolvedValue(new Date().toISOString());
+    it('저장소에 대기중 기록이 있으면 hasPendingRequest가 true로 시작하고 재요청 시 requestTrade를 호출하지 않는다', async () => {
+      mockGetItem.mockResolvedValue('true');
 
       const { result } = renderHookWithProviders(() =>
         useTradeRequest({ productId: 1, sellerId: 2 })
       );
 
-      await waitFor(() => expect(result.current.hasSentToday).toBe(true));
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
 
       await act(async () => {
         await result.current.handleTradeRequest();
       });
 
       expect(mockRequestTrade).not.toHaveBeenCalled();
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'info', text1: '오늘은 이미 거래 신청을 보냈어요' })
-      );
     });
+  });
 
-    it('전날 보낸 기록이면 hasSentToday가 false로 남아 재요청이 가능하다', async () => {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      mockGetItem.mockResolvedValue(yesterday.toISOString());
-      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+  describe('거래 신청 취소', () => {
+    it('withdrawTrade를 올바른 파라미터로 호출한다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
 
       const { result } = renderHookWithProviders(() =>
         useTradeRequest({ productId: 1, sellerId: 2 })
       );
 
-      await waitFor(() => expect(mockGetItem).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
 
       await act(async () => {
-        await result.current.handleTradeRequest();
+        await result.current.handleWithdrawTradeRequest();
       });
 
-      expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
+      expect(mockWithdrawTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
+    });
+
+    it('취소 성공 시 hasPendingRequest가 false가 되고 저장소 기록을 지운다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(result.current.hasPendingRequest).toBe(false);
+      expect(mockRemoveItem).toHaveBeenCalledWith('tradeRequestPending:1');
+    });
+
+    it('취소 성공 Toast를 표시한다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래 신청을 취소했어요' })
+      );
+    });
+
+    it('withdrawTrade 실패 시 에러 Toast를 표시하고 hasPendingRequest는 유지된다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockRejectedValue(new Error('거래 완료 요청자가 아닙니다.'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        try {
+          await result.current.handleWithdrawTradeRequest();
+        } catch {
+          // expected
+        }
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '거래 신청 취소 실패',
+          text2: '거래 완료 요청자가 아닙니다.',
+        })
+      );
+      expect(result.current.hasPendingRequest).toBe(true);
+    });
+
+    it('취소 완료 후 isWithdrawing이 false로 돌아온다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(result.current.isWithdrawing).toBe(false);
     });
   });
 });

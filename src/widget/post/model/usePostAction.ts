@@ -107,7 +107,9 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
         },
       ]);
     }, [data, deletePost]),
-    onTradeRequest: tradeRequest.handleTradeRequest,
+    onTradeRequest: tradeRequest.hasPendingRequest
+      ? tradeRequest.handleWithdrawTradeRequest
+      : tradeRequest.handleTradeRequest,
     onRefresh: useCallback(async () => {
       setRefreshing(true);
       try {
@@ -140,16 +142,18 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     canTrade: data?.mode === 'RECEIVER' && data?.isCompletable && !data?.isCompleted,
     isTradeButtonDisabled:
       tradeRequest.isLoading ||
+      tradeRequest.isWithdrawing ||
       data?.isCompleted ||
-      !data?.isCompletable ||
-      tradeRequest.hasSentToday,
+      (!data?.isCompletable && !tradeRequest.hasPendingRequest),
     tradeButtonText: tradeRequest.isLoading
       ? '신청 중...'
-      : data?.isCompleted
-        ? '거래완료됨'
-        : tradeRequest.hasSentToday
-          ? '오늘 요청 완료'
-          : '거래신청',
+      : tradeRequest.isWithdrawing
+        ? '취소 중...'
+        : data?.isCompleted
+          ? '거래완료됨'
+          : tradeRequest.hasPendingRequest
+            ? '요청 취소'
+            : '거래신청',
   };
 
   return {

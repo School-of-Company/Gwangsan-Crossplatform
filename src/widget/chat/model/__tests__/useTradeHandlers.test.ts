@@ -2,11 +2,13 @@ import { act } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useTradeHandlers } from '../useTradeHandlers';
 import { requestTrade } from '~/entity/post/api/requestTrade';
+import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
 import Toast from 'react-native-toast-message';
 
 jest.mock('~/entity/post/api/requestTrade', () => ({ requestTrade: jest.fn() }));
+jest.mock('~/entity/post/api/withdrawTrade', () => ({ withdrawTrade: jest.fn() }));
 jest.mock('~/entity/post/api/makeReservation', () => ({ makeReservation: jest.fn() }));
 jest.mock('~/entity/post/api/cancelReservation', () => ({ cancelReservation: jest.fn() }));
 jest.mock('react-native-toast-message', () => ({
@@ -15,6 +17,7 @@ jest.mock('react-native-toast-message', () => ({
 }));
 
 const mockRequestTrade = requestTrade as jest.Mock;
+const mockWithdrawTrade = withdrawTrade as jest.Mock;
 const mockMakeReservation = makeReservation as jest.Mock;
 const mockCancelReservation = cancelReservation as jest.Mock;
 
@@ -107,6 +110,44 @@ describe('useTradeHandlers', () => {
       );
 
       expect(result.current.shouldShowButtons).toBe(false);
+    });
+  });
+
+  describe('canWithdrawTradeRequest', () => {
+    it('hasTradeRequest=true, isCompletable=false이면 canWithdrawTradeRequest가 true이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo,
+        })
+      );
+
+      expect(result.current.canWithdrawTradeRequest).toBe(true);
+    });
+
+    it('isCompletable=true이면 canWithdrawTradeRequest가 false이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: true }),
+          otherUserInfo,
+        })
+      );
+
+      expect(result.current.canWithdrawTradeRequest).toBe(false);
+    });
+
+    it('createdAt이 null이면 canWithdrawTradeRequest가 false이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ createdAt: null, isCompletable: false }),
+          otherUserInfo,
+        })
+      );
+
+      expect(result.current.canWithdrawTradeRequest).toBe(false);
     });
   });
 
@@ -216,6 +257,104 @@ describe('useTradeHandlers', () => {
       });
 
       expect(mockRequestTrade).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleWithdrawTradeRequest', () => {
+    it('성공 시 withdrawTrade를 호출하고 성공 Toast를 표시한다', async () => {
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo,
+        })
+      );
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(mockWithdrawTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 42 });
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래 요청을 취소했습니다' })
+      );
+    });
+
+    it('성공 시 chatRoomData 캐시를 createdAt=null, isCompletable=true로 즉시 업데이트한다', async () => {
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo,
+        })
+      );
+
+      queryClient.setQueryData(['chatRoomData', 1], {
+        product: { id: 1, createdAt: '2026-01-01T00:00:00Z', isCompletable: false },
+      });
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.createdAt).toBeNull();
+      expect(cached?.product.isCompletable).toBe(true);
+    });
+
+    it('실패 시 에러 Toast를 표시한다', async () => {
+      mockWithdrawTrade.mockRejectedValue(new Error('취소 실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo,
+        })
+      );
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 요청 취소 실패', text2: '취소 실패' })
+      );
+    });
+
+    it('otherUserInfo.id가 없으면 withdrawTrade를 호출하지 않는다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo: { nickname: '상대방' },
+        })
+      );
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(mockWithdrawTrade).not.toHaveBeenCalled();
+    });
+
+    it('productId가 없으면 withdrawTrade를 호출하지 않는다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: { product: null }, otherUserInfo })
+      );
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(mockWithdrawTrade).not.toHaveBeenCalled();
     });
   });
 
