@@ -30,7 +30,7 @@ export default function ReservationPage() {
   const router = useRouter();
 
   const { data: roomData } = useChatRoomData({ roomId });
-  const { otherUserInfo, messageHandlers } = useChatMessages({ roomId });
+  const { otherUserInfo } = useChatMessages({ roomId });
   const { handleReservation } = useTradeHandlers({
     roomId,
     roomData: roomData || null,
@@ -74,10 +74,6 @@ export default function ReservationPage() {
         latitude,
         longitude,
       });
-      messageHandlers.sendMessage(
-        `예약을 했어요\n${formatDateLabel(date)} ${time}\n${placeName.trim()}`,
-        []
-      );
       resetLocation();
       router.back();
     } catch (error) {
@@ -94,7 +90,6 @@ export default function ReservationPage() {
     placeName,
     address,
     handleReservation,
-    messageHandlers,
     resetLocation,
     router,
   ]);

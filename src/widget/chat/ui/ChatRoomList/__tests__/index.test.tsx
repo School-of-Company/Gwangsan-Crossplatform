@@ -1,10 +1,11 @@
 import React from 'react';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
-import { FlatList } from 'react-native';
+import { Alert, FlatList } from 'react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { ChatRoomList } from '../index';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
+import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import {
   useChatRooms,
   useChatSocket,
@@ -21,6 +22,30 @@ jest.mock('expo-router', () => ({
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
 }));
+
+jest.mock('~/entity/profile/model/useBlockUser', () => ({
+  useBlockUser: jest.fn(),
+}));
+
+jest.mock('~/entity/post/ui', () => {
+  const { TouchableOpacity, Text } = require('react-native');
+  return {
+    ReportModal: ({
+      memberId,
+      isVisible,
+      onClose,
+    }: {
+      memberId?: number;
+      isVisible: boolean;
+      onClose: () => void;
+    }) =>
+      isVisible ? (
+        <TouchableOpacity testID="report-modal-close" onPress={onClose}>
+          <Text>{`신고 모달 (memberId: ${memberId})`}</Text>
+        </TouchableOpacity>
+      ) : null,
+  };
+});
 
 jest.mock('@/entity/chat', () => ({
   useChatRooms: jest.fn(),
@@ -55,9 +80,11 @@ jest.mock('@/entity/chat', () => ({
 const mockUseChatRooms = useChatRooms as jest.Mock;
 const mockUseChatSocket = useChatSocket as jest.Mock;
 const mockUseDeleteChatRoom = useDeleteChatRoom as jest.Mock;
+const mockUseBlockUser = useBlockUser as jest.Mock;
 const mockGetChatRoomData = getChatRoomData as jest.Mock;
 const mockJoinRoom = jest.fn();
 const mockDeleteMutate = jest.fn();
+const mockBlockMutate = jest.fn();
 
 const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
   data: [],
@@ -72,8 +99,14 @@ beforeEach(() => {
   mockUseChatRooms.mockReturnValue(makeChatRoomsReturn());
   mockUseChatSocket.mockReturnValue({ joinRoom: mockJoinRoom });
   mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: false });
+  mockUseBlockUser.mockReturnValue({ block: { mutate: mockBlockMutate, isPending: false } });
   mockGetChatRoomData.mockResolvedValue({ product: null, messages: [] });
+  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   useBottomSheetPortalStore.getState().reset();
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 describe('ChatRoomList', () => {
@@ -385,6 +418,117 @@ describe('ChatRoomList', () => {
         options.onError();
       });
       expect(queryByTestId('room-7')).toBeTruthy();
+    });
+  });
+
+  describe('채팅방 차단 / 신고', () => {
+    beforeEach(() => {
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({
+          data: [{ roomId: 7, nickname: '방장', member: { memberId: 42, nickname: '광산주민' } }],
+        })
+      );
+    });
+
+    it('메뉴를 열면 차단하기/신고하기/채팅방 나가기 항목을 표시한다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+
+      expect(getByText('차단하기')).toBeTruthy();
+      expect(getByText('신고하기')).toBeTruthy();
+      expect(getByText('채팅방 나가기')).toBeTruthy();
+    });
+
+    it('차단하기를 누르면 상대방 닉네임으로 확인 Alert를 띄운다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('차단하기'));
+
+      expect(Alert.alert).toHaveBeenCalledWith(
+        '사용자 차단',
+        expect.stringContaining('광산주민'),
+        expect.any(Array)
+      );
+    });
+
+    it('차단 확인 Alert에서 차단을 누르면 block.mutate를 호출한다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('차단하기'));
+
+      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
+      const buttons = alertCall[2];
+      const confirmButton = buttons.find((b: { text: string }) => b.text === '차단');
+      confirmButton.onPress();
+
+      expect(mockBlockMutate).toHaveBeenCalled();
+    });
+
+    it('신고하기를 누르면 메뉴를 닫고 해당 사용자의 memberId로 신고 모달을 연다', async () => {
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('신고하기'));
+
+      await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 3000 });
+      expect(getByText('신고 모달 (memberId: 42)')).toBeTruthy();
+    });
+
+    it('신고 모달의 onClose를 호출하면 모달이 닫힌다', async () => {
+      const { getByTestId, getByText, queryByTestId } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('신고하기'));
+
+      await waitFor(() => expect(getByTestId('report-modal-close')).toBeTruthy());
+
+      fireEvent.press(getByTestId('report-modal-close'));
+
+      await waitFor(() => expect(queryByTestId('report-modal-close')).toBeNull());
+    });
+
+    it('메뉴에서 닫기를 누르면 메뉴가 닫힌다', async () => {
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      expect(getByText('차단하기')).toBeTruthy();
+
+      fireEvent.press(getByText('닫기'));
+
+      await waitFor(() => expect(queryByText('차단하기')).toBeNull(), { timeout: 3000 });
     });
   });
 });

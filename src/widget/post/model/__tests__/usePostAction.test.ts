@@ -53,6 +53,7 @@ const setupMocks = (dataOverrides = {}) => {
   mockUseTradeRequest.mockReturnValue({
     handleTradeRequest: jest.fn(),
     isLoading: false,
+    hasSentToday: false,
   });
   mockUseChatEntry.mockReturnValue({ navigateToChat: jest.fn(), isLoading: false });
   mockCheckIsMyPost.mockResolvedValue(false);
@@ -152,11 +153,26 @@ describe('usePostAction', () => {
       mockUseTradeRequest.mockReturnValue({
         handleTradeRequest: jest.fn(),
         isLoading: true,
+        hasSentToday: false,
       });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       expect(result.current.computedValues.tradeButtonText).toBe('신청 중...');
+      expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
+    });
+
+    it('tradeRequest.hasSentToday가 true이면 tradeButtonText가 "오늘 요청 완료"이고 버튼이 비활성화된다', async () => {
+      setupMocks();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: jest.fn(),
+        isLoading: false,
+        hasSentToday: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.tradeButtonText).toBe('오늘 요청 완료');
       expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
     });
   });
