@@ -138,12 +138,18 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
           ? '팔아요'
           : '할 수 있어요',
     canTrade: data?.mode === 'RECEIVER' && data?.isCompletable && !data?.isCompleted,
-    isTradeButtonDisabled: tradeRequest.isLoading || data?.isCompleted || !data?.isCompletable,
+    isTradeButtonDisabled:
+      tradeRequest.isLoading ||
+      data?.isCompleted ||
+      !data?.isCompletable ||
+      tradeRequest.hasSentToday,
     tradeButtonText: tradeRequest.isLoading
       ? '신청 중...'
       : data?.isCompleted
         ? '거래완료됨'
-        : '거래신청',
+        : tradeRequest.hasSentToday
+          ? '오늘 요청 완료'
+          : '거래신청',
   };
 
   return {

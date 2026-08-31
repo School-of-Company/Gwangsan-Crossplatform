@@ -447,6 +447,35 @@ describe('ChatRoomPage', () => {
     expect(mockHandleCancelReservation).toHaveBeenCalled();
   });
 
+  it('예약이 잡히면 거래완료 버튼이 예약취소 버튼 오른쪽에 노출되고, 누르면 handleTradeAccept가 호출된다', () => {
+    const mockHandleTradeAccept = jest.fn();
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({ handleTradeAccept: mockHandleTradeAccept })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: true } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    const completeButton = getByTestId('trade-complete-button');
+    expect(completeButton).toHaveTextContent('거래완료');
+
+    fireEvent.press(completeButton);
+
+    expect(mockHandleTradeAccept).toHaveBeenCalled();
+  });
+
+  it('예약 전에는 거래완료 버튼이 노출되지 않는다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-complete-button')).toBeNull();
+  });
+
   it('상대방은 이미 거래를 요청했다면 거래요청 버튼이 비활성화된다', () => {
     mockUseTradeHandlers.mockReturnValue(makeTradeHandlersReturn({ hasTradeRequest: true }));
     mockUseChatRoomData.mockReturnValue({

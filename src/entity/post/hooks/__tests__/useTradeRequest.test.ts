@@ -1,6 +1,7 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTradeRequest } from '../useTradeRequest';
 import { requestTrade } from '../../api/requestTrade';
 import { useChatEntry } from '~/shared/lib/useChatEntry';
@@ -23,8 +24,15 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+}));
+
 const mockRequestTrade = requestTrade as jest.Mock;
 const mockUseChatEntry = useChatEntry as jest.Mock;
+const mockGetItem = AsyncStorage.getItem as jest.Mock;
+const mockSetItem = AsyncStorage.setItem as jest.Mock;
 
 describe('useTradeRequest', () => {
   const mockNavigateToChat = jest.fn();
@@ -37,6 +45,8 @@ describe('useTradeRequest', () => {
       navigateToRoom: mockNavigateToRoom,
       isLoading: false,
     });
+    mockGetItem.mockResolvedValue(null);
+    mockSetItem.mockResolvedValue(undefined);
   });
 
   describe('초기 상태', () => {
@@ -333,6 +343,61 @@ describe('useTradeRequest', () => {
       });
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
+    });
+  });
+
+  describe('하루 1회 제한', () => {
+    it('요청 성공 후 hasSentToday가 true가 되고 저장소에 기록한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(result.current.hasSentToday).toBe(true);
+      expect(mockSetItem).toHaveBeenCalledWith('tradeRequestLastSentAt:1', expect.any(String));
+    });
+
+    it('오늘 이미 보낸 기록이 있으면 hasSentToday가 true로 시작하고 재요청 시 requestTrade를 호출하지 않는다', async () => {
+      mockGetItem.mockResolvedValue(new Date().toISOString());
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasSentToday).toBe(true));
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'info', text1: '오늘은 이미 거래 신청을 보냈어요' })
+      );
+    });
+
+    it('전날 보낸 기록이면 hasSentToday가 false로 남아 재요청이 가능하다', async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      mockGetItem.mockResolvedValue(yesterday.toISOString());
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(mockGetItem).toHaveBeenCalled());
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
     });
   });
 });

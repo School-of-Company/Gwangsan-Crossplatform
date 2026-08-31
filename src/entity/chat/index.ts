@@ -57,6 +57,12 @@ export type {
 
 export { isChatRoomListItem, isChatMessageResponse } from './model/chatTypes';
 
-export { ChatRoomItem, ChatMessage, TradeEmbed } from './ui';
+export {
+  ChatRoomItem,
+  ChatMessage,
+  TradeEmbed,
+  TradeCompletedEmbed,
+  TradeReservedEmbed,
+} from './ui';
 
 export { useChatSocket } from './model/useChatSocket';

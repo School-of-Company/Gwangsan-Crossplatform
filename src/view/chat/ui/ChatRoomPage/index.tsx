@@ -85,11 +85,12 @@ export default function ChatRoomPage() {
     }
   }, [router, tradeReview, myInfo]);
 
-  const { handleCancelReservation, hasTradeRequest, shouldShowButtons } = useTradeHandlers({
-    roomId,
-    roomData: roomData || null,
-    otherUserInfo,
-  });
+  const { handleTradeAccept, handleCancelReservation, hasTradeRequest, shouldShowButtons } =
+    useTradeHandlers({
+      roomId,
+      roomData: roomData || null,
+      otherUserInfo,
+    });
 
   const handleOpenReservationConfirm = useCallback(() => {
     setIsReservationConfirmVisible(true);
@@ -231,14 +232,24 @@ export default function ChatRoomPage() {
 
   const renderTopTradeControl = () =>
     isSeller ? (
-      <TouchableOpacity
-        testID="trade-seller-button"
-        onPress={isReserved ? handleCancelReservation : handleOpenReservationConfirm}
-        className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
-        <Text className="text-label font-medium text-white">
-          {isReserved ? '예약 취소' : '예약하기'}
-        </Text>
-      </TouchableOpacity>
+      <View className="flex-row items-center gap-2">
+        <TouchableOpacity
+          testID="trade-seller-button"
+          onPress={isReserved ? handleCancelReservation : handleOpenReservationConfirm}
+          className={`shrink-0 rounded-lg px-5 py-2.5 ${isReserved ? 'bg-white' : 'bg-main-500'}`}>
+          <Text className={`text-label font-medium ${isReserved ? 'text-gray-700' : 'text-white'}`}>
+            {isReserved ? '예약 취소' : '예약하기'}
+          </Text>
+        </TouchableOpacity>
+        {isReserved && (
+          <TouchableOpacity
+            testID="trade-complete-button"
+            onPress={handleTradeAccept}
+            className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+            <Text className="text-label font-medium text-white">거래완료</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     ) : (
       <TouchableOpacity
         testID="trade-request-button"
