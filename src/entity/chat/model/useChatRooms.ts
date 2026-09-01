@@ -39,8 +39,11 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
             : room;
         });
 
-        const sortedData = [...withReadOverride].sort((a, b) =>
-          (b.lastMessageTime ?? '').localeCompare(a.lastMessageTime ?? '')
+        // 소켓(updateRoomList)은 UTC(Z 접미사), REST는 로컬 오프셋 없는 문자열이라 raw string
+        // 비교로는 순서가 뒤집힐 수 있다 — epoch 기준으로 비교한다 (#533과 동일한 원인)
+        const sortedData = [...withReadOverride].sort(
+          (a, b) =>
+            new Date(b.lastMessageTime ?? 0).getTime() - new Date(a.lastMessageTime ?? 0).getTime()
         );
         return sortedData;
       },
