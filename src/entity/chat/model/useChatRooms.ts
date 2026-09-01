@@ -11,6 +11,13 @@ export const chatRoomKeys = {
   list: () => [...chatRoomKeys.all, 'list'] as const,
 } as const;
 
+// 값이 없거나 파싱 불가능한 날짜 문자열이면 0(가장 오래됨)으로 취급해 정렬이 NaN으로 깨지지 않게 한다
+const toSortableTime = (value: string | null | undefined): number => {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
+};
+
 interface UseChatRoomsOptions {
   enabled?: boolean;
   refetchInterval?: number;
@@ -39,11 +46,9 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
             : room;
         });
 
-        // 소켓(updateRoomList)은 UTC(Z 접미사), REST는 로컬 오프셋 없는 문자열이라 raw string
-        // 비교로는 순서가 뒤집힐 수 있다 — epoch 기준으로 비교한다 (#533과 동일한 원인)
+        // REST/소켓 타임스탬프 형식이 달라 문자열 비교로는 순서가 뒤집힐 수 있다 — epoch로 비교 (#533과 동일)
         const sortedData = [...withReadOverride].sort(
-          (a, b) =>
-            new Date(b.lastMessageTime ?? 0).getTime() - new Date(a.lastMessageTime ?? 0).getTime()
+          (a, b) => toSortableTime(b.lastMessageTime) - toSortableTime(a.lastMessageTime)
         );
         return sortedData;
       },

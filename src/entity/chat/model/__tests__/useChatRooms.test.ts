@@ -116,6 +116,21 @@ describe('useChatRooms', () => {
       expect(result.current.data).toHaveLength(2);
     });
 
+    it('lastMessageTime이 파싱 불가능한 문자열이어도 에러 없이 맨 뒤로 정렬한다', async () => {
+      mockGetChatRooms.mockResolvedValue([
+        makeRoom({ roomId: 1, unreadMessageCount: 0, lastMessageTime: '2024-01-01T00:00:00Z' }),
+        makeRoom({ roomId: 2, unreadMessageCount: 0, lastMessageTime: 'not-a-date' }),
+      ]);
+
+      const { result } = renderHookWithProviders(() => useChatRooms());
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.isError).toBe(false);
+      expect(result.current.data?.[0].roomId).toBe(1);
+      expect(result.current.data?.[1].roomId).toBe(2);
+    });
+
     it('읽음 처리된 방(isRead)은 unreadMessageCount를 0으로 덮어쓴다', async () => {
       act(() => {
         useReadRoomsStore.getState().markRead(1, 5);
