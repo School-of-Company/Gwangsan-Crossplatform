@@ -23,7 +23,7 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { createReview } from '~/entity/post/api/createReview';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
-import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
 
 export default function ChatRoomPage() {
@@ -69,6 +69,14 @@ export default function ChatRoomPage() {
     enabled: isTradeCompleted && !!myInfo,
   });
   const tradeReview = myReceivedReviews?.find((review) => review.productId === productId);
+
+  // 리뷰 버튼을 "작성하러 가기" ↔ "확인하기"로 나누기 위해, 내가 쓴 후기 목록에서 productId가 일치하는 항목을 찾는다
+  const { data: myWrittenReviews } = useQuery({
+    queryKey: ['reviews', 'toss'],
+    queryFn: getTossReview,
+    enabled: isTradeCompleted && !!myInfo,
+  });
+  const myTradeReview = myWrittenReviews?.find((review) => review.productId === productId);
 
   const handleProductPress = useCallback(() => {
     if (!productId) return;
@@ -223,8 +231,12 @@ export default function ChatRoomPage() {
   );
 
   const handleReviewButtonPress = useCallback(() => {
+    if (myTradeReview) {
+      router.push(`/cancelTrade/${myTradeReview.reviewId}`);
+      return;
+    }
     setIsReviewModalVisible(true);
-  }, []);
+  }, [myTradeReview, router]);
 
   const renderHeader = () => (
     <ChatRoomHeader
@@ -341,6 +353,7 @@ export default function ChatRoomPage() {
         tradeEmbedConfig={tradeEmbedConfig}
         onReviewButtonPress={handleReviewButtonPress}
         showReviewButton={isTradeCompleted}
+        hasReviewedTrade={Boolean(myTradeReview)}
       />
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>

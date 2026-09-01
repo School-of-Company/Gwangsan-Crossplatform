@@ -10,7 +10,7 @@ import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { createReview } from '~/entity/post/api/createReview';
-import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
 
@@ -67,6 +67,7 @@ jest.mock('~/entity/post/api/createReview', () => ({
 
 jest.mock('~/view/reviews/api/getReviews', () => ({
   getMyReceivedReview: jest.fn(),
+  getTossReview: jest.fn(),
 }));
 
 jest.mock('~/entity/post/ui/ReviewsModal', () => {
@@ -120,6 +121,7 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
   ChatRoomContent: ({
     onReviewButtonPress,
     showReviewButton,
+    hasReviewedTrade,
     renderHeader,
     onScrollToEnd,
   }: any) => {
@@ -128,6 +130,7 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
       <View testID="chat-room-content">
         {renderHeader()}
         <Text testID="show-review-button">{String(showReviewButton)}</Text>
+        <Text testID="has-reviewed-trade">{String(hasReviewedTrade)}</Text>
         <TouchableOpacity testID="review-button" onPress={onReviewButtonPress}>
           <Text>review</Text>
         </TouchableOpacity>
@@ -216,6 +219,7 @@ const mockUseTradeRequest = useTradeRequest as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockCreateReview = createReview as jest.Mock;
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
+const mockGetTossReview = getTossReview as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
 
 const mockMarkRoomAsRead = jest.fn().mockResolvedValue(undefined);
@@ -280,6 +284,7 @@ beforeEach(() => {
   mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: false } } });
   mockCreateReview.mockResolvedValue(true);
   mockGetMyReceivedReview.mockResolvedValue([]);
+  mockGetTossReview.mockResolvedValue([]);
   mockMarkRoomAsRead.mockClear().mockResolvedValue(undefined);
 });
 
@@ -689,6 +694,31 @@ describe('ChatRoomPage', () => {
       fireEvent.press(getByTestId('received-reviews-link'));
       expect(mockRouterPush).toHaveBeenCalledWith('/cancelTrade/99');
     });
+  });
+
+  it('해당 거래에 내가 작성한 리뷰가 없으면 리뷰 버튼을 눌렀을 때 작성 모달이 열린다', async () => {
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
+    mockGetTossReview.mockResolvedValue([]);
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('review-button'));
+
+    await waitFor(() => expect(getByTestId('reviews-modal-visible').props.children).toBe('true'));
+    expect(mockRouterPush).not.toHaveBeenCalledWith(expect.stringContaining('/cancelTrade/'));
+  });
+
+  it('해당 거래에 내가 작성한 리뷰가 있으면 리뷰 버튼을 눌렀을 때 작성한 리뷰 상세로 이동한다', async () => {
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
+    mockGetTossReview.mockResolvedValue([{ productId: 1, reviewId: 77 }]);
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    await waitFor(() => expect(getByTestId('has-reviewed-trade').props.children).toBe('true'));
+    fireEvent.press(getByTestId('review-button'));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/cancelTrade/77');
+    expect(getByTestId('reviews-modal-visible').props.children).toBe('false');
   });
 
   it('메시지가 있으면 마운트 후 스크롤을 맨 아래로 이동시킨다', async () => {

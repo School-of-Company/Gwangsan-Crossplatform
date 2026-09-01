@@ -95,14 +95,15 @@ describe('SellingPageView', () => {
     expect(header.headerTitle).toBe('상대방님의 판매 목록');
   });
 
-  it('기본 탭은 "판매중"이며 GIVER 게시물이 없으면 안내 문구를 표시한다', () => {
+  it('기본 탭은 "판매중"이며, 게시물이 없으면 두 패널 모두 안내 문구를 표시한다', () => {
     const { getByText } = render(<SellingPageView />);
 
     expect(getByText('판매중(active)')).toBeTruthy();
     expect(getByText('판매 중인 게시물이 없습니다.')).toBeTruthy();
+    expect(getByText('판매 완료된 게시물이 없습니다.')).toBeTruthy();
   });
 
-  it('"판매중" 탭은 완료되지 않은 GIVER 게시물만 렌더링하고, RECEIVER/완료된 게시물은 제외한다', () => {
+  it('좌우로 나란히 배치된 두 패널에 각각 GIVER 게시물을 완료 여부로 나누어 렌더링하고 RECEIVER는 제외한다', () => {
     mockUseGetMyPosts.mockReturnValue({
       data: [
         { id: 1, title: '판매중글', mode: 'GIVER', isCompleted: false },
@@ -116,34 +117,16 @@ describe('SellingPageView', () => {
     const { getByTestId, queryByTestId } = render(<SellingPageView />);
 
     expect(getByTestId('post-1')).toBeTruthy();
-    expect(queryByTestId('post-2')).toBeNull();
-    expect(queryByTestId('post-3')).toBeNull();
-  });
-
-  it('"판매완료" 탭을 누르면 완료된 GIVER 게시물만 렌더링한다', () => {
-    mockUseGetMyPosts.mockReturnValue({
-      data: [
-        { id: 1, title: '판매중글', mode: 'GIVER', isCompleted: false },
-        { id: 3, title: '판매완료글', mode: 'GIVER', isCompleted: true },
-      ],
-      error: null,
-      isError: false,
-    });
-
-    const { getByTestId, queryByTestId } = render(<SellingPageView />);
-
-    fireEvent.press(getByTestId('selling-tab-sold'));
-
     expect(getByTestId('post-3')).toBeTruthy();
-    expect(queryByTestId('post-1')).toBeNull();
+    expect(queryByTestId('post-2')).toBeNull();
   });
 
-  it('"판매완료" 탭에 게시물이 없으면 안내 문구를 표시한다', () => {
+  it('"판매완료" 탭을 누르면 해당 탭이 활성화된다', () => {
     const { getByTestId, getByText } = render(<SellingPageView />);
 
     fireEvent.press(getByTestId('selling-tab-sold'));
 
-    expect(getByText('판매 완료된 게시물이 없습니다.')).toBeTruthy();
+    expect(getByText('판매완료(active)')).toBeTruthy();
   });
 
   it('게시물 조회 실패 시 에러 Toast를 표시한다', () => {

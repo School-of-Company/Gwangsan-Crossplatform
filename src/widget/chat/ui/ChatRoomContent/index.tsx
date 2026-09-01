@@ -31,6 +31,7 @@ type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
 interface ResolvedTradeCompletedEmbed {
   readonly productId: number;
   readonly alignment: 'left' | 'right';
+  readonly hasReviewed: boolean;
 }
 
 interface ResolvedTradeReservedEmbed {
@@ -71,6 +72,7 @@ interface ChatRoomContentProps {
   readonly tradeEmbedConfig?: TradeEmbedConfig;
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
+  readonly hasReviewedTrade?: boolean;
 }
 
 const keyExtractor = (item: ChatListItem): string => {
@@ -91,6 +93,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   tradeEmbedConfig,
   onReviewButtonPress,
   showReviewButton,
+  hasReviewedTrade,
 }) => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const insets = useSafeAreaInsets();
@@ -178,6 +181,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           data: {
             productId: product.id,
             alignment: product.isSeller ? 'left' : 'right',
+            hasReviewed: Boolean(hasReviewedTrade),
           },
         });
       }
@@ -201,7 +205,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     });
 
     return itemsWithDateDividers;
-  }, [messages, tradeEmbedConfig, showReviewButton]);
+  }, [messages, tradeEmbedConfig, showReviewButton, hasReviewedTrade]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
     ({ item, index }) => {
@@ -267,6 +271,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         return (
           <TradeCompletedEmbed
             alignment={item.data.alignment}
+            hasReviewed={item.data.hasReviewed}
             onReviewButtonPress={onReviewButtonPress}
           />
         );

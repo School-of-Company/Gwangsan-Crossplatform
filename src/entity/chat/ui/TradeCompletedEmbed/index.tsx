@@ -3,10 +3,12 @@ import { View, Text, TouchableOpacity } from 'react-native';
 
 export interface TradeCompletedEmbedProps {
   readonly alignment?: 'left' | 'right';
+  readonly hasReviewed?: boolean;
   readonly onReviewButtonPress?: () => void;
 }
 
 const TradeCompletedEmbedComponent: React.FC<TradeCompletedEmbedProps> = ({
+  hasReviewed = false,
   onReviewButtonPress,
 }) => {
   return (
@@ -19,7 +21,9 @@ const TradeCompletedEmbedComponent: React.FC<TradeCompletedEmbedProps> = ({
           testID="trade-completed-review-button"
           onPress={onReviewButtonPress}
           className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
-          <Text className="text-label font-medium text-white">리뷰 작성하기</Text>
+          <Text className="text-label font-medium text-white">
+            {hasReviewed ? '작성한 리뷰 확인하기' : '리뷰 작성하러 가기'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

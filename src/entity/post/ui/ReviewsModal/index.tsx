@@ -61,7 +61,8 @@ const ReviewsModal = ({
       isVisible={isVisible}
       onClose={onClose}
       onAnimationComplete={onAnimationComplete}
-      title="후기 작성">
+      title="후기 작성"
+      showCloseButton={false}>
       <View className="flex-1 flex-col justify-between gap-6">
         <View className="gap-8">
           <ProgressBar value={localLight} onChange={handleLightChange} />

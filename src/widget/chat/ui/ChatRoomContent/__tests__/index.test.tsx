@@ -61,9 +61,9 @@ jest.mock('~/entity/chat', () => {
     TradeReservedEmbed: ({ scheduledAt, placeName }: any) => (
       <Text testID="trade-reserved-embed">{`${scheduledAt ?? ''}-${placeName ?? ''}`}</Text>
     ),
-    TradeCompletedEmbed: ({ onReviewButtonPress }: any) => (
+    TradeCompletedEmbed: ({ hasReviewed, onReviewButtonPress }: any) => (
       <Text testID="trade-completed-embed" onPress={onReviewButtonPress}>
-        리뷰 작성하기
+        {hasReviewed ? '작성한 리뷰 확인하기' : '리뷰 작성하러 가기'}
       </Text>
     ),
     formatMessageTime: (createdAt: string) => createdAt,
@@ -260,9 +260,30 @@ describe('ChatRoomContent', () => {
       'tradeCompleted',
     ]);
     expect(getByTestId('trade-embed-60')).toBeTruthy();
+    expect(getByTestId('trade-completed-embed')).toHaveTextContent('리뷰 작성하러 가기');
 
     fireEvent.press(getByTestId('trade-completed-embed'));
     expect(onReviewButtonPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('내가 이미 이 거래에 리뷰를 작성했으면 완료 카드에 확인하기 문구를 전달한다', () => {
+    const product = createProduct({ id: 62, isCompleted: true });
+
+    const { getByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        tradeEmbedConfig={{
+          shouldShow: true,
+          product,
+          showButtons: true,
+          otherPartyNickname: '요청자',
+        }}
+        showReviewButton
+        hasReviewedTrade
+      />
+    );
+
+    expect(getByTestId('trade-completed-embed')).toHaveTextContent('작성한 리뷰 확인하기');
   });
 
   it('예약이 되면 기존 거래 카드는 그 자리에 그대로 두고, 예약 카드는 대화 맨 끝에 새로 추가한다', () => {
