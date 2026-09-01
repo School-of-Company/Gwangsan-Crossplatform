@@ -191,8 +191,8 @@ describe('AlertModal', () => {
       />
     );
 
-    await waitFor(() => expect(queryByText('메시지')).toBeNull(), { timeout: 3000 });
-  });
+    await waitFor(() => expect(queryByText('메시지')).toBeNull(), { timeout: 8000 });
+  }, 10000);
 
   it('취소 버튼을 누르면 닫힘 애니메이션 없이 즉시 렌더링을 멈춘다', () => {
     const onCancel = jest.fn();

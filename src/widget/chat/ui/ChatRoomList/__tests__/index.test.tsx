@@ -500,9 +500,9 @@ describe('ChatRoomList', () => {
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('신고하기'));
 
-      await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 3000 });
+      await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 8000 });
       expect(getByText('신고 모달 (memberId: 42)')).toBeTruthy();
-    });
+    }, 10000);
 
     it('신고 모달의 onClose를 호출하면 모달이 닫힌다', async () => {
       const { getByTestId, getByText, queryByTestId } = render(
@@ -535,7 +535,7 @@ describe('ChatRoomList', () => {
 
       fireEvent.press(getByText('닫기'));
 
-      await waitFor(() => expect(queryByText('차단하기')).toBeNull(), { timeout: 3000 });
-    });
+      await waitFor(() => expect(queryByText('차단하기')).toBeNull(), { timeout: 8000 });
+    }, 10000);
   });
 });

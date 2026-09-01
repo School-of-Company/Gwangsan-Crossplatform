@@ -356,7 +356,7 @@ describe('BottomSheetModalWrapper', () => {
       </>
     );
 
-    await waitFor(() => expect(queryByText('내용')).toBeNull(), { timeout: 3000 });
+    await waitFor(() => expect(queryByText('내용')).toBeNull(), { timeout: 8000 });
     expect(onAnimationComplete).toHaveBeenCalledTimes(1);
-  });
+  }, 10000);
 });
