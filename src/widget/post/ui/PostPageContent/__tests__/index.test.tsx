@@ -131,11 +131,10 @@ describe('PostPageContent', () => {
       expect(getByText('이 게시글 신고하기')).toBeTruthy();
     });
 
-    it('"채팅하기"와 거래 버튼을 표시한다', () => {
+    it('"채팅하러 가기" 버튼을 표시한다', () => {
       const { getByText } = render(<PostPageContent {...makeProps()} />);
 
-      expect(getByText('채팅하기')).toBeTruthy();
-      expect(getByText('거래하기')).toBeTruthy();
+      expect(getByText('채팅하러 가기')).toBeTruthy();
     });
 
     it('isChatLoading=true이면 "채팅방 생성 중..."을 표시한다', () => {
@@ -153,35 +152,13 @@ describe('PostPageContent', () => {
       expect(onReportPress).toHaveBeenCalled();
     });
 
-    it('"채팅하기"를 누르면 onChatPress가 호출된다', () => {
+    it('"채팅하러 가기"를 누르면 onChatPress가 호출된다', () => {
       const onChatPress = jest.fn();
       const { getByText } = render(<PostPageContent {...makeProps({ onChatPress })} />);
 
-      fireEvent.press(getByText('채팅하기'));
+      fireEvent.press(getByText('채팅하러 가기'));
 
       expect(onChatPress).toHaveBeenCalled();
-    });
-
-    it('거래 버튼을 누르면 onTradeRequest가 호출된다', () => {
-      const onTradeRequest = jest.fn();
-      const { getByText } = render(<PostPageContent {...makeProps({ onTradeRequest })} />);
-
-      fireEvent.press(getByText('거래하기'));
-
-      expect(onTradeRequest).toHaveBeenCalled();
-    });
-
-    it('computedValues.tradeButtonText를 거래 버튼에 표시한다', () => {
-      const props = makeProps({
-        computedValues: {
-          canTrade: false,
-          isTradeButtonDisabled: true,
-          tradeButtonText: '거래 불가',
-        },
-      });
-      const { getByText } = render(<PostPageContent {...props} />);
-
-      expect(getByText('거래 불가')).toBeTruthy();
     });
   });
 
