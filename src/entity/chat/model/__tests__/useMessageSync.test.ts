@@ -874,6 +874,42 @@ describe('useMessageSync', () => {
       expect(cached?.product).toBeNull();
     });
 
+    it('product가 null이면(방에 처음 생기는 거래 요청) chatRoomData를 즉시 invalidate해서 30초 폴링을 기다리지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, { product: null });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
+    it('product를 정상적으로 patch했으면 chatRoomData를 다시 invalidate하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-06-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
     it('기존 createdAt이 없으면 payload의 createdAt을 설정한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
@@ -1131,7 +1167,7 @@ describe('useMessageSync', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
     });
 
-    it('chatRoomQueryKey가 없으면 목록 캐시 처리를 하지 않는다', async () => {
+    it('chatRoomQueryKey가 없으면 목록 캐시 처리는 하지 않지만, product가 없던 chatRoomData는 여전히 invalidate한다', async () => {
       const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
       await act(async () => {});
       const invalidateSpy = jest.spyOn(rendered.queryClient, 'invalidateQueries');
@@ -1146,7 +1182,8 @@ describe('useMessageSync', () => {
           });
         });
       }).not.toThrow();
-      expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chatRoomData', ROOM_ID] });
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
     });
 
     it('currentRoomId가 없는 목록 화면에서도 목록 캐시를 갱신한다', async () => {

@@ -493,9 +493,12 @@ describe('ChatRoomList', () => {
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('신고하기'));
 
-      await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 3000 });
+      // 바텀시트 닫힘 애니메이션(SHEET_TRANSITION_DURATION=500ms)이 끝나야 언마운트되는데,
+      // CI에서 커버리지 계측 + 전체 스위트 동시 실행 시 리소스 경합으로 3000ms를 넘기는 경우가 있어
+      // 여유를 크게 둔다. it()의 타임아웃도 함께 늘려야 waitFor가 끝까지 기다릴 수 있다.
+      await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 10000 });
       expect(getByText('신고 모달 (memberId: 42)')).toBeTruthy();
-    });
+    }, 15000);
 
     it('신고 모달의 onClose를 호출하면 모달이 닫힌다', async () => {
       const { getByTestId, getByText, queryByTestId } = render(
@@ -528,7 +531,8 @@ describe('ChatRoomList', () => {
 
       fireEvent.press(getByText('닫기'));
 
-      await waitFor(() => expect(queryByText('차단하기')).toBeNull(), { timeout: 3000 });
-    });
+      // 위와 동일하게 바텀시트 닫힘 애니메이션 완료를 기다리는 시간 여유를 크게 둔다.
+      await waitFor(() => expect(queryByText('차단하기')).toBeNull(), { timeout: 10000 });
+    }, 15000);
   });
 });

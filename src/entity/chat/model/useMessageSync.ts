@@ -203,8 +203,10 @@ export const useMessageSync = ({
 
       // 이 방을 지금 보고 있지 않아도(채팅 목록 화면이거나 다른 방을 보는 중이어도) 반영되어야 하므로
       // currentRoomId 일치 여부로 걸러내지 않는다.
+      let patchedExistingProduct = false;
       queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', data.roomId], (old) => {
         if (!old?.product) return old;
+        patchedExistingProduct = true;
         return {
           ...old,
           product: {
@@ -221,6 +223,12 @@ export const useMessageSync = ({
           },
         };
       });
+
+      // 이 방에 처음 생기는 거래 요청이면 payload만으로는 title/images 등을 채울 수 없어 위에서 patch가
+      // 스킵된다 — 상대방이 방을 이미 열어둔 상태라면 30초 폴링을 기다리지 않고 바로 다시 받아온다.
+      if (!patchedExistingProduct) {
+        queryClient.invalidateQueries({ queryKey: ['chatRoomData', data.roomId] });
+      }
 
       if (!chatRoomQueryKey) return;
 
