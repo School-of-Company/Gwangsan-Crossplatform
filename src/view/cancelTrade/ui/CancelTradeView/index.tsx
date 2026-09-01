@@ -1,10 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Header } from '~/shared/ui';
+import { Button, Header, LightBar } from '~/shared/ui';
 import { useGetReview } from '../../model/useGetReview';
-import { getLightColor } from '~/shared/lib/handleLightColor';
-import { clsx } from 'clsx';
 import CancelTradeBottomSheet from '~/widget/cancelTrade/ui/CancelTradeBottomSheet';
 import { useState, useCallback, useEffect } from 'react';
 import { logger } from '~/shared/lib/logger';
@@ -48,12 +46,7 @@ export default function CancelTradeView() {
           <View>
             <Text className="text-titleSmall">{data?.title}</Text>
             <Text>{data?.content}</Text>
-            <View className="relative flex h-4 w-[120px] justify-center rounded-xl bg-gray-200">
-              <View
-                style={{ width: `${data?.light ?? 0}%` }}
-                className={clsx('absolute mx-1 h-2 rounded-xl', getLightColor(data?.light ?? 0))}
-              />
-            </View>
+            <LightBar value={data?.light ?? 0} />
           </View>
         </View>
         <Button variant="error" disabled={!data?.productId} onPress={handleToggleCancelTradeModal}>

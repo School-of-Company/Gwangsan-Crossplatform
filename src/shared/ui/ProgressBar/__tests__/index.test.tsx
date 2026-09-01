@@ -114,6 +114,55 @@ describe('ProgressBar', () => {
       expect(onChange).toHaveBeenCalledWith(expect.any(Number));
     });
 
+    it('드래그 중에는 엄지 위에 현재 값을 보여주는 말풍선을 표시하고, 손을 떼면 사라진다', () => {
+      withCapturedPanResponderConfig();
+      const { getByTestId, queryByTestId, UNSAFE_getAllByType } = render(
+        <ProgressBar value={50} onChange={jest.fn()} />
+      );
+
+      const root = UNSAFE_getAllByType(View)[0];
+      fireEvent(root, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 48 } },
+      });
+
+      expect(queryByTestId('progress-bar-value-tooltip')).toBeNull();
+
+      act(() => {
+        capturedConfig.onPanResponderGrant({ nativeEvent: { pageX: 150 } });
+      });
+
+      expect(getByTestId('progress-bar-value-tooltip')).toHaveTextContent('50');
+
+      act(() => {
+        capturedConfig.onPanResponderRelease();
+      });
+
+      expect(queryByTestId('progress-bar-value-tooltip')).toBeNull();
+    });
+
+    it('드래그가 다른 제스처에 가로채여 종료(Terminate)되어도 말풍선이 사라진다', () => {
+      withCapturedPanResponderConfig();
+      const { queryByTestId, UNSAFE_getAllByType } = render(
+        <ProgressBar value={50} onChange={jest.fn()} />
+      );
+
+      const root = UNSAFE_getAllByType(View)[0];
+      fireEvent(root, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 48 } },
+      });
+
+      act(() => {
+        capturedConfig.onPanResponderGrant({ nativeEvent: { pageX: 150 } });
+      });
+      expect(queryByTestId('progress-bar-value-tooltip')).toBeTruthy();
+
+      act(() => {
+        capturedConfig.onPanResponderTerminate();
+      });
+
+      expect(queryByTestId('progress-bar-value-tooltip')).toBeNull();
+    });
+
     it('언마운트되어 ref가 정리된 후에는 onPanResponderGrant/Move가 measure를 호출하지 않는다', () => {
       withCapturedPanResponderConfig();
       const onChange = jest.fn();

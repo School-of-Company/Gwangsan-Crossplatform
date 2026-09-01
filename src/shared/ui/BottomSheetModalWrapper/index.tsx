@@ -45,7 +45,7 @@ export function BottomSheetModalWrapper({
   children,
   height,
   hasHeader = true,
-  showCloseButton = true,
+  showCloseButton = false,
   dragLockRef,
 }: BottomSheetModalWrapperProps) {
   const id = useId();

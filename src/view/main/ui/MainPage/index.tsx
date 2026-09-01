@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '~/entity/main/ui/header';
-import { Inform, MainSlideViewer } from '~/widget/main';
+import { GwangsanBanner, Inform, MainSlideViewer } from '~/widget/main';
 import { useGetMyInformation } from '../../../../entity/main/model/useGetMyInformation';
 import Toast from 'react-native-toast-message';
 
@@ -23,6 +23,7 @@ export default function MainPageView() {
       <Header />
       <ScrollView className="flex-1">
         <MainSlideViewer />
+        <GwangsanBanner gwangsan={data?.gwangsan} />
         <Inform
           head={data?.headName ?? '본점'}
           dong={data?.dongName ?? '동'}

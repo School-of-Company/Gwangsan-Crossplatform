@@ -74,15 +74,24 @@ describe('BottomSheetModalWrapper', () => {
     expect(getByText('내용')).toBeTruthy();
   });
 
-  it('닫기 버튼 클릭 시 onClose를 호출한다', () => {
+  it('showCloseButton이 true이면 닫기 버튼 클릭 시 onClose를 호출한다', () => {
     const onClose = jest.fn();
     const { UNSAFE_getByType } = renderSheet(
-      <BottomSheetModalWrapper isVisible onClose={onClose} title="제목">
+      <BottomSheetModalWrapper isVisible onClose={onClose} title="제목" showCloseButton>
         <Text>내용</Text>
       </BottomSheetModalWrapper>
     );
     fireEvent.press(UNSAFE_getByType(TouchableOpacity));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('showCloseButton 기본값은 false이므로 닫기 버튼을 렌더링하지 않는다', () => {
+    const { UNSAFE_queryAllByType } = renderSheet(
+      <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목">
+        <Text>내용</Text>
+      </BottomSheetModalWrapper>
+    );
+    expect(UNSAFE_queryAllByType(TouchableOpacity)).toHaveLength(0);
   });
 
   it('오버레이(배경) 클릭 시 onClose를 호출한다', () => {

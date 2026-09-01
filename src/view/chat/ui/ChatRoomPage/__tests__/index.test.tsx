@@ -9,7 +9,6 @@ import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { createReview } from '~/entity/post/api/createReview';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
@@ -61,39 +60,10 @@ jest.mock('~/entity/post/hooks/useTradeRequest', () => ({
   useTradeRequest: jest.fn(),
 }));
 
-jest.mock('~/entity/post/api/createReview', () => ({
-  createReview: jest.fn(),
-}));
-
 jest.mock('~/view/reviews/api/getReviews', () => ({
   getMyReceivedReview: jest.fn(),
   getTossReview: jest.fn(),
 }));
-
-jest.mock('~/entity/post/ui/ReviewsModal', () => {
-  const { View, Text, TouchableOpacity } = require('react-native');
-  return {
-    __esModule: true,
-    default: ({ isVisible, onClose, onSubmit, light, contents, onAnimationComplete }: any) => (
-      <View testID="reviews-modal">
-        <Text testID="reviews-modal-visible">{String(isVisible)}</Text>
-        <Text testID="reviews-modal-light">{String(light)}</Text>
-        <Text testID="reviews-modal-contents">{contents}</Text>
-        <TouchableOpacity
-          testID="reviews-modal-submit"
-          onPress={() => onSubmit(80, '좋은 거래였어요')}>
-          <Text>submit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="reviews-modal-close" onPress={onClose}>
-          <Text>close</Text>
-        </TouchableOpacity>
-        <TouchableOpacity testID="reviews-modal-animation-complete" onPress={onAnimationComplete}>
-          <Text>animation-complete</Text>
-        </TouchableOpacity>
-      </View>
-    ),
-  };
-});
 
 jest.mock('@/widget/chat/ui/ChatRoomHeader', () => ({
   ChatRoomHeader: () => {
@@ -217,7 +187,6 @@ const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseChatUIState = useChatUIState as jest.Mock;
 const mockUseTradeRequest = useTradeRequest as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
-const mockCreateReview = createReview as jest.Mock;
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
 const mockGetTossReview = getTossReview as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
@@ -282,7 +251,6 @@ beforeEach(() => {
     isLoading: false,
   });
   mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: false } } });
-  mockCreateReview.mockResolvedValue(true);
   mockGetMyReceivedReview.mockResolvedValue([]);
   mockGetTossReview.mockResolvedValue([]);
   mockMarkRoomAsRead.mockClear().mockResolvedValue(undefined);
@@ -595,47 +563,6 @@ describe('ChatRoomPage', () => {
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
   });
 
-  it('리뷰 버튼 클릭 시 리뷰 모달이 열린다', () => {
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    expect(getByTestId('reviews-modal-visible').props.children).toBe('false');
-    fireEvent.press(getByTestId('review-button'));
-    expect(getByTestId('reviews-modal-visible').props.children).toBe('true');
-  });
-
-  it('리뷰 제출 성공 시 성공 토스트를 표시하고 모달을 닫는다', async () => {
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    fireEvent.press(getByTestId('review-button'));
-    fireEvent.press(getByTestId('reviews-modal-submit'));
-
-    await waitFor(() =>
-      expect(mockCreateReview).toHaveBeenCalledWith({
-        productId: 1,
-        otherMemberId: 7,
-        content: '좋은 거래였어요',
-        light: 80,
-      })
-    );
-    await waitFor(() =>
-      expect(mockToastShow).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }))
-    );
-    await waitFor(() => expect(getByTestId('reviews-modal-visible').props.children).toBe('false'));
-  });
-
-  it('리뷰 제출 실패 시 에러 토스트를 표시한다', async () => {
-    mockCreateReview.mockRejectedValue(new Error('작성 실패'));
-
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    fireEvent.press(getByTestId('review-button'));
-    fireEvent.press(getByTestId('reviews-modal-submit'));
-
-    await waitFor(() =>
-      expect(mockToastShow).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }))
-    );
-  });
-
   it('roomData?.product?.isCompleted가 true이면 리뷰 버튼을 노출한다', () => {
     mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
 
@@ -696,7 +623,7 @@ describe('ChatRoomPage', () => {
     });
   });
 
-  it('해당 거래에 내가 작성한 리뷰가 없으면 리뷰 버튼을 눌렀을 때 작성 모달이 열린다', async () => {
+  it('해당 거래에 내가 작성한 리뷰가 없으면 리뷰 버튼을 눌렀을 때 후기 작성 페이지로 이동한다', async () => {
     mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
     mockGetTossReview.mockResolvedValue([]);
 
@@ -704,8 +631,7 @@ describe('ChatRoomPage', () => {
 
     fireEvent.press(getByTestId('review-button'));
 
-    await waitFor(() => expect(getByTestId('reviews-modal-visible').props.children).toBe('true'));
-    expect(mockRouterPush).not.toHaveBeenCalledWith(expect.stringContaining('/cancelTrade/'));
+    expect(mockRouterPush).toHaveBeenCalledWith('/chatting/10/review');
   });
 
   it('해당 거래에 내가 작성한 리뷰가 있으면 리뷰 버튼을 눌렀을 때 작성한 리뷰 상세로 이동한다', async () => {
@@ -718,7 +644,7 @@ describe('ChatRoomPage', () => {
     fireEvent.press(getByTestId('review-button'));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/cancelTrade/77');
-    expect(getByTestId('reviews-modal-visible').props.children).toBe('false');
+    expect(mockRouterPush).not.toHaveBeenCalledWith('/chatting/10/review');
   });
 
   it('메시지가 있으면 마운트 후 스크롤을 맨 아래로 이동시킨다', async () => {
@@ -771,24 +697,5 @@ describe('ChatRoomPage', () => {
 
     fireEvent.press(getByTestId('reservation-confirm-modal-close'));
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
-  });
-
-  it('리뷰 모달을 닫으면 다시 숨겨진다', () => {
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    fireEvent.press(getByTestId('review-button'));
-    expect(getByTestId('reviews-modal-visible').props.children).toBe('true');
-
-    fireEvent.press(getByTestId('reviews-modal-close'));
-    expect(getByTestId('reviews-modal-visible').props.children).toBe('false');
-  });
-
-  it('리뷰 모달 애니메이션 종료 시 리뷰 입력값이 초기화된다', () => {
-    const { getByTestId } = render(<ChatRoomPage />);
-
-    fireEvent.press(getByTestId('reviews-modal-animation-complete'));
-
-    expect(getByTestId('reviews-modal-light').props.children).toBe('60');
-    expect(getByTestId('reviews-modal-contents').props.children).toBe('');
   });
 });
