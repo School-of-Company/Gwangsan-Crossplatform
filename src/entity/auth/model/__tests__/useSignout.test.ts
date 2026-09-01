@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { signout } from '../../api/signout';
 import { clearCredentialsForBiometric } from '../../api/signin';
 import { removeData } from '~/shared/lib/removeData';
+import { clearAuthTokens } from '~/shared/lib/auth';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { renderHookWithProviders } from '~/test-utils';
 import { useSignout } from '../useSignout';
@@ -19,6 +20,9 @@ jest.mock('../../api/signin', () => ({
 jest.mock('~/shared/lib/removeData', () => ({
   removeData: jest.fn(),
 }));
+jest.mock('~/shared/lib/auth', () => ({
+  clearAuthTokens: jest.fn(),
+}));
 jest.mock('~/shared/lib/getCurrentUserId', () => ({
   clearCurrentUserId: jest.fn(),
 }));
@@ -30,6 +34,7 @@ const mockUseRouter = useRouter as jest.Mock;
 const mockSignout = signout as jest.Mock;
 const mockClearCredentialsForBiometric = clearCredentialsForBiometric as jest.Mock;
 const mockRemoveData = removeData as jest.Mock;
+const mockClearAuthTokens = clearAuthTokens as jest.Mock;
 const mockClearCurrentUserId = clearCurrentUserId as jest.Mock;
 
 describe('useSignout', () => {
@@ -40,6 +45,7 @@ describe('useSignout', () => {
     mockUseRouter.mockReturnValue({ replace: mockReplace });
     mockClearCredentialsForBiometric.mockResolvedValue(undefined);
     mockRemoveData.mockResolvedValue(undefined);
+    mockClearAuthTokens.mockResolvedValue(undefined);
   });
 
   it('초기 상태가 올바르다', () => {
@@ -60,6 +66,7 @@ describe('useSignout', () => {
     });
 
     await waitFor(() => {
+      expect(mockClearAuthTokens).toHaveBeenCalled();
       expect(mockClearCredentialsForBiometric).toHaveBeenCalled();
       expect(mockRemoveData).toHaveBeenCalledWith('memberId');
       expect(mockClearCurrentUserId).toHaveBeenCalled();
@@ -132,6 +139,7 @@ describe('useSignout', () => {
       });
 
       await waitFor(() => {
+        expect(mockClearAuthTokens).toHaveBeenCalled();
         expect(mockClearCredentialsForBiometric).toHaveBeenCalled();
         expect(mockRemoveData).toHaveBeenCalledWith('memberId');
         expect(mockClearCurrentUserId).toHaveBeenCalled();

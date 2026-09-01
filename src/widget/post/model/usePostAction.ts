@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useQueryClient } from '@tanstack/react-query';
 import { createReview } from '~/entity/post/api/createReview';
@@ -24,6 +23,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
+  const [isDeleteAlertVisible, setIsDeleteAlertVisible] = useState(false);
 
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
@@ -41,6 +41,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     closeReportModal: useCallback(() => setIsReportModalVisible(false), []),
     openReviewModal: useCallback(() => setIsReviewModalVisible(true), []),
     closeReviewModal: useCallback(() => setIsReviewModalVisible(false), []),
+    closeDeleteAlert: useCallback(() => setIsDeleteAlertVisible(false), []),
   };
 
   const reviewHandlers = {
@@ -97,17 +98,16 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const actionHandlers = {
     onDelete: useCallback(() => {
       if (!data) return;
-
-      Alert.alert('게시글 삭제', '이 게시글을 삭제하시겠습니까?', [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => deletePost(data.id, data.type, data.mode),
-        },
-      ]);
+      setIsDeleteAlertVisible(true);
+    }, [data]),
+    onConfirmDelete: useCallback(() => {
+      if (!data) return;
+      setIsDeleteAlertVisible(false);
+      deletePost(data.id, data.type, data.mode);
     }, [data, deletePost]),
-    onTradeRequest: tradeRequest.handleTradeRequest,
+    onTradeRequest: tradeRequest.hasPendingRequest
+      ? tradeRequest.handleWithdrawTradeRequest
+      : tradeRequest.handleTradeRequest,
     onRefresh: useCallback(async () => {
       setRefreshing(true);
       try {
@@ -140,16 +140,18 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     canTrade: data?.mode === 'RECEIVER' && data?.isCompletable && !data?.isCompleted,
     isTradeButtonDisabled:
       tradeRequest.isLoading ||
+      tradeRequest.isWithdrawing ||
       data?.isCompleted ||
-      !data?.isCompletable ||
-      tradeRequest.hasSentToday,
+      (!data?.isCompletable && !tradeRequest.hasPendingRequest),
     tradeButtonText: tradeRequest.isLoading
       ? '신청 중...'
-      : data?.isCompleted
-        ? '거래완료됨'
-        : tradeRequest.hasSentToday
-          ? '오늘 요청 완료'
-          : '거래신청',
+      : tradeRequest.isWithdrawing
+        ? '취소 중...'
+        : data?.isCompleted
+          ? '거래완료됨'
+          : tradeRequest.hasPendingRequest
+            ? '요청 취소'
+            : '거래신청',
   };
 
   return {
@@ -161,6 +163,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     isDeleting,
     isReportModalVisible,
     isReviewModalVisible,
+    isDeleteAlertVisible,
     reviewLight,
     reviewContents,
     isChatLoading,

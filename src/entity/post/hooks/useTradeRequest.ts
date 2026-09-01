@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '../api/requestTrade';
+import { withdrawTrade } from '../api/withdrawTrade';
 import { useChatEntry } from '~/shared/lib/useChatEntry';
 import { logger } from '~/shared/lib/logger';
 
@@ -12,34 +13,35 @@ interface UseTradeRequestOptions {
 
 interface UseTradeRequestReturn {
   readonly handleTradeRequest: () => Promise<void>;
+  readonly handleWithdrawTradeRequest: () => Promise<void>;
   readonly isLoading: boolean;
-  readonly hasSentToday: boolean;
+  readonly isWithdrawing: boolean;
+  readonly hasPendingRequest: boolean;
 }
 
-// 백엔드에 거래 요청 취소/철회 API가 없어(School-of-Company/Gwangsan-Server#366),
-// 한 번 보낸 요청은 상대가 확정하기 전까지 영구히 재요청이 막힌다.
-// 임시 조치로 게시글별 하루 1회로 클라이언트에서 재전송을 제한한다.
-const getTradeRequestStorageKey = (productId: number) => `tradeRequestLastSentAt:${productId}`;
+// GET /post/{post_id}의 isCompletable은 PENDING 거래 완료 요청 여부를 반영하지 않는다
+// (School-of-Company/Gwangsan-Server#366). 이 화면은 그 신호를 서버에서 받을 수 없어,
+// "내가 방금 보낸 요청이 아직 대기중"이라는 사실만 로컬에 기록해 버튼을 신청/취소로 전환한다.
+// 실제 취소는 DELETE /post/trade(School-of-Company/Gwangsan-Server#367)로 처리한다.
+const getPendingRequestStorageKey = (productId: number) => `tradeRequestPending:${productId}`;
 
-const isSameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-
-const getLastSentAt = async (productId: number): Promise<Date | null> => {
+const getHasPendingRequest = async (productId: number): Promise<boolean> => {
   try {
-    const raw = await AsyncStorage.getItem(getTradeRequestStorageKey(productId));
-    return raw ? new Date(raw) : null;
+    return (await AsyncStorage.getItem(getPendingRequestStorageKey(productId))) === 'true';
   } catch {
-    return null;
+    return false;
   }
 };
 
-const saveLastSentAt = async (productId: number): Promise<void> => {
+const savePendingRequest = async (productId: number, pending: boolean): Promise<void> => {
   try {
-    await AsyncStorage.setItem(getTradeRequestStorageKey(productId), new Date().toISOString());
+    if (pending) {
+      await AsyncStorage.setItem(getPendingRequestStorageKey(productId), 'true');
+    } else {
+      await AsyncStorage.removeItem(getPendingRequestStorageKey(productId));
+    }
   } catch {
-    // 저장 실패해도 거래 신청 자체는 이미 서버에 접수된 상태라 무시한다
+    // 저장 실패해도 서버 요청 자체는 이미 처리된 상태라 무시한다
   }
 };
 
@@ -48,15 +50,16 @@ export const useTradeRequest = ({
   sellerId,
 }: UseTradeRequestOptions): UseTradeRequestReturn => {
   const [isLoading, setIsLoading] = useState(false);
-  const [hasSentToday, setHasSentToday] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const { navigateToChat, navigateToRoom } = useChatEntry();
 
   useEffect(() => {
     let isMounted = true;
 
-    getLastSentAt(productId).then((lastSentAt) => {
+    getHasPendingRequest(productId).then((pending) => {
       if (isMounted) {
-        setHasSentToday(!!lastSentAt && isSameDay(lastSentAt, new Date()));
+        setHasPendingRequest(pending);
       }
     });
 
@@ -66,16 +69,7 @@ export const useTradeRequest = ({
   }, [productId]);
 
   const handleTradeRequest = useCallback(async () => {
-    if (isLoading) return;
-
-    if (hasSentToday) {
-      Toast.show({
-        type: 'info',
-        text1: '오늘은 이미 거래 신청을 보냈어요',
-        text2: '내일 다시 시도해주세요.',
-      });
-      return;
-    }
+    if (isLoading || hasPendingRequest) return;
 
     try {
       setIsLoading(true);
@@ -85,8 +79,8 @@ export const useTradeRequest = ({
         otherMemberId: sellerId,
       });
 
-      await saveLastSentAt(productId);
-      setHasSentToday(true);
+      await savePendingRequest(productId, true);
+      setHasPendingRequest(true);
 
       Toast.show({
         type: 'success',
@@ -121,11 +115,40 @@ export const useTradeRequest = ({
     } finally {
       setIsLoading(false);
     }
-  }, [productId, sellerId, isLoading, hasSentToday, navigateToChat, navigateToRoom]);
+  }, [productId, sellerId, isLoading, hasPendingRequest, navigateToChat, navigateToRoom]);
+
+  const handleWithdrawTradeRequest = useCallback(async () => {
+    if (isWithdrawing) return;
+
+    try {
+      setIsWithdrawing(true);
+
+      await withdrawTrade({ productId, otherMemberId: sellerId });
+
+      await savePendingRequest(productId, false);
+      setHasPendingRequest(false);
+
+      Toast.show({
+        type: 'success',
+        text1: '거래 신청을 취소했어요',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: '거래 신청 취소 실패',
+        text2: error instanceof Error ? error.message : '다시 시도해주세요.',
+      });
+      throw error;
+    } finally {
+      setIsWithdrawing(false);
+    }
+  }, [productId, sellerId, isWithdrawing]);
 
   return {
     handleTradeRequest,
+    handleWithdrawTradeRequest,
     isLoading,
-    hasSentToday,
+    isWithdrawing,
+    hasPendingRequest,
   };
 };

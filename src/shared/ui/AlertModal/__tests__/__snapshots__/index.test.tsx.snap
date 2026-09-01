@@ -42,6 +42,12 @@ exports[`AlertModal 스냅샷 - 기본 상태 1`] = `
   >
     <View
       className="flex-1 items-center justify-center bg-black/40 px-8"
+      collapsable={false}
+      style={
+        {
+          "opacity": 0,
+        }
+      }
     >
       <View
         accessibilityState={
@@ -82,7 +88,7 @@ exports[`AlertModal 스냅샷 - 기본 상태 1`] = `
             {
               "transform": [
                 {
-                  "scale": 0.9,
+                  "scale": 1.1,
                 },
               ],
             }

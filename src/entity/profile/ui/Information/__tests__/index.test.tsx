@@ -1,6 +1,6 @@
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
-import { Alert, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Information from '../index';
 
@@ -25,7 +25,7 @@ jest.mock('~/entity/post/ui', () => {
 });
 
 jest.mock('~/shared/ui', () => {
-  const { View } = require('react-native');
+  const { View, TouchableOpacity, Text } = require('react-native');
   return {
     BottomSheetModalWrapper: ({
       isVisible,
@@ -34,6 +34,36 @@ jest.mock('~/shared/ui', () => {
       isVisible: boolean;
       children: React.ReactNode;
     }) => (isVisible ? <View>{children}</View> : null),
+    AlertModal: ({
+      isVisible,
+      message,
+      cancelText = '취소',
+      confirmText,
+      onCancel,
+      onConfirm,
+      isLoading,
+    }: {
+      isVisible: boolean;
+      message: string;
+      cancelText?: string;
+      confirmText: string;
+      onCancel?: () => void;
+      onConfirm: () => void;
+      isLoading?: boolean;
+    }) =>
+      isVisible ? (
+        <View>
+          <Text>{message}</Text>
+          {onCancel && (
+            <TouchableOpacity testID="alert-cancel" disabled={isLoading} onPress={onCancel}>
+              <Text>{cancelText}</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity testID="alert-confirm" disabled={isLoading} onPress={onConfirm}>
+            <Text>{confirmText}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null,
   };
 });
 
@@ -51,11 +81,6 @@ beforeEach(() => {
     block: { mutate: mockBlockMutate, isPending: false },
     unblock: { mutate: mockUnblockMutate, isPending: false },
   });
-  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
 });
 
 describe('Information', () => {
@@ -107,7 +132,7 @@ describe('Information', () => {
       expect(getByText('신고하기')).toBeTruthy();
     });
 
-    it('isBlocked가 false이면 "차단하기"를 표시하고 누르면 차단 확인 Alert를 띄운다', () => {
+    it('isBlocked가 false이면 "차단하기"를 표시하고 누르면 차단 확인 AlertModal을 띄운다', () => {
       const { UNSAFE_getByType, getByText } = render(
         <Information name="타인" id={2} isMe={false} isBlocked={false} />
       );
@@ -115,30 +140,22 @@ describe('Information', () => {
       fireEvent.press(UNSAFE_getByType(TouchableOpacity));
       fireEvent.press(getByText('차단하기'));
 
-      expect(Alert.alert).toHaveBeenCalledWith(
-        '사용자 차단',
-        expect.stringContaining('타인'),
-        expect.any(Array)
-      );
+      expect(getByText('타인님을 차단하시겠습니까?')).toBeTruthy();
     });
 
-    it('차단 확인 Alert에서 차단을 누르면 block.mutate를 호출한다', () => {
-      const { UNSAFE_getByType, getByText } = render(
+    it('차단 확인 AlertModal에서 차단을 누르면 block.mutate를 호출한다', () => {
+      const { UNSAFE_getByType, getByText, getByTestId } = render(
         <Information name="타인" id={2} isMe={false} isBlocked={false} />
       );
 
       fireEvent.press(UNSAFE_getByType(TouchableOpacity));
       fireEvent.press(getByText('차단하기'));
-
-      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
-      const buttons = alertCall[2];
-      const confirmButton = buttons.find((b: { text: string }) => b.text === '차단');
-      confirmButton.onPress();
+      fireEvent.press(getByTestId('alert-confirm'));
 
       expect(mockBlockMutate).toHaveBeenCalled();
     });
 
-    it('isBlocked가 true이면 "차단 해제하기"를 표시하고 누르면 해제 확인 Alert를 띄운다', () => {
+    it('isBlocked가 true이면 "차단 해제하기"를 표시하고 누르면 해제 확인 AlertModal을 띄운다', () => {
       const { UNSAFE_getByType, getByText } = render(
         <Information name="타인" id={2} isMe={false} isBlocked />
       );
@@ -146,27 +163,32 @@ describe('Information', () => {
       fireEvent.press(UNSAFE_getByType(TouchableOpacity));
       fireEvent.press(getByText('차단 해제하기'));
 
-      expect(Alert.alert).toHaveBeenCalledWith(
-        '차단 해제',
-        expect.stringContaining('타인'),
-        expect.any(Array)
-      );
+      expect(getByText('타인님의 차단을 해제하시겠습니까?')).toBeTruthy();
     });
 
-    it('차단 해제 확인 Alert에서 해제를 누르면 unblock.mutate를 호출한다', () => {
-      const { UNSAFE_getByType, getByText } = render(
+    it('차단 해제 확인 AlertModal에서 해제를 누르면 unblock.mutate를 호출한다', () => {
+      const { UNSAFE_getByType, getByText, getByTestId } = render(
         <Information name="타인" id={2} isMe={false} isBlocked />
       );
 
       fireEvent.press(UNSAFE_getByType(TouchableOpacity));
       fireEvent.press(getByText('차단 해제하기'));
-
-      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
-      const buttons = alertCall[2];
-      const confirmButton = buttons.find((b: { text: string }) => b.text === '해제');
-      confirmButton.onPress();
+      fireEvent.press(getByTestId('alert-confirm'));
 
       expect(mockUnblockMutate).toHaveBeenCalled();
+    });
+
+    it('차단 확인 AlertModal에서 취소를 누르면 block.mutate를 호출하지 않고 닫힌다', () => {
+      const { UNSAFE_getByType, getByText, getByTestId, queryByText } = render(
+        <Information name="타인" id={2} isMe={false} isBlocked={false} />
+      );
+
+      fireEvent.press(UNSAFE_getByType(TouchableOpacity));
+      fireEvent.press(getByText('차단하기'));
+      fireEvent.press(getByTestId('alert-cancel'));
+
+      expect(mockBlockMutate).not.toHaveBeenCalled();
+      expect(queryByText('타인님을 차단하시겠습니까?')).toBeNull();
     });
 
     it('신고하기를 누르면 메뉴를 닫고 신고 모달을 연다', async () => {

@@ -1,12 +1,20 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { TradeReservedEmbed } from '../index';
 
 describe('TradeReservedEmbed', () => {
-  it('예약 중 안내 문구를 표시한다', () => {
+  it('닉네임이 없으면 기본 안내 문구를 표시한다', () => {
     const { getByTestId } = render(<TradeReservedEmbed />);
 
-    expect(getByTestId('trade-reserved-notice')).toBeTruthy();
+    expect(getByTestId('trade-reserved-notice').props.children).toBe('예약을 했어요');
+  });
+
+  it('닉네임이 있으면 누가 예약했는지 보여준다', () => {
+    const { getByTestId } = render(<TradeReservedEmbed otherPartyNickname="상무동주민" />);
+
+    expect(getByTestId('trade-reserved-notice').props.children).toBe(
+      '상무동주민님이 예약을 했어요'
+    );
   });
 
   it('예약 일시/장소가 없으면 상세 정보를 표시하지 않는다', () => {
@@ -30,18 +38,18 @@ describe('TradeReservedEmbed', () => {
     expect(getByTestId('trade-reservation-detail').props.children).toContain('invalid-date-string');
   });
 
-  it('alignment가 right이면 우측 정렬 클래스를 적용한다', () => {
-    const { toJSON } = render(<TradeReservedEmbed alignment="right" />);
+  it('onOpenMap이 없으면 지도 보기 버튼을 표시하지 않는다', () => {
+    const { queryByTestId } = render(<TradeReservedEmbed />);
 
-    const tree = JSON.stringify(toJSON());
-    expect(tree).toContain('self-end');
-    expect(tree).not.toContain('self-start ml-10');
+    expect(queryByTestId('trade-reserved-map-button')).toBeNull();
   });
 
-  it('alignment가 left(기본값)이면 좌측 정렬 클래스를 적용한다', () => {
-    const { toJSON } = render(<TradeReservedEmbed alignment="left" />);
+  it('onOpenMap이 있으면 지도 보기 버튼을 표시하고 누르면 호출한다', () => {
+    const onOpenMap = jest.fn();
+    const { getByTestId } = render(<TradeReservedEmbed onOpenMap={onOpenMap} />);
 
-    const tree = JSON.stringify(toJSON());
-    expect(tree).toContain('self-start ml-10');
+    fireEvent.press(getByTestId('trade-reserved-map-button'));
+
+    expect(onOpenMap).toHaveBeenCalledTimes(1);
   });
 });

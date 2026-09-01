@@ -20,10 +20,8 @@ import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { createReview } from '~/entity/post/api/createReview';
-import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
-import { getMyReceivedReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
 
 export default function ChatRoomPage() {
@@ -35,9 +33,6 @@ export default function ChatRoomPage() {
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReservationConfirmVisible, setIsReservationConfirmVisible] = useState(false);
-  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
-  const [reviewLight, setReviewLight] = useState<number>(60);
-  const [reviewContents, setReviewContents] = useState('');
 
   const {
     flatListRef,
@@ -70,6 +65,14 @@ export default function ChatRoomPage() {
   });
   const tradeReview = myReceivedReviews?.find((review) => review.productId === productId);
 
+  // 리뷰 버튼을 "작성하러 가기" ↔ "확인하기"로 나누기 위해, 내가 쓴 후기 목록에서 productId가 일치하는 항목을 찾는다
+  const { data: myWrittenReviews } = useQuery({
+    queryKey: ['reviews', 'toss'],
+    queryFn: getTossReview,
+    enabled: isTradeCompleted && !!myInfo,
+  });
+  const myTradeReview = myWrittenReviews?.find((review) => review.productId === productId);
+
   const handleProductPress = useCallback(() => {
     if (!productId) return;
     router.push(`/post/${productId}`);
@@ -85,12 +88,18 @@ export default function ChatRoomPage() {
     }
   }, [router, tradeReview, myInfo]);
 
-  const { handleTradeAccept, handleCancelReservation, hasTradeRequest, shouldShowButtons } =
-    useTradeHandlers({
-      roomId,
-      roomData: roomData || null,
-      otherUserInfo,
-    });
+  const {
+    handleTradeAccept,
+    handleCancelReservation,
+    handleTradeRequestButtonPress,
+    hasTradeRequest,
+    shouldShowButtons,
+    canWithdrawTradeRequest,
+  } = useTradeHandlers({
+    roomId,
+    roomData: roomData || null,
+    otherUserInfo,
+  });
 
   const handleOpenReservationConfirm = useCallback(() => {
     setIsReservationConfirmVisible(true);
@@ -101,6 +110,14 @@ export default function ChatRoomPage() {
     router.push(`/chatting/${roomId}/reservation`);
   }, [router, roomId]);
 
+  const handleOpenMap = useCallback(() => {
+    const product = roomData?.product;
+    if (product?.reservationLatitude == null || product?.reservationLongitude == null) return;
+    router.push(
+      `/chatting/${roomId}/reservation/location?latitude=${product.reservationLatitude}&longitude=${product.reservationLongitude}&placeName=${encodeURIComponent(product.reservationPlaceName ?? '')}`
+    );
+  }, [router, roomId, roomData?.product]);
+
   const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState, productInfoConfig } =
     useChatUIState({
       roomId,
@@ -108,6 +125,7 @@ export default function ChatRoomPage() {
       hasTradeRequest,
       shouldShowButtons,
       onOpenReservationModal: handleOpenReservationConfirm,
+      onOpenMap: handleOpenMap,
     });
 
   const updatedComponentState = useMemo(
@@ -155,6 +173,13 @@ export default function ChatRoomPage() {
     setIsTradeRequestModalVisible(true);
   }, []);
 
+  const handleTradeRequestButtonPressed = useCallback(async () => {
+    const canOpenRequestModal = await handleTradeRequestButtonPress();
+    if (canOpenRequestModal) {
+      handleMenuPress();
+    }
+  }, [handleTradeRequestButtonPress, handleMenuPress]);
+
   const handleTradeRequest = useCallback(async () => {
     try {
       await executeTradeRequest();
@@ -169,40 +194,13 @@ export default function ChatRoomPage() {
     }
   }, [executeTradeRequest, queryClient, roomId]);
 
-  const handleReviewSubmit = useCallback(
-    async (light: number, contents: string) => {
-      if (!roomData?.product?.id || !otherUserInfo.id) return;
-
-      try {
-        await createReview({
-          productId: roomData.product.id,
-          otherMemberId: otherUserInfo.id,
-          content: contents,
-          light: light,
-        });
-        queryClient.invalidateQueries({ queryKey: ['reviews'] });
-        Toast.show({
-          type: 'success',
-          text1: '리뷰가 성공적으로 작성되었습니다.',
-        });
-        setIsReviewModalVisible(false);
-        setReviewLight(60);
-        setReviewContents('');
-      } catch (error) {
-        logger.error('리뷰 작성 실패', error);
-        Toast.show({
-          type: 'error',
-          text1: '리뷰 작성 실패',
-          text2: '잠시 후 다시 시도해주세요.',
-        });
-      }
-    },
-    [roomData, otherUserInfo.id, queryClient]
-  );
-
   const handleReviewButtonPress = useCallback(() => {
-    setIsReviewModalVisible(true);
-  }, []);
+    if (myTradeReview) {
+      router.push(`/cancelTrade/${myTradeReview.reviewId}`);
+      return;
+    }
+    router.push(`/chatting/${roomId}/review`);
+  }, [myTradeReview, router, roomId]);
 
   const renderHeader = () => (
     <ChatRoomHeader
@@ -250,16 +248,18 @@ export default function ChatRoomPage() {
           </TouchableOpacity>
         )}
       </View>
-    ) : (
+    ) : isReserved ? null : (
       <TouchableOpacity
         testID="trade-request-button"
-        onPress={handleMenuPress}
-        disabled={hasTradeRequest}
+        onPress={handleTradeRequestButtonPressed}
+        disabled={hasTradeRequest && !canWithdrawTradeRequest}
         className={`shrink-0 rounded-lg px-5 py-2.5 ${
-          hasTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
+          hasTradeRequest && !canWithdrawTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
         }`}>
         <Text
-          className={`text-label font-medium ${hasTradeRequest ? 'text-gray-500' : 'text-white'}`}>
+          className={`text-label font-medium ${
+            hasTradeRequest && !canWithdrawTradeRequest ? 'text-gray-500' : 'text-white'
+          }`}>
           거래요청
         </Text>
       </TouchableOpacity>
@@ -317,6 +317,7 @@ export default function ChatRoomPage() {
         tradeEmbedConfig={tradeEmbedConfig}
         onReviewButtonPress={handleReviewButtonPress}
         showReviewButton={isTradeCompleted}
+        hasReviewedTrade={Boolean(myTradeReview)}
       />
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
@@ -338,20 +339,6 @@ export default function ChatRoomPage() {
         isVisible={isReservationConfirmVisible}
         onClose={() => setIsReservationConfirmVisible(false)}
         onConfirm={handleReservationConfirmProceed}
-      />
-
-      <ReviewsModal
-        isVisible={isReviewModalVisible}
-        onClose={() => setIsReviewModalVisible(false)}
-        onSubmit={handleReviewSubmit}
-        light={reviewLight}
-        setLight={setReviewLight}
-        contents={reviewContents}
-        onContentsChange={setReviewContents}
-        onAnimationComplete={() => {
-          setReviewLight(60);
-          setReviewContents('');
-        }}
       />
     </SafeAreaView>
   );

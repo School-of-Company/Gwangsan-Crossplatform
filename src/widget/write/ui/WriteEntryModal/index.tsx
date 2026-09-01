@@ -72,7 +72,6 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
       isVisible={isVisible}
       onClose={onClose}
       title={stage === 'category' ? '무엇을 등록할까요?' : '어떤 유형인가요?'}
-      showCloseButton={false}
       height={320}>
       {stage === 'mode' && (
         <TouchableOpacity

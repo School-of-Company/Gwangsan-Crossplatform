@@ -26,7 +26,7 @@ jest.mock('~/widget/cancelTrade/ui/CancelTradeBottomSheet', () => {
 });
 
 jest.mock('~/shared/ui', () => {
-  const { Text, TouchableOpacity } = require('react-native');
+  const { Text, TouchableOpacity, View } = require('react-native');
   return {
     Header: ({ headerTitle }: any) => <Text testID="header-title">{headerTitle}</Text>,
     Button: ({ children, disabled, onPress }: any) => (
@@ -34,6 +34,7 @@ jest.mock('~/shared/ui', () => {
         <Text>{children}</Text>
       </TouchableOpacity>
     ),
+    LightBar: ({ value }: any) => <View testID="light-bar" data-value={value} />,
   };
 });
 

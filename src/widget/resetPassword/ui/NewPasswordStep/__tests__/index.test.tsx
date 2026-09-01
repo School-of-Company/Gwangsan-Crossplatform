@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { router } from 'expo-router';
 import { resetPassword } from '~/entity/auth/api/resetPassword';
 import {
@@ -79,8 +78,6 @@ const mockRouterReplace = router.replace as jest.Mock;
 const mockResetStore = jest.fn();
 const mockUpdatePhoneNumber = jest.fn();
 
-let alertSpy: jest.SpyInstance;
-
 beforeEach(() => {
   jest.clearAllMocks();
 
@@ -91,12 +88,6 @@ beforeEach(() => {
     return { value: '', updateField: jest.fn() };
   });
   mockUseResetPasswordStepNavigation.mockReturnValue({ resetStore: mockResetStore });
-
-  alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-});
-
-afterEach(() => {
-  alertSpy.mockRestore();
 });
 
 describe('NewPasswordStep — 유효성 검사', () => {
@@ -207,10 +198,10 @@ describe('NewPasswordStep — 유효성 검사', () => {
 });
 
 describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
-  it('성공 시 resetPassword를 호출하고 성공 Alert를 표시한다', async () => {
+  it('성공 시 resetPassword를 호출하고 성공 AlertModal을 표시한다', async () => {
     mockResetPassword.mockResolvedValue({});
 
-    const { getByTestId } = render(<NewPasswordStep />);
+    const { getByTestId, getByText } = render(<NewPasswordStep />);
 
     fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
     fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
@@ -224,43 +215,48 @@ describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
     });
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
-        '비밀번호 재설정 완료',
-        expect.any(String),
-        expect.any(Array)
-      );
+      expect(
+        getByText(
+          '비밀번호 재설정 완료\n비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 로그인해주세요.'
+        )
+      ).toBeTruthy();
     });
   });
 
-  it('성공 Alert 확인 클릭 시 resetStore와 router.replace가 호출된다', async () => {
+  it('성공 AlertModal 확인 클릭 시 resetStore와 router.replace가 호출된다', async () => {
     mockResetPassword.mockResolvedValue({});
 
-    const { getByTestId } = render(<NewPasswordStep />);
+    const { getByTestId, getByText } = render(<NewPasswordStep />);
 
     fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
     fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
     fireEvent.press(getByTestId('next-button'));
 
-    await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(
+        getByText(
+          '비밀번호 재설정 완료\n비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 로그인해주세요.'
+        )
+      ).toBeTruthy()
+    );
 
-    const alertButtons = alertSpy.mock.calls[0][2];
-    alertButtons[0].onPress();
+    fireEvent.press(getByText('확인'));
 
     expect(mockResetStore).toHaveBeenCalled();
     expect(mockRouterReplace).toHaveBeenCalledWith('/signin');
   });
 
-  it('실패 시 실패 Alert를 표시한다', async () => {
+  it('실패 시 실패 AlertModal을 표시한다', async () => {
     mockResetPassword.mockRejectedValue(new Error('서버 오류'));
 
-    const { getByTestId } = render(<NewPasswordStep />);
+    const { getByTestId, getByText } = render(<NewPasswordStep />);
 
     fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
     fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
     fireEvent.press(getByTestId('next-button'));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('비밀번호 재설정 실패', '서버 오류');
+      expect(getByText('비밀번호 재설정 실패\n서버 오류')).toBeTruthy();
     });
     expect(mockResetStore).not.toHaveBeenCalled();
   });
@@ -268,17 +264,16 @@ describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
   it('Error 인스턴스가 아닌 값으로 실패해도 기본 실패 메시지를 표시한다', async () => {
     mockResetPassword.mockRejectedValue('문자열 거부 사유');
 
-    const { getByTestId } = render(<NewPasswordStep />);
+    const { getByTestId, getByText } = render(<NewPasswordStep />);
 
     fireEvent.changeText(getByTestId('새 비밀번호'), 'password1!');
     fireEvent.changeText(getByTestId('비밀번호 재입력'), 'password1!');
     fireEvent.press(getByTestId('next-button'));
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
-        '비밀번호 재설정 실패',
-        '비밀번호 재설정에 실패했습니다. 다시 시도해주세요.'
-      );
+      expect(
+        getByText('비밀번호 재설정 실패\n비밀번호 재설정에 실패했습니다. 다시 시도해주세요.')
+      ).toBeTruthy();
     });
   });
 

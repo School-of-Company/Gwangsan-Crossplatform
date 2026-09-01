@@ -23,10 +23,17 @@ const mockUseRouter = useRouter as jest.Mock;
 
 describe('useDeletePost', () => {
   const mockReplace = jest.fn();
+  const mockBack = jest.fn();
+  const mockCanGoBack = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseRouter.mockReturnValue({ replace: mockReplace });
+    mockCanGoBack.mockReturnValue(false);
+    mockUseRouter.mockReturnValue({
+      replace: mockReplace,
+      back: mockBack,
+      canGoBack: mockCanGoBack,
+    });
   });
 
   describe('초기 상태', () => {
@@ -106,6 +113,20 @@ describe('useDeletePost', () => {
       });
 
       await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/post?type=OBJECT&mode=GIVER'));
+    });
+
+    it('뒤로 갈 수 있으면 back()을 호출하고 replace()는 호출하지 않는다', async () => {
+      mockDeletePost.mockResolvedValue(undefined);
+      mockCanGoBack.mockReturnValue(true);
+
+      const { result } = renderHookWithProviders(() => useDeletePost());
+
+      act(() => {
+        result.current.deletePost(1, 'OBJECT', 'GIVER');
+      });
+
+      await waitFor(() => expect(mockBack).toHaveBeenCalled());
+      expect(mockReplace).not.toHaveBeenCalled();
     });
 
     it('다른 type/mode 조합에 대해 올바른 경로를 생성한다', async () => {

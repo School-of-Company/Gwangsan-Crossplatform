@@ -1,6 +1,7 @@
 import { View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { memo } from 'react';
 import Icon from '@expo/vector-icons/Ionicons';
+import { AlertModal } from '~/shared/ui/AlertModal';
 import { useChatInput } from '../../model/useChatInput';
 import { ImagePreview } from '../ImagePreview';
 
@@ -73,6 +74,20 @@ const ChatInputComponent = ({ onSendMessage, disabled, onFocus }: ChatInputProps
           )}
         </TouchableOpacity>
       </View>
+
+      <AlertModal
+        isVisible={chatInput.permissionAlertMessage !== null}
+        message={`권한 필요\n${chatInput.permissionAlertMessage ?? ''}`}
+        confirmText="확인"
+        onConfirm={chatInput.closePermissionAlert}
+      />
+
+      <AlertModal
+        isVisible={chatInput.isUploadErrorAlertVisible}
+        message={'오류\n이미지 업로드 중 오류가 발생했습니다.'}
+        confirmText="확인"
+        onConfirm={chatInput.closeUploadErrorAlert}
+      />
     </View>
   );
 };

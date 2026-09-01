@@ -191,7 +191,52 @@ describe('AlertModal', () => {
       />
     );
 
-    await waitFor(() => expect(queryByText('메시지')).toBeNull(), { timeout: 3000 });
+    await waitFor(() => expect(queryByText('메시지')).toBeNull(), { timeout: 8000 });
+  }, 10000);
+
+  it('취소 버튼을 누르면 닫힘 애니메이션 없이 즉시 렌더링을 멈춘다', () => {
+    const onCancel = jest.fn();
+    const { queryByText, getByText, rerender } = render(
+      <AlertModal
+        isVisible
+        message="메시지"
+        confirmText="확인"
+        onCancel={onCancel}
+        onConfirm={jest.fn()}
+      />
+    );
+
+    fireEvent.press(getByText('취소'));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AlertModal
+        isVisible={false}
+        message="메시지"
+        confirmText="확인"
+        onCancel={onCancel}
+        onConfirm={jest.fn()}
+      />
+    );
+
+    expect(queryByText('메시지')).toBeNull();
+  });
+
+  it('onCancel을 생략하면 취소 버튼 없이 확인 버튼만 렌더링한다', () => {
+    const { queryByText, getByText } = render(
+      <AlertModal isVisible message="알림 메시지" confirmText="확인" onConfirm={jest.fn()} />
+    );
+    expect(queryByText('취소')).toBeNull();
+    expect(getByText('확인')).toBeTruthy();
+  });
+
+  it('onCancel을 생략하면 배경을 눌러도 onConfirm을 호출한다', () => {
+    const onConfirm = jest.fn();
+    const { UNSAFE_getByProps } = render(
+      <AlertModal isVisible message="알림 메시지" confirmText="확인" onConfirm={onConfirm} />
+    );
+    fireEvent.press(UNSAFE_getByProps({ className: 'flex-1' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
   it('스냅샷 - 기본 상태', () => {

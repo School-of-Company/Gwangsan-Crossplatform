@@ -3,12 +3,13 @@ import { render, fireEvent } from '@testing-library/react-native';
 import ReviewsModal from '../index';
 
 jest.mock('~/shared/ui', () => ({
-  BottomSheetModalWrapper: ({ isVisible, children, title }: any) => {
+  BottomSheetModalWrapper: ({ isVisible, children, title, showCloseButton = false }: any) => {
     if (!isVisible) return null;
     const { View, Text } = require('react-native');
     return (
       <View>
         <Text>{title}</Text>
+        <Text testID="show-close-button">{String(showCloseButton)}</Text>
         {children}
       </View>
     );
@@ -65,6 +66,12 @@ describe('ReviewsModal', () => {
     const { getByText } = render(<ReviewsModal {...defaultProps} />);
 
     expect(getByText('후기 작성')).toBeTruthy();
+  });
+
+  it('닫기(X) 버튼을 표시하지 않는다', () => {
+    const { getByTestId } = render(<ReviewsModal {...defaultProps} />);
+
+    expect(getByTestId('show-close-button').props.children).toBe('false');
   });
 
   it('"작성완료" 버튼을 표시한다', () => {

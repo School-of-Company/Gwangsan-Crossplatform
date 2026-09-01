@@ -16,11 +16,15 @@ const makeChatInputReturn = (overrides: Record<string, unknown> = {}) => ({
   isUploading: false,
   isSending: false,
   canSend: false,
+  permissionAlertMessage: null,
+  isUploadErrorAlertVisible: false,
   updateMessage: jest.fn(),
   handleImagePicker: jest.fn(),
   removeImage: jest.fn(),
   handleSendMessage: jest.fn(),
   resetInput: jest.fn(),
+  closePermissionAlert: jest.fn(),
+  closeUploadErrorAlert: jest.fn(),
   ...overrides,
 });
 
@@ -135,6 +139,39 @@ describe('ChatInput', () => {
     // 이미지 미리보기 제거 버튼(5개) 다음이 카메라 버튼이다.
     const cameraButton = buttons[selectedImages.length];
     expect(cameraButton.props.disabled).toBe(true);
+  });
+
+  it('permissionAlertMessage가 있으면 권한 안내 AlertModal을 표시하고, 확인 시 closePermissionAlert를 호출한다', () => {
+    const closePermissionAlert = jest.fn();
+    mockUseChatInput.mockReturnValue(
+      makeChatInputReturn({
+        permissionAlertMessage: '사진첨부를 위해 사진첩 접근 권한이 필요합니다.',
+        closePermissionAlert,
+      })
+    );
+
+    const { getByText } = render(<ChatInput onSendMessage={jest.fn()} />);
+
+    expect(getByText('권한 필요\n사진첨부를 위해 사진첩 접근 권한이 필요합니다.')).toBeTruthy();
+
+    fireEvent.press(getByText('확인'));
+
+    expect(closePermissionAlert).toHaveBeenCalled();
+  });
+
+  it('isUploadErrorAlertVisible=true이면 업로드 오류 AlertModal을 표시하고, 확인 시 closeUploadErrorAlert를 호출한다', () => {
+    const closeUploadErrorAlert = jest.fn();
+    mockUseChatInput.mockReturnValue(
+      makeChatInputReturn({ isUploadErrorAlertVisible: true, closeUploadErrorAlert })
+    );
+
+    const { getByText } = render(<ChatInput onSendMessage={jest.fn()} />);
+
+    expect(getByText('오류\n이미지 업로드 중 오류가 발생했습니다.')).toBeTruthy();
+
+    fireEvent.press(getByText('확인'));
+
+    expect(closeUploadErrorAlert).toHaveBeenCalled();
   });
 
   it('onSendMessage와 disabled를 useChatInput에 전달한다', () => {

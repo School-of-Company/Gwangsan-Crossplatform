@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -16,29 +16,40 @@ export interface TradeReservedEmbedProps {
   readonly alignment?: 'left' | 'right';
   readonly scheduledAt?: string | null;
   readonly placeName?: string | null;
+  readonly otherPartyNickname?: string;
+  readonly onOpenMap?: () => void;
 }
 
 const TradeReservedEmbedComponent: React.FC<TradeReservedEmbedProps> = ({
-  alignment = 'left',
   scheduledAt,
   placeName,
+  otherPartyNickname,
+  onOpenMap,
 }) => {
-  const alignmentClass = alignment === 'right' ? 'self-end' : 'self-start ml-10';
-
   const detailLabel = scheduledAt
     ? [formatReservationSchedule(scheduledAt), placeName].filter(Boolean).join(' · ')
     : null;
 
   return (
-    <View className={`mb-4 ${alignmentClass}`}>
-      <View className="overflow-hidden rounded-xl bg-gray-50 px-4 py-3">
-        <Text testID="trade-reserved-notice" className="text-sm font-medium text-[#8FC31D]">
-          예약 중입니다
-        </Text>
-        {detailLabel && (
-          <Text testID="trade-reservation-detail" className="mt-1 text-xs text-gray-600">
-            {detailLabel}
+    <View className="mb-4 w-full">
+      <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <View className="flex-1">
+          <Text testID="trade-reserved-notice" className="text-base font-bold text-gray-900">
+            {otherPartyNickname ? `${otherPartyNickname}님이 예약을 했어요` : '예약을 했어요'}
           </Text>
+          {detailLabel && (
+            <Text testID="trade-reservation-detail" className="mt-1 text-xs text-gray-600">
+              {detailLabel}
+            </Text>
+          )}
+        </View>
+        {onOpenMap && (
+          <TouchableOpacity
+            testID="trade-reserved-map-button"
+            onPress={onOpenMap}
+            className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+            <Text className="text-label font-medium text-white">지도 보기</Text>
+          </TouchableOpacity>
         )}
       </View>
     </View>

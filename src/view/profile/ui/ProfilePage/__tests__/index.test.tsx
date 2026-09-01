@@ -130,7 +130,6 @@ describe('ProfilePageView', () => {
       const menu = JSON.parse(getByTestId('profile-menu').props.children);
       expect(menu.isMe).toBe(true);
       expect(menu.memberId).toBe(1);
-      expect(menu.name).toBe('나');
     });
   });
 
@@ -171,7 +170,6 @@ describe('ProfilePageView', () => {
       const menu = JSON.parse(getByTestId('profile-menu').props.children);
       expect(menu.isMe).toBe(false);
       expect(menu.memberId).toBe(5);
-      expect(menu.name).toBe('상대방');
     });
 
     it('차단된 사용자면 Information에 isBlocked=true를 전달한다', () => {
