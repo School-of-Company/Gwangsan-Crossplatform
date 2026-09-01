@@ -83,6 +83,21 @@ describe('useChatRooms', () => {
       expect(result.current.data?.[0].roomId).toBe(2);
     });
 
+    it('REST(로컬, 오프셋 없음)와 소켓(UTC, Z 접미사) 형식이 섞여도 epoch 기준으로 정렬한다', async () => {
+      // 방금 소켓으로 갱신된 방(UTC)이 REST로 받은 다른 방(로컬)보다 문자열상 작게
+      // 판정되어 아래로 밀리던 버그(#552)의 회귀 테스트
+      mockGetChatRooms.mockResolvedValue([
+        makeRoom({ roomId: 1, lastMessageTime: '2026-08-30T21:04:27' }), // REST, KST 21:04:27
+        makeRoom({ roomId: 2, lastMessageTime: '2026-08-30T12:04:28.000Z' }), // 소켓, UTC 12:04:28 (KST 21:04:28, 더 최신)
+      ]);
+
+      const { result } = renderHookWithProviders(() => useChatRooms());
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.[0].roomId).toBe(2);
+    });
+
     it('lastMessageTime이 없는 방이 섞여 있어도 에러 없이 정렬한다', async () => {
       mockGetChatRooms.mockResolvedValue([
         makeRoom({ roomId: 1, unreadMessageCount: 0, lastMessageTime: '2024-01-01T00:00:00Z' }),
@@ -99,6 +114,21 @@ describe('useChatRooms', () => {
 
       expect(result.current.isError).toBe(false);
       expect(result.current.data).toHaveLength(2);
+    });
+
+    it('lastMessageTime이 파싱 불가능한 문자열이어도 에러 없이 맨 뒤로 정렬한다', async () => {
+      mockGetChatRooms.mockResolvedValue([
+        makeRoom({ roomId: 1, unreadMessageCount: 0, lastMessageTime: '2024-01-01T00:00:00Z' }),
+        makeRoom({ roomId: 2, unreadMessageCount: 0, lastMessageTime: 'not-a-date' }),
+      ]);
+
+      const { result } = renderHookWithProviders(() => useChatRooms());
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.isError).toBe(false);
+      expect(result.current.data?.[0].roomId).toBe(1);
+      expect(result.current.data?.[1].roomId).toBe(2);
     });
 
     it('읽음 처리된 방(isRead)은 unreadMessageCount를 0으로 덮어쓴다', async () => {
