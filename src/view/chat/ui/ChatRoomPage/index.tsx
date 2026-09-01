@@ -88,7 +88,7 @@ export default function ChatRoomPage() {
   const {
     handleTradeAccept,
     handleCancelReservation,
-    handleWithdrawTradeRequest,
+    handleTradeRequestButtonPress,
     hasTradeRequest,
     shouldShowButtons,
     canWithdrawTradeRequest,
@@ -160,6 +160,13 @@ export default function ChatRoomPage() {
     Keyboard.dismiss();
     setIsTradeRequestModalVisible(true);
   }, []);
+
+  const handleTradeRequestButtonPressed = useCallback(async () => {
+    const canOpenRequestModal = await handleTradeRequestButtonPress();
+    if (canOpenRequestModal) {
+      handleMenuPress();
+    }
+  }, [handleTradeRequestButtonPress, handleMenuPress]);
 
   const handleTradeRequest = useCallback(async () => {
     try {
@@ -256,27 +263,19 @@ export default function ChatRoomPage() {
           </TouchableOpacity>
         )}
       </View>
-    ) : (
+    ) : isReserved ? null : (
       <TouchableOpacity
         testID="trade-request-button"
-        onPress={canWithdrawTradeRequest ? handleWithdrawTradeRequest : handleMenuPress}
+        onPress={handleTradeRequestButtonPressed}
         disabled={hasTradeRequest && !canWithdrawTradeRequest}
         className={`shrink-0 rounded-lg px-5 py-2.5 ${
-          hasTradeRequest && !canWithdrawTradeRequest
-            ? 'bg-[#CDCDCF]'
-            : canWithdrawTradeRequest
-              ? 'bg-white'
-              : 'bg-main-500'
+          hasTradeRequest && !canWithdrawTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
         }`}>
         <Text
           className={`text-label font-medium ${
-            hasTradeRequest && !canWithdrawTradeRequest
-              ? 'text-gray-500'
-              : canWithdrawTradeRequest
-                ? 'text-gray-700'
-                : 'text-white'
+            hasTradeRequest && !canWithdrawTradeRequest ? 'text-gray-500' : 'text-white'
           }`}>
-          {canWithdrawTradeRequest ? '요청 취소' : '거래요청'}
+          거래요청
         </Text>
       </TouchableOpacity>
     );

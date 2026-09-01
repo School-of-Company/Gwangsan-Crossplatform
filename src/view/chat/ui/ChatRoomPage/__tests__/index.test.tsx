@@ -239,7 +239,7 @@ const makeTradeHandlersReturn = (overrides = {}) => ({
   handleTradeAccept: jest.fn(),
   handleReservation: jest.fn(),
   handleCancelReservation: jest.fn(),
-  handleWithdrawTradeRequest: jest.fn(),
+  handleTradeRequestButtonPress: jest.fn().mockResolvedValue(true),
   hasTradeRequest: false,
   shouldShowButtons: false,
   canWithdrawTradeRequest: false,
@@ -366,12 +366,14 @@ describe('ChatRoomPage', () => {
     expect(queryByTestId('received-reviews-link')).toBeNull();
   });
 
-  it('거래요청 버튼을 누르면 거래 요청 모달이 열린다', () => {
+  it('거래요청 버튼을 누르면 거래 요청 모달이 열린다', async () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
     fireEvent.press(getByTestId('trade-request-button'));
-    expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
+    await waitFor(() =>
+      expect(getByTestId('trade-request-modal-visible').props.children).toBe('true')
+    );
   });
 
   it('거래 요청 확인 시 handleTradeRequest가 호출되고 모달이 닫힌다', async () => {
@@ -493,14 +495,9 @@ describe('ChatRoomPage', () => {
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
   });
 
-  it('내가 보낸 요청이 대기중이면 거래요청 버튼이 요청 취소로 바뀌고 누르면 handleWithdrawTradeRequest가 호출된다', () => {
-    const mockHandleWithdrawTradeRequest = jest.fn();
+  it('내가 보낸 요청이 대기중이어도 거래요청 버튼은 계속 활성화된 채로 노출된다', () => {
     mockUseTradeHandlers.mockReturnValue(
-      makeTradeHandlersReturn({
-        hasTradeRequest: true,
-        canWithdrawTradeRequest: true,
-        handleWithdrawTradeRequest: mockHandleWithdrawTradeRequest,
-      })
+      makeTradeHandlersReturn({ hasTradeRequest: true, canWithdrawTradeRequest: true })
     );
     mockUseChatRoomData.mockReturnValue({
       data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
@@ -510,11 +507,71 @@ describe('ChatRoomPage', () => {
 
     const button = getByTestId('trade-request-button');
     expect(button.props.accessibilityState.disabled).toBe(false);
-    expect(button).toHaveTextContent('요청 취소');
+    expect(button).toHaveTextContent('거래요청');
+  });
 
-    fireEvent.press(button);
+  it('게시물 작성자가 예약을 잡으면 상대방에게는 거래요청 버튼이 노출되지 않는다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: true } },
+    });
 
-    expect(mockHandleWithdrawTradeRequest).toHaveBeenCalled();
+    const { queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-request-button')).toBeNull();
+  });
+
+  it('예약이 취소되면 상대방에게 거래요청 버튼이 다시 노출된다', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('trade-request-button')).toBeTruthy();
+  });
+
+  it('거래요청 버튼을 누르면 handleTradeRequestButtonPress를 호출하고, true를 반환하면 거래 요청 모달이 열린다', async () => {
+    const mockHandleTradeRequestButtonPress = jest.fn().mockResolvedValue(true);
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({
+        hasTradeRequest: true,
+        canWithdrawTradeRequest: true,
+        handleTradeRequestButtonPress: mockHandleTradeRequestButtonPress,
+      })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-request-button'));
+
+    expect(mockHandleTradeRequestButtonPress).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(getByTestId('trade-request-modal-visible').props.children).toBe('true')
+    );
+  });
+
+  it('handleTradeRequestButtonPress가 false를 반환하면(하루 제한 또는 갱신 실패) 거래 요청 모달을 열지 않는다', async () => {
+    const mockHandleTradeRequestButtonPress = jest.fn().mockResolvedValue(false);
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({
+        hasTradeRequest: true,
+        canWithdrawTradeRequest: true,
+        handleTradeRequestButtonPress: mockHandleTradeRequestButtonPress,
+      })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: false, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-request-button'));
+
+    await waitFor(() => expect(mockHandleTradeRequestButtonPress).toHaveBeenCalled());
+    expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
   });
 
   it('거래 요청 실패 시 모달을 닫지 않고 에러를 로깅한다', async () => {
@@ -660,11 +717,13 @@ describe('ChatRoomPage', () => {
     expect(mockScrollToEnd).toHaveBeenCalledWith(true);
   });
 
-  it('거래 요청 모달을 닫으면 다시 숨겨진다', () => {
+  it('거래 요청 모달을 닫으면 다시 숨겨진다', async () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     fireEvent.press(getByTestId('trade-request-button'));
-    expect(getByTestId('trade-request-modal-visible').props.children).toBe('true');
+    await waitFor(() =>
+      expect(getByTestId('trade-request-modal-visible').props.children).toBe('true')
+    );
 
     fireEvent.press(getByTestId('trade-request-close'));
     expect(getByTestId('trade-request-modal-visible').props.children).toBe('false');
