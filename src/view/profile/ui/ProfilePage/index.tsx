@@ -69,11 +69,7 @@ export default function ProfilePageView() {
           <Light lightLevel={isMe ? myProfileData?.light : profileData?.light} />
           {isMe && <Gwangsan gwangsan={myProfileData?.gwangsan} />}
         </View>
-        <ProfileMenu
-          isMe={isMe}
-          memberId={activeMemberId}
-          name={isMe ? myProfileData?.nickname : profileData?.nickname}
-        />
+        <ProfileMenu isMe={isMe} memberId={activeMemberId} />
       </ScrollView>
     </SafeAreaView>
   );
