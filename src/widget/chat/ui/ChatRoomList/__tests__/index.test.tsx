@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert, FlatList } from 'react-native';
+import { FlatList } from 'react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { ChatRoomList } from '../index';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
@@ -101,7 +101,6 @@ beforeEach(() => {
   mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: false });
   mockUseBlockUser.mockReturnValue({ block: { mutate: mockBlockMutate, isPending: false } });
   mockGetChatRoomData.mockResolvedValue({ product: null, messages: [] });
-  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   useBottomSheetPortalStore.getState().reset();
 });
 
@@ -445,7 +444,7 @@ describe('ChatRoomList', () => {
       expect(getByText('채팅방 나가기')).toBeTruthy();
     });
 
-    it('차단하기를 누르면 상대방 닉네임으로 확인 Alert를 띄운다', () => {
+    it('차단하기를 누르면 상대방 닉네임으로 확인 AlertModal을 띄운다', () => {
       const { getByTestId, getByText } = render(
         <>
           <ChatRoomList />
@@ -456,14 +455,10 @@ describe('ChatRoomList', () => {
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('차단하기'));
 
-      expect(Alert.alert).toHaveBeenCalledWith(
-        '사용자 차단',
-        expect.stringContaining('광산주민'),
-        expect.any(Array)
-      );
+      expect(getByText('광산주민님을 차단하시겠습니까?')).toBeTruthy();
     });
 
-    it('차단 확인 Alert에서 차단을 누르면 block.mutate를 호출한다', () => {
+    it('차단 확인 AlertModal에서 차단을 누르면 block.mutate를 호출한다', () => {
       const { getByTestId, getByText } = render(
         <>
           <ChatRoomList />
@@ -473,13 +468,25 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('차단하기'));
-
-      const alertCall = (Alert.alert as jest.Mock).mock.calls[0];
-      const buttons = alertCall[2];
-      const confirmButton = buttons.find((b: { text: string }) => b.text === '차단');
-      confirmButton.onPress();
+      fireEvent.press(getByText('차단'));
 
       expect(mockBlockMutate).toHaveBeenCalled();
+    });
+
+    it('차단 확인 AlertModal에서 취소를 누르면 block.mutate를 호출하지 않고 닫힌다', () => {
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('차단하기'));
+      fireEvent.press(getByText('취소'));
+
+      expect(mockBlockMutate).not.toHaveBeenCalled();
+      expect(queryByText('광산주민님을 차단하시겠습니까?')).toBeNull();
     });
 
     it('신고하기를 누르면 메뉴를 닫고 해당 사용자의 memberId로 신고 모달을 연다', async () => {

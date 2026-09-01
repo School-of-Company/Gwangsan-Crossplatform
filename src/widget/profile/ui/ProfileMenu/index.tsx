@@ -122,7 +122,7 @@ export default function ProfileMenu({ isMe, memberId }: ProfileMenuProps) {
       <View className="overflow-hidden rounded-xl bg-[#F3F4F5]">
         <TradeMenuRow label="판매관리" onPress={() => router.push(`/profile/selling${idQuery}`)} />
         <TradeMenuRow
-          label="구매내역"
+          label="거래내역"
           onPress={() => router.push(`/profile/purchased${idQuery}`)}
         />
         <TradeMenuRow
@@ -132,6 +132,7 @@ export default function ProfileMenu({ isMe, memberId }: ProfileMenuProps) {
             if (memberId != null) router.push(`/reviews/${memberId}`);
           }}
         />
+        {isMe && <TradeMenuRow label="차단 목록" onPress={() => router.push('/profile/blocked')} />}
       </View>
 
       {appVersion && (

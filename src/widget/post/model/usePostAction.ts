@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useQueryClient } from '@tanstack/react-query';
 import { createReview } from '~/entity/post/api/createReview';
@@ -24,6 +23,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
+  const [isDeleteAlertVisible, setIsDeleteAlertVisible] = useState(false);
 
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
@@ -41,6 +41,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     closeReportModal: useCallback(() => setIsReportModalVisible(false), []),
     openReviewModal: useCallback(() => setIsReviewModalVisible(true), []),
     closeReviewModal: useCallback(() => setIsReviewModalVisible(false), []),
+    closeDeleteAlert: useCallback(() => setIsDeleteAlertVisible(false), []),
   };
 
   const reviewHandlers = {
@@ -97,15 +98,12 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const actionHandlers = {
     onDelete: useCallback(() => {
       if (!data) return;
-
-      Alert.alert('게시글 삭제', '이 게시글을 삭제하시겠습니까?', [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => deletePost(data.id, data.type, data.mode),
-        },
-      ]);
+      setIsDeleteAlertVisible(true);
+    }, [data]),
+    onConfirmDelete: useCallback(() => {
+      if (!data) return;
+      setIsDeleteAlertVisible(false);
+      deletePost(data.id, data.type, data.mode);
     }, [data, deletePost]),
     onTradeRequest: tradeRequest.hasPendingRequest
       ? tradeRequest.handleWithdrawTradeRequest
@@ -165,6 +163,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     isDeleting,
     isReportModalVisible,
     isReviewModalVisible,
+    isDeleteAlertVisible,
     reviewLight,
     reviewContents,
     isChatLoading,

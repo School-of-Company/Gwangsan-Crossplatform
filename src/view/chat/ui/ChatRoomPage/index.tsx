@@ -20,8 +20,6 @@ import { Header } from '@/shared/ui/Header';
 import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { createReview } from '~/entity/post/api/createReview';
-import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
@@ -35,9 +33,6 @@ export default function ChatRoomPage() {
 
   const [isTradeRequestModalVisible, setIsTradeRequestModalVisible] = useState(false);
   const [isReservationConfirmVisible, setIsReservationConfirmVisible] = useState(false);
-  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
-  const [reviewLight, setReviewLight] = useState<number>(60);
-  const [reviewContents, setReviewContents] = useState('');
 
   const {
     flatListRef,
@@ -199,44 +194,13 @@ export default function ChatRoomPage() {
     }
   }, [executeTradeRequest, queryClient, roomId]);
 
-  const handleReviewSubmit = useCallback(
-    async (light: number, contents: string) => {
-      if (!roomData?.product?.id || !otherUserInfo.id) return;
-
-      try {
-        await createReview({
-          productId: roomData.product.id,
-          otherMemberId: otherUserInfo.id,
-          content: contents,
-          light: light,
-        });
-        queryClient.invalidateQueries({ queryKey: ['reviews'] });
-        Toast.show({
-          type: 'success',
-          text1: '리뷰가 성공적으로 작성되었습니다.',
-        });
-        setIsReviewModalVisible(false);
-        setReviewLight(60);
-        setReviewContents('');
-      } catch (error) {
-        logger.error('리뷰 작성 실패', error);
-        Toast.show({
-          type: 'error',
-          text1: '리뷰 작성 실패',
-          text2: '잠시 후 다시 시도해주세요.',
-        });
-      }
-    },
-    [roomData, otherUserInfo.id, queryClient]
-  );
-
   const handleReviewButtonPress = useCallback(() => {
     if (myTradeReview) {
       router.push(`/cancelTrade/${myTradeReview.reviewId}`);
       return;
     }
-    setIsReviewModalVisible(true);
-  }, [myTradeReview, router]);
+    router.push(`/chatting/${roomId}/review`);
+  }, [myTradeReview, router, roomId]);
 
   const renderHeader = () => (
     <ChatRoomHeader
@@ -375,20 +339,6 @@ export default function ChatRoomPage() {
         isVisible={isReservationConfirmVisible}
         onClose={() => setIsReservationConfirmVisible(false)}
         onConfirm={handleReservationConfirmProceed}
-      />
-
-      <ReviewsModal
-        isVisible={isReviewModalVisible}
-        onClose={() => setIsReviewModalVisible(false)}
-        onSubmit={handleReviewSubmit}
-        light={reviewLight}
-        setLight={setReviewLight}
-        contents={reviewContents}
-        onContentsChange={setReviewContents}
-        onAnimationComplete={() => {
-          setReviewLight(60);
-          setReviewContents('');
-        }}
       />
     </SafeAreaView>
   );

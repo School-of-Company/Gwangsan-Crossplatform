@@ -30,7 +30,7 @@ jest.mock('~/shared/ui', () => ({
             key={tab.value}
             testID={`${testIDPrefix}-${tab.value}`}
             onPress={() => onChange(tab.value)}>
-            <Text>{tab.label}</Text>
+            <Text>{`${tab.label}${tab.value === value ? '(active)' : ''}`}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -39,9 +39,9 @@ jest.mock('~/shared/ui', () => ({
 }));
 
 jest.mock('~/entity/reviews/ui', () => ({
-  ReviewPost: ({ review }: any) => {
+  ReviewPost: ({ review, mode }: any) => {
     const { Text } = require('react-native');
-    return <Text testID="review-post">{review.reviewId}</Text>;
+    return <Text testID={`review-post-${mode}`}>{review.reviewId}</Text>;
   },
 }));
 
@@ -58,6 +58,16 @@ const makeReview = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+// mode별로 다른 데이터를 반환하도록 mock을 구성한다 (두 패널이 항상 동시에 렌더링되므로)
+const mockReviewsByMode = (
+  byMode: Partial<Record<'receive' | 'toss', { data?: unknown[]; isError?: boolean }>>
+) => {
+  mockUseGetReviews.mockImplementation((mode: 'receive' | 'toss') => ({
+    data: byMode[mode]?.data ?? [],
+    isError: byMode[mode]?.isError ?? false,
+  }));
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseLocalSearchParams.mockReturnValue({ id: '1' });
@@ -66,56 +76,66 @@ beforeEach(() => {
 describe('ReviewsPageView', () => {
   describe('탭', () => {
     it('헤더는 "후기"를 표시하고, "받은 후기"/"작성한 후기" 탭을 보여준다', () => {
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+      mockReviewsByMode({});
 
       const { getByTestId, getByText } = render(<ReviewsPageView mode="receive" />);
 
       expect(getByTestId('header-title').props.children).toBe('후기');
-      expect(getByText('받은 후기')).toBeTruthy();
+      expect(getByText('받은 후기(active)')).toBeTruthy();
       expect(getByText('작성한 후기')).toBeTruthy();
     });
 
-    it('"작성한 후기" 탭을 누르면 toss 모드로 조회한다', () => {
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+    it('마운트 시 받은 후기와 작성한 후기를 함께 조회한다 (스와이프 패널이 항상 존재하므로)', () => {
+      mockReviewsByMode({});
 
-      const { getByTestId } = render(<ReviewsPageView mode="receive" />);
+      render(<ReviewsPageView mode="receive" />);
+
+      expect(mockUseGetReviews).toHaveBeenCalledWith('receive', '1');
+      expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '1');
+    });
+
+    it('"판매완료" 탭처럼 "작성한 후기" 탭을 누르면 해당 탭이 활성화된다', () => {
+      mockReviewsByMode({});
+
+      const { getByTestId, getByText } = render(<ReviewsPageView mode="receive" />);
 
       fireEvent.press(getByTestId('reviews-tab-toss'));
 
-      expect(mockUseGetReviews).toHaveBeenLastCalledWith('toss', '1');
+      expect(getByText('작성한 후기(active)')).toBeTruthy();
     });
 
-    it('작성한 후기 페이지에서 "받은 후기" 탭을 누르면 receive 모드로 조회한다', () => {
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+    it('작성한 후기 페이지에서 "받은 후기" 탭을 누르면 해당 탭이 활성화된다', () => {
+      mockReviewsByMode({});
 
-      const { getByTestId } = render(<ReviewsPageView mode="toss" />);
+      const { getByTestId, getByText } = render(<ReviewsPageView mode="toss" />);
 
       fireEvent.press(getByTestId('reviews-tab-receive'));
 
-      expect(mockUseGetReviews).toHaveBeenLastCalledWith('receive', '1');
+      expect(getByText('받은 후기(active)')).toBeTruthy();
     });
   });
 
-  describe('receive 모드', () => {
+  describe('receive 패널', () => {
     it('posts가 있으면 각 리뷰를 렌더링한다', () => {
-      const posts = [makeReview({ reviewId: '1' }), makeReview({ reviewId: '2' })];
-      mockUseGetReviews.mockReturnValue({ data: posts, isError: false });
+      mockReviewsByMode({
+        receive: { data: [makeReview({ reviewId: '1' }), makeReview({ reviewId: '2' })] },
+      });
 
       const { getAllByTestId } = render(<ReviewsPageView mode="receive" />);
 
-      expect(getAllByTestId('review-post')).toHaveLength(2);
+      expect(getAllByTestId('review-post-receive')).toHaveLength(2);
     });
 
     it('posts가 비어있고 에러가 없으면 안내 텍스트를 표시한다', () => {
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+      mockReviewsByMode({});
 
       const { getByText } = render(<ReviewsPageView mode="receive" />);
 
-      expect(getByText('표시할 리뷰가 없습니다.')).toBeTruthy();
+      expect(getByText('받은 후기가 없습니다.')).toBeTruthy();
     });
 
     it('isError가 true이면 에러 메시지를 표시한다', () => {
-      mockUseGetReviews.mockReturnValue({ data: undefined, isError: true });
+      mockReviewsByMode({ receive: { data: [], isError: true } });
 
       const { getByText } = render(<ReviewsPageView mode="receive" />);
 
@@ -124,16 +144,17 @@ describe('ReviewsPageView', () => {
 
     it('배열 형태의 id 파라미터는 첫 번째 값을 사용한다', () => {
       mockUseLocalSearchParams.mockReturnValue({ id: ['9', '10'] });
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+      mockReviewsByMode({});
 
       render(<ReviewsPageView mode="receive" />);
 
       expect(mockUseGetReviews).toHaveBeenCalledWith('receive', '9');
+      expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '9');
     });
 
     it('id 파라미터를 그대로 useGetReviews에 전달한다', () => {
       mockUseLocalSearchParams.mockReturnValue({ id: '42' });
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+      mockReviewsByMode({});
 
       render(<ReviewsPageView mode="receive" />);
 
@@ -141,13 +162,23 @@ describe('ReviewsPageView', () => {
     });
   });
 
-  describe('toss 모드', () => {
-    it('useGetReviews를 toss 모드로 호출한다', () => {
-      mockUseGetReviews.mockReturnValue({ data: [], isError: false });
+  describe('toss 패널', () => {
+    it('posts가 있으면 각 리뷰를 렌더링한다', () => {
+      mockReviewsByMode({
+        toss: { data: [makeReview({ reviewId: '3' })] },
+      });
 
-      render(<ReviewsPageView mode="toss" />);
+      const { getAllByTestId } = render(<ReviewsPageView mode="toss" />);
 
-      expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '1');
+      expect(getAllByTestId('review-post-toss')).toHaveLength(1);
+    });
+
+    it('posts가 비어있고 에러가 없으면 안내 텍스트를 표시한다', () => {
+      mockReviewsByMode({});
+
+      const { getByText } = render(<ReviewsPageView mode="toss" />);
+
+      expect(getByText('작성한 후기가 없습니다.')).toBeTruthy();
     });
   });
 });

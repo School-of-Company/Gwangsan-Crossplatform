@@ -5,7 +5,7 @@ import { usePostAction } from '@/widget/post/model/usePostAction';
 import { PostPageContent } from '@/widget/post/ui/PostPageContent';
 import ReportModal from '~/entity/post/ui/ReportModal';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
-import { Header } from '~/shared/ui';
+import { AlertModal, Header } from '~/shared/ui';
 
 export default function PostPageView() {
   const { id, review } = useLocalSearchParams<{ id: string; review?: string }>();
@@ -19,6 +19,7 @@ export default function PostPageView() {
     isDeleting,
     isReportModalVisible,
     isReviewModalVisible,
+    isDeleteAlertVisible,
     reviewLight,
     reviewContents,
     isChatLoading,
@@ -84,6 +85,16 @@ export default function PostPageView() {
         contents={reviewContents}
         onContentsChange={reviewHandlers.onContentsChange}
         onAnimationComplete={reviewHandlers.onAnimationComplete}
+      />
+
+      <AlertModal
+        isVisible={isDeleteAlertVisible}
+        message="이 게시글을 삭제하시겠습니까?"
+        confirmText="삭제"
+        destructive
+        isLoading={isDeleting}
+        onCancel={modalHandlers.closeDeleteAlert}
+        onConfirm={actionHandlers.onConfirmDelete}
       />
     </SafeAreaView>
   );

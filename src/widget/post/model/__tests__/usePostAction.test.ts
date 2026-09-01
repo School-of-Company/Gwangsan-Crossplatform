@@ -1,5 +1,4 @@
 import { act, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { usePostAction } from '../usePostAction';
 import { useGetItem } from '~/entity/post/model/useGetItem';
@@ -407,29 +406,34 @@ describe('usePostAction', () => {
   });
 
   describe('actionHandlers.onDelete', () => {
-    it('data가 있으면 onDelete 호출 시 오류가 없다', () => {
+    it('data가 있으면 onDelete 호출 시 isDeleteAlertVisible이 true가 된다', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(true);
     });
 
-    it('삭제 확인 Alert에서 삭제를 누르면 deletePost를 data.id, data.type, data.mode로 호출한다', () => {
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    it('삭제 확인 AlertModal에서 onConfirmDelete를 호출하면 deletePost를 data.id, data.type, data.mode로 호출하고 알럿을 닫는다', () => {
       const mockDeletePost = jest.fn();
       mockUseDeletePost.mockReturnValue({ deletePost: mockDeletePost, isLoading: false });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
-
-      const alertCall = alertSpy.mock.calls[0];
-      const buttons = alertCall[2] as { text: string; onPress?: () => void }[];
-      const confirmButton = buttons.find((b) => b.text === '삭제');
-      confirmButton?.onPress?.();
+      act(() => result.current.actionHandlers.onConfirmDelete());
 
       expect(mockDeletePost).toHaveBeenCalledWith(1, 'OBJECT', 'GIVER');
+      expect(result.current.isDeleteAlertVisible).toBe(false);
+    });
 
-      alertSpy.mockRestore();
+    it('modalHandlers.closeDeleteAlert를 호출하면 isDeleteAlertVisible이 false가 된다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+      act(() => result.current.modalHandlers.closeDeleteAlert());
+
+      expect(result.current.isDeleteAlertVisible).toBe(false);
     });
 
     it('data가 없으면 아무것도 하지 않는다', () => {
@@ -443,6 +447,8 @@ describe('usePostAction', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(false);
     });
   });
 

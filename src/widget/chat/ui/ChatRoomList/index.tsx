@@ -1,12 +1,4 @@
-import {
-  Animated,
-  FlatList,
-  View,
-  Text,
-  RefreshControl,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
+import { Animated, FlatList, View, Text, RefreshControl, TouchableOpacity } from 'react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,6 +13,7 @@ import {
 } from '@/entity/chat';
 import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
+import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
@@ -83,6 +76,14 @@ export function ChatRoomList() {
   const [exitingRoomId, setExitingRoomId] = useState<RoomId | null>(null);
   // 슬라이드 아웃이 끝나 실제로 목록에서 제거된 채팅방 — 이 시점부터 위/아래 항목이 붙는 애니메이션이 재생된다
   const [hiddenRoomIds, setHiddenRoomIds] = useState<Set<RoomId>>(() => new Set());
+  // 차단 확인 AlertModal은 액션 시트가 닫힌 뒤에도 열려있어야 하므로 대상을 따로 보관한다.
+  // memberId도 함께 저장해, 시트가 닫혀 actionTargetMemberId가 사라진 뒤에도
+  // useBlockUser가 올바른 대상에 그대로 묶여 있게 한다.
+  const [blockTarget, setBlockTarget] = useState<{
+    roomId: RoomId;
+    nickname: string;
+    memberId: number;
+  } | null>(null);
   const hasRooms = (chatRooms?.length ?? 0) > 0;
 
   const { joinRoom } = useChatSocket({
@@ -101,7 +102,7 @@ export function ChatRoomList() {
       ? Number(actionTargetRoom.member.memberId)
       : undefined;
 
-  const { block } = useBlockUser(actionTargetMemberId);
+  const { block } = useBlockUser(blockTarget?.memberId ?? actionTargetMemberId);
 
   const visibleChatRooms = useMemo(
     () => (chatRooms ?? []).filter((room) => !hiddenRoomIds.has(room.roomId)),
@@ -151,13 +152,33 @@ export function ChatRoomList() {
   }, [actionTargetRoomId]);
 
   const handleBlockPress = useCallback(() => {
-    const nickname = actionTargetRoom?.member?.nickname ?? '';
+    if (actionTargetRoom === null || actionTargetMemberId === undefined) return;
+    setBlockTarget({
+      roomId: actionTargetRoom.roomId,
+      nickname: actionTargetRoom.member?.nickname ?? '',
+      memberId: actionTargetMemberId,
+    });
     setActionTargetRoomId(null);
-    Alert.alert('사용자 차단', `${nickname}님을 차단하시겠습니까?`, [
-      { text: '취소', style: 'cancel' },
-      { text: '차단', style: 'destructive', onPress: () => block.mutate() },
-    ]);
-  }, [actionTargetRoom, block]);
+  }, [actionTargetRoom, actionTargetMemberId]);
+
+  const handleCloseBlockAlert = useCallback(() => {
+    setBlockTarget(null);
+  }, []);
+
+  const handleConfirmBlock = useCallback(() => {
+    if (blockTarget === null) return;
+    const { roomId } = blockTarget;
+
+    block.mutate(undefined, {
+      onSuccess: () => {
+        setHiddenRoomIds((prev) => new Set(prev).add(roomId));
+        queryClient.invalidateQueries({ queryKey: CHAT_ROOM_QUERY_KEY });
+      },
+      onSettled: () => {
+        setBlockTarget(null);
+      },
+    });
+  }, [blockTarget, block, queryClient]);
 
   const handleReportPress = useCallback(() => {
     setReportTargetMemberId(actionTargetMemberId);
@@ -273,6 +294,16 @@ export function ChatRoomList() {
         memberId={reportTargetMemberId}
         isVisible={isReportVisible}
         onClose={handleCloseReport}
+      />
+
+      <AlertModal
+        isVisible={blockTarget !== null}
+        message={`${blockTarget?.nickname ?? ''}님을 차단하시겠습니까?`}
+        confirmText="차단"
+        destructive
+        isLoading={block.isPending}
+        onCancel={handleCloseBlockAlert}
+        onConfirm={handleConfirmBlock}
       />
     </>
   );
