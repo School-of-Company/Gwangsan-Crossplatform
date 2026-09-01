@@ -31,11 +31,13 @@ interface UseTradeHandlersReturn {
   readonly handleTradeAccept: () => Promise<void>;
   readonly handleReservation: (input: ReservationInput) => Promise<void>;
   readonly handleCancelReservation: () => Promise<void>;
-  readonly handleWithdrawTradeRequest: () => Promise<void>;
+  readonly handleTradeRequestButtonPress: () => Promise<boolean>;
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
   readonly canWithdrawTradeRequest: boolean;
 }
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export const useTradeHandlers = ({
   roomId,
@@ -87,8 +89,24 @@ export const useTradeHandlers = ({
     }
   }, [roomData, otherUserInfo.id, patchProduct]);
 
-  const handleWithdrawTradeRequest = useCallback(async () => {
-    if (!roomData?.product?.id || !otherUserInfo.id) return;
+  // 대기중인 내 요청을 다시 누르면 "취소" 개념을 노출하지 않고, 하루가 지났을 때만
+  // 내부적으로 기존 요청을 철회한 뒤 새 요청을 보낼 수 있도록 통과시킨다(호출부가 true를
+  // 받으면 거래 요청 모달을 연다). 하루가 안 지났으면 안내 토스트만 띄우고 막는다.
+  const handleTradeRequestButtonPress = useCallback(async (): Promise<boolean> => {
+    if (!canWithdrawTradeRequest) return true;
+
+    const createdAt = roomData?.product?.createdAt;
+    const sentAt = createdAt ? new Date(createdAt).getTime() : null;
+
+    if (sentAt !== null && Date.now() - sentAt < ONE_DAY_MS) {
+      Toast.show({
+        type: 'info',
+        text1: '내일 다시 보낼 수 있어요',
+      });
+      return false;
+    }
+
+    if (!roomData?.product?.id || !otherUserInfo.id) return false;
 
     try {
       await withdrawTrade({
@@ -98,18 +116,17 @@ export const useTradeHandlers = ({
 
       patchProduct({ createdAt: null, isCompletable: true });
 
-      Toast.show({
-        type: 'success',
-        text1: '거래 요청을 취소했습니다',
-      });
+      return true;
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: '거래 요청 취소 실패',
+        text1: '거래 요청 실패',
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
+
+      return false;
     }
-  }, [roomData, otherUserInfo.id, patchProduct]);
+  }, [canWithdrawTradeRequest, roomData, otherUserInfo.id, patchProduct]);
 
   const handleReservation = useCallback(
     async ({ scheduledAt, placeName, address, latitude, longitude }: ReservationInput) => {
@@ -183,7 +200,7 @@ export const useTradeHandlers = ({
     handleTradeAccept,
     handleReservation,
     handleCancelReservation,
-    handleWithdrawTradeRequest,
+    handleTradeRequestButtonPress,
     hasTradeRequest,
     shouldShowButtons,
     canWithdrawTradeRequest,
