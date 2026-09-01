@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import ReviewsModal from '../index';
 
 jest.mock('~/shared/ui', () => ({
-  BottomSheetModalWrapper: ({ isVisible, children, title, showCloseButton }: any) => {
+  BottomSheetModalWrapper: ({ isVisible, children, title, showCloseButton = false }: any) => {
     if (!isVisible) return null;
     const { View, Text } = require('react-native');
     return (

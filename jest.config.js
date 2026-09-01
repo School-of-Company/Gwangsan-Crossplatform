@@ -15,6 +15,7 @@ module.exports = {
   moduleNameMapper: {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
     '^react-native-keyboard-controller$': '<rootDir>/__mocks__/react-native-keyboard-controller.js',
+    '^expo-linear-gradient$': '<rootDir>/__mocks__/expo-linear-gradient.js',
     '^@expo/vector-icons(/.*)?$': '<rootDir>/__mocks__/vector-icons.js',
     '^~/test-utils$': '<rootDir>/src/test-utils/index.ts',
     '^@env$': '<rootDir>/src/mocks/env.ts',

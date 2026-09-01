@@ -1,5 +1,5 @@
 import { useMemo, useCallback, memo, useState, useEffect } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, ScrollView, Dimensions } from 'react-native';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper, ProgressBar } from '~/shared/ui';
@@ -61,10 +61,15 @@ const ReviewsModal = ({
       isVisible={isVisible}
       onClose={onClose}
       onAnimationComplete={onAnimationComplete}
-      title="후기 작성"
-      showCloseButton={false}>
+      title="후기 작성">
       <View className="flex-1 flex-col justify-between gap-6">
-        <View className="gap-8">
+        {/* 키보드가 올라와 아래 버튼이 인풋에 가까워질 때, ScrollView 안 포커스된 인풋을 RN이
+            자동으로 버튼 위(스크롤뷰 영역 안)로 끌어올려주도록 인풋만 스크롤 가능한 영역으로 둔다 */}
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ gap: 32 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <ProgressBar value={localLight} onChange={handleLightChange} />
           <TextField
             label="후기 작성"
@@ -74,7 +79,7 @@ const ReviewsModal = ({
             multiline
             style={{ maxHeight: maxTextFieldHeight }}
           />
-        </View>
+        </ScrollView>
         <Button disabled={isDisabled} onPress={handleSubmit}>
           작성완료
         </Button>

@@ -142,6 +142,10 @@ export default function RootLayout() {
                 {/* 하단 탭 전환은 (tabs) 레이아웃의 sceneStyleInterpolator가 전담하므로
                   네이티브 트랜지션은 끄고 중복 애니메이션을 방지한다. */}
                 <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+                {/* 후기 작성 화면의 밝기 슬라이더가 화면 전체 폭을 가로질러 드래그되는데,
+                  스와이프-뒤로가기 제스처가 이 드래그와 같은 터치로 인식되어 화면이 함께
+                  뒤로 넘어가 버린다. 이 화면에서는 제스처 자체를 꺼서 충돌을 없앤다. */}
+                <Stack.Screen name="chatting/[id]/review" options={{ gestureEnabled: false }} />
                 {/* 로그인(별칭 → 비밀번호) 화면은 SigninPage 내부의 SlideFadeTransition이
                   푸터 탭 전환과 동일한 애니메이션을 전담하므로, 네이티브 트랜지션은 끄고
                   중복 애니메이션을 방지한다. */}
