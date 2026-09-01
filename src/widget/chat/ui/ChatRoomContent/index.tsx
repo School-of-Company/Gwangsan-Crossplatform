@@ -21,6 +21,7 @@ interface TradeEmbedConfig {
   readonly showButtons: boolean;
   readonly otherPartyNickname: string;
   readonly onOpenReservationModal?: () => void;
+  readonly onOpenMap?: () => void;
 }
 
 type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
@@ -37,6 +38,8 @@ interface ResolvedTradeReservedEmbed {
   readonly alignment: 'left' | 'right';
   readonly scheduledAt?: string | null;
   readonly placeName?: string | null;
+  readonly otherPartyNickname: string;
+  readonly onOpenMap?: () => void;
 }
 
 type ChatListItem =
@@ -162,6 +165,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
             alignment: product.isSeller ? 'left' : 'right',
             scheduledAt: product.reservationScheduledAt,
             placeName: product.reservationPlaceName,
+            otherPartyNickname: tradeEmbedConfig.otherPartyNickname,
+            onOpenMap: tradeEmbedConfig.onOpenMap,
           },
         });
       }
@@ -252,6 +257,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
             alignment={item.data.alignment}
             scheduledAt={item.data.scheduledAt}
             placeName={item.data.placeName}
+            otherPartyNickname={item.data.otherPartyNickname}
+            onOpenMap={item.data.onOpenMap}
           />
         );
       }

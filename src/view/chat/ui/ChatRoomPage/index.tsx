@@ -107,6 +107,14 @@ export default function ChatRoomPage() {
     router.push(`/chatting/${roomId}/reservation`);
   }, [router, roomId]);
 
+  const handleOpenMap = useCallback(() => {
+    const product = roomData?.product;
+    if (product?.reservationLatitude == null || product?.reservationLongitude == null) return;
+    router.push(
+      `/chatting/${roomId}/reservation/location?latitude=${product.reservationLatitude}&longitude=${product.reservationLongitude}&placeName=${encodeURIComponent(product.reservationPlaceName ?? '')}`
+    );
+  }, [router, roomId, roomData?.product]);
+
   const { tradeEmbedConfig, menuConfig, tradeRequestInfo, componentState, productInfoConfig } =
     useChatUIState({
       roomId,
@@ -114,6 +122,7 @@ export default function ChatRoomPage() {
       hasTradeRequest,
       shouldShowButtons,
       onOpenReservationModal: handleOpenReservationConfirm,
+      onOpenMap: handleOpenMap,
     });
 
   const updatedComponentState = useMemo(

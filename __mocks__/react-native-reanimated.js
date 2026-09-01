@@ -57,6 +57,7 @@ const Animated = {
   FadeIn: createAnimationBuilderMock(),
   FadeOut: createAnimationBuilderMock(),
   FadeInDown: createAnimationBuilderMock(),
+  FadeInUp: createAnimationBuilderMock(),
   FadeOutUp: createAnimationBuilderMock(),
   FadeInRight: createAnimationBuilderMock(),
   FadeInLeft: createAnimationBuilderMock(),

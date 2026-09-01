@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import Animated, { FadeInDown, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import type { ToastConfigParams } from 'react-native-toast-message';
 import { useToastQueueStore } from '~/shared/lib/toastQueue';
 import '~/shared/lib/toastQueuePatch';
@@ -11,6 +11,9 @@ interface ToastStackProps {
 
 export function ToastStack({ topOffset = 40 }: ToastStackProps) {
   const toasts = useToastQueueStore((state) => state.toasts);
+  // 최신 토스트가 맨 위에 오도록 뒤집어서 렌더링한다 — 새 토스트가 위에서 내려와 자리를
+  // 차지하면 기존 토스트들은 그 아래로 밀려난다.
+  const displayToasts = [...toasts].reverse();
 
   return (
     <View
@@ -18,12 +21,12 @@ export function ToastStack({ topOffset = 40 }: ToastStackProps) {
       pointerEvents="box-none"
       className="absolute left-0 right-0 items-center gap-2"
       style={{ top: topOffset }}>
-      {toasts.map((toast) => (
+      {displayToasts.map((toast) => (
         <Animated.View
           key={toast.id}
-          entering={FadeInDown.springify().damping(18)}
+          entering={FadeInUp.duration(220)}
           exiting={FadeOutUp.duration(150)}
-          layout={LinearTransition.springify().damping(18)}>
+          layout={LinearTransition.duration(220)}>
           {toastConfig[toast.type]?.({
             type: toast.type,
             text1: toast.text1,

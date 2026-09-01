@@ -10,6 +10,7 @@ interface UseChatUIStateParams {
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
   readonly onOpenReservationModal: () => void;
+  readonly onOpenMap: () => void;
 }
 
 interface UseChatUIStateReturn {
@@ -19,6 +20,7 @@ interface UseChatUIStateReturn {
     readonly showButtons: boolean;
     readonly otherPartyNickname: string;
     readonly onOpenReservationModal?: () => void;
+    readonly onOpenMap?: () => void;
   };
   readonly menuConfig: {
     readonly shouldShowMenuButton: boolean;
@@ -48,6 +50,7 @@ export const useChatUIState = ({
   hasTradeRequest,
   shouldShowButtons,
   onOpenReservationModal,
+  onOpenMap,
 }: UseChatUIStateParams): UseChatUIStateReturn => {
   const { data: roomData } = useChatRoomData({ roomId });
 
@@ -58,6 +61,10 @@ export const useChatUIState = ({
   const isReceiverMode = productDetail?.mode === MODE.RECEIVER;
   const shouldShowMenuButton = !isProductLoading && (isGiverMode || isReceiverMode);
 
+  const hasReservationLocation =
+    roomData?.product?.reservationLatitude != null &&
+    roomData?.product?.reservationLongitude != null;
+
   const tradeEmbedConfig = useMemo(
     () => ({
       shouldShow: hasTradeRequest,
@@ -65,6 +72,7 @@ export const useChatUIState = ({
       showButtons: shouldShowButtons,
       otherPartyNickname: otherUserInfo.nickname,
       onOpenReservationModal: shouldShowButtons ? onOpenReservationModal : undefined,
+      onOpenMap: hasReservationLocation ? onOpenMap : undefined,
     }),
     [
       hasTradeRequest,
@@ -72,6 +80,8 @@ export const useChatUIState = ({
       shouldShowButtons,
       otherUserInfo.nickname,
       onOpenReservationModal,
+      hasReservationLocation,
+      onOpenMap,
     ]
   );
 
