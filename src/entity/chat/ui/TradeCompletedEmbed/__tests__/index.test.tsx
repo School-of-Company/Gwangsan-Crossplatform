@@ -19,18 +19,10 @@ describe('TradeCompletedEmbed', () => {
     expect(onReviewButtonPress).toHaveBeenCalledTimes(1);
   });
 
-  it('alignment가 right이면 우측 정렬 클래스를 적용한다', () => {
-    const { toJSON } = render(<TradeCompletedEmbed alignment="right" />);
+  it('예약 카드처럼 너비를 꽉 채운다', () => {
+    const { toJSON } = render(<TradeCompletedEmbed />);
 
     const tree = JSON.stringify(toJSON());
-    expect(tree).toContain('self-end');
-    expect(tree).not.toContain('self-start ml-10');
-  });
-
-  it('alignment가 left(기본값)이면 좌측 정렬 클래스를 적용한다', () => {
-    const { toJSON } = render(<TradeCompletedEmbed alignment="left" />);
-
-    const tree = JSON.stringify(toJSON());
-    expect(tree).toContain('self-start ml-10');
+    expect(tree).toContain('w-full');
   });
 });

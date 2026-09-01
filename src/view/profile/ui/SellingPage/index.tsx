@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import Animated, { SlideInLeft, SlideInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Header, PillTabs } from '~/shared/ui';
 import Post from '~/shared/ui/Post';
-import { SlideFadeTransition, TabTransitionDirection } from '~/shared/ui/SlideFadeTransition';
+import { TabTransitionDirection } from '~/shared/ui/SlideFadeTransition';
 import { MODE } from '~/shared/types/mode';
 import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyPosts } from '../../model/useGetMyPosts';
@@ -17,6 +18,8 @@ const SELLING_TABS = [
   { value: 'onSale' as const, label: '판매중' },
   { value: 'sold' as const, label: '판매완료' },
 ];
+
+const SLIDE_DURATION = 200;
 
 const getTabIndex = (tab: SellingTab) => SELLING_TABS.findIndex((t) => t.value === tab);
 
@@ -71,7 +74,14 @@ export default function SellingPageView() {
         testIDPrefix="selling-tab"
       />
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <SlideFadeTransition key={activeTab} direction={direction}>
+        <Animated.View
+          key={activeTab}
+          entering={
+            direction
+              ? (direction === 'right' ? SlideInRight : SlideInLeft).duration(SLIDE_DURATION)
+              : undefined
+          }
+          style={{ flex: 1 }}>
           <View className="gap-6 px-6 pb-9">
             {visiblePosts.length > 0 ? (
               visiblePosts.map((post) => <Post {...post} key={post.id} />)
@@ -83,7 +93,7 @@ export default function SellingPageView() {
               </Text>
             )}
           </View>
-        </SlideFadeTransition>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -7,20 +7,19 @@ export interface TradeCompletedEmbedProps {
 }
 
 const TradeCompletedEmbedComponent: React.FC<TradeCompletedEmbedProps> = ({
-  alignment = 'left',
   onReviewButtonPress,
 }) => {
-  const alignmentClass = alignment === 'right' ? 'self-end' : 'self-start ml-10';
-
   return (
-    <View className={`mb-4 ${alignmentClass}`}>
-      <View className="overflow-hidden rounded-xl bg-gray-50 px-4 py-3">
-        <Text className="mb-2 text-sm text-gray-900">거래가 완료되었습니다</Text>
+    <View className="mb-4 w-full">
+      <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <Text testID="trade-completed-notice" className="flex-1 text-base font-bold text-gray-900">
+          거래가 완료되었습니다
+        </Text>
         <TouchableOpacity
           testID="trade-completed-review-button"
           onPress={onReviewButtonPress}
-          className="self-start rounded-lg bg-main-500 px-4 py-2">
-          <Text className="text-xs font-medium text-white">리뷰 작성하기</Text>
+          className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+          <Text className="text-label font-medium text-white">리뷰 작성하기</Text>
         </TouchableOpacity>
       </View>
     </View>
