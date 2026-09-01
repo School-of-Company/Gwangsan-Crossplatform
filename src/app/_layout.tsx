@@ -8,8 +8,7 @@ import { useEffect, useRef } from 'react';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
-import Toast from 'react-native-toast-message';
-import { toastConfig } from '@/shared/ui/Toast';
+import { ToastStack } from '@/shared/ui/Toast/ToastStack';
 import QueryProvider from '../shared/lib/QueryProvider';
 import '@/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
@@ -150,7 +149,7 @@ export default function RootLayout() {
               </Stack>
             </SentryRN.ErrorBoundary>
             <BottomSheetPortalOutlet />
-            <Toast config={toastConfig} topOffset={Platform.select({ ios: 70, default: 40 })} />
+            <ToastStack topOffset={Platform.select({ ios: 70, default: 40 })} />
             <NoNetworkOverlay visible={!isConnected} />
           </QueryProvider>
         </View>

@@ -56,6 +56,8 @@ const Animated = {
   Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
   FadeIn: createAnimationBuilderMock(),
   FadeOut: createAnimationBuilderMock(),
+  FadeInDown: createAnimationBuilderMock(),
+  FadeOutUp: createAnimationBuilderMock(),
   FadeInRight: createAnimationBuilderMock(),
   FadeInLeft: createAnimationBuilderMock(),
   SlideInRight: createAnimationBuilderMock(),
