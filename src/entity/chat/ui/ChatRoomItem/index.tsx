@@ -91,7 +91,7 @@ const ChatRoomItemComponent = ({
   const renderUnreadBadge = () => {
     if (!room.unreadMessageCount || room.unreadMessageCount === 0) return null;
     return (
-      <View className="ml-2 min-w-[20px] items-center justify-center rounded-full bg-main-500 px-1.5 py-0.5">
+      <View className="mx-1.5 min-w-[20px] items-center justify-center rounded-full bg-main-500 px-1.5 py-0.5">
         <Text className="text-xs font-semibold text-white">{room.unreadMessageCount}</Text>
       </View>
     );
@@ -137,17 +137,15 @@ const ChatRoomItemComponent = ({
             {room.lastMessageType === 'IMAGE' ? '📷 사진을 보냈습니다.' : room.lastMessage}
           </Text>
         </View>
-        <View className="ml-2 flex-col items-end">
-          <View className="mb-1 flex-row items-center">
-            <Text className="text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
-            <TouchableOpacity
-              onPress={handleMenuPress}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className="-mr-1 p-1">
-              <Ionicons name="ellipsis-vertical" size={16} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
+        <View className="ml-2 flex-row items-center">
+          <Text className="text-xs text-gray-400">{formatDate(room.lastMessageTime)}</Text>
           {renderUnreadBadge()}
+          <TouchableOpacity
+            onPress={handleMenuPress}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="-mr-1 p-1">
+            <Ionicons name="ellipsis-vertical" size={16} color="#9CA3AF" />
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     </Animated.View>

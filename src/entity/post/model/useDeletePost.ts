@@ -47,8 +47,11 @@ export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
     (postId: number, type: ProductType, mode: ModeType) => {
       deletePostMutation.mutate(postId, {
         onSuccess: () => {
-          const redirectPath = getRedirectPath(type, mode);
-          router.replace(redirectPath);
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace(getRedirectPath(type, mode));
+          }
         },
       });
     },
