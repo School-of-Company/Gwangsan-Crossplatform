@@ -19,6 +19,7 @@ interface UseChatMessagesReturn {
   readonly isLoading: boolean;
   readonly isError: boolean;
   readonly connectionState: 'connected' | 'connecting' | 'disconnected';
+  readonly isBlockedByOtherUser: boolean;
   readonly messageHandlers: {
     readonly sendMessage: (content: string | null, imageIds: number[]) => void;
     readonly renderMessage: ({ item }: { item: ChatMessageResponse }) => null;
@@ -41,6 +42,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
     sendMessage: socketSendMessage,
     markRoomAsRead,
     connectionState,
+    isBlockedByOtherUser,
   } = useChatSocket({
     currentRoomId: roomId,
     chatRoomQueryKey: CHAT_ROOM_QUERY_KEY,
@@ -103,6 +105,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
     isLoading,
     isError,
     connectionState,
+    isBlockedByOtherUser,
     messageHandlers,
     scrollToEnd,
     markRoomAsRead,

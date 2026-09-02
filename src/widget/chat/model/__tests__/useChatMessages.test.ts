@@ -35,6 +35,7 @@ const setupMocks = () => {
     sendMessage: jest.fn(),
     markRoomAsRead: jest.fn(),
     connectionState: 'connected',
+    isBlockedByOtherUser: false,
   });
   mockUseResilientMessageSender.mockReturnValue({ sendMessage: jest.fn() });
   mockEnsureMessagesArray.mockReturnValue([]);
@@ -257,6 +258,23 @@ describe('useChatMessages', () => {
 
       expect(scrollToOffsetSpy).not.toHaveBeenCalled();
       jest.useRealTimers();
+    });
+  });
+
+  describe('isBlockedByOtherUser', () => {
+    it('useChatSocket의 isBlockedByOtherUser를 그대로 반환한다', () => {
+      mockUseChatSocket.mockReturnValue({
+        sendMessage: jest.fn(),
+        markRoomAsRead: jest.fn(),
+        connectionState: 'connected',
+        isBlockedByOtherUser: true,
+      });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatMessages({ roomId: 'room-1' as any })
+      );
+
+      expect(result.current.isBlockedByOtherUser).toBe(true);
     });
   });
 
