@@ -1,13 +1,20 @@
 import { act, renderHook } from '@testing-library/react-native';
+import Toast from 'react-native-toast-message';
 import { useChatSocket } from '../useChatSocket';
 import { createChatSocketService } from '../../lib/socketService';
 import { createChatSocketManager } from '@/shared/lib/socket';
 import { useSocketConnection } from '../useSocketConnection';
 import { useMessageSync } from '../useMessageSync';
 import { useSocketEventHandlers } from '../useSocketEventHandlers';
+import { useChatQueueStore, MESSAGE_STATUS } from '@/shared/store/useChatQueueStore';
 
 jest.mock('@/shared/lib/socket', () => ({
   createChatSocketManager: jest.fn(() => ({})),
+}));
+
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
 }));
 
 const mockChatSocketService = {
@@ -64,6 +71,7 @@ describe('useChatSocket', () => {
     mockChatSocketService.isConnected = false;
     mockUseSocketConnection.mockReturnValue(mockConnection);
     mockUseMessageSync.mockReturnValue(mockMessageSyncHandlers);
+    useChatQueueStore.setState({ pendingMessages: [] });
   });
 
   it('socketManager와 chatSocketService를 생성한다', () => {
@@ -227,5 +235,100 @@ describe('useChatSocket', () => {
     expect(result.current.markRoomAsRead).toBe(mockMessageSyncHandlers.markRoomAsRead);
     expect(result.current.connect).toBe(mockConnection.connect);
     expect(result.current.disconnect).toBe(mockConnection.disconnect);
+  });
+
+  describe('차단으로 인한 소켓 error 이벤트 처리', () => {
+    it('초기값은 isBlockedByOtherUser: false 이다', () => {
+      const { result } = renderHook(() => useChatSocket());
+
+      expect(result.current.isBlockedByOtherUser).toBe(false);
+    });
+
+    it('currentRoomId가 없으면(채팅 목록 화면 등) error 이벤트를 구독하지 않는다', () => {
+      renderHook(() => useChatSocket());
+
+      const call = mockUseSocketEventHandlers.mock.calls[0][0];
+      expect(call.onError).toBeUndefined();
+    });
+
+    it('차단 관련 error 이벤트를 받으면 isBlockedByOtherUser를 true로 바꾼다', () => {
+      const { result } = renderHook(() => useChatSocket({ currentRoomId: 1 }));
+      const call = mockUseSocketEventHandlers.mock.calls[0][0];
+
+      act(() => {
+        call.onError({ message: '차단한 사용자입니다.' });
+      });
+
+      expect(result.current.isBlockedByOtherUser).toBe(true);
+    });
+
+    it('차단과 무관한 error 이벤트는 무시한다', () => {
+      const { result } = renderHook(() => useChatSocket({ currentRoomId: 1 }));
+      const call = mockUseSocketEventHandlers.mock.calls[0][0];
+
+      act(() => {
+        call.onError({ message: '알 수 없는 오류입니다.' });
+      });
+
+      expect(result.current.isBlockedByOtherUser).toBe(false);
+    });
+
+    it('차단 에러를 받으면 현재 방에서 전송 중이던 메시지를 실패로 전환하고 안내 토스트를 띄운다', () => {
+      useChatQueueStore.setState({
+        pendingMessages: [
+          {
+            tempId: 'a',
+            roomId: 1,
+            content: 'hi',
+            messageType: 'TEXT',
+            imageIds: [],
+            status: MESSAGE_STATUS.SENDING,
+            createdAt: new Date().toISOString(),
+            retryCount: 0,
+          },
+          {
+            tempId: 'b',
+            roomId: 2,
+            content: 'other room',
+            messageType: 'TEXT',
+            imageIds: [],
+            status: MESSAGE_STATUS.SENDING,
+            createdAt: new Date().toISOString(),
+            retryCount: 0,
+          },
+        ],
+      });
+
+      renderHook(() => useChatSocket({ currentRoomId: 1 }));
+      const call = mockUseSocketEventHandlers.mock.calls[0][0];
+
+      act(() => {
+        call.onError({ message: '차단한 사용자입니다.' });
+      });
+
+      const messages = useChatQueueStore.getState().pendingMessages;
+      expect(messages.find((m) => m.tempId === 'a')?.status).toBe(MESSAGE_STATUS.FAILED);
+      expect(messages.find((m) => m.tempId === 'b')?.status).toBe(MESSAGE_STATUS.SENDING);
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '메시지를 보낼 수 없어요' })
+      );
+    });
+
+    it('currentRoomId가 바뀌면 isBlockedByOtherUser가 초기화된다', () => {
+      const { result, rerender } = renderHook(
+        ({ roomId }: { roomId: number }) => useChatSocket({ currentRoomId: roomId }),
+        { initialProps: { roomId: 1 } }
+      );
+      const call = mockUseSocketEventHandlers.mock.calls[0][0];
+
+      act(() => {
+        call.onError({ message: '차단한 사용자입니다.' });
+      });
+      expect(result.current.isBlockedByOtherUser).toBe(true);
+
+      rerender({ roomId: 2 });
+
+      expect(result.current.isBlockedByOtherUser).toBe(false);
+    });
   });
 });

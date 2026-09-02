@@ -1,5 +1,9 @@
 import { useEffect } from 'react';
-import type { IChatSocketService, TransactionStateChangedPayload } from '../lib/socketService';
+import type {
+  IChatSocketService,
+  SocketErrorPayload,
+  TransactionStateChangedPayload,
+} from '../lib/socketService';
 import type { ChatMessageResponse } from './chatTypes';
 
 interface UseSocketEventHandlersProps {
@@ -13,6 +17,7 @@ interface UseSocketEventHandlersProps {
     lastMessageTime: string;
   }) => void;
   onTransactionStateChanged?: (data: TransactionStateChangedPayload) => void;
+  onError?: (error: SocketErrorPayload) => void;
 }
 
 export const useSocketEventHandlers = ({
@@ -21,6 +26,7 @@ export const useSocketEventHandlers = ({
   onReceiveMessage,
   onUpdateRoomList,
   onTransactionStateChanged,
+  onError,
 }: UseSocketEventHandlersProps) => {
   useEffect(() => {
     if (onConnect) {
@@ -39,6 +45,10 @@ export const useSocketEventHandlers = ({
       socketService.on('transactionStateChanged', onTransactionStateChanged);
     }
 
+    if (onError) {
+      socketService.on('error', onError);
+    }
+
     return () => {
       if (onConnect) {
         socketService.off('connect', onConnect);
@@ -55,6 +65,17 @@ export const useSocketEventHandlers = ({
       if (onTransactionStateChanged) {
         socketService.off('transactionStateChanged', onTransactionStateChanged);
       }
+
+      if (onError) {
+        socketService.off('error', onError);
+      }
     };
-  }, [socketService, onConnect, onReceiveMessage, onUpdateRoomList, onTransactionStateChanged]);
+  }, [
+    socketService,
+    onConnect,
+    onReceiveMessage,
+    onUpdateRoomList,
+    onTransactionStateChanged,
+    onError,
+  ]);
 };
