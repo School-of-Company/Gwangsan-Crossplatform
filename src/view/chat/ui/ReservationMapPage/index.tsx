@@ -15,6 +15,7 @@ import type { Coordinates } from 'expo-maps';
 import Icon from '@expo/vector-icons/Ionicons';
 import Animated, {
   Easing,
+  cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -71,6 +72,10 @@ function NearbyPlacesSkeleton() {
       -1,
       true
     );
+
+    // 무한 반복 애니메이션이라 언마운트 시 명시적으로 취소하지 않으면, 이미 해제된
+    // 뷰에 뒤늦게 prop을 반영하려다 reanimated가 크래시할 수 있다.
+    return () => cancelAnimation(opacity);
   }, [opacity]);
 
   const pulseStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));

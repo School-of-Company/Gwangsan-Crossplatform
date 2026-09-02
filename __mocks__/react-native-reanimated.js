@@ -50,6 +50,7 @@ const Animated = {
   withDelay: (_, v) => v,
   withSequence: identity,
   withRepeat: identity,
+  cancelAnimation: noop,
   runOnJS: (fn) => fn,
   runOnUI: (fn) => fn,
   interpolate: identity,
