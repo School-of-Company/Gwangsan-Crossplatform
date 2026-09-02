@@ -3,11 +3,6 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { TradeEmbed } from '../index';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
 
-jest.mock('~/shared/ui', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  Button: require('~/shared/ui/Button').Button,
-}));
-
 const createProduct = (overrides: Partial<TradeProduct> = {}): TradeProduct => ({
   id: 100,
   title: '거래 상품',
@@ -40,7 +35,7 @@ describe('TradeEmbed', () => {
     expect(getByText('상대방님이 거래하기를 원합니다')).toBeTruthy();
   });
 
-  it('showButtons가 false이면 사진/제목 없이 상대방에게 요청했다는 문구만 표시한다', () => {
+  it('showButtons가 false이어도 작성자 화면과 동일한 사진 카드로 요청했다는 문구를 표시한다', () => {
     const { getByText, queryByText, UNSAFE_queryByType } = render(
       <TradeEmbed product={createProduct()} otherPartyNickname="홍길동" showButtons={false} />
     );
@@ -49,15 +44,20 @@ describe('TradeEmbed', () => {
     expect(getByText('홍길동님에게 거래를 요청했어요')).toBeTruthy();
     expect(queryByText('거래 상품')).toBeNull();
     expect(queryByText('홍길동님이 거래하기를 원합니다')).toBeNull();
-    expect(UNSAFE_queryByType(Image)).toBeNull();
+    expect(UNSAFE_queryByType(Image)).toBeTruthy();
   });
 
-  it('isCompleted이면 완료 안내 문구를 표시한다', () => {
+  it('isCompleted이어도 기존 거래요청 카드 문구는 바뀌지 않는다', () => {
     const { getByText, queryByText } = render(
-      <TradeEmbed product={createProduct({ isCompleted: true })} showButtons />
+      <TradeEmbed
+        product={createProduct({ isCompleted: true })}
+        otherPartyNickname="홍길동"
+        showButtons
+      />
     );
 
-    expect(getByText('거래가 완료되었습니다')).toBeTruthy();
+    expect(getByText('홍길동님이 거래하기를 원합니다')).toBeTruthy();
+    expect(queryByText('거래가 완료되었습니다')).toBeNull();
     expect(queryByText('예약하기')).toBeNull();
     expect(queryByText('거래 완료하기')).toBeNull();
   });
@@ -113,101 +113,6 @@ describe('TradeEmbed', () => {
 
     expect(queryByText('예약하기')).toBeNull();
     expect(queryByText('거래 완료하기')).toBeNull();
-  });
-
-  it('showReviewButton이 true이고 isCompleted면 리뷰 작성 버튼을 표시하고 누르면 콜백이 호출된다', () => {
-    const onReviewButtonPress = jest.fn();
-    const { getByText } = render(
-      <TradeEmbed
-        product={createProduct({ isCompleted: true })}
-        showReviewButton
-        onReviewButtonPress={onReviewButtonPress}
-      />
-    );
-
-    fireEvent.press(getByText('리뷰 작성하기'));
-
-    expect(onReviewButtonPress).toHaveBeenCalledTimes(1);
-  });
-
-  it('showReviewButton이 true여도 isCompleted가 아니면 리뷰 버튼을 표시하지 않는다', () => {
-    const { queryByText } = render(
-      <TradeEmbed product={createProduct({ isCompleted: false })} showReviewButton />
-    );
-
-    expect(queryByText('리뷰 작성하기')).toBeNull();
-  });
-
-  it('버튼이 없는 쪽에서도 isReserved가 true면 예약 중 안내를 보여준다', () => {
-    const { getByTestId } = render(
-      <TradeEmbed product={createProduct({ isReserved: true })} showButtons={false} />
-    );
-
-    expect(getByTestId('trade-reserved-notice')).toBeTruthy();
-  });
-
-  it('isReserved가 false면 예약 중 안내를 보여주지 않는다', () => {
-    const { queryByTestId } = render(
-      <TradeEmbed product={createProduct({ isReserved: false })} showButtons={false} />
-    );
-
-    expect(queryByTestId('trade-reserved-notice')).toBeNull();
-  });
-
-  it('거래가 완료되면 예약 중 안내를 보여주지 않는다', () => {
-    const { queryByTestId } = render(
-      <TradeEmbed product={createProduct({ isReserved: true, isCompleted: true })} showButtons />
-    );
-
-    expect(queryByTestId('trade-reserved-notice')).toBeNull();
-  });
-
-  it('예약 중이고 서버에서 예약 정보를 내려주면 날짜/시간/장소를 함께 보여준다', () => {
-    const { getByTestId } = render(
-      <TradeEmbed
-        product={createProduct({
-          isReserved: true,
-          reservationScheduledAt: '2026-08-28T14:00:00',
-          reservationPlaceName: '상무역 2번 출구',
-        })}
-        showButtons={false}
-      />
-    );
-
-    expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
-    expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
-  });
-
-  it('showButtons가 true이고 예약 정보가 있으면 예약 상세를 함께 보여준다', () => {
-    const { getByTestId } = render(
-      <TradeEmbed
-        product={createProduct({
-          isSeller: true,
-          isReserved: true,
-          reservationScheduledAt: '2026-08-28T14:00:00',
-          reservationPlaceName: '상무역 2번 출구',
-        })}
-        showButtons
-      />
-    );
-
-    expect(getByTestId('trade-reserved-notice')).toBeTruthy();
-    expect(getByTestId('trade-reservation-detail').props.children).toContain('14:00');
-    expect(getByTestId('trade-reservation-detail').props.children).toContain('상무역 2번 출구');
-  });
-
-  it('예약 일시 형식이 올바르지 않으면 원본 문자열을 그대로 보여준다', () => {
-    const { getByTestId } = render(
-      <TradeEmbed
-        product={createProduct({
-          isReserved: true,
-          reservationScheduledAt: 'invalid-date-string',
-        })}
-        showButtons={false}
-      />
-    );
-
-    expect(getByTestId('trade-reservation-detail').props.children).toContain('invalid-date-string');
   });
 
   it('alignment가 right이면 우측 정렬 클래스를 적용한다', () => {

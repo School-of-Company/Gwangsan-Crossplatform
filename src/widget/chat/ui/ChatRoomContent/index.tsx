@@ -7,6 +7,8 @@ import { OtherMessage } from '../OtherMessage';
 import { ChatDateDivider } from '../ChatDateDivider';
 import {
   TradeEmbed,
+  TradeCompletedEmbed,
+  TradeReservedEmbed,
   formatMessageTime,
   getMessageDateKey,
   formatDateDividerLabel,
@@ -19,15 +21,41 @@ interface TradeEmbedConfig {
   readonly showButtons: boolean;
   readonly otherPartyNickname: string;
   readonly onOpenReservationModal?: () => void;
+  readonly onOpenMap?: () => void;
 }
 
 type ResolvedTradeEmbed = Omit<TradeEmbedConfig, 'product'> & {
   readonly product: TradeProduct;
 };
 
+interface ResolvedTradeCompletedEmbed {
+  readonly productId: number;
+  readonly alignment: 'left' | 'right';
+  readonly hasReviewed: boolean;
+}
+
+interface ResolvedTradeReservedEmbed {
+  readonly productId: number;
+  readonly alignment: 'left' | 'right';
+  readonly scheduledAt?: string | null;
+  readonly placeName?: string | null;
+  readonly otherPartyNickname: string;
+  readonly onOpenMap?: () => void;
+}
+
 type ChatListItem =
   | { readonly type: 'message'; readonly timestamp: string; readonly data: EnhancedChatMessage }
   | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed }
+  | {
+      readonly type: 'tradeReserved';
+      readonly timestamp: string;
+      readonly data: ResolvedTradeReservedEmbed;
+    }
+  | {
+      readonly type: 'tradeCompleted';
+      readonly timestamp: string;
+      readonly data: ResolvedTradeCompletedEmbed;
+    }
   | {
       readonly type: 'dateDivider';
       readonly timestamp: string;
@@ -44,11 +72,14 @@ interface ChatRoomContentProps {
   readonly tradeEmbedConfig?: TradeEmbedConfig;
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
+  readonly hasReviewedTrade?: boolean;
 }
 
 const keyExtractor = (item: ChatListItem): string => {
   if (item.type === 'message') return `m-${item.data.messageId}`;
   if (item.type === 'trade') return `t-${item.data.product.id}`;
+  if (item.type === 'tradeReserved') return `tr-${item.data.productId}`;
+  if (item.type === 'tradeCompleted') return `tc-${item.data.productId}`;
   return `d-${item.timestamp}`;
 };
 
@@ -62,6 +93,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   tradeEmbedConfig,
   onReviewButtonPress,
   showReviewButton,
+  hasReviewedTrade,
 }) => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const insets = useSafeAreaInsets();
@@ -95,19 +127,63 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       data: message,
     }));
 
-    if (tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product?.createdAt) {
-      const tradeTimestamp = tradeEmbedConfig.product.createdAt;
+    const product = tradeEmbedConfig?.product;
+    if (tradeEmbedConfig?.shouldShow && product?.createdAt) {
+      const tradeTimestamp = product.createdAt;
       const tradeItem: ChatListItem = {
         type: 'trade',
         timestamp: tradeTimestamp,
-        data: tradeEmbedConfig as ResolvedTradeEmbed,
+        // 요청/수신 방향(왼쪽·오른쪽, 문구)은 언제든 false로 뒤집힐 수 있는 isCompletable이 아니라
+        // 완료 후에도 값이 그대로인 isSeller로 고정해야, 거래가 완료돼도 기존 카드가 반대편으로
+        // 뒤집히지 않는다
+        data: { ...tradeEmbedConfig, showButtons: product.isSeller } as ResolvedTradeEmbed,
       };
 
-      const insertAt = items.findIndex((item) => item.timestamp > tradeTimestamp);
-      if (insertAt < 0) {
-        items.push(tradeItem);
-      } else {
-        items.splice(insertAt, 0, tradeItem);
+      // WS 메시지는 UTC(Z 접미사), REST 메시지는 로컬 오프셋 없는 문자열이라 raw string 비교로는
+      // 정렬 순서가 뒤집힐 수 있다 — items 정렬(useChatMessages.ts)과 동일하게 epoch 기준으로 비교한다
+      const tradeMs = new Date(tradeTimestamp).getTime();
+      const insertAt = Number.isNaN(tradeMs)
+        ? -1
+        : items.findIndex((item) => {
+            const itemMs = new Date(item.timestamp).getTime();
+            return !Number.isNaN(itemMs) && itemMs > tradeMs;
+          });
+      items.splice(insertAt < 0 ? items.length : insertAt, 0, tradeItem);
+
+      // 서버가 예약/완료 시점을 별도로 내려주지 않아 실제 타임스탬프로 끼워 넣을 수 없다 —
+      // 두 시점 모두 항상 지금까지의 대화 중 가장 최근이므로 목록 맨 끝에 추가하고,
+      // 기존 거래요청 카드는 그대로 둔다
+      const appendTrailingTimestamp = () => {
+        const lastItem = items[items.length - 1];
+        const lastMs = lastItem ? new Date(lastItem.timestamp).getTime() : NaN;
+        return Number.isNaN(lastMs) ? tradeTimestamp : new Date(lastMs + 1).toISOString();
+      };
+
+      if (!product.isCompleted && product.isReserved) {
+        items.push({
+          type: 'tradeReserved',
+          timestamp: appendTrailingTimestamp(),
+          data: {
+            productId: product.id,
+            alignment: product.isSeller ? 'left' : 'right',
+            scheduledAt: product.reservationScheduledAt,
+            placeName: product.reservationPlaceName,
+            otherPartyNickname: tradeEmbedConfig.otherPartyNickname,
+            onOpenMap: tradeEmbedConfig.onOpenMap,
+          },
+        });
+      }
+
+      if (showReviewButton && product.isCompleted) {
+        items.push({
+          type: 'tradeCompleted',
+          timestamp: appendTrailingTimestamp(),
+          data: {
+            productId: product.id,
+            alignment: product.isSeller ? 'left' : 'right',
+            hasReviewed: Boolean(hasReviewedTrade),
+          },
+        });
       }
     }
 
@@ -129,7 +205,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     });
 
     return itemsWithDateDividers;
-  }, [messages, tradeEmbedConfig]);
+  }, [messages, tradeEmbedConfig, showReviewButton, hasReviewedTrade]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
     ({ item, index }) => {
@@ -179,6 +255,28 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         return <ChatDateDivider label={item.data.label} />;
       }
 
+      if (item.type === 'tradeReserved') {
+        return (
+          <TradeReservedEmbed
+            alignment={item.data.alignment}
+            scheduledAt={item.data.scheduledAt}
+            placeName={item.data.placeName}
+            otherPartyNickname={item.data.otherPartyNickname}
+            onOpenMap={item.data.onOpenMap}
+          />
+        );
+      }
+
+      if (item.type === 'tradeCompleted') {
+        return (
+          <TradeCompletedEmbed
+            alignment={item.data.alignment}
+            hasReviewed={item.data.hasReviewed}
+            onReviewButtonPress={onReviewButtonPress}
+          />
+        );
+      }
+
       const config = item.data;
       return (
         <TradeEmbed
@@ -186,13 +284,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           showButtons={config.showButtons}
           otherPartyNickname={config.otherPartyNickname}
           alignment={config.showButtons ? 'left' : 'right'}
-          onReviewButtonPress={onReviewButtonPress}
-          showReviewButton={showReviewButton}
           onOpenReservationModal={config.onOpenReservationModal}
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, showReviewButton, lastMyMessageId, combinedData]
+    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData]
   );
 
   const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);

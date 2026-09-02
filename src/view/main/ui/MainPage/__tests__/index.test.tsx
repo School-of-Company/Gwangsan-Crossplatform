@@ -37,6 +37,10 @@ jest.mock('~/widget/main', () => ({
     const { View } = require('react-native');
     return <View testID="slide-viewer" />;
   },
+  GwangsanBanner: ({ gwangsan }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="gwangsan">{gwangsan}</Text>;
+  },
 }));
 
 const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
@@ -59,6 +63,18 @@ describe('MainPageView', () => {
     expect(getByTestId('inform-head').props.children).toBe('광산점');
     expect(getByTestId('inform-dong').props.children).toBe('수완동');
     expect(getByTestId('inform-place').props.children).toBe('지점1');
+  });
+
+  it('보유한 광산 개수를 Gwangsan에 전달한다', () => {
+    mockUseGetMyInformation.mockReturnValue({
+      data: { headName: '광산점', dongName: '수완동', placeName: '지점1', gwangsan: 42 },
+      isError: false,
+      error: null,
+    });
+
+    const { getByTestId } = render(<MainPageView />);
+
+    expect(getByTestId('gwangsan').props.children).toBe(42);
   });
 
   it('data가 없으면 기본값을 Inform에 전달한다', () => {

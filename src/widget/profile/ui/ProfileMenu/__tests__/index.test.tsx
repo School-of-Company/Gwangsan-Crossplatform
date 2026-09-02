@@ -59,73 +59,80 @@ beforeEach(() => {
 });
 
 describe('ProfileMenu', () => {
-  it('본인 프로필이면 "나의 거래" 섹션과 "내 글", 회원탈퇴/로그아웃 행을 표시한다', () => {
+  it('본인 프로필이면 회원탈퇴/로그아웃 행을 표시한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
-    expect(getByText('나의 거래')).toBeTruthy();
-    expect(getByText('내 글')).toBeTruthy();
     expect(getByText('회원탈퇴')).toBeTruthy();
     expect(getByText('로그아웃')).toBeTruthy();
   });
 
-  it('상대방 프로필이면 "{이름}님의 거래" 섹션과 "{이름}님의 글"을 표시하고 회원탈퇴/로그아웃 행은 없다', () => {
-    const { getByText, queryByText } = render(
-      <ProfileMenu isMe={false} memberId={5} name="홍길동" />
-    );
+  it('상대방 프로필이면 회원탈퇴/로그아웃 행은 없다', () => {
+    const { queryByText } = render(<ProfileMenu isMe={false} memberId={5} />);
 
-    expect(getByText('홍길동님의 거래')).toBeTruthy();
-    expect(getByText('홍길동님의 글')).toBeTruthy();
     expect(queryByText('회원탈퇴')).toBeNull();
     expect(queryByText('로그아웃')).toBeNull();
   });
 
-  it('상대방 프로필에서 name이 없으면 "님의 거래"/"님의 글"로 표시한다', () => {
-    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} />);
+  it('본인 프로필에서는 판매관리/거래내역/후기/차단 목록 행 각각에 chevron 아이콘을 표시한다', () => {
+    const { getAllByTestId } = render(<ProfileMenu isMe memberId={1} />);
 
-    expect(getByText('님의 거래')).toBeTruthy();
-    expect(getByText('님의 글')).toBeTruthy();
+    expect(getAllByTestId('chevron-icon')).toHaveLength(4);
   });
 
-  it('내 글/거래 내역/후기 행 각각에 chevron 아이콘을 표시한다', () => {
-    const { getAllByTestId } = render(<ProfileMenu isMe memberId={1} />);
+  it('상대방 프로필에서는 판매관리/거래내역/후기 행에만 chevron 아이콘을 표시한다', () => {
+    const { getAllByTestId } = render(<ProfileMenu isMe={false} memberId={5} />);
 
     expect(getAllByTestId('chevron-icon')).toHaveLength(3);
   });
 
-  it('본인 프로필에서 "내 글"을 누르면 id 없이 posts 페이지로 이동한다', () => {
+  it('본인 프로필에서 "판매관리"를 누르면 id 없이 selling 페이지로 이동한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
-    fireEvent.press(getByText('내 글'));
+    fireEvent.press(getByText('판매관리'));
 
-    expect(push).toHaveBeenCalledWith('/profile/posts');
+    expect(push).toHaveBeenCalledWith('/profile/selling');
   });
 
-  it('본인 프로필에서 "거래 내역"을 누르면 id 없이 completedTrades 페이지로 이동한다', () => {
+  it('상대방 프로필에서 "판매관리"를 누르면 id와 함께 selling 페이지로 이동한다', () => {
+    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} />);
+
+    fireEvent.press(getByText('판매관리'));
+
+    expect(push).toHaveBeenCalledWith('/profile/selling?id=5');
+  });
+
+  it('본인 프로필에서 "거래내역"을 누르면 id 없이 purchased 페이지로 이동한다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
-    fireEvent.press(getByText('거래 내역'));
+    fireEvent.press(getByText('거래내역'));
 
-    expect(push).toHaveBeenCalledWith('/profile/completedTrades');
+    expect(push).toHaveBeenCalledWith('/profile/purchased');
   });
 
-  it('상대방 프로필에서 "{이름}님의 글"을 누르면 id와 함께 posts 페이지로 이동한다', () => {
-    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} name="홍길동" />);
+  it('상대방 프로필에서 "거래내역"을 누르면 id와 함께 purchased 페이지로 이동한다', () => {
+    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} />);
 
-    fireEvent.press(getByText('홍길동님의 글'));
+    fireEvent.press(getByText('거래내역'));
 
-    expect(push).toHaveBeenCalledWith('/profile/posts?id=5');
+    expect(push).toHaveBeenCalledWith('/profile/purchased?id=5');
   });
 
-  it('상대방 프로필에서 "거래 내역"을 누르면 id와 함께 completedTrades 페이지로 이동한다', () => {
-    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} name="홍길동" />);
+  it('본인 프로필에서 "차단 목록"을 누르면 차단 목록 페이지로 이동한다', () => {
+    const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
-    fireEvent.press(getByText('거래 내역'));
+    fireEvent.press(getByText('차단 목록'));
 
-    expect(push).toHaveBeenCalledWith('/profile/completedTrades?id=5');
+    expect(push).toHaveBeenCalledWith('/profile/blocked');
+  });
+
+  it('상대방 프로필에서는 "차단 목록" 행이 보이지 않는다', () => {
+    const { queryByText } = render(<ProfileMenu isMe={false} memberId={5} />);
+
+    expect(queryByText('차단 목록')).toBeNull();
   });
 
   it('"후기"를 누르면 해당 회원의 리뷰 페이지로 이동한다', () => {
-    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} name="홍길동" />);
+    const { getByText } = render(<ProfileMenu isMe={false} memberId={5} />);
 
     fireEvent.press(getByText('후기'));
 
@@ -143,7 +150,7 @@ describe('ProfileMenu', () => {
   it('memberId가 없을 때 후기 행의 onPress를 직접 호출해도 push하지 않는다', () => {
     const { UNSAFE_getAllByType } = render(<ProfileMenu isMe />);
 
-    // 행 순서: 내 글(0), 거래 내역(1), 후기(2)
+    // 행 순서: 판매관리(0), 거래내역(1), 후기(2)
     const reviewRow = UNSAFE_getAllByType(TouchableOpacity)[2];
     reviewRow.props.onPress();
 
@@ -220,7 +227,7 @@ describe('ProfileMenu', () => {
   it('행을 누르고 있다가 떼면 pressIn/pressOut 애니메이션 핸들러가 오류 없이 실행된다', () => {
     const { getByText } = render(<ProfileMenu isMe memberId={1} />);
 
-    const row = getByText('내 글').parent?.parent;
+    const row = getByText('회원탈퇴').parent?.parent;
     if (!row) throw new Error('row not found');
 
     expect(() => {

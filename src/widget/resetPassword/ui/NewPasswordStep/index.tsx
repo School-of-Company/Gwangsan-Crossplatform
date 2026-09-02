@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { AlertModal } from '@/shared/ui/AlertModal';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
@@ -7,7 +8,7 @@ import {
   useResetPasswordStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
-import { View, TextInput, Alert } from 'react-native';
+import { View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
 import { resetPassword } from '~/entity/auth/api/resetPassword';
 import { router } from 'expo-router';
@@ -26,6 +27,8 @@ export default function NewPasswordStep() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccessAlertVisible, setIsSuccessAlertVisible] = useState(false);
+  const [errorAlertMessage, setErrorAlertMessage] = useState<string | null>(null);
 
   const passwordConfirmRef = useRef<TextInput>(null);
 
@@ -84,22 +87,9 @@ export default function NewPasswordStep() {
       updateNewPassword(localPassword);
       updateNewPasswordConfirm(localPasswordConfirm);
 
-      Alert.alert(
-        '비밀번호 재설정 완료',
-        '비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 로그인해주세요.',
-        [
-          {
-            text: '확인',
-            onPress: () => {
-              resetStore();
-              router.replace('/signin');
-            },
-          },
-        ]
-      );
+      setIsSuccessAlertVisible(true);
     } catch (error) {
-      Alert.alert(
-        '비밀번호 재설정 실패',
+      setErrorAlertMessage(
         error instanceof Error
           ? error.message
           : '비밀번호 재설정에 실패했습니다. 다시 시도해주세요.'
@@ -113,8 +103,17 @@ export default function NewPasswordStep() {
     phoneNumber,
     updateNewPassword,
     updateNewPasswordConfirm,
-    resetStore,
   ]);
+
+  const handleConfirmSuccess = useCallback(() => {
+    setIsSuccessAlertVisible(false);
+    resetStore();
+    router.replace('/signin');
+  }, [resetStore]);
+
+  const handleCloseErrorAlert = useCallback(() => {
+    setErrorAlertMessage(null);
+  }, []);
 
   const handleConfirmSubmit = useCallback(() => {
     if (localPassword.trim() !== '' && localPasswordConfirm.trim() !== '') {
@@ -159,6 +158,22 @@ export default function NewPasswordStep() {
         />
         <ErrorMessage error={confirmError} />
       </View>
+
+      <AlertModal
+        isVisible={isSuccessAlertVisible}
+        message={
+          '비밀번호 재설정 완료\n비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 로그인해주세요.'
+        }
+        confirmText="확인"
+        onConfirm={handleConfirmSuccess}
+      />
+
+      <AlertModal
+        isVisible={errorAlertMessage !== null}
+        message={`비밀번호 재설정 실패\n${errorAlertMessage ?? ''}`}
+        confirmText="확인"
+        onConfirm={handleCloseErrorAlert}
+      />
     </ResetPasswordForm>
   );
 }

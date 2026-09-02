@@ -1,5 +1,4 @@
 import { act, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { usePostAction } from '../usePostAction';
 import { useGetItem } from '~/entity/post/model/useGetItem';
@@ -52,7 +51,10 @@ const setupMocks = (dataOverrides = {}) => {
   mockUseDeletePost.mockReturnValue({ deletePost: jest.fn(), isLoading: false });
   mockUseTradeRequest.mockReturnValue({
     handleTradeRequest: jest.fn(),
+    handleWithdrawTradeRequest: jest.fn(),
     isLoading: false,
+    isWithdrawing: false,
+    hasPendingRequest: false,
   });
   mockUseChatEntry.mockReturnValue({ navigateToChat: jest.fn(), isLoading: false });
   mockCheckIsMyPost.mockResolvedValue(false);
@@ -151,13 +153,82 @@ describe('usePostAction', () => {
       setupMocks();
       mockUseTradeRequest.mockReturnValue({
         handleTradeRequest: jest.fn(),
+        handleWithdrawTradeRequest: jest.fn(),
         isLoading: true,
+        isWithdrawing: false,
+        hasPendingRequest: false,
       });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       expect(result.current.computedValues.tradeButtonText).toBe('신청 중...');
       expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
+    });
+
+    it('tradeRequest.isWithdrawing이 true이면 tradeButtonText가 "취소 중..."이고 버튼이 비활성화된다', async () => {
+      setupMocks();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: jest.fn(),
+        handleWithdrawTradeRequest: jest.fn(),
+        isLoading: false,
+        isWithdrawing: true,
+        hasPendingRequest: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.tradeButtonText).toBe('취소 중...');
+      expect(result.current.computedValues.isTradeButtonDisabled).toBe(true);
+    });
+
+    it('tradeRequest.hasPendingRequest가 true이면 tradeButtonText가 "요청 취소"이고 버튼은 활성화된 채 유지된다', async () => {
+      setupMocks({ isCompletable: false });
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: jest.fn(),
+        handleWithdrawTradeRequest: jest.fn(),
+        isLoading: false,
+        isWithdrawing: false,
+        hasPendingRequest: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.computedValues.tradeButtonText).toBe('요청 취소');
+      expect(result.current.computedValues.isTradeButtonDisabled).toBe(false);
+    });
+
+    it('actionHandlers.onTradeRequest는 hasPendingRequest가 true이면 handleWithdrawTradeRequest를 사용한다', async () => {
+      setupMocks({ isCompletable: false });
+      const mockHandleTradeRequest = jest.fn();
+      const mockHandleWithdrawTradeRequest = jest.fn();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: mockHandleTradeRequest,
+        handleWithdrawTradeRequest: mockHandleWithdrawTradeRequest,
+        isLoading: false,
+        isWithdrawing: false,
+        hasPendingRequest: true,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.actionHandlers.onTradeRequest).toBe(mockHandleWithdrawTradeRequest);
+    });
+
+    it('actionHandlers.onTradeRequest는 hasPendingRequest가 false이면 handleTradeRequest를 사용한다', async () => {
+      setupMocks();
+      const mockHandleTradeRequest = jest.fn();
+      const mockHandleWithdrawTradeRequest = jest.fn();
+      mockUseTradeRequest.mockReturnValue({
+        handleTradeRequest: mockHandleTradeRequest,
+        handleWithdrawTradeRequest: mockHandleWithdrawTradeRequest,
+        isLoading: false,
+        isWithdrawing: false,
+        hasPendingRequest: false,
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      expect(result.current.actionHandlers.onTradeRequest).toBe(mockHandleTradeRequest);
     });
   });
 
@@ -335,29 +406,34 @@ describe('usePostAction', () => {
   });
 
   describe('actionHandlers.onDelete', () => {
-    it('data가 있으면 onDelete 호출 시 오류가 없다', () => {
+    it('data가 있으면 onDelete 호출 시 isDeleteAlertVisible이 true가 된다', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(true);
     });
 
-    it('삭제 확인 Alert에서 삭제를 누르면 deletePost를 data.id, data.type, data.mode로 호출한다', () => {
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    it('삭제 확인 AlertModal에서 onConfirmDelete를 호출하면 deletePost를 data.id, data.type, data.mode로 호출하고 알럿을 닫는다', () => {
       const mockDeletePost = jest.fn();
       mockUseDeletePost.mockReturnValue({ deletePost: mockDeletePost, isLoading: false });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
-
-      const alertCall = alertSpy.mock.calls[0];
-      const buttons = alertCall[2] as { text: string; onPress?: () => void }[];
-      const confirmButton = buttons.find((b) => b.text === '삭제');
-      confirmButton?.onPress?.();
+      act(() => result.current.actionHandlers.onConfirmDelete());
 
       expect(mockDeletePost).toHaveBeenCalledWith(1, 'OBJECT', 'GIVER');
+      expect(result.current.isDeleteAlertVisible).toBe(false);
+    });
 
-      alertSpy.mockRestore();
+    it('modalHandlers.closeDeleteAlert를 호출하면 isDeleteAlertVisible이 false가 된다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+      act(() => result.current.modalHandlers.closeDeleteAlert());
+
+      expect(result.current.isDeleteAlertVisible).toBe(false);
     });
 
     it('data가 없으면 아무것도 하지 않는다', () => {
@@ -371,6 +447,8 @@ describe('usePostAction', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
       act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(false);
     });
   });
 

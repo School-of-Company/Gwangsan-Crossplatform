@@ -340,7 +340,7 @@ describe('ReservationPage', () => {
       );
     });
 
-    it('예약 성공 시 handleReservation을 올바른 payload로 호출하고, 요약 메시지 전송/위치 초기화/뒤로가기를 수행한다', async () => {
+    it('예약 성공 시 handleReservation을 올바른 payload로 호출하고, 별도 메시지 전송 없이 위치 초기화/뒤로가기를 수행한다', async () => {
       const { getByText, getAllByText, getByTestId } = render(<ReservationPage />);
 
       fillAllFields(getByText, getByTestId);
@@ -357,12 +357,9 @@ describe('ReservationPage', () => {
         })
       );
 
-      expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining('예약을 했어요'), []);
-      expect(mockSendMessage).toHaveBeenCalledWith(
-        expect.stringContaining(`${NOT_TODAY_DATE_LABEL} 14:30`),
-        []
-      );
-      expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining('스타벅스'), []);
+      // 예약 상태는 TradeEmbed 카드가 캐시(patchProduct/transactionStateChanged)로부터
+      // 직접 반영하므로, 더 이상 별도의 요약 텍스트 메시지를 보내지 않는다.
+      expect(mockSendMessage).not.toHaveBeenCalled();
 
       await waitFor(() => expect(mockResetLocation).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(mockRouterBack).toHaveBeenCalledTimes(1));

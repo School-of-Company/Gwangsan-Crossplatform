@@ -28,14 +28,25 @@ const setupUploadMock = (mutateAsync = jest.fn()) => {
   return mutateAsync;
 };
 
+// ActionSheet를 갤러리(1) 선택으로 고정
+const mockActionSheetGallery = () =>
+  jest
+    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .mockImplementation((_opts: any, cb: any) => cb(1));
+
+// ActionSheet를 카메라(2) 선택으로 고정
+const mockActionSheetCamera = () =>
+  jest
+    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .mockImplementation((_opts: any, cb: any) => cb(2));
+
 beforeEach(() => {
   jest.clearAllMocks();
   setupUploadMock();
-  jest
-    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-    .mockImplementation((_options, callback) => {
-      callback(1); // '갤러리에서 선택' 시뮬레이션
-    });
+  mockActionSheetGallery();
+  // 기본값: 권한 거부 (ActionSheet 콜백 후 비동기 흐름이 조용히 종료되도록)
+  mockRequestPermission.mockResolvedValue({ granted: false });
+  mockRequestCameraPermission.mockResolvedValue({ granted: false });
 });
 
 describe('useChatInput', () => {
@@ -49,6 +60,8 @@ describe('useChatInput', () => {
       expect(result.current.selectedImages).toEqual([]);
       expect(result.current.isUploading).toBe(false);
       expect(result.current.isSending).toBe(false);
+      expect(result.current.permissionAlertMessage).toBeNull();
+      expect(result.current.isUploadErrorAlertVisible).toBe(false);
     });
   });
 
@@ -217,7 +230,7 @@ describe('useChatInput', () => {
       expect(mockRequestPermission).not.toHaveBeenCalled();
     });
 
-    it('권한이 없으면 이미지를 추가하지 않는다', async () => {
+    it('권한이 없으면 이미지를 추가하지 않고 권한 안내를 표시한다', async () => {
       mockRequestPermission.mockResolvedValue({ granted: false });
 
       const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
@@ -228,6 +241,22 @@ describe('useChatInput', () => {
 
       expect(result.current.selectedImages).toEqual([]);
       expect(mockLaunchImageLibrary).not.toHaveBeenCalled();
+      expect(result.current.permissionAlertMessage).toBe(
+        '사진첨부를 위해 사진첩 접근 권한이 필요합니다.'
+      );
+    });
+
+    it('closePermissionAlert를 호출하면 권한 안내가 사라진다', async () => {
+      mockRequestPermission.mockResolvedValue({ granted: false });
+
+      const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
+
+      await act(async () => {
+        await result.current.handleImagePicker();
+      });
+      act(() => result.current.closePermissionAlert());
+
+      expect(result.current.permissionAlertMessage).toBeNull();
     });
 
     it('이미지 선택이 취소되면 selectedImages가 변하지 않는다', async () => {
@@ -280,7 +309,7 @@ describe('useChatInput', () => {
       expect(result.current.isUploading).toBe(false);
     });
 
-    it('이미지 업로드 실패 시 selectedImages가 변하지 않고 isUploading이 false이다', async () => {
+    it('이미지 업로드 실패 시 selectedImages가 변하지 않고 업로드 오류 안내를 표시한다', async () => {
       setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
       mockRequestPermission.mockResolvedValue({ granted: true });
       mockLaunchImageLibrary.mockResolvedValue({
@@ -291,23 +320,34 @@ describe('useChatInput', () => {
       const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
 
       await act(async () => {
-        try {
-          await result.current.handleImagePicker();
-        } catch {
-          // uploadImage re-throws after showing Alert
-        }
+        await result.current.handleImagePicker();
       });
 
       expect(result.current.selectedImages).toEqual([]);
       expect(result.current.isUploading).toBe(false);
+      expect(result.current.isUploadErrorAlertVisible).toBe(true);
+    });
+
+    it('closeUploadErrorAlert를 호출하면 업로드 오류 안내가 사라진다', async () => {
+      setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
+      mockRequestPermission.mockResolvedValue({ granted: true });
+      mockLaunchImageLibrary.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://photo.jpg' }],
+      });
+
+      const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
+
+      await act(async () => {
+        await result.current.handleImagePicker();
+      });
+      act(() => result.current.closeUploadErrorAlert());
+
+      expect(result.current.isUploadErrorAlertVisible).toBe(false);
     });
 
     it('iOS ActionSheet에서 카메라 촬영을 선택하면 카메라 권한을 요청하고 촬영 결과를 업로드한다', async () => {
-      jest
-        .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-        .mockImplementation((_options, callback) => {
-          callback(2); // '카메라로 촬영' 시뮬레이션
-        });
+      mockActionSheetCamera();
       mockRequestCameraPermission.mockResolvedValue({ granted: true });
       const mockMutateAsync = setupUploadMock(
         jest.fn().mockResolvedValue({ imageId: 20, imageUrl: 'https://example.com/cam.jpg' })
@@ -330,12 +370,8 @@ describe('useChatInput', () => {
       ]);
     });
 
-    it('카메라 권한이 없으면 촬영하지 않는다', async () => {
-      jest
-        .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-        .mockImplementation((_options, callback) => {
-          callback(2);
-        });
+    it('카메라 권한이 없으면 촬영하지 않고 권한 안내를 표시한다', async () => {
+      mockActionSheetCamera();
       mockRequestCameraPermission.mockResolvedValue({ granted: false });
 
       const { result } = renderHookWithProviders(() => useChatInput({ onSendMessage }));
@@ -346,6 +382,9 @@ describe('useChatInput', () => {
 
       expect(mockLaunchCamera).not.toHaveBeenCalled();
       expect(result.current.selectedImages).toEqual([]);
+      expect(result.current.permissionAlertMessage).toBe(
+        '카메라 사용을 위해 카메라 접근 권한이 필요합니다.'
+      );
     });
 
     it('ActionSheet에서 취소를 선택하면 아무 동작도 하지 않는다', async () => {

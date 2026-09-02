@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Alert, ActionSheetIOS, Platform } from 'react-native';
+import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useUploadImage } from '@/shared/model/useUploadImage';
 import { logger } from '@/shared/lib/logger';
@@ -20,6 +20,8 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
   const [selectedImages, setSelectedImages] = useState<ImagePreview[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [permissionAlertMessage, setPermissionAlertMessage] = useState<string | null>(null);
+  const [isUploadErrorAlertVisible, setIsUploadErrorAlertVisible] = useState(false);
 
   const uploadImageMutation = useUploadImage();
 
@@ -39,7 +41,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
         return await uploadImageMutation.mutateAsync(imageUri);
       } catch (error) {
         logger.error('useChatInput error', error);
-        Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
+        setIsUploadErrorAlertVisible(true);
         throw error;
       }
     },
@@ -71,7 +73,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
   const pickFromGallery = useCallback(async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('권한 필요', '사진첨부를 위해 사진첩 접근 권한이 필요합니다.');
+      setPermissionAlertMessage('사진첨부를 위해 사진첩 접근 권한이 필요합니다.');
       return;
     }
     await pickAndUpload(() =>
@@ -88,7 +90,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
   const pickFromCamera = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('권한 필요', '카메라 사용을 위해 카메라 접근 권한이 필요합니다.');
+      setPermissionAlertMessage('카메라 사용을 위해 카메라 접근 권한이 필요합니다.');
       return;
     }
     await pickAndUpload(() =>
@@ -120,6 +122,14 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       ]);
     }
   }, [disabled, isUploading, selectedImages.length, pickFromGallery, pickFromCamera]);
+
+  const closePermissionAlert = useCallback(() => {
+    setPermissionAlertMessage(null);
+  }, []);
+
+  const closeUploadErrorAlert = useCallback(() => {
+    setIsUploadErrorAlertVisible(false);
+  }, []);
 
   const removeImage = useCallback((imageId: number) => {
     setSelectedImages((prev) => prev.filter((img) => img.imageId !== imageId));
@@ -156,11 +166,15 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     isUploading,
     isSending,
     canSend,
+    permissionAlertMessage,
+    isUploadErrorAlertVisible,
 
     updateMessage,
     handleImagePicker,
     removeImage,
     handleSendMessage,
     resetInput,
+    closePermissionAlert,
+    closeUploadErrorAlert,
   };
 };

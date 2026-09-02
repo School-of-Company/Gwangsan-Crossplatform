@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { ReportModal } from '~/entity/post/ui';
-import { BottomSheetModalWrapper } from '~/shared/ui';
+import { AlertModal, BottomSheetModalWrapper } from '~/shared/ui';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import ProfileHeader from '../ProfileHeader';
 
@@ -17,6 +17,7 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
   const R = useRouter();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isReportVisible, setIsReportVisible] = useState(false);
+  const [isBlockAlertVisible, setIsBlockAlertVisible] = useState(false);
   const { block, unblock } = useBlockUser(id);
 
   const handleEditProfile = useCallback(() => {
@@ -33,18 +34,21 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
 
   const handleBlockPress = useCallback(() => {
     setIsMenuVisible(false);
+    setIsBlockAlertVisible(true);
+  }, []);
+
+  const handleCloseBlockAlert = useCallback(() => {
+    setIsBlockAlertVisible(false);
+  }, []);
+
+  const handleConfirmBlock = useCallback(() => {
+    setIsBlockAlertVisible(false);
     if (isBlocked) {
-      Alert.alert('차단 해제', `${name}님의 차단을 해제하시겠습니까?`, [
-        { text: '취소', style: 'cancel' },
-        { text: '해제', onPress: () => unblock.mutate() },
-      ]);
+      unblock.mutate();
     } else {
-      Alert.alert('사용자 차단', `${name}님을 차단하시겠습니까?`, [
-        { text: '취소', style: 'cancel' },
-        { text: '차단', style: 'destructive', onPress: () => block.mutate() },
-      ]);
+      block.mutate();
     }
-  }, [isBlocked, name, block, unblock]);
+  }, [isBlocked, block, unblock]);
 
   const handleReportPress = useCallback(() => {
     setIsMenuVisible(false);
@@ -90,6 +94,18 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
       </BottomSheetModalWrapper>
 
       <ReportModal memberId={id} isVisible={isReportVisible} onClose={handleCloseReport} />
+
+      <AlertModal
+        isVisible={isBlockAlertVisible}
+        message={
+          isBlocked ? `${name}님의 차단을 해제하시겠습니까?` : `${name}님을 차단하시겠습니까?`
+        }
+        confirmText={isBlocked ? '해제' : '차단'}
+        destructive={!isBlocked}
+        isLoading={block.isPending || unblock.isPending}
+        onCancel={handleCloseBlockAlert}
+        onConfirm={handleConfirmBlock}
+      />
     </>
   );
 }

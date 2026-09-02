@@ -9,6 +9,7 @@ export { Header } from './Header';
 export { BottomSheetModalWrapper } from './BottomSheetModalWrapper';
 export { BottomSheetPortalOutlet } from './BottomSheetPortalOutlet';
 export { default as ProgressBar } from './ProgressBar';
+export { LightBar } from './LightBar';
 export { SlideIndicator } from './SlideIndicator';
 export { Card } from './Card';
 export { PillTabs } from './PillTabs';

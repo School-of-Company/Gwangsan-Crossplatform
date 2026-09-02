@@ -35,6 +35,7 @@ const defaultProps = {
   hasTradeRequest: false,
   shouldShowButtons: false,
   onOpenReservationModal: jest.fn(),
+  onOpenMap: jest.fn(),
 };
 
 describe('useChatUIState', () => {
@@ -149,6 +150,24 @@ describe('useChatUIState', () => {
       );
 
       expect(result.current.tradeEmbedConfig.onOpenReservationModal).toBeDefined();
+    });
+
+    it('예약 위치 좌표가 없으면 onOpenMap이 undefined이다', () => {
+      setupMocks({ roomData: { product: { id: 1 } } });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.tradeEmbedConfig.onOpenMap).toBeUndefined();
+    });
+
+    it('예약 위치 좌표가 있으면 onOpenMap이 제공된다', () => {
+      setupMocks({
+        roomData: { product: { id: 1, reservationLatitude: 35.14, reservationLongitude: 126.79 } },
+      });
+
+      const { result } = renderHookWithProviders(() => useChatUIState(defaultProps));
+
+      expect(result.current.tradeEmbedConfig.onOpenMap).toBeDefined();
     });
   });
 

@@ -12,6 +12,7 @@ interface ProgressBarProps {
 const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: ProgressBarProps) => {
   const [sliderWidth, setSliderWidth] = useState(0);
   const [localValue, setLocalValue] = useState(value);
+  const [isDragging, setIsDragging] = useState(false);
   const sliderRef = useRef<View>(null);
   const onChangeRef = useRef(onChange);
   const barHeight = 6;
@@ -45,6 +46,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (evt) => {
+      setIsDragging(true);
       if (sliderRef.current) {
         sliderRef.current.measure((pageX, pageY) => {
           const touchX = evt.nativeEvent.pageX - pageX;
@@ -59,6 +61,12 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
           updateValueFromX(touchX);
         });
       }
+    },
+    onPanResponderRelease: () => {
+      setIsDragging(false);
+    },
+    onPanResponderTerminate: () => {
+      setIsDragging(false);
     },
   });
 
@@ -107,6 +115,18 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
               pointerEvents: 'none',
             }}
           />
+        )}
+        {sliderWidth > 0 && isDragging && (
+          <View
+            testID="progress-bar-value-tooltip"
+            pointerEvents="none"
+            className="absolute min-w-[32px] items-center justify-center rounded-md bg-gray-900 px-2 py-1"
+            style={{
+              left: thumbPosition + thumbSize / 2 - 16,
+              top: thumbTop - 34,
+            }}>
+            <Text className="text-xs font-medium text-white">{localValue}</Text>
+          </View>
         )}
       </View>
     </View>

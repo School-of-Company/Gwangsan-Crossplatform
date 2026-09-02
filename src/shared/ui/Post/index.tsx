@@ -4,6 +4,10 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { PostType } from '~/shared/types/postType';
 
+interface PostProps extends PostType {
+  paddingClassName?: string;
+}
+
 export default function Post({
   id,
   title,
@@ -13,7 +17,8 @@ export default function Post({
   images = [],
   seller,
   buyer,
-}: PostType) {
+  paddingClassName = 'px-6 py-4',
+}: PostProps) {
   const router = useRouter();
 
   const handlePress = useCallback(() => {
@@ -47,7 +52,7 @@ export default function Post({
   return (
     <TouchableOpacity
       onPress={handlePress}
-      className="flex flex-row items-center gap-6 px-6 py-4"
+      className={`flex flex-row items-center gap-6 ${paddingClassName}`}
       activeOpacity={isTemporary ? 1 : 0.7}
       disabled={isTemporary}>
       <View className="relative">

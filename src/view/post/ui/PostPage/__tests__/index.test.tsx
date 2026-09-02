@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { usePostAction } from '~/widget/post/model/usePostAction';
 import PostPageView from '../index';
@@ -33,12 +33,24 @@ jest.mock('~/entity/post/ui/ReviewsModal', () => {
   return () => <View testID="reviews-modal" />;
 });
 
-jest.mock('~/shared/ui', () => ({
-  Header: ({ headerTitle }: any) => {
-    const { Text } = require('react-native');
-    return <Text testID="header-title">{headerTitle}</Text>;
-  },
-}));
+jest.mock('~/shared/ui', () => {
+  const { Text, TouchableOpacity, View } = require('react-native');
+  return {
+    Header: ({ headerTitle }: any) => <Text testID="header-title">{headerTitle}</Text>,
+    AlertModal: ({ isVisible, message, confirmText, onCancel, onConfirm }: any) =>
+      isVisible ? (
+        <View testID="delete-alert">
+          <Text>{message}</Text>
+          <TouchableOpacity testID="delete-alert-cancel" onPress={onCancel}>
+            <Text>취소</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="delete-alert-confirm" onPress={onConfirm}>
+            <Text>{confirmText}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null,
+  };
+});
 
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUsePostAction = usePostAction as jest.Mock;
@@ -66,6 +78,7 @@ const makeUsePostActionReturn = (overrides = {}) => ({
   isDeleting: false,
   isReportModalVisible: false,
   isReviewModalVisible: false,
+  isDeleteAlertVisible: false,
   reviewLight: 60,
   reviewContents: '',
   isChatLoading: false,
@@ -75,6 +88,7 @@ const makeUsePostActionReturn = (overrides = {}) => ({
     closeReportModal: jest.fn(),
     openReviewModal: jest.fn(),
     closeReviewModal: jest.fn(),
+    closeDeleteAlert: jest.fn(),
   },
   reviewHandlers: {
     onSubmit: jest.fn(),
@@ -83,7 +97,12 @@ const makeUsePostActionReturn = (overrides = {}) => ({
     onAnimationComplete: jest.fn(),
   },
   navigationHandlers: { goToEdit: jest.fn(), goToChat: jest.fn() },
-  actionHandlers: { onDelete: jest.fn(), onTradeRequest: jest.fn(), onRefresh: jest.fn() },
+  actionHandlers: {
+    onDelete: jest.fn(),
+    onConfirmDelete: jest.fn(),
+    onTradeRequest: jest.fn(),
+    onRefresh: jest.fn(),
+  },
   computedValues: {
     headerTitle: '팔아요',
     canTrade: true,
@@ -169,6 +188,57 @@ describe('PostPageView', () => {
       render(<PostPageView />);
 
       expect(mockUsePostAction).toHaveBeenCalledWith({ id: '42', review: '1' });
+    });
+
+    it('isDeleteAlertVisible이 true이면 삭제 확인 AlertModal을 표시한다', () => {
+      mockUsePostAction.mockReturnValue(makeUsePostActionReturn({ isDeleteAlertVisible: true }));
+
+      const { getByTestId } = render(<PostPageView />);
+
+      expect(getByTestId('delete-alert')).toBeTruthy();
+    });
+
+    it('삭제 확인 AlertModal에서 확인을 누르면 actionHandlers.onConfirmDelete를 호출한다', () => {
+      const onConfirmDelete = jest.fn();
+      mockUsePostAction.mockReturnValue(
+        makeUsePostActionReturn({
+          isDeleteAlertVisible: true,
+          actionHandlers: {
+            onDelete: jest.fn(),
+            onConfirmDelete,
+            onTradeRequest: jest.fn(),
+            onRefresh: jest.fn(),
+          },
+        })
+      );
+
+      const { getByTestId } = render(<PostPageView />);
+
+      fireEvent.press(getByTestId('delete-alert-confirm'));
+
+      expect(onConfirmDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it('삭제 확인 AlertModal에서 취소를 누르면 modalHandlers.closeDeleteAlert를 호출한다', () => {
+      const closeDeleteAlert = jest.fn();
+      mockUsePostAction.mockReturnValue(
+        makeUsePostActionReturn({
+          isDeleteAlertVisible: true,
+          modalHandlers: {
+            openReportModal: jest.fn(),
+            closeReportModal: jest.fn(),
+            openReviewModal: jest.fn(),
+            closeReviewModal: jest.fn(),
+            closeDeleteAlert,
+          },
+        })
+      );
+
+      const { getByTestId } = render(<PostPageView />);
+
+      fireEvent.press(getByTestId('delete-alert-cancel'));
+
+      expect(closeDeleteAlert).toHaveBeenCalledTimes(1);
     });
   });
 });

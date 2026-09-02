@@ -9,7 +9,6 @@ import { useSignout, useWithdrawal } from '~/entity/auth';
 interface ProfileMenuProps {
   isMe: boolean;
   memberId?: number;
-  name?: string;
 }
 
 interface PressableCardRowProps {
@@ -81,7 +80,7 @@ const ProfileActionRow = ({ label, disabled = false, onPress }: ProfileActionRow
   </PressableCardRow>
 );
 
-export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) {
+export default function ProfileMenu({ isMe, memberId }: ProfileMenuProps) {
   const router = useRouter();
   const { signout, isLoading: isSignoutLoading } = useSignout();
   const { withdrawal, isLoading: isWithdrawalLoading } = useWithdrawal();
@@ -121,16 +120,10 @@ export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) 
   return (
     <View className="mx-6 mt-3 gap-4">
       <View className="overflow-hidden rounded-xl bg-[#F3F4F5]">
-        <Text className="px-6 pb-2 pt-4 text-lg font-medium">
-          {isMe ? '나의 거래' : `${name ?? ''}님의 거래`}
-        </Text>
+        <TradeMenuRow label="판매관리" onPress={() => router.push(`/profile/selling${idQuery}`)} />
         <TradeMenuRow
-          label={isMe ? '내 글' : `${name ?? ''}님의 글`}
-          onPress={() => router.push(`/profile/posts${idQuery}`)}
-        />
-        <TradeMenuRow
-          label="거래 내역"
-          onPress={() => router.push(`/profile/completedTrades${idQuery}`)}
+          label="거래내역"
+          onPress={() => router.push(`/profile/purchased${idQuery}`)}
         />
         <TradeMenuRow
           label="후기"
@@ -139,6 +132,7 @@ export default function ProfileMenu({ isMe, memberId, name }: ProfileMenuProps) 
             if (memberId != null) router.push(`/reviews/${memberId}`);
           }}
         />
+        {isMe && <TradeMenuRow label="차단 목록" onPress={() => router.push('/profile/blocked')} />}
       </View>
 
       {appVersion && (

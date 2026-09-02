@@ -33,12 +33,10 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
   isChatLoading,
   refreshing,
   review,
-  computedValues,
   onDeletePress,
   onReportPress,
   onEditPress,
   onChatPress,
-  onTradeRequest,
   onReviewButtonPress,
   onRefresh,
 }) => {
@@ -96,31 +94,14 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
           <Button variant="primary" width="w-full" onPress={onReviewButtonPress}>
             리뷰 작성
           </Button>
+        ) : isMyPost ? (
+          <Button variant="primary" width="w-[100%]" onPress={onEditPress}>
+            수정하기
+          </Button>
         ) : (
-          <>
-            {!isMyPost && (
-              <Button
-                variant="secondary"
-                width="w-1/2"
-                onPress={onChatPress}
-                disabled={isChatLoading}>
-                {isChatLoading ? '채팅방 생성 중...' : '채팅하기'}
-              </Button>
-            )}
-            {isMyPost ? (
-              <Button variant="primary" width="w-[100%]" onPress={onEditPress}>
-                수정하기
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                width="w-1/2"
-                onPress={onTradeRequest}
-                disabled={computedValues.isTradeButtonDisabled}>
-                {computedValues.tradeButtonText}
-              </Button>
-            )}
-          </>
+          <Button variant="primary" width="w-full" onPress={onChatPress} disabled={isChatLoading}>
+            {isChatLoading ? '채팅방 생성 중...' : '채팅하러 가기'}
+          </Button>
         )}
       </View>
     </View>

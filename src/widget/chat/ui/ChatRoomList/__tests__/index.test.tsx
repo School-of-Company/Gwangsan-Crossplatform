@@ -5,6 +5,7 @@ import { renderWithProviders as render } from '~/test-utils';
 import { ChatRoomList } from '../index';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
+import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import {
   useChatRooms,
   useChatSocket,
@@ -21,6 +22,30 @@ jest.mock('expo-router', () => ({
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
 }));
+
+jest.mock('~/entity/profile/model/useBlockUser', () => ({
+  useBlockUser: jest.fn(),
+}));
+
+jest.mock('~/entity/post/ui', () => {
+  const { TouchableOpacity, Text } = require('react-native');
+  return {
+    ReportModal: ({
+      memberId,
+      isVisible,
+      onClose,
+    }: {
+      memberId?: number;
+      isVisible: boolean;
+      onClose: () => void;
+    }) =>
+      isVisible ? (
+        <TouchableOpacity testID="report-modal-close" onPress={onClose}>
+          <Text>{`신고 모달 (memberId: ${memberId})`}</Text>
+        </TouchableOpacity>
+      ) : null,
+  };
+});
 
 jest.mock('@/entity/chat', () => ({
   useChatRooms: jest.fn(),
@@ -55,9 +80,11 @@ jest.mock('@/entity/chat', () => ({
 const mockUseChatRooms = useChatRooms as jest.Mock;
 const mockUseChatSocket = useChatSocket as jest.Mock;
 const mockUseDeleteChatRoom = useDeleteChatRoom as jest.Mock;
+const mockUseBlockUser = useBlockUser as jest.Mock;
 const mockGetChatRoomData = getChatRoomData as jest.Mock;
 const mockJoinRoom = jest.fn();
 const mockDeleteMutate = jest.fn();
+const mockBlockMutate = jest.fn();
 
 const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
   data: [],
@@ -72,8 +99,13 @@ beforeEach(() => {
   mockUseChatRooms.mockReturnValue(makeChatRoomsReturn());
   mockUseChatSocket.mockReturnValue({ joinRoom: mockJoinRoom });
   mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: false });
+  mockUseBlockUser.mockReturnValue({ block: { mutate: mockBlockMutate, isPending: false } });
   mockGetChatRoomData.mockResolvedValue({ product: null, messages: [] });
   useBottomSheetPortalStore.getState().reset();
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 describe('ChatRoomList', () => {
@@ -386,5 +418,128 @@ describe('ChatRoomList', () => {
       });
       expect(queryByTestId('room-7')).toBeTruthy();
     });
+  });
+
+  describe('채팅방 차단 / 신고', () => {
+    beforeEach(() => {
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({
+          data: [{ roomId: 7, nickname: '방장', member: { memberId: 42, nickname: '광산주민' } }],
+        })
+      );
+    });
+
+    it('메뉴를 열면 차단하기/신고하기/채팅방 나가기 항목을 표시한다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+
+      expect(getByText('차단하기')).toBeTruthy();
+      expect(getByText('신고하기')).toBeTruthy();
+      expect(getByText('채팅방 나가기')).toBeTruthy();
+    });
+
+    it('차단하기를 누르면 상대방 닉네임으로 확인 AlertModal을 띄운다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('차단하기'));
+
+      expect(getByText('광산주민님을 차단하시겠습니까?')).toBeTruthy();
+    });
+
+    it('차단 확인 AlertModal에서 차단을 누르면 block.mutate를 호출한다', () => {
+      const { getByTestId, getByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('차단하기'));
+      fireEvent.press(getByText('차단'));
+
+      expect(mockBlockMutate).toHaveBeenCalled();
+    });
+
+    it('차단 확인 AlertModal에서 취소를 누르면 block.mutate를 호출하지 않고 닫힌다', () => {
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('차단하기'));
+      fireEvent.press(getByText('취소'));
+
+      expect(mockBlockMutate).not.toHaveBeenCalled();
+      expect(queryByText('광산주민님을 차단하시겠습니까?')).toBeNull();
+    });
+
+    it('신고하기를 누르면 메뉴를 닫고 해당 사용자의 memberId로 신고 모달을 연다', async () => {
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('신고하기'));
+
+      // 바텀시트 닫힘 애니메이션(SHEET_TRANSITION_DURATION=500ms)이 끝나야 언마운트되는데,
+      // CI에서 커버리지 계측 + 전체 스위트 동시 실행 시 리소스 경합으로 3000ms를 넘기는 경우가 있어
+      // 여유를 크게 둔다. it()의 타임아웃도 함께 늘려야 waitFor가 끝까지 기다릴 수 있다.
+      await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 10000 });
+      expect(getByText('신고 모달 (memberId: 42)')).toBeTruthy();
+    }, 15000);
+
+    it('신고 모달의 onClose를 호출하면 모달이 닫힌다', async () => {
+      const { getByTestId, getByText, queryByTestId } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('신고하기'));
+
+      await waitFor(() => expect(getByTestId('report-modal-close')).toBeTruthy());
+
+      fireEvent.press(getByTestId('report-modal-close'));
+
+      await waitFor(() => expect(queryByTestId('report-modal-close')).toBeNull());
+    });
+
+    it('메뉴에서 닫기를 누르면 메뉴가 닫힌다', async () => {
+      const { getByTestId, getByText, queryByText } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      expect(getByText('차단하기')).toBeTruthy();
+
+      fireEvent.press(getByText('닫기'));
+
+      // 위와 동일하게 바텀시트 닫힘 애니메이션 완료를 기다리는 시간 여유를 크게 둔다.
+      await waitFor(() => expect(queryByText('차단하기')).toBeNull(), { timeout: 10000 });
+    }, 15000);
   });
 });
