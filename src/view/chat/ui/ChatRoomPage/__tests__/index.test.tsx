@@ -217,6 +217,7 @@ const makeChatMessagesReturn = (overrides = {}) => ({
   isLoading: false,
   isError: false,
   connectionState: 'connected',
+  isBlockedByOtherUser: false,
   messageHandlers: { sendMessage: mockSendMessage, renderMessage: jest.fn() },
   scrollToEnd: mockScrollToEnd,
   markRoomAsRead: mockMarkRoomAsRead,
@@ -762,6 +763,27 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('message-count').props.children).toBe(1);
+  });
+
+  it('상대방이 나를 차단했으면 채팅 입력창 대신 안내 배너를 표시하고 차단 풀기 버튼은 없다', () => {
+    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ isBlockedByOtherUser: true }));
+
+    const { getByText, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(getByText('상대방이 차단하여 메시지를 보낼 수 없습니다.')).toBeTruthy();
+    expect(queryByTestId('chat-input')).toBeNull();
+    expect(queryByTestId('chat-unblock-button')).toBeNull();
+  });
+
+  it('내가 차단하고 상대방도 나를 차단했으면 내가 차단한 배너(차단 풀기 포함)를 우선 표시한다', () => {
+    mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 7, nickname: '상대방' }] });
+    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ isBlockedByOtherUser: true }));
+
+    const { getByText, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(getByText('차단한 사용자입니다.')).toBeTruthy();
+    expect(queryByTestId('chat-unblock-button')).toBeTruthy();
+    expect(queryByTestId('chat-blocked-by-other-banner')).toBeNull();
   });
 
   it('차단하지 않았으면 상대방 메시지도 그대로 표시한다', () => {

@@ -43,6 +43,7 @@ export default function ChatRoomPage() {
     isLoading,
     isError,
     connectionState,
+    isBlockedByOtherUser,
     messageHandlers,
     scrollToEnd,
     markRoomAsRead,
@@ -57,6 +58,10 @@ export default function ChatRoomPage() {
   const { data: blockList } = useGetBlockList();
   const isBlocked = !!blockList?.some((b) => b.memberId === otherUserInfo.id);
   const { unblock } = useBlockUser(otherUserInfo.id);
+  // isBlocked는 내가 차단한 목록 기준이라, 상대방이 나를 차단한 경우는 잡아내지 못한다.
+  // 그 경우는 메시지 전송이 서버에서 거부될 때 소켓 error 이벤트로만 알 수 있다.
+  // (School-of-Company/Gwangsan-Crossplatform#566)
+  const isChatBlocked = isBlocked || isBlockedByOtherUser;
   const visibleMessages = useMemo(
     () => (isBlocked ? messages.filter((m) => m.isMine) : messages),
     [messages, isBlocked]
@@ -141,9 +146,9 @@ export default function ChatRoomPage() {
     () => ({
       ...componentState,
       hasMessages: visibleMessages.length > 0,
-      canSendMessage: connectionState === 'connected' && !isBlocked,
+      canSendMessage: connectionState === 'connected' && !isChatBlocked,
     }),
-    [componentState, visibleMessages.length, connectionState, isBlocked]
+    [componentState, visibleMessages.length, connectionState, isChatBlocked]
   );
 
   useEffect(() => {
@@ -342,6 +347,14 @@ export default function ChatRoomPage() {
                 {unblock.isPending ? '해제 중...' : '차단 풀기'}
               </Text>
             </TouchableOpacity>
+          </View>
+        ) : isBlockedByOtherUser ? (
+          <View
+            testID="chat-blocked-by-other-banner"
+            className="border-t border-gray-200 bg-white px-4 py-4">
+            <Text className="text-label text-gray-500">
+              상대방이 차단하여 메시지를 보낼 수 없습니다.
+            </Text>
           </View>
         ) : (
           <ChatInput
