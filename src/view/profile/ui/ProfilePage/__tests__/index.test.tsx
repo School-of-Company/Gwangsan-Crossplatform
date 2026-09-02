@@ -5,7 +5,7 @@ import Toast from 'react-native-toast-message';
 import ProfilePageView from '../index';
 import { useGetProfile } from '~/view/profile/model/useGetProfile';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
-import { useGetBlockList } from '~/view/profile/model/useGetBlockList';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
@@ -22,7 +22,7 @@ jest.mock('react-native-toast-message', () => ({
 
 jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetBlockList', () => ({ useGetBlockList: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetBlockList', () => ({ useGetBlockList: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {

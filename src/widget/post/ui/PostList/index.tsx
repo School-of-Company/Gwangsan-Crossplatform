@@ -2,8 +2,9 @@ import { RefreshControl, Text, View } from 'react-native';
 import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { returnValue } from '~/view/post/model/handleCategory';
 import { Category } from '~/view/post/model/category';
 import { VirtualList } from 'scrolloop/native';
@@ -12,9 +13,15 @@ export default function PostList({ category, type }: { category: Category; type:
   const [refreshing, setRefreshing] = useState(false);
   const currentMode = category ? returnValue(category) : undefined;
 
-  const { data = [], refetch } = useGetPosts(
+  const { data: postsData = [], refetch } = useGetPosts(
     currentMode as ModeType | undefined,
     type as ProductType | undefined
+  );
+  const { data: blockList } = useGetBlockList();
+
+  const data = useMemo(
+    () => postsData.filter((post) => !blockList?.some((b) => b.memberId === post.member?.memberId)),
+    [postsData, blockList]
   );
 
   const onRefresh = useCallback(async () => {

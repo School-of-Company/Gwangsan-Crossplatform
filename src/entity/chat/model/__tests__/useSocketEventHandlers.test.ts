@@ -28,13 +28,14 @@ describe('useSocketEventHandlers', () => {
     expect(socketService.on).toHaveBeenCalledTimes(2);
   });
 
-  it('모든 핸들러를 전달하면 4개 이벤트 모두 등록한다', () => {
+  it('모든 핸들러를 전달하면 5개 이벤트 모두 등록한다', () => {
     const socketService = createMockSocketService();
     const handlers = {
       onConnect: jest.fn(),
       onReceiveMessage: jest.fn(),
       onUpdateRoomList: jest.fn(),
       onTransactionStateChanged: jest.fn(),
+      onError: jest.fn(),
     };
 
     renderHook(() => useSocketEventHandlers({ socketService, ...handlers }));
@@ -46,7 +47,19 @@ describe('useSocketEventHandlers', () => {
       'transactionStateChanged',
       handlers.onTransactionStateChanged
     );
-    expect(socketService.on).toHaveBeenCalledTimes(4);
+    expect(socketService.on).toHaveBeenCalledWith('error', handlers.onError);
+    expect(socketService.on).toHaveBeenCalledTimes(5);
+  });
+
+  it('언마운트 시 onError 핸들러도 해제한다', () => {
+    const socketService = createMockSocketService();
+    const onError = jest.fn();
+
+    const { unmount } = renderHook(() => useSocketEventHandlers({ socketService, onError }));
+
+    unmount();
+
+    expect(socketService.off).toHaveBeenCalledWith('error', onError);
   });
 
   it('핸들러를 아무것도 전달하지 않으면 아무 이벤트도 등록하지 않는다', () => {

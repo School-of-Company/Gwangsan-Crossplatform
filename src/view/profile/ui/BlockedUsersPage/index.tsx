@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { AlertModal, Header } from '~/shared/ui';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
-import { useGetBlockList } from '../../model/useGetBlockList';
-import type { BlockedMember } from '../../api/getBlockList';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
+import type { BlockedMember } from '~/entity/profile/api/getBlockList';
 
 interface BlockedUserRowProps {
   member: BlockedMember;

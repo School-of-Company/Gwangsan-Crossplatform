@@ -167,11 +167,9 @@ export function ChatRoomList() {
 
   const handleConfirmBlock = useCallback(() => {
     if (blockTarget === null) return;
-    const { roomId } = blockTarget;
 
     block.mutate(undefined, {
       onSuccess: () => {
-        setHiddenRoomIds((prev) => new Set(prev).add(roomId));
         queryClient.invalidateQueries({ queryKey: CHAT_ROOM_QUERY_KEY });
       },
       onSettled: () => {

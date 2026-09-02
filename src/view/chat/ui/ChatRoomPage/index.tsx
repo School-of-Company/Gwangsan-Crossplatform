@@ -23,6 +23,8 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
+import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,6 +43,7 @@ export default function ChatRoomPage() {
     isLoading,
     isError,
     connectionState,
+    isBlockedByOtherUser,
     messageHandlers,
     scrollToEnd,
     markRoomAsRead,
@@ -52,6 +55,17 @@ export default function ChatRoomPage() {
 
   const { data: roomData, error: roomDataError } = useChatRoomData({ roomId });
   const { data: myInfo } = useGetMyInformation();
+  const { data: blockList } = useGetBlockList();
+  const isBlocked = !!blockList?.some((b) => b.memberId === otherUserInfo.id);
+  const { unblock } = useBlockUser(otherUserInfo.id);
+  // isBlocked는 내가 차단한 목록 기준이라, 상대방이 나를 차단한 경우는 잡아내지 못한다.
+  // 그 경우는 메시지 전송이 서버에서 거부될 때 소켓 error 이벤트로만 알 수 있다.
+  // (School-of-Company/Gwangsan-Crossplatform#566)
+  const isChatBlocked = isBlocked || isBlockedByOtherUser;
+  const visibleMessages = useMemo(
+    () => (isBlocked ? messages.filter((m) => m.isMine) : messages),
+    [messages, isBlocked]
+  );
   const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
   const isSeller = Boolean(roomData?.product?.isSeller);
   const isReserved = Boolean(roomData?.product?.isReserved);
@@ -131,10 +145,10 @@ export default function ChatRoomPage() {
   const updatedComponentState = useMemo(
     () => ({
       ...componentState,
-      hasMessages: messages.length > 0,
-      canSendMessage: connectionState === 'connected',
+      hasMessages: visibleMessages.length > 0,
+      canSendMessage: connectionState === 'connected' && !isChatBlocked,
     }),
-    [componentState, messages.length, connectionState]
+    [componentState, visibleMessages.length, connectionState, isChatBlocked]
   );
 
   useEffect(() => {
@@ -157,10 +171,10 @@ export default function ChatRoomPage() {
   }, [roomDataError, router]);
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (visibleMessages.length > 0) {
       setTimeout(() => scrollToEnd(true), 100);
     }
-  }, [messages.length, scrollToEnd]);
+  }, [visibleMessages.length, scrollToEnd]);
 
   const { handleTradeRequest: executeTradeRequest, isLoading: isTradeRequestLoading } =
     useTradeRequest({
@@ -206,7 +220,7 @@ export default function ChatRoomPage() {
     <ChatRoomHeader
       otherUserNickname={otherUserInfo.nickname}
       otherUserId={otherUserInfo.id}
-      lastMessageDate={formatLastMessageDate(messages)}
+      lastMessageDate={formatLastMessageDate(visibleMessages)}
       onProfilePress={navigationHandlers.goToOtherUserProfile}
     />
   );
@@ -308,7 +322,7 @@ export default function ChatRoomPage() {
       )}
 
       <ChatRoomContent
-        messages={messages}
+        messages={visibleMessages}
         hasMessages={updatedComponentState.hasMessages}
         flatListRef={flatListRef}
         renderHeader={renderHeader}
@@ -321,11 +335,34 @@ export default function ChatRoomPage() {
       />
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
-        <ChatInput
-          onSendMessage={messageHandlers.sendMessage}
-          disabled={!updatedComponentState.canSendMessage}
-          onFocus={() => scrollToEnd(true)}
-        />
+        {isBlocked ? (
+          <View className="flex-row items-center justify-between border-t border-gray-200 bg-white px-4 py-4">
+            <Text className="text-label text-gray-500">차단한 사용자입니다.</Text>
+            <TouchableOpacity
+              testID="chat-unblock-button"
+              onPress={() => unblock.mutate()}
+              disabled={unblock.isPending}
+              className={`rounded-lg bg-[#F3F4F5] px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
+              <Text className="text-label font-medium text-gray-900">
+                {unblock.isPending ? '해제 중...' : '차단 풀기'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : isBlockedByOtherUser ? (
+          <View
+            testID="chat-blocked-by-other-banner"
+            className="border-t border-gray-200 bg-white px-4 py-4">
+            <Text className="text-label text-gray-500">
+              상대방이 차단하여 메시지를 보낼 수 없습니다.
+            </Text>
+          </View>
+        ) : (
+          <ChatInput
+            onSendMessage={messageHandlers.sendMessage}
+            disabled={!updatedComponentState.canSendMessage}
+            onFocus={() => scrollToEnd(true)}
+          />
+        )}
       </KeyboardStickyView>
 
       <TradeRequestModal
