@@ -10,6 +10,8 @@ import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
+import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Toast from 'react-native-toast-message';
 import ChatRoomPage from '../index';
 
@@ -65,6 +67,14 @@ jest.mock('~/view/reviews/api/getReviews', () => ({
   getTossReview: jest.fn(),
 }));
 
+jest.mock('~/entity/profile/model/useGetBlockList', () => ({
+  useGetBlockList: jest.fn(),
+}));
+
+jest.mock('~/entity/profile/model/useBlockUser', () => ({
+  useBlockUser: jest.fn(),
+}));
+
 jest.mock('@/widget/chat/ui/ChatRoomHeader', () => ({
   ChatRoomHeader: () => {
     const { View } = require('react-native');
@@ -89,6 +99,7 @@ jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
 
 jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
   ChatRoomContent: ({
+    messages,
     onReviewButtonPress,
     showReviewButton,
     hasReviewedTrade,
@@ -99,6 +110,7 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
     return (
       <View testID="chat-room-content">
         {renderHeader()}
+        <Text testID="message-count">{messages.length}</Text>
         <Text testID="show-review-button">{String(showReviewButton)}</Text>
         <Text testID="has-reviewed-trade">{String(hasReviewedTrade)}</Text>
         <TouchableOpacity testID="review-button" onPress={onReviewButtonPress}>
@@ -190,10 +202,13 @@ const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
 const mockGetTossReview = getTossReview as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
+const mockUseGetBlockList = useGetBlockList as jest.Mock;
+const mockUseBlockUser = useBlockUser as jest.Mock;
 
 const mockMarkRoomAsRead = jest.fn().mockResolvedValue(undefined);
 const mockScrollToEnd = jest.fn();
 const mockSendMessage = jest.fn();
+const mockUnblockMutate = jest.fn();
 
 const makeChatMessagesReturn = (overrides = {}) => ({
   flatListRef: { current: null },
@@ -254,6 +269,11 @@ beforeEach(() => {
   mockGetMyReceivedReview.mockResolvedValue([]);
   mockGetTossReview.mockResolvedValue([]);
   mockMarkRoomAsRead.mockClear().mockResolvedValue(undefined);
+  mockUseGetBlockList.mockReturnValue({ data: [] });
+  mockUseBlockUser.mockReturnValue({
+    block: { mutate: jest.fn(), isPending: false },
+    unblock: { mutate: mockUnblockMutate, isPending: false },
+  });
 });
 
 describe('ChatRoomPage', () => {
@@ -697,5 +717,65 @@ describe('ChatRoomPage', () => {
 
     fireEvent.press(getByTestId('reservation-confirm-modal-close'));
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
+  });
+
+  it('상대방을 차단했으면 채팅 입력창 대신 차단 안내 배너를 표시한다', () => {
+    mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 7, nickname: '상대방' }] });
+
+    const { getByText, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(getByText('차단한 사용자입니다.')).toBeTruthy();
+    expect(queryByTestId('chat-input')).toBeNull();
+  });
+
+  it('차단 배너에서 차단 풀기를 누르면 unblock을 호출하고, 나가기 없이 채팅방에 머무른다', () => {
+    mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 7, nickname: '상대방' }] });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('chat-unblock-button'));
+
+    expect(mockUnblockMutate).toHaveBeenCalledTimes(1);
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+  });
+
+  it('차단하지 않은 상대방과는 평소처럼 채팅 입력창이 노출된다', () => {
+    mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 999, nickname: '다른유저' }] });
+
+    const { getByTestId, queryByText } = render(<ChatRoomPage />);
+
+    expect(getByTestId('chat-input')).toBeTruthy();
+    expect(queryByText('차단한 사용자입니다.')).toBeNull();
+  });
+
+  it('상대방을 차단하면 상대방이 보낸 메시지는 화면에 표시하지 않는다', () => {
+    mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 7, nickname: '상대방' }] });
+    mockUseChatMessages.mockReturnValue(
+      makeChatMessagesReturn({
+        messages: [
+          { messageId: 1, senderId: 7, isMine: false, content: '상대방 메시지' },
+          { messageId: 2, senderId: 5, isMine: true, content: '내 메시지' },
+        ],
+      })
+    );
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('message-count').props.children).toBe(1);
+  });
+
+  it('차단하지 않았으면 상대방 메시지도 그대로 표시한다', () => {
+    mockUseChatMessages.mockReturnValue(
+      makeChatMessagesReturn({
+        messages: [
+          { messageId: 1, senderId: 7, isMine: false, content: '상대방 메시지' },
+          { messageId: 2, senderId: 5, isMine: true, content: '내 메시지' },
+        ],
+      })
+    );
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    expect(getByTestId('message-count').props.children).toBe(2);
   });
 });
