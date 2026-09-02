@@ -8,7 +8,7 @@ import { useGetProfile } from '../../model/useGetProfile';
 import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
-import { useGetBlockList } from '../../model/useGetBlockList';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
