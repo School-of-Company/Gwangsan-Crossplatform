@@ -14,10 +14,14 @@ import { setQueryClientInstance } from '../axios';
 import * as Sentry from '@sentry/react-native';
 
 jest.mock('../axios', () => ({ setQueryClientInstance: jest.fn() }));
-jest.mock('@sentry/react-native', () => ({ captureException: jest.fn() }));
+jest.mock('@sentry/react-native', () => ({
+  captureException: jest.fn(),
+  addBreadcrumb: jest.fn(),
+}));
 
 const mockSetQueryClientInstance = setQueryClientInstance as jest.Mock;
 const mockCaptureException = Sentry.captureException as jest.Mock;
+const mockAddBreadcrumb = Sentry.addBreadcrumb as jest.Mock;
 
 function ClientProbe() {
   const client = useQueryClient();
@@ -188,6 +192,63 @@ describe('QueryProvider', () => {
       expect.objectContaining({
         extra: expect.objectContaining({ context: 'react_mutation_error' }),
       })
+    );
+  });
+
+  // 기기 오프라인/타임아웃 등 응답이 없는 네트워크 실패는 앱 버그가 아니므로
+  // Sentry 예외로 남기지 않고 breadcrumb만 남긴다 (see #560).
+  it('does not report network/timeout query failures to Sentry', async () => {
+    const networkError = new AxiosError('Network Error', 'ERR_NETWORK', {} as any, null, undefined);
+
+    function FailingQuery() {
+      const { isError } = useQuery({
+        queryKey: ['network-boom'],
+        queryFn: () => Promise.reject(networkError),
+        retry: false,
+      });
+      return <Text>{isError ? 'errored' : 'loading'}</Text>;
+    }
+
+    const { getByText } = render(
+      <QueryProvider>
+        <FailingQuery />
+      </QueryProvider>
+    );
+
+    await waitFor(() => expect(getByText('errored')).toBeTruthy());
+    expect(mockCaptureException).not.toHaveBeenCalled();
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'react-query' })
+    );
+  });
+
+  it('does not report network/timeout mutation failures to Sentry', async () => {
+    const networkError = new AxiosError('Network Error', 'ERR_NETWORK', {} as any, null, undefined);
+
+    function FailingMutation() {
+      const { mutate, isError } = useMutation({
+        mutationFn: () => Promise.reject(networkError),
+      });
+      return (
+        <>
+          <Text onPress={() => mutate()}>trigger</Text>
+          <Text>{isError ? 'errored' : 'idle'}</Text>
+        </>
+      );
+    }
+
+    const { getByText } = render(
+      <QueryProvider>
+        <FailingMutation />
+      </QueryProvider>
+    );
+
+    getByText('trigger').props.onPress();
+
+    await waitFor(() => expect(getByText('errored')).toBeTruthy());
+    expect(mockCaptureException).not.toHaveBeenCalled();
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'react-query' })
     );
   });
 });
