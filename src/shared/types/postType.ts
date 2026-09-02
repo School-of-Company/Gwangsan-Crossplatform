@@ -7,6 +7,13 @@ export interface TradeCounterpart {
   nickname: string;
 }
 
+export interface PostMember {
+  memberId: number;
+  nickname: string;
+  placeName: string;
+  light: number;
+}
+
 export interface PostType {
   id: number;
   type: ProductType;
@@ -21,4 +28,5 @@ export interface PostType {
   images?: ImageType[];
   seller?: TradeCounterpart;
   buyer?: TradeCounterpart;
+  member?: PostMember;
 }
