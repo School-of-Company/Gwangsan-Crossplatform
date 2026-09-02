@@ -6,6 +6,7 @@ import { getAccessToken, getRefreshToken, clearAuthTokens } from './auth';
 import { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
+import { isNetworkOrTimeoutError } from './errorHandler';
 
 // env(API_URL)가 빌드에 주입되지 않은 경우(예: EAS 빌드에 env 미등록)에도
 // 동작하도록 프로덕션 API 주소를 폴백으로 사용한다.
@@ -131,6 +132,8 @@ instance.interceptors.response.use(
         const isMissingRefreshToken =
           refreshError instanceof Error && refreshError.message === 'No refresh token';
 
+        const isNetworkOrTimeoutFailure = isNetworkOrTimeoutError(refreshError);
+
         if (isMissingRefreshToken) {
           // 이미 로그아웃되어 리프레시 토큰이 없는 상태에서의 잔여 요청 401은
           // 예상된 흐름이므로 Sentry 예외로 남기지 않고 breadcrumb만 남긴다.
@@ -138,6 +141,14 @@ instance.interceptors.response.use(
             category: 'auth',
             message: 'Token refresh skipped: no refresh token available',
             level: 'info',
+          });
+        } else if (isNetworkOrTimeoutFailure) {
+          // 기기/네트워크 상태에 의한 실패(오프라인, 5s 타임아웃 등)는 앱 버그가 아니므로
+          // Sentry 예외로 남기지 않고 breadcrumb만 남긴다.
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'Token refresh skipped: network or timeout error',
+            level: 'warning',
           });
         } else {
           Sentry.captureException(refreshError, {
@@ -149,9 +160,6 @@ instance.interceptors.response.use(
             },
           });
         }
-
-        const isNetworkOrTimeoutFailure =
-          axios.isAxiosError(refreshError) && refreshError.response === undefined;
 
         if (isNetworkOrTimeoutFailure) {
           return Promise.reject(refreshError);

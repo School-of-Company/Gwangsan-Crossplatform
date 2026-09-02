@@ -47,6 +47,11 @@ export const getErrorMessage = (error: unknown): string => {
   return '알 수 없는 오류가 발생했습니다.';
 };
 
+// 기기 오프라인, 셀룰러 전환, 5s 타임아웃 등 실사용자 네트워크 상태에 의한 실패로,
+// 서버 응답 자체를 받지 못한 경우다. 앱/서버 버그가 아니므로 별도로 구분해 취급한다.
+export const isNetworkOrTimeoutError = (error: unknown): boolean =>
+  error instanceof AxiosError && error.response === undefined;
+
 export const toAppError = (error: unknown): Error => {
   const message = getErrorMessage(error);
   if (error instanceof Error) {
