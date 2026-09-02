@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { memo, useEffect } from 'react';
 import Animated, {
+  cancelAnimation,
   Easing,
   LinearTransition,
   ReduceMotion,
@@ -68,7 +69,13 @@ const ChatRoomItemComponent = ({
     });
 
     const timer = setTimeout(() => onExited?.(room.roomId), EXIT_DURATION);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // 애니메이션 도중 화면을 벗어나 언마운트되면, 뒤늦게 완료 콜백이 이미 해제된
+      // 뷰에 prop을 반영하려다 reanimated가 크래시할 수 있어 명시적으로 취소한다.
+      cancelAnimation(translateX);
+      cancelAnimation(opacity);
+    };
   }, [isExiting, room.roomId, onExited, translateX, opacity]);
 
   const exitStyle = useAnimatedStyle(() => ({
