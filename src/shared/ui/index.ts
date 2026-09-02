@@ -1,5 +1,6 @@
 export { AlertModal } from './AlertModal';
 export { Button } from './Button';
+export { Checkbox } from './Checkbox';
 export { Input } from './Input';
 export { Dropdown } from './Dropdown';
 export { ErrorMessage } from './ErrorMessage';
