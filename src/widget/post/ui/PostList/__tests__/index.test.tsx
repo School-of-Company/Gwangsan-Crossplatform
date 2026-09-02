@@ -2,9 +2,14 @@ import React from 'react';
 import { render, act } from '@testing-library/react-native';
 import PostList from '../index';
 import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 
 jest.mock('~/shared/model/useGetPosts', () => ({
   useGetPosts: jest.fn(),
+}));
+
+jest.mock('~/entity/profile/model/useGetBlockList', () => ({
+  useGetBlockList: jest.fn(),
 }));
 
 jest.mock('scrolloop/native', () => ({
@@ -30,6 +35,7 @@ jest.mock('~/shared/ui/Post', () => {
 });
 
 const mockUseGetPosts = useGetPosts as jest.Mock;
+const mockUseGetBlockList = useGetBlockList as jest.Mock;
 
 const makePosts = (count = 2) =>
   Array.from({ length: count }, (_, i) => ({
@@ -44,7 +50,10 @@ const makePosts = (count = 2) =>
     imageUrls: [],
   }));
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUseGetBlockList.mockReturnValue({ data: [] });
+});
 
 describe('PostList', () => {
   it('게시물이 없으면 빈 상태 메시지를 표시한다', () => {
@@ -124,5 +133,19 @@ describe('PostList', () => {
 
     expect(getByText('게시글 1')).toBeTruthy();
     expect(queryByText('게시글 2')).toBeNull();
+  });
+
+  it('차단한 사용자의 게시물은 목록에서 제외한다', () => {
+    const posts = makePosts(2).map((post, i) => ({
+      ...post,
+      member: { memberId: i + 1, nickname: `유저${i + 1}`, placeName: '', light: 1 },
+    }));
+    mockUseGetPosts.mockReturnValue({ data: posts, refetch: jest.fn() });
+    mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 1, nickname: '유저1' }] });
+
+    const { getByText, queryByText } = render(<PostList category="팔아요" type="OBJECT" />);
+
+    expect(queryByText('게시글 1')).toBeNull();
+    expect(getByText('게시글 2')).toBeTruthy();
   });
 });
