@@ -10,11 +10,23 @@ import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
 import { setQueryClientInstance } from './axios';
+import { isNetworkOrTimeoutError } from './errorHandler';
 import * as Sentry from '@sentry/react-native';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
+      // 기기 오프라인, 5s 타임아웃 등 실사용자 네트워크 상태에 의한 실패는 앱 버그가
+      // 아니므로 Sentry 예외로 남기지 않고 breadcrumb만 남겨 노이즈를 줄인다.
+      if (isNetworkOrTimeoutError(error)) {
+        Sentry.addBreadcrumb({
+          category: 'react-query',
+          message: `Query failed with network/timeout error: ${JSON.stringify(query.queryKey)}`,
+          level: 'warning',
+        });
+        return;
+      }
+
       Sentry.captureException(error, {
         extra: {
           queryKey: JSON.stringify(query.queryKey),
@@ -25,6 +37,15 @@ const queryClient = new QueryClient({
   }),
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
+      if (isNetworkOrTimeoutError(error)) {
+        Sentry.addBreadcrumb({
+          category: 'react-query',
+          message: `Mutation failed with network/timeout error: ${JSON.stringify(mutation.options.mutationKey)}`,
+          level: 'warning',
+        });
+        return;
+      }
+
       Sentry.captureException(error, {
         extra: {
           mutationKey: JSON.stringify(mutation.options.mutationKey),

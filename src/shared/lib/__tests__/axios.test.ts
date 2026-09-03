@@ -359,7 +359,14 @@ describe('response interceptor', () => {
 
     await expect(instance.get('/reissue-timeout')).rejects.toThrow();
 
-    expect(mockSentry.captureException).toHaveBeenCalled();
+    // 기기/네트워크 상태에 의한 실패(오프라인, 타임아웃 등)는 앱 버그가 아니므로
+    // Sentry 예외로 남기지 않고 breadcrumb만 남긴다.
+    expect(mockSentry.captureException).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Token refresh skipped: network or timeout error',
+      })
+    );
     expect(mockClearAuthTokens).not.toHaveBeenCalled();
     expect(queryClient.clear).not.toHaveBeenCalled();
     expect(mockRouter.replace).not.toHaveBeenCalledWith('/signin');

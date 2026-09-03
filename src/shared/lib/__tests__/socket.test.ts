@@ -1,6 +1,7 @@
 import Toast from 'react-native-toast-message';
 
 import { io } from 'socket.io-client';
+import * as Sentry from '@sentry/react-native';
 import { getData } from '../getData';
 import { logger } from '../logger';
 import { chatSocket } from '../socket';
@@ -9,6 +10,10 @@ jest.mock('socket.io-client', () => ({ io: jest.fn() }));
 jest.mock('../axios', () => ({ baseURL: 'https://api.test.com/api' }));
 jest.mock('../getData', () => ({ getData: jest.fn() }));
 jest.mock('../logger', () => ({ logger: { error: jest.fn(), warn: jest.fn() } }));
+jest.mock('@sentry/react-native', () => ({
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+}));
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -16,6 +21,7 @@ jest.mock('react-native-toast-message', () => ({
 
 const mockIo = io as jest.Mock;
 const mockGetData = getData as jest.Mock;
+const mockSentry = Sentry as jest.Mocked<typeof Sentry>;
 
 function createMockSocket() {
   const handlers: Record<string, ((...args: any[]) => void)[]> = {};
@@ -190,7 +196,64 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text2: 'Connection timeout' })
     );
-    expect(logger.error).toHaveBeenCalled();
+    // 기기/네트워크 상태에 의한 연결 실패(타임아웃 등)는 앱 버그가 아니므로
+    // Sentry 예외로 남기지 않고 breadcrumb만 남긴다 (see #562).
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'socket' })
+    );
+  });
+
+  it('does not report a native network/route failure (e.g. NoRouteToHostException) to Sentry', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    mockGetData.mockResolvedValue('token');
+
+    const promise = chatSocket.connect();
+    await flush();
+
+    const error = new Error('NoRouteToHostException: Host unreachable');
+    socket.__trigger('connect_error', error);
+
+    await expect(promise).rejects.toBe(error);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(mockSentry.captureException).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'socket',
+        message: expect.stringContaining('NoRouteToHostException'),
+      })
+    );
+  });
+
+  it('does not report a native socket read failure (e.g. SocketException connection abort) to Sentry', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    await connectSuccessfully(socket);
+
+    const error = new Error('SocketException: Software caused connection abort');
+    socket.__trigger('error', error);
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(mockSentry.captureException).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'socket',
+        message: expect.stringContaining('SocketException'),
+      })
+    );
+  });
+
+  it('reports a non-network "error" event on the socket to Sentry as before', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    await connectSuccessfully(socket);
+
+    const error = new Error('invalid message payload');
+    socket.__trigger('error', error);
+
+    expect(logger.error).toHaveBeenCalledWith('Socket server error', error);
+    expect(mockSentry.addBreadcrumb).not.toHaveBeenCalled();
   });
 
   it('maps unauthorized connect_error messages to an authentication-failure toast', async () => {
@@ -208,6 +271,9 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text2: 'Authentication failed' })
     );
+    // 네트워크/타임아웃이 아닌 실제 오류는 기존대로 Sentry에 기록되어야 한다.
+    expect(logger.error).toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).not.toHaveBeenCalled();
   });
 
   it('forwards socket "disconnect" events to local disconnect handlers', async () => {

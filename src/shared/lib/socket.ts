@@ -2,6 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
 import { baseURL } from './axios';
 import Toast from 'react-native-toast-message';
+import * as Sentry from '@sentry/react-native';
 import {
   CHAT_SOCKET_EVENTS,
   CHAT_SOCKET_SERVER_EVENTS,
@@ -9,6 +10,7 @@ import {
   type SocketConnectionConfig,
 } from '@/shared/types/chatType';
 import { logger } from './logger';
+import { isNetworkOrTimeoutError } from './errorHandler';
 
 const SOCKET_URL = (baseURL ?? '').replace(/\/$/, '') + '/chat';
 
@@ -108,12 +110,34 @@ class SocketManager implements ISocketManager {
     });
 
     socket.on('error', (error) => {
+      // 이미 연결된 소켓의 읽기/쓰기 도중 기기·네트워크에 의해 강제로 끊어진 경우
+      // (예: SocketException: Software caused connection abort)는 앱 버그가
+      // 아니므로 Sentry 예외로 남기지 않고 breadcrumb만 남겨 노이즈를 줄인다.
+      if (isNetworkOrTimeoutError(error)) {
+        Sentry.addBreadcrumb({
+          category: 'socket',
+          message: `Socket error due to network/timeout: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'warning',
+        });
+        return;
+      }
       logger.error('Socket server error', error);
     });
   }
 
   private handleConnectionError(error: Error): void {
-    logger.error('Socket connection error', error);
+    // 기기 오프라인, NoRouteToHostException, 자체 20s 연결 타임아웃 등 실사용자
+    // 네트워크 상태에 의한 연결 실패는 앱 버그가 아니므로 Sentry 예외로 남기지
+    // 않고 breadcrumb만 남겨 노이즈를 줄인다.
+    if (isNetworkOrTimeoutError(error)) {
+      Sentry.addBreadcrumb({
+        category: 'socket',
+        message: `Socket connect_error due to network/timeout: ${error.message}`,
+        level: 'warning',
+      });
+    } else {
+      logger.error('Socket connection error', error);
+    }
     this.emit('connect_error', error);
 
     let errorMessage = error.message;

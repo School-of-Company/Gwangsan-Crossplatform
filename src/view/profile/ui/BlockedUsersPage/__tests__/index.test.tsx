@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import BlockedUsersPageView from '../index';
-import { useGetBlockList } from '~/view/profile/model/useGetBlockList';
+import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -14,7 +14,7 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetBlockList', () => ({ useGetBlockList: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetBlockList', () => ({ useGetBlockList: jest.fn() }));
 jest.mock('~/entity/profile/model/useBlockUser', () => ({ useBlockUser: jest.fn() }));
 
 jest.mock('~/shared/ui', () => {
