@@ -196,7 +196,34 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text2: 'Connection timeout' })
     );
-    expect(logger.error).toHaveBeenCalled();
+    // 기기/네트워크 상태에 의한 연결 실패(타임아웃 등)는 앱 버그가 아니므로
+    // Sentry 예외로 남기지 않고 breadcrumb만 남긴다 (see #562).
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'socket' })
+    );
+  });
+
+  it('does not report a native network/route failure (e.g. NoRouteToHostException) to Sentry', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+    mockGetData.mockResolvedValue('token');
+
+    const promise = chatSocket.connect();
+    await flush();
+
+    const error = new Error('NoRouteToHostException: Host unreachable');
+    socket.__trigger('connect_error', error);
+
+    await expect(promise).rejects.toBe(error);
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(mockSentry.captureException).not.toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'socket',
+        message: expect.stringContaining('NoRouteToHostException'),
+      })
+    );
   });
 
   it('does not report a native socket read failure (e.g. SocketException connection abort) to Sentry', async () => {
@@ -244,6 +271,9 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text2: 'Authentication failed' })
     );
+    // 네트워크/타임아웃이 아닌 실제 오류는 기존대로 Sentry에 기록되어야 한다.
+    expect(logger.error).toHaveBeenCalled();
+    expect(mockSentry.addBreadcrumb).not.toHaveBeenCalled();
   });
 
   it('forwards socket "disconnect" events to local disconnect handlers', async () => {

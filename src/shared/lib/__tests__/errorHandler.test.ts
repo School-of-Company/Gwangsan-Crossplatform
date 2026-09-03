@@ -157,6 +157,13 @@ describe('isNetworkOrTimeoutError', () => {
   });
 
   it.each([
+    'NoRouteToHostException: Host unreachable',
+    'timeout reached',
+    'Connection timeout',
+    'xhr poll error',
+    'websocket error',
+    'Network request failed',
+    'Unable to resolve host',
     'SocketException: Software caused connection abort',
     'Connection reset by peer',
     'ECONNRESET',
@@ -169,6 +176,7 @@ describe('isNetworkOrTimeoutError', () => {
   );
 
   it('네트워크와 무관한 일반 Error는 네트워크/타임아웃 오류가 아니다', () => {
+    expect(isNetworkOrTimeoutError(new Error('401 unauthorized'))).toBe(false);
     expect(isNetworkOrTimeoutError(new Error('invalid message payload'))).toBe(false);
   });
 
