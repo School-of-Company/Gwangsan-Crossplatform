@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { getErrorMessage } from '../errorHandler';
+import { getErrorMessage, isNetworkOrTimeoutError } from '../errorHandler';
 
 const makeAxiosError = (message: string, responseData?: unknown, status?: number): AxiosError => {
   const config = { headers: {} } as InternalAxiosRequestConfig;
@@ -141,5 +141,39 @@ describe('getErrorMessage', () => {
     it('객체이면 알 수 없는 오류 메시지를 반환한다', () => {
       expect(getErrorMessage({ code: 'ERR' })).toBe('알 수 없는 오류가 발생했습니다.');
     });
+  });
+});
+
+describe('isNetworkOrTimeoutError', () => {
+  it('response가 없는 AxiosError는 네트워크/타임아웃 오류로 판단한다', () => {
+    const config = { headers: {} } as InternalAxiosRequestConfig;
+    const error = new AxiosError('Network Error', 'ERR_NETWORK', config, null, undefined);
+    expect(isNetworkOrTimeoutError(error)).toBe(true);
+  });
+
+  it('response가 있는 AxiosError는 네트워크/타임아웃 오류가 아니다', () => {
+    const error = makeAxiosError('bad request', { message: '잘못된 요청' }, 400);
+    expect(isNetworkOrTimeoutError(error)).toBe(false);
+  });
+
+  it.each([
+    'SocketException: Software caused connection abort',
+    'Connection reset by peer',
+    'ECONNRESET',
+    'ECONNABORTED',
+  ])(
+    'Socket.io 등에서 전달되는 일반 Error("%s")도 네트워크/타임아웃 오류로 판단한다',
+    (message) => {
+      expect(isNetworkOrTimeoutError(new Error(message))).toBe(true);
+    }
+  );
+
+  it('네트워크와 무관한 일반 Error는 네트워크/타임아웃 오류가 아니다', () => {
+    expect(isNetworkOrTimeoutError(new Error('invalid message payload'))).toBe(false);
+  });
+
+  it('Error가 아닌 값은 네트워크/타임아웃 오류가 아니다', () => {
+    expect(isNetworkOrTimeoutError('문자열 에러')).toBe(false);
+    expect(isNetworkOrTimeoutError(undefined)).toBe(false);
   });
 });

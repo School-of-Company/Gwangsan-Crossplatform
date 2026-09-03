@@ -47,10 +47,20 @@ export const getErrorMessage = (error: unknown): string => {
   return '알 수 없는 오류가 발생했습니다.';
 };
 
-// 기기 오프라인, 셀룰러 전환, 5s 타임아웃 등 실사용자 네트워크 상태에 의한 실패로,
-// 서버 응답 자체를 받지 못한 경우다. 앱/서버 버그가 아니므로 별도로 구분해 취급한다.
-export const isNetworkOrTimeoutError = (error: unknown): boolean =>
-  error instanceof AxiosError && error.response === undefined;
+// Socket.io의 소켓 레벨 'error' 이벤트 등 AxiosError가 아닌 일반 Error로 전달되는
+// 순수 네트워크 실패(예: 안드로이드 SocketException: Software caused connection
+// abort)까지 잡아내기 위한 메시지 패턴이다.
+const NETWORK_ERROR_MESSAGE_PATTERN =
+  /connection abort|software caused connection abort|socketexception|connection reset|econnreset|econnaborted|epipe|network request failed|network error/i;
+
+// 기기 오프라인, 셀룰러 전환, 5s 타임아웃, 소켓 강제 종료 등 실사용자 네트워크
+// 상태에 의한 실패로, 서버 응답 자체를 받지 못한 경우다. 앱/서버 버그가 아니므로
+// 별도로 구분해 취급한다.
+export const isNetworkOrTimeoutError = (error: unknown): boolean => {
+  if (error instanceof AxiosError && error.response === undefined) return true;
+  if (error instanceof Error) return NETWORK_ERROR_MESSAGE_PATTERN.test(error.message);
+  return false;
+};
 
 export const toAppError = (error: unknown): Error => {
   const message = getErrorMessage(error);
