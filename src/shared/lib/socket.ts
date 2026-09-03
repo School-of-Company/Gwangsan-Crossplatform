@@ -8,7 +8,9 @@ import {
   type ISocketManager,
   type SocketConnectionConfig,
 } from '@/shared/types/chatType';
+import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
+import { isNetworkOrTimeoutError } from './errorHandler';
 
 const SOCKET_URL = (baseURL ?? '').replace(/\/$/, '') + '/chat';
 
@@ -108,6 +110,17 @@ class SocketManager implements ISocketManager {
     });
 
     socket.on('error', (error) => {
+      // 이미 연결된 소켓의 읽기/쓰기 도중 기기·네트워크에 의해 강제로 끊어진 경우
+      // (예: SocketException: Software caused connection abort)는 앱 버그가
+      // 아니므로 Sentry 예외로 남기지 않고 breadcrumb만 남겨 노이즈를 줄인다.
+      if (isNetworkOrTimeoutError(error)) {
+        Sentry.addBreadcrumb({
+          category: 'socket',
+          message: `Socket error due to network/timeout: ${error instanceof Error ? error.message : String(error)}`,
+          level: 'warning',
+        });
+        return;
+      }
       logger.error('Socket server error', error);
     });
   }
