@@ -316,8 +316,10 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       onContentSizeChange={onScrollToEnd}
       contentContainerStyle={{
         // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 insets.bottom(iOS)/15(Android)만큼
-        // 위로 띄우므로, 그만큼 리스트 하단 여백을 확보해야 마지막 메시지가 가려지지 않음
-        paddingBottom: 10 + (Platform.OS === 'ios' ? Math.max(keyboardHeight, insets.bottom) : 15),
+        // 위로 띄우므로, 그만큼 리스트 하단 여백을 기본으로 확보한다. 키보드가 열리면 입력창이
+        // 그 높이만큼 더 위로 떠오르므로, 두 플랫폼 모두 keyboardHeight를 반영해야 마지막 메시지가
+        // 입력창/키보드에 가려지지 않는다 (Android에서 이 값이 빠져 있어 키보드에 가려지는 문제가 있었음)
+        paddingBottom: 10 + Math.max(keyboardHeight, Platform.OS === 'ios' ? insets.bottom : 15),
       }}
       initialNumToRender={15}
       maxToRenderPerBatch={10}
