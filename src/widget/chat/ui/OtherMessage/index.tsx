@@ -37,6 +37,7 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({
   };
 
   const content = renderMessageContent(message, imageLoader, messageConfig);
+  const isImageMessage = message.messageType === 'IMAGE' && (message.images?.length ?? 0) > 0;
 
   if (!content) return null;
 
@@ -67,7 +68,12 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({
             </TouchableOpacity>
           )}
           <View className="flex-row items-end">
-            <View className="max-w-[280px] rounded-3xl bg-gray-100 px-4 py-3">{content}</View>
+            <View
+              className={
+                isImageMessage ? 'max-w-[280px]' : 'max-w-[280px] rounded-3xl bg-gray-100 px-4 py-3'
+              }>
+              {content}
+            </View>
             {showTime && (
               <Text className="ml-2 text-xs text-gray-500">
                 {formatMessageTime(message.createdAt)}
