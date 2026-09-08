@@ -1,7 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
 import { baseURL } from './axios';
-import Toast from 'react-native-toast-message';
 import * as Sentry from '@sentry/react-native';
 import {
   CHAT_SOCKET_EVENTS,
@@ -138,22 +137,14 @@ class SocketManager implements ISocketManager {
     } else {
       logger.error('Socket connection error', error);
     }
+
+    // 채팅 소켓은 로그인 직후·화면 이동·앱 포그라운드 복귀 시마다 백그라운드로
+    // 자동 재연결을 시도한다(모든 호출부가 실패를 조용히 무시하거나 로깅만
+    // 함). 이 실패를 전역 Toast로 노출하면 로그인 등 소켓과 무관한 동작
+    // 직후에도 "오류" 토스트가 떠 사용자를 혼란시키므로(#585) 표시하지
+    // 않는다. 연결 상태는 채팅 화면의 connectionState 표시(Header dot)로
+    // 별도 전달된다.
     this.emit('connect_error', error);
-
-    let errorMessage = error.message;
-
-    if (error.message.includes('timeout')) {
-      errorMessage = 'Connection timeout';
-    } else if (error.message.includes('unauthorized') || error.message.includes('401')) {
-      errorMessage = 'Authentication failed';
-    }
-
-    Toast.show({
-      type: 'error',
-      text1: 'Connection failed',
-      text2: errorMessage,
-      visibilityTime: 4000,
-    });
   }
 
   private static readonly RESERVED_EVENTS = new Set<string>(CHAT_SOCKET_EVENTS);
