@@ -113,7 +113,6 @@ export default function FindNicknamePage() {
                     onSubmitEditing={handlePhoneSubmit}
                     keyboardType="numeric"
                     maxLength={11}
-                    returnKeyType="done"
                     editable={!verificationState.isSendingCode && !isVerificationComplete}
                   />
                 </View>
@@ -139,7 +138,6 @@ export default function FindNicknamePage() {
                       onChangeText={handleVerificationChange}
                       onSubmitEditing={handleVerificationSubmit}
                       keyboardType="numeric"
-                      returnKeyType="done"
                       editable={!verificationState.isVerifyingCode && !isVerificationComplete}
                       maxLength={6}
                     />
