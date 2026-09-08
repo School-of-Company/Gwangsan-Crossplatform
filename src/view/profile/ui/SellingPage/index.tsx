@@ -24,6 +24,8 @@ import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetMyPosts } from '../../model/useGetMyPosts';
 import { useGetPosts } from '../../model/useGetPosts';
+import { useGetReviews } from '~/view/reviews/model/useGetReviews';
+import type { ReviewPostType } from '~/view/reviews/model/reviewPostType';
 
 type SellingTab = 'onSale' | 'sold';
 
@@ -91,10 +93,12 @@ const ActionSheetRow = ({
 const SellingPostCard = ({
   post,
   reviewsMemberId,
+  receivedReviews,
   onMenuPress,
 }: {
   post: PostType;
   reviewsMemberId?: number;
+  receivedReviews?: ReviewPostType[];
   onMenuPress: (post: PostType) => void;
 }) => {
   const router = useRouter();
@@ -112,8 +116,15 @@ const SellingPostCard = ({
 
   const handleReviewsPress = useCallback(() => {
     if (reviewsMemberId == null) return;
+    // 이 게시물(거래)에 대해 실제로 받은 후기가 있으면 그 상세로, 없으면(아직 후기 전이거나
+    // 다른 게시물 후기만 있는 경우) 받은 후기 목록으로 보낸다
+    const matchedReview = receivedReviews?.find((review) => review.productId === id);
+    if (matchedReview) {
+      router.push(`/cancelTrade/${matchedReview.reviewId}`);
+      return;
+    }
     router.push(`/reviews/${reviewsMemberId}`);
-  }, [router, reviewsMemberId]);
+  }, [router, reviewsMemberId, receivedReviews, id]);
 
   const firstImage =
     imageUrls?.[0]?.imageUrl ??
@@ -189,11 +200,13 @@ const SellingPanel = memo(
     posts,
     emptyMessage,
     reviewsMemberId,
+    receivedReviews,
     onMenuPress,
   }: {
     posts: PostType[];
     emptyMessage: string;
     reviewsMemberId?: number;
+    receivedReviews?: ReviewPostType[];
     onMenuPress: (post: PostType) => void;
   }) => (
     <ScrollView
@@ -206,6 +219,7 @@ const SellingPanel = memo(
             <SellingPostCard
               post={post}
               reviewsMemberId={reviewsMemberId}
+              receivedReviews={receivedReviews}
               onMenuPress={onMenuPress}
               key={post.id}
             />
@@ -251,6 +265,10 @@ export default function SellingPageView() {
   );
   const soldPosts = useMemo(() => sellingPosts.filter((post) => post.isCompleted), [sellingPosts]);
   const reviewsMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
+  const { data: receivedReviews } = useGetReviews(
+    'receive',
+    reviewsMemberId != null ? String(reviewsMemberId) : undefined
+  );
 
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
@@ -355,6 +373,7 @@ export default function SellingPageView() {
           posts={soldPosts}
           emptyMessage="판매 완료된 게시물이 없습니다."
           reviewsMemberId={reviewsMemberId}
+          receivedReviews={receivedReviews}
           onMenuPress={handleMenuPress}
         />
       </ScrollView>

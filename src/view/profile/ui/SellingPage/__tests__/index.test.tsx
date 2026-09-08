@@ -8,6 +8,7 @@ import { useGetProfile } from '~/view/profile/model/useGetProfile';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
 import { useGetMyPosts } from '~/view/profile/model/useGetMyPosts';
 import { useGetPosts } from '~/view/profile/model/useGetPosts';
+import { useGetReviews } from '~/view/reviews/model/useGetReviews';
 import { deletePost } from '~/entity/post/api/deletePost';
 
 jest.mock('expo-router', () => ({
@@ -30,6 +31,7 @@ jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn(
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
 jest.mock('~/view/profile/model/useGetPosts', () => ({ useGetPosts: jest.fn() }));
+jest.mock('~/view/reviews/model/useGetReviews', () => ({ useGetReviews: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {
@@ -92,6 +94,7 @@ const mockUseGetProfile = useGetProfile as jest.Mock;
 const mockUseGetMyProfile = useGetMyProfile as jest.Mock;
 const mockUseGetMyPosts = useGetMyPosts as jest.Mock;
 const mockUseGetPosts = useGetPosts as jest.Mock;
+const mockUseGetReviews = useGetReviews as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -101,6 +104,7 @@ beforeEach(() => {
   mockUseGetMyProfile.mockReturnValue({ data: { memberId: 1, nickname: '나' } });
   mockUseGetMyPosts.mockReturnValue({ data: [], error: null, isError: false });
   mockUseGetPosts.mockReturnValue({ data: [], error: null, isError: false });
+  mockUseGetReviews.mockReturnValue({ data: [], error: null, isError: false });
 });
 
 describe('SellingPageView', () => {
@@ -494,6 +498,34 @@ describe('SellingPageView', () => {
     fireEvent.press(getByTestId('selling-card-reviews-3'));
 
     expect(push).toHaveBeenCalledWith('/reviews/5');
+  });
+
+  it('해당 게시물로 실제 받은 후기가 있으면 목록이 아닌 후기 상세로 바로 이동한다', () => {
+    mockUseGetMyPosts.mockReturnValue({
+      data: [
+        {
+          id: 3,
+          title: '판매완료글',
+          type: 'OBJECT',
+          mode: 'GIVER',
+          gwangsan: 5,
+          isCompleted: true,
+        },
+      ],
+      error: null,
+      isError: false,
+    });
+    mockUseGetReviews.mockReturnValue({
+      data: [{ reviewId: 'review-3', productId: 3, reviewerName: '구매자', content: '', light: 5 }],
+      error: null,
+      isError: false,
+    });
+
+    const { getByTestId } = renderWithProviders(<SellingPageView />);
+
+    fireEvent.press(getByTestId('selling-card-reviews-3'));
+
+    expect(push).toHaveBeenCalledWith('/cancelTrade/review-3');
   });
 
   it('"판매완료" 탭을 누르면 해당 탭이 활성화된다', () => {
