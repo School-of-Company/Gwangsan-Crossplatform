@@ -13,6 +13,7 @@ import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReview
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Toast from 'react-native-toast-message';
+import { Keyboard } from 'react-native';
 import ChatRoomPage from '../index';
 
 jest.mock('expo-router', () => ({
@@ -410,6 +411,21 @@ describe('ChatRoomPage', () => {
 
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
     expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('예약하기를 누르면 바텀시트가 키보드에 가려지지 않도록 키보드를 먼저 닫는다', () => {
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+
+    expect(dismissSpy).toHaveBeenCalled();
+
+    dismissSpy.mockRestore();
   });
 
   it('예약 확인 바텀시트에서 예약하기를 누르면 바텀시트가 닫히고 예약하기 페이지로 이동한다', () => {

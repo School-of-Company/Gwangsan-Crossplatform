@@ -116,6 +116,8 @@ export default function ChatRoomPage() {
   });
 
   const handleOpenReservationConfirm = useCallback(() => {
+    // 채팅 입력 중 키보드가 올라온 상태로 시트를 띄우면 키보드가 바텀시트를 가린다
+    Keyboard.dismiss();
     setIsReservationConfirmVisible(true);
   }, []);
 
