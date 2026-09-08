@@ -1,9 +1,10 @@
 import React from 'react';
-import { DeviceEventEmitter, FlatList, Text } from 'react-native';
+import { DeviceEventEmitter, FlatList, Platform, Text } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { ChatRoomContent } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
@@ -467,5 +468,22 @@ describe('ChatRoomContent', () => {
 
     const listAfterHide = UNSAFE_getByType(FlatList);
     expect(listAfterHide.props.contentContainerStyle.paddingBottom).toBe(10);
+  });
+
+  it('안드로이드에서도 하단 여백이 insets.bottom을 반영해, 입력창이 위로 뜬 만큼 리스트가 가려지지 않는다 (#591)', () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'android';
+    (useSafeAreaInsets as jest.Mock).mockReturnValueOnce({ top: 0, bottom: 48, left: 0, right: 0 });
+
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent {...defaultProps} messages={[createMessage()]} hasMessages />
+    );
+
+    // ChatRoomPage의 KeyboardStickyView가 닫힘 상태에서 insets.bottom(48)만큼 입력창을 위로
+    // 띄우므로, 리스트도 동일한 양을 하단 여백으로 확보해야 마지막 메시지가 가려지지 않는다
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.contentContainerStyle.paddingBottom).toBe(58);
+
+    Platform.OS = originalOS;
   });
 });
