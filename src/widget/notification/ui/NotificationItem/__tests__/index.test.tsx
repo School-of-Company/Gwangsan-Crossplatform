@@ -45,7 +45,7 @@ describe('NotificationItem — 클릭 동작', () => {
     expect(mockPush).toHaveBeenCalledWith('/post/5?review=1');
   });
 
-  it('REVIEW 타입 클릭 시 거래철회 화면으로 이동한다', () => {
+  it('REVIEW 타입 클릭 시 거래취소 화면으로 이동한다', () => {
     const { getByText } = render(
       <NotificationItem {...baseProps} alertType={AlertType.REVIEW} sourceId={5} />
     );

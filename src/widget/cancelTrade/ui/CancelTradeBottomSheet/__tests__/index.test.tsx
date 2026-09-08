@@ -98,13 +98,13 @@ describe('CancelTradeBottomSheet', () => {
   it('isVisible=false이면 렌더링하지 않는다', () => {
     const { queryByText } = render(<CancelTradeBottomSheet {...defaultProps} isVisible={false} />);
 
-    expect(queryByText('거래철회하기')).toBeNull();
+    expect(queryByText('거래취소하기')).toBeNull();
   });
 
-  it('isVisible=true이면 "거래철회하기" 타이틀을 표시한다', () => {
+  it('isVisible=true이면 "거래취소하기" 타이틀을 표시한다', () => {
     const { getAllByText } = render(<CancelTradeBottomSheet {...defaultProps} />);
 
-    expect(getAllByText('거래철회하기').length).toBeGreaterThan(0);
+    expect(getAllByText('거래취소하기').length).toBeGreaterThan(0);
   });
 
   it('canSubmit=false이면 제출 버튼이 비활성화된다', () => {
@@ -123,12 +123,12 @@ describe('CancelTradeBottomSheet', () => {
     expect(getByTestId('submit-button').props.accessibilityState.disabled).toBe(false);
   });
 
-  it('isLoading=true이면 "거래 철회 처리 중..." 텍스트를 표시한다', () => {
+  it('isLoading=true이면 "거래 취소 처리 중..." 텍스트를 표시한다', () => {
     mockUseCancelTrade.mockReturnValue(makeUseCancelTradeReturn({ isLoading: true }));
 
     const { getByText } = render(<CancelTradeBottomSheet {...defaultProps} />);
 
-    expect(getByText('거래 철회 처리 중...')).toBeTruthy();
+    expect(getByText('거래 취소 처리 중...')).toBeTruthy();
   });
 
   it('이미지 업로드 중이면 "이미지 업로드 중..." 텍스트를 표시한다', () => {
@@ -161,9 +161,9 @@ describe('CancelTradeBottomSheet', () => {
 
     const { getByTestId } = render(<CancelTradeBottomSheet {...defaultProps} />);
 
-    fireEvent.changeText(getByTestId('reason-field'), '철회 사유입니다');
+    fireEvent.changeText(getByTestId('reason-field'), '취소 사유입니다');
 
-    expect(setReason).toHaveBeenCalledWith('철회 사유입니다');
+    expect(setReason).toHaveBeenCalledWith('취소 사유입니다');
   });
 
   it('사유가 있는 상태에서 제출하면 handleSubmit이 trim된 값으로 호출된다', () => {

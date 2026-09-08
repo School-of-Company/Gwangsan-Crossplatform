@@ -218,7 +218,7 @@ export const useMessageSync = ({
                 (data.requestedBySeller == null ||
                   data.requestedBySeller !== old.product.isSeller)),
             ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
-            // 거래 철회 시 서버가 createdAt: null을 보내므로 무조건 대입해야 반영된다
+            // 거래 취소 시 서버가 createdAt: null을 보내므로 무조건 대입해야 반영된다
             createdAt: data.createdAt ?? null,
           },
         };

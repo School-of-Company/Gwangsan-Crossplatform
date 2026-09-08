@@ -17,7 +17,7 @@ export default function CancelTradeView() {
 
   useEffect(() => {
     if (data && !data.productId) {
-      logger.warn('리뷰 상세 응답에 productId가 없어 거래철회를 진행할 수 없습니다', {
+      logger.warn('리뷰 상세 응답에 productId가 없어 거래취소를 진행할 수 없습니다', {
         reviewId: data.reviewId,
       });
     }
@@ -50,7 +50,7 @@ export default function CancelTradeView() {
           </View>
         </View>
         <Button variant="error" disabled={!data?.productId} onPress={handleToggleCancelTradeModal}>
-          철회하기
+          취소하기
         </Button>
         <CancelTradeBottomSheet
           productId={data?.productId}
