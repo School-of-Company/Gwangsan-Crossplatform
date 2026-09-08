@@ -36,6 +36,12 @@ const APPLE_SHEET_EASING = Easing.bezier(0.32, 0.72, 0, 1);
 const DRAG_RESISTANCE = 0.7;
 // 여닫힘 속도를 동일하게 맞춘다
 const SHEET_TRANSITION_DURATION = 500;
+// 일부 안드로이드 키보드는 입력 중 예측 변환/후보 문구 바가 나타나거나 사라질 때마다
+// 높이가 조금 다른 채로 keyboardDidShow를 다시 쏜다(자체 숨김/노출이 아님). 이 변화에
+// 맞춰 시트를 매번 다시 애니메이션시키면, 한글 입력 조합 중인 TextInput의 위치가 자꾸
+// 바뀌면서 자소가 분리되어 보이는 문제가 생긴다. 실제 키보드 노출/숨김으로 볼 수 있는
+// 큰 변화(이 값보다 큰 변화)에만 반응해 그 문제를 피한다.
+const KEYBOARD_HEIGHT_CHANGE_THRESHOLD = 80;
 
 export function BottomSheetModalWrapper({
   isVisible,
@@ -59,6 +65,7 @@ export function BottomSheetModalWrapper({
   const translateY = useRef(new Animated.Value(modalHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
+  const lastKeyboardHeightRef = useRef(0);
 
   const panResponder = useMemo(
     () =>
@@ -103,8 +110,14 @@ export function BottomSheetModalWrapper({
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
+      const nextHeight = e.endCoordinates.height;
+      if (Math.abs(nextHeight - lastKeyboardHeightRef.current) < KEYBOARD_HEIGHT_CHANGE_THRESHOLD) {
+        return;
+      }
+      lastKeyboardHeightRef.current = nextHeight;
+
       Animated.timing(translateY, {
-        toValue: -e.endCoordinates.height,
+        toValue: -nextHeight,
         duration: 250,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
@@ -112,6 +125,8 @@ export function BottomSheetModalWrapper({
     });
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      lastKeyboardHeightRef.current = 0;
+
       Animated.timing(translateY, {
         toValue: 0,
         duration: 250,
