@@ -57,6 +57,12 @@ describe('KakaoMapWebView', () => {
     expect(lastWebViewProps.source.baseUrl).toBe('http://localhost');
   });
 
+  it('한글이 깨지지 않도록 UTF-8 charset meta 태그를 포함한다', () => {
+    render(<KakaoMapWebView center={center} onCameraMove={jest.fn()} />);
+
+    expect(lastWebViewProps.source.html).toContain('<meta charset="utf-8" />');
+  });
+
   it('cameraMove 메시지를 받기 전까지 로딩 스피너를 보여준다', () => {
     const { UNSAFE_getByType } = render(
       <KakaoMapWebView center={center} onCameraMove={jest.fn()} />

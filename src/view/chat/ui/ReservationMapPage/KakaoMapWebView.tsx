@@ -12,6 +12,7 @@ const buildHtml = (appKey: string, center: Required<Coordinates>) => `
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <style>html,body,#map{width:100%;height:100%;margin:0;padding:0;}</style>
 </head>
