@@ -1,6 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, Keyboard, Platform, type ListRenderItem } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { View, Text, FlatList, Platform, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useAnimatedReaction,
+  scrollTo,
+  type AnimatedRef,
+} from 'react-native-reanimated';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Icon from '@expo/vector-icons/Ionicons';
 import { MyMessage } from '../MyMessage';
 import { OtherMessage } from '../OtherMessage';
@@ -65,7 +72,7 @@ type ChatListItem =
 interface ChatRoomContentProps {
   readonly messages: readonly EnhancedChatMessage[];
   readonly hasMessages: boolean;
-  readonly flatListRef: React.RefObject<FlatList<ChatListItem> | null>;
+  readonly flatListRef: AnimatedRef<FlatList<ChatListItem>>;
   readonly renderHeader: () => React.JSX.Element;
   readonly onProfilePress: (userId: number) => void;
   readonly onScrollToEnd: () => void;
@@ -95,25 +102,43 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   showReviewButton,
   hasReviewedTrade,
 }) => {
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+  // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 이만큼 위로 띄우므로,
+  // 그 여백은 항상 정적으로 확보해 둔다(키보드가 열렸을 때 추가로 필요한 여백은 아래
+  // keyboardSpacerStyle이 애니메이션으로 채운다)
+  const basePadding = Platform.OS === 'ios' ? insets.bottom : 15;
 
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
+  // height는 키보드가 닫혀있으면 0, 열려있으면 음수(예: -300)로, 네이티브 키보드
+  // 애니메이션과 프레임 단위로 동기화되는 값이다(KeyboardStickyView가 입력창을 띄울 때
+  // 쓰는 것과 동일한 값). 이 값을 그대로 스페이서 높이/스크롤 위치에 반영하면 리스트도
+  // 키보드와 같은 속도로 움직인다
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  const keyboardSpacerStyle = useAnimatedStyle(() => ({
+    height: Math.max(0, -keyboardHeight.value - basePadding),
+  }));
+
+  // 스페이서가 늘어나 스크롤 가능 영역이 커지는 동안, 같은 UI 스레드 프레임에서 리스트도
+  // 함께 맨 아래로 밀어야 마지막 메시지가 계속 화면에 붙어서 올라간다. scrollToOffset과
+  // 마찬가지로 실제 끝보다 훨씬 큰 값으로 스크롤하면 네이티브가 알아서 clamp한다
+  useAnimatedReaction(
+    () => keyboardHeight.value,
+    (current, previous) => {
+      if (current !== previous) {
+        scrollTo(flatListRef, 0, 10_000_000, false);
+      }
+    }
+  );
+
+  // Fabric에서는 scrollTo()가 같은 프레임에 커밋되지 않고 한 프레임 밀릴 수 있어(키보드
+  // 애니메이션이 끝나는 순간 리스트가 툭 튀었다 돌아오는 원인), 매 프레임 transform이
+  // 바뀌는 화면에 보이지 않는 뷰를 하나 더 두어 강제로 커밋을 발생시킨다. 이 라이브러리의
+  // KeyboardChatScrollView가 쓰는 것과 동일한 우회책이다
+  // (see https://github.com/software-mansion/react-native-reanimated/issues/9000)
+  const commitStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardHeight.value }],
+  }));
 
   const lastMyMessageId = useMemo(() => {
     const lastMyMessage = [...messages].reverse().find((message) => message.isMine);
@@ -305,27 +330,28 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   }
 
   return (
-    <FlatList
-      ref={flatListRef}
-      data={combinedData}
-      keyExtractor={keyExtractor}
-      renderItem={renderItem}
-      ListHeaderComponent={renderHeader}
-      className="flex-1 px-4"
-      showsVerticalScrollIndicator={false}
-      onContentSizeChange={onScrollToEnd}
-      contentContainerStyle={{
-        // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 insets.bottom(iOS)/15(Android)만큼
-        // 위로 띄우므로, 그만큼 리스트 하단 여백을 기본으로 확보한다. 키보드가 열리면 입력창이
-        // 그 높이만큼 더 위로 떠오르므로, 두 플랫폼 모두 keyboardHeight를 반영해야 마지막 메시지가
-        // 입력창/키보드에 가려지지 않는다 (Android에서 이 값이 빠져 있어 키보드에 가려지는 문제가 있었음)
-        paddingBottom: 10 + Math.max(keyboardHeight, Platform.OS === 'ios' ? insets.bottom : 15),
-      }}
-      initialNumToRender={15}
-      maxToRenderPerBatch={10}
-      windowSize={11}
-      updateCellsBatchingPeriod={50}
-      removeClippedSubviews
-    />
+    <>
+      <FlatList
+        ref={flatListRef}
+        data={combinedData}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        className="flex-1 px-4"
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={onScrollToEnd}
+        contentContainerStyle={{ paddingBottom: 10 + basePadding }}
+        ListFooterComponent={<Animated.View style={keyboardSpacerStyle} />}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={11}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews
+      />
+      {/* 화면에는 보이지 않지만, 이 뷰의 애니메이션 스타일이 매 프레임 바뀌어야 위 scrollTo가
+          같은 프레임에 커밋된다 — NativeWind의 className 경유는 Reanimated의 style prop
+          가로채기와 충돌할 수 있어 라이브러리 원본과 동일하게 순수 style 객체를 쓴다 */}
+      <Animated.View style={[{ display: 'none', position: 'absolute' }, commitStyle]} />
+    </>
   );
 };
