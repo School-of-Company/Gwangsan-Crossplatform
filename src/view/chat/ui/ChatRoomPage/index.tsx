@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, TouchableOpacity, ActivityIndicator, Keyboard } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
@@ -115,11 +115,40 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  const handleOpenReservationConfirm = useCallback(() => {
-    // 채팅 입력 중 키보드가 올라온 상태로 시트를 띄우면 키보드가 바텀시트를 가린다
-    Keyboard.dismiss();
-    setIsReservationConfirmVisible(true);
+  // 채팅 입력 중 키보드가 올라온 상태로 바텀시트를 띄우면 키보드가 시트를 가린다.
+  // Keyboard.dismiss() 직후 바로 시트를 열면, 키보드가 실제로 내려가며 발생하는
+  // 레이아웃 변동과 시트의 등장 애니메이션(onLayout 기준)이 겹쳐 배경 딤 애니메이션이
+  // 씹히는 경우가 있었다 — 그래서 키보드가 완전히 내려간 뒤(keyboardDidHide)에만
+  // 시트를 연다. 애초에 키보드가 없었다면 바로 연다.
+  const isKeyboardVisibleRef = useRef(false);
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      isKeyboardVisibleRef.current = true;
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      isKeyboardVisibleRef.current = false;
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
+
+  const openAfterKeyboardDismiss = useCallback((openFn: () => void) => {
+    if (!isKeyboardVisibleRef.current) {
+      openFn();
+      return;
+    }
+    Keyboard.dismiss();
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      hideSub.remove();
+      openFn();
+    });
+  }, []);
+
+  const handleOpenReservationConfirm = useCallback(() => {
+    openAfterKeyboardDismiss(() => setIsReservationConfirmVisible(true));
+  }, [openAfterKeyboardDismiss]);
 
   const handleReservationConfirmProceed = useCallback(() => {
     setIsReservationConfirmVisible(false);
@@ -185,9 +214,8 @@ export default function ChatRoomPage() {
     });
 
   const handleMenuPress = useCallback(() => {
-    Keyboard.dismiss();
-    setIsTradeRequestModalVisible(true);
-  }, []);
+    openAfterKeyboardDismiss(() => setIsTradeRequestModalVisible(true));
+  }, [openAfterKeyboardDismiss]);
 
   const handleTradeRequestButtonPressed = useCallback(async () => {
     const canOpenRequestModal = await handleTradeRequestButtonPress();
