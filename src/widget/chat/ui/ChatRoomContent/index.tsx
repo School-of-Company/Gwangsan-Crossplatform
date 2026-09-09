@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, FlatList, Platform, type ListRenderItem } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -105,9 +105,12 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   const insets = useSafeAreaInsets();
 
   // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 이만큼 위로 띄우므로,
-  // 그 여백은 항상 정적으로 확보해 둔다(키보드가 열렸을 때 추가로 필요한 여백은 아래
-  // keyboardSpacerStyle이 애니메이션으로 채운다)
-  const basePadding = Platform.OS === 'ios' ? insets.bottom : 15;
+  // 그 여백은 항상 정적으로 확보해 둔다(이전 버전의 "10 + basePadding"과 동일한 총량 유지)
+  const closedGap = 10 + (Platform.OS === 'ios' ? insets.bottom : 40);
+
+  // 키보드가 완전히 열렸을 때 마지막 말풍선과 입력창 사이에 남기고 싶은 여백(작을수록 붙는다).
+  // closedGap과 별도 상수라 닫힘 상태 여백을 안 건드리고 이 값만으로 열림 상태 간격을 조절한다
+  const openGap = 0;
 
   // height는 키보드가 닫혀있으면 0, 열려있으면 음수(예: -300)로, 네이티브 키보드
   // 애니메이션과 프레임 단위로 동기화되는 값이다(KeyboardStickyView가 입력창을 띄울 때
@@ -115,8 +118,10 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   // 키보드와 같은 속도로 움직인다
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
+  // 정적 패딩(closedGap)에 이 스페이서를 더한 총량이, 닫힘 상태에서는 closedGap 그대로,
+  // 열림 상태에서는 keyboardHeight + openGap이 되도록 맞춘다
   const keyboardSpacerStyle = useAnimatedStyle(() => ({
-    height: Math.max(0, -keyboardHeight.value - basePadding),
+    height: Math.max(0, -keyboardHeight.value - closedGap + openGap),
   }));
 
   // 스페이서가 늘어나 스크롤 가능 영역이 커지는 동안, 같은 UI 스레드 프레임에서 리스트도
@@ -139,6 +144,23 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   const commitStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -keyboardHeight.value }],
   }));
+
+  // 스페이서가 애니메이션되는 동안 onContentSizeChange가 프레임마다 발생해, 그때마다 JS
+  // 스레드의 별도 애니메이션 스크롤(scrollToEnd(true))이 다시 시작되며 위 scrollTo와 서로
+  // 경쟁해 끊기는 느낌을 만든다. reanimated 훅을 더 쓰지 않고, 순수 JS 디바운스로 크기 변화가
+  // 잠잠해진 뒤 한 번만 호출되도록 한다
+  const scrollToEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleContentSizeChange = useCallback(() => {
+    if (scrollToEndTimeoutRef.current) clearTimeout(scrollToEndTimeoutRef.current);
+    scrollToEndTimeoutRef.current = setTimeout(onScrollToEnd, 100);
+  }, [onScrollToEnd]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollToEndTimeoutRef.current) clearTimeout(scrollToEndTimeoutRef.current);
+    };
+  }, []);
 
   const lastMyMessageId = useMemo(() => {
     const lastMyMessage = [...messages].reverse().find((message) => message.isMine);
@@ -339,8 +361,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         ListHeaderComponent={renderHeader}
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={onScrollToEnd}
-        contentContainerStyle={{ paddingBottom: 10 + basePadding }}
+        onContentSizeChange={handleContentSizeChange}
+        contentContainerStyle={{ paddingBottom: closedGap }}
         ListFooterComponent={<Animated.View style={keyboardSpacerStyle} />}
         initialNumToRender={15}
         maxToRenderPerBatch={10}
