@@ -93,13 +93,11 @@ const ActionSheetRow = ({
 
 const SellingPostCard = ({
   post,
-  reviewsMemberId,
   receivedReviews,
   isReviewsLoading,
   onMenuPress,
 }: {
   post: PostType;
-  reviewsMemberId?: number;
   receivedReviews?: ReviewPostType[];
   isReviewsLoading?: boolean;
   onMenuPress: (post: PostType) => void;
@@ -117,20 +115,13 @@ const SellingPostCard = ({
     onMenuPress(post);
   }, [onMenuPress, post]);
 
+  // 이 게시물(거래)에 대해 실제로 받은 후기가 있을 때만 버튼을 보여주고 그 상세로 이동한다
+  const matchedReview = receivedReviews?.find((review) => review.productId === id);
+
   const handleReviewsPress = useCallback(() => {
-    if (reviewsMemberId == null) return;
-    // 받은 후기 목록이 아직 로딩 중이면(=아직 매칭 시도 전) 눌러도 대기 — 로딩 끝나기 전에
-    // 목록 페이지로 잘못 빠지는 것을 막는다
-    if (isReviewsLoading) return;
-    // 이 게시물(거래)에 대해 실제로 받은 후기가 있으면 그 상세로, 없으면(아직 후기 전이거나
-    // 다른 게시물 후기만 있는 경우) 받은 후기 목록으로 보낸다
-    const matchedReview = receivedReviews?.find((review) => review.productId === id);
-    if (matchedReview) {
-      router.push(`/cancelTrade/${matchedReview.reviewId}`);
-      return;
-    }
-    router.push(`/reviews/${reviewsMemberId}`);
-  }, [router, reviewsMemberId, isReviewsLoading, receivedReviews, id]);
+    if (!matchedReview) return;
+    router.push(`/cancelTrade/${matchedReview.reviewId}`);
+  }, [router, matchedReview]);
 
   const firstImage =
     imageUrls?.[0]?.imageUrl ??
@@ -188,17 +179,19 @@ const SellingPostCard = ({
             </TouchableOpacity>
           )}
         </View>
-        {!isTemporary && isCompleted && reviewsMemberId != null && (
+        {!isTemporary && isCompleted && isReviewsLoading && (
+          <View
+            className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
+            testID={`selling-card-reviews-loading-${id}`}>
+            <ActivityIndicator color="white" />
+          </View>
+        )}
+        {!isTemporary && isCompleted && !isReviewsLoading && matchedReview && (
           <TouchableOpacity
             onPress={handleReviewsPress}
-            disabled={isReviewsLoading}
             className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
             testID={`selling-card-reviews-${id}`}>
-            {isReviewsLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-label font-medium text-white">받은 후기 보기</Text>
-            )}
+            <Text className="text-label font-medium text-white">받은 후기 보기</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -210,14 +203,12 @@ const SellingPanel = memo(
   ({
     posts,
     emptyMessage,
-    reviewsMemberId,
     receivedReviews,
     isReviewsLoading,
     onMenuPress,
   }: {
     posts: PostType[];
     emptyMessage: string;
-    reviewsMemberId?: number;
     receivedReviews?: ReviewPostType[];
     isReviewsLoading?: boolean;
     onMenuPress: (post: PostType) => void;
@@ -231,7 +222,6 @@ const SellingPanel = memo(
           posts.map((post) => (
             <SellingPostCard
               post={post}
-              reviewsMemberId={reviewsMemberId}
               receivedReviews={receivedReviews}
               isReviewsLoading={isReviewsLoading}
               onMenuPress={onMenuPress}
@@ -389,7 +379,6 @@ export default function SellingPageView() {
         <SellingPanel
           posts={soldPosts}
           emptyMessage="판매 완료된 게시물이 없습니다."
-          reviewsMemberId={reviewsMemberId}
           receivedReviews={receivedReviews}
           isReviewsLoading={isReviewsLoading}
           onMenuPress={handleMenuPress}

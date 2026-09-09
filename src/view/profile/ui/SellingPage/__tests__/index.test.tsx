@@ -381,7 +381,7 @@ describe('SellingPageView', () => {
     expect(queryByText('삭제하기')).toBeNull();
   });
 
-  it('판매완료 카드에는 점 3개 메뉴가 없고 "받은 후기 보기" 버튼이 있다', () => {
+  it('판매완료 카드는 점 3개 메뉴가 없지만, 받은 후기가 없으면 "받은 후기 보기" 버튼도 뜨지 않는다', () => {
     mockUseGetMyPosts.mockReturnValue({
       data: [
         {
@@ -397,9 +397,36 @@ describe('SellingPageView', () => {
       isError: false,
     });
 
-    const { queryByTestId, getByTestId, getByText } = renderWithProviders(<SellingPageView />);
+    const { queryByTestId, queryByText } = renderWithProviders(<SellingPageView />);
 
     expect(queryByTestId('selling-card-menu-3')).toBeNull();
+    expect(queryByTestId('selling-card-reviews-3')).toBeNull();
+    expect(queryByText('받은 후기 보기')).toBeNull();
+  });
+
+  it('판매완료 카드로 실제 받은 후기가 있으면 "받은 후기 보기" 버튼이 뜬다', () => {
+    mockUseGetMyPosts.mockReturnValue({
+      data: [
+        {
+          id: 3,
+          title: '판매완료글',
+          type: 'OBJECT',
+          mode: 'GIVER',
+          gwangsan: 5,
+          isCompleted: true,
+        },
+      ],
+      error: null,
+      isError: false,
+    });
+    mockUseGetReviews.mockReturnValue({
+      data: [{ reviewId: 'review-3', productId: 3, reviewerName: '구매자', content: '', light: 5 }],
+      error: null,
+      isError: false,
+    });
+
+    const { getByTestId, getByText } = renderWithProviders(<SellingPageView />);
+
     expect(getByTestId('selling-card-reviews-3')).toBeTruthy();
     expect(getByText('받은 후기 보기')).toBeTruthy();
   });
@@ -448,59 +475,7 @@ describe('SellingPageView', () => {
     expect(queryByText('구매자 홍길동')).toBeNull();
   });
 
-  it('"받은 후기 보기"를 누르면 내 받은 후기 페이지로 이동한다', () => {
-    mockUseGetMyPosts.mockReturnValue({
-      data: [
-        {
-          id: 3,
-          title: '판매완료글',
-          type: 'OBJECT',
-          mode: 'GIVER',
-          gwangsan: 5,
-          isCompleted: true,
-        },
-      ],
-      error: null,
-      isError: false,
-    });
-
-    const { getByTestId } = renderWithProviders(<SellingPageView />);
-
-    fireEvent.press(getByTestId('selling-card-reviews-3'));
-
-    expect(push).toHaveBeenCalledWith('/reviews/1');
-  });
-
-  it('상대방 프로필의 판매완료 카드에서 "받은 후기 보기"를 누르면 상대방 후기 페이지로 이동한다', () => {
-    mockUseLocalSearchParams.mockReturnValue({ id: '5' });
-    mockUseGetProfile.mockReturnValue({
-      data: { nickname: '상대방', memberId: 5 },
-      error: null,
-      isError: false,
-    });
-    mockUseGetPosts.mockReturnValue({
-      data: [
-        {
-          id: 3,
-          title: '판매완료글',
-          type: 'OBJECT',
-          mode: 'GIVER',
-          gwangsan: 5,
-          isCompleted: true,
-        },
-      ],
-      error: null,
-      isError: false,
-    });
-
-    const { getByTestId } = renderWithProviders(<SellingPageView />);
-
-    fireEvent.press(getByTestId('selling-card-reviews-3'));
-
-    expect(push).toHaveBeenCalledWith('/reviews/5');
-  });
-
-  it('해당 게시물로 실제 받은 후기가 있으면 목록이 아닌 후기 상세로 바로 이동한다', () => {
+  it('"받은 후기 보기"를 누르면 해당 거래의 받은 후기 상세로 이동한다', () => {
     mockUseGetMyPosts.mockReturnValue({
       data: [
         {
@@ -528,7 +503,41 @@ describe('SellingPageView', () => {
     expect(push).toHaveBeenCalledWith('/cancelTrade/review-3');
   });
 
-  it('받은 후기 목록이 아직 로딩 중이면 "받은 후기 보기"를 눌러도 목록 페이지로 잘못 이동하지 않는다', () => {
+  it('상대방 프로필의 판매완료 카드도 매칭되는 받은 후기가 있으면 해당 후기 상세로 이동한다', () => {
+    mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+    mockUseGetProfile.mockReturnValue({
+      data: { nickname: '상대방', memberId: 5 },
+      error: null,
+      isError: false,
+    });
+    mockUseGetPosts.mockReturnValue({
+      data: [
+        {
+          id: 3,
+          title: '판매완료글',
+          type: 'OBJECT',
+          mode: 'GIVER',
+          gwangsan: 5,
+          isCompleted: true,
+        },
+      ],
+      error: null,
+      isError: false,
+    });
+    mockUseGetReviews.mockReturnValue({
+      data: [{ reviewId: 'review-3', productId: 3, reviewerName: '구매자', content: '', light: 5 }],
+      error: null,
+      isError: false,
+    });
+
+    const { getByTestId } = renderWithProviders(<SellingPageView />);
+
+    fireEvent.press(getByTestId('selling-card-reviews-3'));
+
+    expect(push).toHaveBeenCalledWith('/cancelTrade/review-3');
+  });
+
+  it('받은 후기 목록이 아직 로딩 중이면 버튼 대신 로딩 표시를 보여주고 탭할 수 없다', () => {
     mockUseGetMyPosts.mockReturnValue({
       data: [
         {
@@ -553,12 +562,10 @@ describe('SellingPageView', () => {
       isPending: true,
     });
 
-    const { getByTestId } = renderWithProviders(<SellingPageView />);
+    const { queryByTestId, getByTestId } = renderWithProviders(<SellingPageView />);
 
-    fireEvent.press(getByTestId('selling-card-reviews-3'));
-
-    expect(push).not.toHaveBeenCalledWith('/reviews/5');
-    expect(push).not.toHaveBeenCalledWith(expect.stringContaining('/cancelTrade/'));
+    expect(queryByTestId('selling-card-reviews-3')).toBeNull();
+    expect(getByTestId('selling-card-reviews-loading-3')).toBeTruthy();
   });
 
   it('"판매완료" 탭을 누르면 해당 탭이 활성화된다', () => {
