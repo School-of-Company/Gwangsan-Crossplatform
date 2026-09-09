@@ -348,7 +348,7 @@ describe('BottomSheetModalWrapper', () => {
 
       expect(timingSpy).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ toValue: -420 })
+        expect.objectContaining({ toValue: -432 })
       );
     });
   });

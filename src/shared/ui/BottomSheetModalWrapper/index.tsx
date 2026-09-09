@@ -42,6 +42,8 @@ const SHEET_TRANSITION_DURATION = 500;
 // 바뀌면서 자소가 분리되어 보이는 문제가 생긴다. 실제 키보드 노출/숨김으로 볼 수 있는
 // 큰 변화(이 값보다 큰 변화)에만 반응해 그 문제를 피한다.
 const KEYBOARD_HEIGHT_CHANGE_THRESHOLD = 80;
+// 키보드가 올라왔을 때 시트 바닥이 키보드 상단에 완전히 붙어버리지 않도록 살짝 띄운다.
+const KEYBOARD_GAP = 12;
 
 export function BottomSheetModalWrapper({
   isVisible,
@@ -117,7 +119,7 @@ export function BottomSheetModalWrapper({
       lastKeyboardHeightRef.current = nextHeight;
 
       Animated.timing(translateY, {
-        toValue: -nextHeight,
+        toValue: -(nextHeight + KEYBOARD_GAP),
         duration: 250,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
