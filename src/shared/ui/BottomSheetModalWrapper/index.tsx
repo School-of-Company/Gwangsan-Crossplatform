@@ -19,6 +19,10 @@ interface BottomSheetModalWrapperProps {
   isVisible: boolean;
   onClose: () => void;
   onAnimationComplete?: () => void;
+  // 시트가 다 열려서 슬라이드업 애니메이션이 끝난 직후 호출된다. 애니메이션 도중
+  // TextInput에 포커스를 주면(autoFocus) 안드로이드에서 한글 입력 중 자소가
+  // 분리되는 문제가 있어, 포커스는 이 콜백이 온 뒤에 주도록 한다.
+  onOpenAnimationComplete?: () => void;
   title: string;
   children: React.ReactNode;
   height?: number;
@@ -49,6 +53,7 @@ export function BottomSheetModalWrapper({
   isVisible,
   onClose,
   onAnimationComplete,
+  onOpenAnimationComplete,
   title,
   children,
   height,
@@ -189,9 +194,11 @@ export function BottomSheetModalWrapper({
           useNativeDriver: true,
           easing: APPLE_SHEET_EASING,
         }),
-      ]).start();
+      ]).start(() => {
+        onOpenAnimationComplete?.();
+      });
     });
-  }, [translateY, backdropOpacity]);
+  }, [translateY, backdropOpacity, onOpenAnimationComplete]);
 
   // Modal의 onRequestClose를 대체 — 안드로이드 뒤로가기를 닫기 동작으로 처리한다
   useEffect(() => {
