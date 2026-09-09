@@ -1,5 +1,3 @@
-import Toast from 'react-native-toast-message';
-
 import { io } from 'socket.io-client';
 import * as Sentry from '@sentry/react-native';
 import { getData } from '../getData';
@@ -13,10 +11,6 @@ jest.mock('../logger', () => ({ logger: { error: jest.fn(), warn: jest.fn() } })
 jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
-}));
-jest.mock('react-native-toast-message', () => ({
-  __esModule: true,
-  default: { show: jest.fn() },
 }));
 
 const mockIo = io as jest.Mock;
@@ -181,7 +175,7 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(mockIo).toHaveBeenCalledTimes(2);
   });
 
-  it('rejects and shows a toast on connect_error, mapping timeout messages', async () => {
+  it('rejects on connect_error without surfacing a user-facing toast, mapping timeout messages to a breadcrumb', async () => {
     const socket = createMockSocket();
     mockIo.mockReturnValue(socket);
     mockGetData.mockResolvedValue('token');
@@ -193,9 +187,10 @@ describe('chatSocket (SocketManager singleton)', () => {
     socket.__trigger('connect_error', error);
 
     await expect(promise).rejects.toBe(error);
-    expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', text2: 'Connection timeout' })
-    );
+    // 채팅 소켓은 로그인 직후 등 화면 곳곳에서 자동으로 재연결을 시도하므로,
+    // 연결 실패를 전역 Toast로 노출하면 소켓과 무관한 동작 직후에도 오류
+    // 토스트가 떠 사용자를 혼란시킨다 (see #585). 배경 재연결 실패는 UI를
+    // 방해하지 않고 breadcrumb으로만 남긴다.
     // 기기/네트워크 상태에 의한 연결 실패(타임아웃 등)는 앱 버그가 아니므로
     // Sentry 예외로 남기지 않고 breadcrumb만 남긴다 (see #562).
     expect(logger.error).not.toHaveBeenCalled();
@@ -256,7 +251,7 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(mockSentry.addBreadcrumb).not.toHaveBeenCalled();
   });
 
-  it('maps unauthorized connect_error messages to an authentication-failure toast', async () => {
+  it('logs an unauthorized connect_error without surfacing a user-facing toast', async () => {
     const socket = createMockSocket();
     mockIo.mockReturnValue(socket);
     mockGetData.mockResolvedValue('token');
@@ -268,9 +263,6 @@ describe('chatSocket (SocketManager singleton)', () => {
     socket.__trigger('connect_error', error);
 
     await expect(promise).rejects.toBe(error);
-    expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', text2: 'Authentication failed' })
-    );
     // 네트워크/타임아웃이 아닌 실제 오류는 기존대로 Sentry에 기록되어야 한다.
     expect(logger.error).toHaveBeenCalled();
     expect(mockSentry.addBreadcrumb).not.toHaveBeenCalled();
