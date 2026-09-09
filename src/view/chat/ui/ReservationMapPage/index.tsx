@@ -272,7 +272,7 @@ export function ReservationMapPage() {
   }, [currentAddress, placeNameDraft, router, setCoordinates, setPlaceName]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
       <Header headerTitle="장소 선택" />
 
       <View className="px-4 pb-3">
@@ -317,7 +317,7 @@ export function ReservationMapPage() {
             )}
           </View>
         ) : (
-          <View className="flex-1">
+          <View className="flex-1" onTouchStart={() => Keyboard.dismiss()}>
             {cameraCenter ? (
               Platform.OS === 'ios' ? (
                 <AppleMaps.View
