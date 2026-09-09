@@ -1,9 +1,19 @@
 import React from 'react';
 import { DeviceEventEmitter, FlatList, Text } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
+import type { AnimatedRef } from 'react-native-reanimated';
 import { ChatRoomContent } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+
+// AnimatedRef는 함수(콜백 ref)이면서 .current를 갖는 특수한 형태라 실제 훅으로 만들 수 없는
+// 테스트 환경에서는 동일한 형태의 모의 객체로 대체한다
+const createMockFlatListRef = <T,>(): AnimatedRef<FlatList<T>> => {
+  const ref = ((_node?: FlatList<T> | null) => undefined) as unknown as AnimatedRef<FlatList<T>>;
+  ref.current = null;
+  ref.observe = () => {};
+  return ref;
+};
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
@@ -101,7 +111,7 @@ const createProduct = (overrides: Partial<TradeProduct> = {}): TradeProduct => (
 const defaultProps = {
   messages: [],
   hasMessages: false,
-  flatListRef: React.createRef<FlatList<any>>(),
+  flatListRef: createMockFlatListRef<any>(),
   renderHeader: () => <Text>채팅방 헤더</Text>,
   onProfilePress: jest.fn(),
   onScrollToEnd: jest.fn(),
@@ -446,26 +456,22 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('my-message-4').props.children).toBe('last');
   });
 
-  it('키보드가 나타나고 사라짐에 따라 리스트 하단 여백을 조정한다', () => {
+  it('리스트 하단 패딩은 플랫폼 기준 고정값을 유지하고, 키보드 높이 변화는 애니메이션 스페이서(ListFooterComponent)가 담당한다', () => {
     const { UNSAFE_getByType } = render(
       <ChatRoomContent {...defaultProps} messages={[createMessage()]} hasMessages />
     );
 
     const list = UNSAFE_getByType(FlatList);
     expect(list.props.contentContainerStyle.paddingBottom).toBe(10);
+    expect(list.props.ListFooterComponent).toBeTruthy();
 
+    // 키보드 높이는 이제 useReanimatedKeyboardAnimation의 SharedValue로 프레임 단위 동기화되므로,
+    // 과거처럼 Keyboard 이벤트를 직접 구독하지 않는다 — 같은 이벤트를 흘려보내도 정적 패딩은 그대로다
     act(() => {
       DeviceEventEmitter.emit('keyboardWillShow', { endCoordinates: { height: 300 } });
     });
 
     const listAfterShow = UNSAFE_getByType(FlatList);
-    expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(310);
-
-    act(() => {
-      DeviceEventEmitter.emit('keyboardWillHide');
-    });
-
-    const listAfterHide = UNSAFE_getByType(FlatList);
-    expect(listAfterHide.props.contentContainerStyle.paddingBottom).toBe(10);
+    expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(10);
   });
 });

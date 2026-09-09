@@ -1,6 +1,7 @@
-import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FlatList } from 'react-native';
+import { useAnimatedRef, type AnimatedRef } from 'react-native-reanimated';
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
@@ -13,7 +14,7 @@ interface UseChatMessagesParams {
 }
 
 interface UseChatMessagesReturn {
-  readonly flatListRef: React.RefObject<FlatList | null>;
+  readonly flatListRef: AnimatedRef<FlatList>;
   readonly messages: ChatMessageResponse[];
   readonly otherUserInfo: { nickname: string; id?: number };
   readonly isLoading: boolean;
@@ -31,7 +32,7 @@ interface UseChatMessagesReturn {
 const CHAT_ROOM_QUERY_KEY = ['chatRooms', 'list'] as const;
 
 export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
-  const flatListRef = useRef<FlatList | null>(null);
+  const flatListRef = useAnimatedRef<FlatList>();
   const queryClient = useQueryClient();
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
