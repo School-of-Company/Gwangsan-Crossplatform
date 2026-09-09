@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   NativeScrollEvent,
@@ -94,11 +95,13 @@ const SellingPostCard = ({
   post,
   reviewsMemberId,
   receivedReviews,
+  isReviewsLoading,
   onMenuPress,
 }: {
   post: PostType;
   reviewsMemberId?: number;
   receivedReviews?: ReviewPostType[];
+  isReviewsLoading?: boolean;
   onMenuPress: (post: PostType) => void;
 }) => {
   const router = useRouter();
@@ -116,6 +119,9 @@ const SellingPostCard = ({
 
   const handleReviewsPress = useCallback(() => {
     if (reviewsMemberId == null) return;
+    // 받은 후기 목록이 아직 로딩 중이면(=아직 매칭 시도 전) 눌러도 대기 — 로딩 끝나기 전에
+    // 목록 페이지로 잘못 빠지는 것을 막는다
+    if (isReviewsLoading) return;
     // 이 게시물(거래)에 대해 실제로 받은 후기가 있으면 그 상세로, 없으면(아직 후기 전이거나
     // 다른 게시물 후기만 있는 경우) 받은 후기 목록으로 보낸다
     const matchedReview = receivedReviews?.find((review) => review.productId === id);
@@ -124,7 +130,7 @@ const SellingPostCard = ({
       return;
     }
     router.push(`/reviews/${reviewsMemberId}`);
-  }, [router, reviewsMemberId, receivedReviews, id]);
+  }, [router, reviewsMemberId, isReviewsLoading, receivedReviews, id]);
 
   const firstImage =
     imageUrls?.[0]?.imageUrl ??
@@ -185,9 +191,14 @@ const SellingPostCard = ({
         {!isTemporary && isCompleted && reviewsMemberId != null && (
           <TouchableOpacity
             onPress={handleReviewsPress}
+            disabled={isReviewsLoading}
             className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
             testID={`selling-card-reviews-${id}`}>
-            <Text className="text-label font-medium text-white">받은 후기 보기</Text>
+            {isReviewsLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-label font-medium text-white">받은 후기 보기</Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -201,12 +212,14 @@ const SellingPanel = memo(
     emptyMessage,
     reviewsMemberId,
     receivedReviews,
+    isReviewsLoading,
     onMenuPress,
   }: {
     posts: PostType[];
     emptyMessage: string;
     reviewsMemberId?: number;
     receivedReviews?: ReviewPostType[];
+    isReviewsLoading?: boolean;
     onMenuPress: (post: PostType) => void;
   }) => (
     <ScrollView
@@ -220,6 +233,7 @@ const SellingPanel = memo(
               post={post}
               reviewsMemberId={reviewsMemberId}
               receivedReviews={receivedReviews}
+              isReviewsLoading={isReviewsLoading}
               onMenuPress={onMenuPress}
               key={post.id}
             />
@@ -265,7 +279,10 @@ export default function SellingPageView() {
   );
   const soldPosts = useMemo(() => sellingPosts.filter((post) => post.isCompleted), [sellingPosts]);
   const reviewsMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
-  const { data: receivedReviews } = useGetReviews(
+  // react-query v5의 isLoading은 isPending && isFetching이라 아직 enabled:false로
+  // 대기 중인(= myInfo를 기다리는) 상태에서는 false를 반환한다. 그 시점에도 data는
+  // 여전히 undefined이므로, "아직 받아오지 못함"을 정확히 판별하려면 isPending을 써야 한다
+  const { data: receivedReviews, isPending: isReviewsLoading } = useGetReviews(
     'receive',
     reviewsMemberId != null ? String(reviewsMemberId) : undefined
   );
@@ -374,6 +391,7 @@ export default function SellingPageView() {
           emptyMessage="판매 완료된 게시물이 없습니다."
           reviewsMemberId={reviewsMemberId}
           receivedReviews={receivedReviews}
+          isReviewsLoading={isReviewsLoading}
           onMenuPress={handleMenuPress}
         />
       </ScrollView>

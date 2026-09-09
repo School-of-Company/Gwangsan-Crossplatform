@@ -528,6 +528,39 @@ describe('SellingPageView', () => {
     expect(push).toHaveBeenCalledWith('/cancelTrade/review-3');
   });
 
+  it('받은 후기 목록이 아직 로딩 중이면 "받은 후기 보기"를 눌러도 목록 페이지로 잘못 이동하지 않는다', () => {
+    mockUseGetMyPosts.mockReturnValue({
+      data: [
+        {
+          id: 3,
+          title: '판매완료글',
+          type: 'OBJECT',
+          mode: 'GIVER',
+          gwangsan: 5,
+          isCompleted: true,
+        },
+      ],
+      error: null,
+      isError: false,
+    });
+    // react-query v5에서 쿼리가 아직 enabled:false로 대기 중일 때는 isLoading이 아니라
+    // isPending만 true다. 실제 useGetReviews 훅과 동일한 형태로 목을 구성해 이 경우를 재현한다.
+    mockUseGetReviews.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isLoading: false,
+      isPending: true,
+    });
+
+    const { getByTestId } = renderWithProviders(<SellingPageView />);
+
+    fireEvent.press(getByTestId('selling-card-reviews-3'));
+
+    expect(push).not.toHaveBeenCalledWith('/reviews/5');
+    expect(push).not.toHaveBeenCalledWith(expect.stringContaining('/cancelTrade/'));
+  });
+
   it('"판매완료" 탭을 누르면 해당 탭이 활성화된다', () => {
     const { getByTestId, getByText } = renderWithProviders(<SellingPageView />);
 
