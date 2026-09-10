@@ -420,6 +420,74 @@ describe('ChatRoomList', () => {
     });
   });
 
+  describe('재참여로 복원된 방', () => {
+    beforeEach(() => {
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+      );
+    });
+
+    it('나가기 완료 후 같은 roomId가 서버 목록에 다시 나타나면(재참여) 화면에 다시 표시한다', () => {
+      const { getByTestId, getByText, queryByTestId, rerender } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByTestId('exit-complete-7'));
+      expect(queryByTestId('room-7')).toBeNull();
+
+      // 나가기 요청이 서버에 성공적으로 반영됨
+      const [, options] = mockDeleteMutate.mock.calls[0];
+      act(() => {
+        options.onSuccess();
+      });
+
+      // 상품의 '채팅하기'로 재참여해 서버 목록에 같은 roomId가 다시 나타난 상황을 흉내낸다
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+      );
+      rerender(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      expect(queryByTestId('room-7')).toBeTruthy();
+    });
+
+    it('나가기 요청 응답을 아직 기다리는 중이면(pending) 목록에 남아있어도 되살리지 않는다', () => {
+      const { getByTestId, getByText, queryByTestId, rerender } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByTestId('exit-complete-7'));
+      expect(queryByTestId('room-7')).toBeNull();
+
+      // onSuccess/onError가 아직 오지 않은 상태에서 폴링 응답이 먼저 도착해 목록에 그대로 남아있다
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+      );
+      rerender(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      expect(queryByTestId('room-7')).toBeNull();
+    });
+  });
+
   describe('채팅방 차단 / 신고', () => {
     beforeEach(() => {
       mockUseChatRooms.mockReturnValue(
