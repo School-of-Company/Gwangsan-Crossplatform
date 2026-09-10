@@ -11,6 +11,7 @@ import {
   useChatSocket,
   useDeleteChatRoom,
   chatRoomKeys,
+  chatMessageKeys,
   getChatRoomData,
 } from '@/entity/chat';
 
@@ -206,6 +207,117 @@ describe('ChatRoomList', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/chatting/7');
     await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+  });
+
+  describe('재입장 시 메시지 캐시 보존 (#610)', () => {
+    const roomId = 7;
+
+    beforeEach(() => {
+      mockUseChatRooms.mockReturnValue(
+        makeChatRoomsReturn({ data: [{ roomId, nickname: '방장' }] })
+      );
+    });
+
+    const makeMessage = (overrides: Record<string, unknown> = {}) => ({
+      messageId: 1,
+      roomId,
+      content: '메시지',
+      messageType: 'TEXT',
+      createdAt: '2026-01-01T00:00:00Z',
+      senderNickname: '상대',
+      senderId: 1,
+      checked: false,
+      isMine: false,
+      ...overrides,
+    });
+
+    it('기존 캐시(방금 보낸 메시지)가 REST snapshot보다 최신이면 기존 캐시를 유지한다', async () => {
+      const freshCache = [
+        makeMessage({
+          messageId: 'temp-1',
+          createdAt: '2026-01-01T00:00:10Z',
+          content: '방금 보낸 메시지',
+        }),
+      ];
+      const staleSnapshot = [
+        makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z', content: '이전 메시지' }),
+      ];
+      mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: staleSnapshot });
+
+      const { getByTestId, queryClient } = render(<ChatRoomList />);
+      queryClient.setQueryData(chatMessageKeys.room(roomId), freshCache);
+
+      fireEvent.press(getByTestId(`room-${roomId}`));
+
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(freshCache);
+    });
+
+    it('서버 snapshot이 기존 캐시보다 최신이면 서버 값으로 갱신한다', async () => {
+      const staleCache = [makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })];
+      const freshSnapshot = [
+        makeMessage({ messageId: 2, createdAt: '2026-01-01T00:05:00Z', content: '새 메시지' }),
+      ];
+      mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: freshSnapshot });
+
+      const { getByTestId, queryClient } = render(<ChatRoomList />);
+      queryClient.setQueryData(chatMessageKeys.room(roomId), staleCache);
+
+      fireEvent.press(getByTestId(`room-${roomId}`));
+
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(freshSnapshot);
+    });
+
+    it('기존 캐시가 없으면 서버 조회 결과를 그대로 저장한다', async () => {
+      const snapshot = [makeMessage({ messageId: 1 })];
+      mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: snapshot });
+
+      const { getByTestId, queryClient } = render(<ChatRoomList />);
+
+      fireEvent.press(getByTestId(`room-${roomId}`));
+
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(snapshot);
+    });
+
+    it('최신 시각이 같으면 기존 캐시를 그대로 유지한다(불필요한 교체 방지)', async () => {
+      const cache = [makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })];
+      const snapshot = [
+        makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z', content: '다른 참조값' }),
+      ];
+      mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: snapshot });
+
+      const { getByTestId, queryClient } = render(<ChatRoomList />);
+      queryClient.setQueryData(chatMessageKeys.room(roomId), cache);
+
+      fireEvent.press(getByTestId(`room-${roomId}`));
+
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toBe(cache);
+    });
+
+    it('REST 배열이 최신순(내림차순)으로 와도 최댓값 기준으로 최신 여부를 판단한다', async () => {
+      const cache = [makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })];
+      const descendingSnapshot = [
+        makeMessage({ messageId: 3, createdAt: '2026-01-01T00:10:00Z' }),
+        makeMessage({ messageId: 2, createdAt: '2026-01-01T00:05:00Z' }),
+      ];
+      mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: descendingSnapshot });
+
+      const { getByTestId, queryClient } = render(<ChatRoomList />);
+      queryClient.setQueryData(chatMessageKeys.room(roomId), cache);
+
+      fireEvent.press(getByTestId(`room-${roomId}`));
+
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(descendingSnapshot);
+    });
   });
 
   it('isLoading=true이면 RefreshControl의 refreshing이 true이다', () => {
