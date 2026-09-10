@@ -6,7 +6,11 @@ import { useChatInput } from '../../model/useChatInput';
 import { ImagePreview } from '../ImagePreview';
 
 interface ChatInputProps {
-  onSendMessage: (content: string | null, imageIds: number[]) => void;
+  onSendMessage: (
+    content: string | null,
+    imageIds: number[],
+    images?: { imageId: number; imageUrl: string }[]
+  ) => void;
   disabled?: boolean;
   onFocus?: () => void;
 }

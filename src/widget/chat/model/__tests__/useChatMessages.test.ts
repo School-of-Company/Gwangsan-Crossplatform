@@ -150,7 +150,7 @@ describe('useChatMessages', () => {
 
       result.current.messageHandlers.sendMessage('내용', [1, 2]);
 
-      expect(mockResilientSend).toHaveBeenCalledWith('내용', 'IMAGE', [1, 2]);
+      expect(mockResilientSend).toHaveBeenCalledWith('내용', 'IMAGE', [1, 2], undefined);
     });
 
     it('imageIds가 없고 content가 있으면 TEXT 타입으로 resilientSendMessage를 호출한다', () => {

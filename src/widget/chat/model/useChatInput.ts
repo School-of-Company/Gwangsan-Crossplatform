@@ -11,7 +11,11 @@ export interface ImagePreview {
 }
 
 interface UseChatInputProps {
-  onSendMessage: (content: string | null, imageIds: number[]) => void;
+  onSendMessage: (
+    content: string | null,
+    imageIds: number[],
+    images?: { imageId: number; imageUrl: string }[]
+  ) => void;
   disabled?: boolean;
 }
 
@@ -81,8 +85,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
         mediaTypes: ['images'],
         allowsMultipleSelection: false,
         quality: 0.8,
-        allowsEditing: true,
-        aspect: [1, 1],
       })
     );
   }, [pickAndUpload]);
@@ -97,8 +99,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
         quality: 0.8,
-        allowsEditing: true,
-        aspect: [1, 1],
       })
     );
   }, [pickAndUpload]);
@@ -143,8 +143,13 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     try {
       const content = textMessage.trim() || null;
       const imageIds = selectedImages.map((img) => img.imageId);
+      // 서버 echo를 기다리지 않고 바로 미리보기를 그릴 수 있도록 로컬 파일 경로를 함께 전달한다
+      const images = selectedImages.map((img) => ({
+        imageId: img.imageId,
+        imageUrl: img.localUri,
+      }));
 
-      onSendMessage(content, imageIds);
+      onSendMessage(content, imageIds, images);
 
       setTextMessage('');
       setSelectedImages([]);

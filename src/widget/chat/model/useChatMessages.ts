@@ -7,6 +7,7 @@ import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessa
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse, ChatRoomListItem } from '~/entity/chat';
+import type { PendingMessageImage } from '~/shared/store/useChatQueueStore';
 
 interface UseChatMessagesParams {
   readonly roomId: RoomId;
@@ -21,7 +22,11 @@ interface UseChatMessagesReturn {
   readonly connectionState: 'connected' | 'connecting' | 'disconnected';
   readonly isBlockedByOtherUser: boolean;
   readonly messageHandlers: {
-    readonly sendMessage: (content: string | null, imageIds: number[]) => void;
+    readonly sendMessage: (
+      content: string | null,
+      imageIds: number[],
+      images?: PendingMessageImage[]
+    ) => void;
     readonly renderMessage: ({ item }: { item: ChatMessageResponse }) => null;
   };
   readonly scrollToEnd: (animated?: boolean) => void;
@@ -83,9 +88,9 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
 
   const messageHandlers = {
     sendMessage: useCallback(
-      (content: string | null, imageIds: number[]) => {
+      (content: string | null, imageIds: number[], images?: PendingMessageImage[]) => {
         if (imageIds.length > 0) {
-          resilientSendMessage(content, 'IMAGE', imageIds);
+          resilientSendMessage(content, 'IMAGE', imageIds, images);
         } else if (content) {
           resilientSendMessage(content, 'TEXT', []);
         }
