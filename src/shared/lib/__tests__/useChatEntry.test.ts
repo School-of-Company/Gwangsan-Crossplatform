@@ -146,4 +146,53 @@ describe('useChatEntry', () => {
 
     expect(result.current.isLoading).toBe(false);
   });
+
+  describe('rejoinChat (명시적 재참여)', () => {
+    it('findChatRoom을 거치지 않고 바로 createChatRoom을 호출해 이동한다', async () => {
+      mockCreateChatRoom.mockResolvedValue({ roomId: 'room-99' });
+
+      const { result } = renderHookWithProviders(() => useChatEntry());
+
+      await act(async () => {
+        await result.current.rejoinChat(10);
+      });
+
+      expect(mockCreateChatRoom).toHaveBeenCalledWith(10);
+      expect(mockFindChatRoom).not.toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/chatting/room-99');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('createChatRoom 실패 시 추가 Toast 없이(자체 에러 Toast만) 이동하지 않는다', async () => {
+      mockCreateChatRoom.mockRejectedValue(new Error('채팅방 생성 실패'));
+
+      const { result } = renderHookWithProviders(() => useChatEntry());
+
+      await act(async () => {
+        await result.current.rejoinChat(11);
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('rejoinChat 호출 중 isLoading이 true가 된다', async () => {
+      let resolveCreate!: (value: any) => void;
+      mockCreateChatRoom.mockReturnValue(new Promise((res) => (resolveCreate = res)));
+
+      const { result } = renderHookWithProviders(() => useChatEntry());
+
+      act(() => {
+        result.current.rejoinChat(12);
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(true));
+
+      await act(async () => {
+        resolveCreate({ roomId: 'room-12' });
+      });
+
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
 });

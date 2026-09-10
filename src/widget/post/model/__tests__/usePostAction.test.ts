@@ -56,7 +56,7 @@ const setupMocks = (dataOverrides = {}) => {
     isWithdrawing: false,
     hasPendingRequest: false,
   });
-  mockUseChatEntry.mockReturnValue({ navigateToChat: jest.fn(), isLoading: false });
+  mockUseChatEntry.mockReturnValue({ rejoinChat: jest.fn(), isLoading: false });
   mockCheckIsMyPost.mockResolvedValue(false);
 };
 
@@ -372,9 +372,9 @@ describe('usePostAction', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('goToChat이 navigateToChat을 data.id로 호출한다', async () => {
-      const mockNavigateToChat = jest.fn().mockResolvedValue({});
-      mockUseChatEntry.mockReturnValue({ navigateToChat: mockNavigateToChat, isLoading: false });
+    it('goToChat이 rejoinChat을 data.id로 호출한다', async () => {
+      const mockRejoinChat = jest.fn().mockResolvedValue({});
+      mockUseChatEntry.mockReturnValue({ rejoinChat: mockRejoinChat, isLoading: false });
 
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
@@ -382,12 +382,12 @@ describe('usePostAction', () => {
         await result.current.navigationHandlers.goToChat();
       });
 
-      expect(mockNavigateToChat).toHaveBeenCalledWith(1);
+      expect(mockRejoinChat).toHaveBeenCalledWith(1);
     });
 
-    it('goToChat이 data가 없으면 navigateToChat을 호출하지 않는다', async () => {
-      const mockNavigateToChat = jest.fn();
-      mockUseChatEntry.mockReturnValue({ navigateToChat: mockNavigateToChat, isLoading: false });
+    it('goToChat이 data가 없으면 rejoinChat을 호출하지 않는다', async () => {
+      const mockRejoinChat = jest.fn();
+      mockUseChatEntry.mockReturnValue({ rejoinChat: mockRejoinChat, isLoading: false });
       mockUseGetItem.mockReturnValue({
         data: null,
         isLoading: false,
@@ -401,7 +401,7 @@ describe('usePostAction', () => {
         await result.current.navigationHandlers.goToChat();
       });
 
-      expect(mockNavigateToChat).not.toHaveBeenCalled();
+      expect(mockRejoinChat).not.toHaveBeenCalled();
     });
   });
 

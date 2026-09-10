@@ -19,7 +19,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
-  const { navigateToChat, isLoading: isChatLoading } = useChatEntry();
+  const { rejoinChat, isLoading: isChatLoading } = useChatEntry();
 
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
@@ -90,9 +90,9 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     }, [id, router]),
     goToChat: useCallback(async () => {
       if (data?.id) {
-        await navigateToChat(data.id);
+        await rejoinChat(data.id);
       }
-    }, [data, navigateToChat]),
+    }, [data, rejoinChat]),
   };
 
   const actionHandlers = {
