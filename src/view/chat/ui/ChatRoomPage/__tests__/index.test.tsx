@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
@@ -13,6 +13,7 @@ import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReview
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Toast from 'react-native-toast-message';
+import { Keyboard } from 'react-native';
 import ChatRoomPage from '../index';
 
 jest.mock('expo-router', () => ({
@@ -410,6 +411,51 @@ describe('ChatRoomPage', () => {
 
     expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
     expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('키보드가 올라온 상태에서 예약하기를 누르면 키보드를 먼저 닫고, 키보드가 완전히 내려간 뒤에 바텀시트를 연다', () => {
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    const listeners: Record<string, () => void> = {};
+    jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+      listeners[event as string] = cb as () => void;
+      return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+    });
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    // 채팅 입력창에 포커스되어 키보드가 올라온 상태를 재현한다
+    act(() => listeners.keyboardDidShow());
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+
+    expect(dismissSpy).toHaveBeenCalled();
+    // 키보드가 아직 내려가지 않았으므로 바텀시트는 아직 열리지 않는다
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('false');
+
+    act(() => listeners.keyboardDidHide());
+
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
+
+    dismissSpy.mockRestore();
+  });
+
+  it('키보드가 내려가 있는 상태에서 예약하기를 누르면 Keyboard.dismiss 없이 바로 바텀시트를 연다', () => {
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: false } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    fireEvent.press(getByTestId('trade-seller-button'));
+
+    expect(dismissSpy).not.toHaveBeenCalled();
+    expect(getByTestId('reservation-confirm-modal-visible').props.children).toBe('true');
+
+    dismissSpy.mockRestore();
   });
 
   it('예약 확인 바텀시트에서 예약하기를 누르면 바텀시트가 닫히고 예약하기 페이지로 이동한다', () => {

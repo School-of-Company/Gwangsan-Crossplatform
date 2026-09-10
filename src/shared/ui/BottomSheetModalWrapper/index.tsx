@@ -72,6 +72,9 @@ export function BottomSheetModalWrapper({
   const translateY = useRef(new Animated.Value(modalHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
+  // 시트가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
+  // 열릴 때(isVisible 효과)마다 false로 리셋된다.
+  const hasAnimatedOpenRef = useRef(false);
   const lastKeyboardHeightRef = useRef(0);
 
   const panResponder = useMemo(
@@ -152,6 +155,7 @@ export function BottomSheetModalWrapper({
     if (isVisible) {
       translateY.setValue(modalHeight);
       backdropOpacity.setValue(0);
+      hasAnimatedOpenRef.current = false;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true);
     } else if (show) {
@@ -178,8 +182,13 @@ export function BottomSheetModalWrapper({
   // Modal(별도 네이티브 창) 없이 이미 떠 있는 화면 위에 바로 얹기 때문에, 토스트처럼
   // 창 생성 지연이 없다. 시트의 첫 layout이 실제로 커밋된 직후(onLayout)에만
   // 애니메이션을 시작해 첫 프레임이 끊기지 않게 하고, rAF로 한 프레임 더 미뤄 안전
-  // 여유를 둔다.
+  // 여유를 둔다. onLayout 이전에 시작하면 아직 native view가 붙지 않아
+  // useNativeDriver 애니메이션이 아무 효과 없이 즉시 끝나버리므로, 반드시 이 시점을
+  // 기다려야 한다.
   const handleSheetLayout = useCallback(() => {
+    if (hasAnimatedOpenRef.current) return;
+    hasAnimatedOpenRef.current = true;
+
     requestAnimationFrame(() => {
       Animated.parallel([
         Animated.timing(translateY, {
