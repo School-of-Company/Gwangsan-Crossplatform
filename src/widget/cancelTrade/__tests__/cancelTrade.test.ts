@@ -21,7 +21,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('cancelTrade API', () => {
   it('cancelTrade를 호출하면 응답을 반환한다', async () => {
-    const mockRes = { status: 200, data: { success: true } };
+    const mockRes = { cancelled: false };
     mockCancelTrade.mockResolvedValue(mockRes);
 
     const result = await cancelTrade('취소 사유', [1, 2], 99);
@@ -101,8 +101,8 @@ describe('useCancelTrade', () => {
     expect(result.current.canSubmit).toBe(true);
   });
 
-  it('handleSubmit 성공 시 성공 Toast를 표시하고 onSuccess를 호출한다', async () => {
-    mockCancelTrade.mockResolvedValue({});
+  it('handleSubmit 성공 시(cancelled: false) 승인 대기 Toast를 표시하고 onSuccess를 호출한다', async () => {
+    mockCancelTrade.mockResolvedValue({ cancelled: false });
     const onSuccess = jest.fn();
 
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 5, onSuccess }));
@@ -117,9 +117,36 @@ describe('useCancelTrade', () => {
 
     await waitFor(() =>
       expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래취소 접수' })
+      )
+    );
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it('handleSubmit 성공 시(cancelled: true) 철회 완료 Toast를 표시하고 광산 잔액 쿼리를 무효화한다', async () => {
+    mockCancelTrade.mockResolvedValue({ cancelled: true });
+    const onSuccess = jest.fn();
+
+    const { result, queryClient } = renderHookWithProviders(() =>
+      useCancelTrade({ productId: 5, onSuccess })
+    );
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    act(() => {
+      result.current.setReason('취소 사유');
+    });
+
+    await act(async () => {
+      result.current.handleSubmit('취소 사유');
+    });
+
+    await waitFor(() =>
+      expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success', text1: '거래취소 완료' })
       )
     );
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myInformation'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
     expect(onSuccess).toHaveBeenCalled();
   });
 
