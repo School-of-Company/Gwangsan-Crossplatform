@@ -11,8 +11,8 @@ export default function Gwangsan({ gwangsan }: GwangsanProps) {
       <View className="flex flex-row items-center justify-around rounded-2xl bg-gray-200 px-11 py-6">
         <Image
           source={require('~/shared/assets/png/Gwangsan.png')}
-          width={57}
-          height={52}
+          width={60}
+          height={60}
           resizeMode="contain"
         />
         <Text className="font-cafe24 text-titleMedium text-sub2-700">{gwangsan} 광산</Text>
