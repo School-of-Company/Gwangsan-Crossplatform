@@ -28,8 +28,8 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
     onSuccess: () => {
       Toast.show({
         type: 'success',
-        text1: '거래철회 완료',
-        text2: '거래철회가 성공적으로 접수되었습니다.',
+        text1: '거래취소 완료',
+        text2: '거래취소가 성공적으로 접수되었습니다.',
         visibilityTime: 2000,
       });
       resetForm();
@@ -38,8 +38,8 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
     onError: (error) => {
       Toast.show({
         type: 'error',
-        text1: '거래철회 실패',
-        text2: error instanceof Error ? error.message : '거래철회 처리 중 오류가 발생했습니다.',
+        text1: '거래취소 실패',
+        text2: error instanceof Error ? error.message : '거래취소 처리 중 오류가 발생했습니다.',
         visibilityTime: 3000,
       });
     },
@@ -119,7 +119,7 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
       } else {
         Toast.show({
           type: 'error',
-          text1: '거래철회 실패',
+          text1: '거래취소 실패',
           visibilityTime: 3000,
         });
       }

@@ -67,10 +67,10 @@ const CancelTradeBottomSheet = ({
   const isFormDisabled = useMemo(() => !canSubmit || isLoading, [canSubmit, isLoading]);
 
   const getSubmitButtonText = useMemo(() => {
-    if (isLoading) return '거래 철회 처리 중...';
+    if (isLoading) return '거래 취소 처리 중...';
     if (imageUploadState?.hasUploadingImages) return '이미지 업로드 중...';
     if (imageUploadState?.hasFailedImages) return '이미지 업로드 실패';
-    return '거래철회하기';
+    return '거래취소하기';
   }, [isLoading, imageUploadState]);
 
   return (
@@ -78,12 +78,12 @@ const CancelTradeBottomSheet = ({
       isVisible={isVisible}
       onClose={handleClose}
       onAnimationComplete={onAnimationComplete}
-      title="거래철회하기">
+      title="거래취소하기">
       <View className="flex-1 flex-col justify-between gap-4">
         <View className="gap-6">
           <TextField
-            label="거래철회사유"
-            placeholder="거래철회사유를 입력해주세요"
+            label="거래취소사유"
+            placeholder="거래취소사유를 입력해주세요"
             value={reason}
             onChangeText={setReason}
             multiline

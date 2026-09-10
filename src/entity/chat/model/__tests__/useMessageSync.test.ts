@@ -1101,7 +1101,7 @@ describe('useMessageSync', () => {
       expect(cached?.product.createdAt).toBe('2024-06-01T00:00:00Z');
     });
 
-    it('payload의 createdAt이 null이면(거래 철회) 기존 createdAt을 지운다', async () => {
+    it('payload의 createdAt이 null이면(거래 취소) 기존 createdAt을 지운다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
         product: { id: 1, isCompleted: false, createdAt: '2024-01-01T00:00:00Z' },

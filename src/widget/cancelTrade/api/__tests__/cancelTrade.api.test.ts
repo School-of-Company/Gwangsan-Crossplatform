@@ -14,11 +14,11 @@ describe('cancelTrade', () => {
     const mockRes = { status: 200, data: { success: true } };
     mockPost.mockResolvedValue(mockRes);
 
-    const result = await cancelTrade('철회 사유', [1, 2], 99);
+    const result = await cancelTrade('취소 사유', [1, 2], 99);
 
     expect(mockPost).toHaveBeenCalledWith('/trade/cancel/99', {
       imageIds: [1, 2],
-      reason: '철회 사유',
+      reason: '취소 사유',
     });
     expect(result).toEqual(mockRes);
   });
