@@ -3,7 +3,7 @@ import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useSignupPhoneVerification } from '~/entity/auth/model/useSignupPhoneVerification';
 
 export default function PhoneStep() {
@@ -57,6 +57,7 @@ export default function PhoneStep() {
               onSubmitEditing={handlePhoneSubmit}
               keyboardType="numeric"
               maxLength={11}
+              returnKeyType={Platform.OS === 'ios' ? 'default' : 'done'}
               editable={!verificationState.isSendingCode}
             />
           </View>
@@ -79,6 +80,7 @@ export default function PhoneStep() {
                 onChangeText={handleVerificationChange}
                 onSubmitEditing={handleVerificationSubmit}
                 keyboardType="numeric"
+                returnKeyType={Platform.OS === 'ios' ? 'default' : 'done'}
                 editable={!verificationState.isVerifyingCode && !isVerificationComplete}
                 maxLength={6}
               />

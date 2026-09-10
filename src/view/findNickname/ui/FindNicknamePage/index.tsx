@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '@/shared/ui/Input';
@@ -113,6 +113,7 @@ export default function FindNicknamePage() {
                     onSubmitEditing={handlePhoneSubmit}
                     keyboardType="numeric"
                     maxLength={11}
+                    returnKeyType={Platform.OS === 'ios' ? 'default' : 'done'}
                     editable={!verificationState.isSendingCode && !isVerificationComplete}
                   />
                 </View>
@@ -138,6 +139,7 @@ export default function FindNicknamePage() {
                       onChangeText={handleVerificationChange}
                       onSubmitEditing={handleVerificationSubmit}
                       keyboardType="numeric"
+                      returnKeyType={Platform.OS === 'ios' ? 'default' : 'done'}
                       editable={!verificationState.isVerifyingCode && !isVerificationComplete}
                       maxLength={6}
                     />

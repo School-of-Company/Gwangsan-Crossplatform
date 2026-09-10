@@ -6,7 +6,7 @@ import {
   useResetPasswordFormField,
   useResetPasswordStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { usePasswordResetPhoneVerification } from '~/entity/auth/model/usePasswordResetPhoneVerification';
 import { router } from 'expo-router';
 
@@ -67,6 +67,7 @@ export default function PhoneStep() {
               onSubmitEditing={handlePhoneSubmit}
               keyboardType="numeric"
               maxLength={11}
+              returnKeyType={Platform.OS === 'ios' ? 'default' : 'done'}
               editable={!verificationState.isSendingCode}
             />
           </View>
@@ -89,6 +90,7 @@ export default function PhoneStep() {
                 onChangeText={handleVerificationChange}
                 onSubmitEditing={handleVerificationSubmit}
                 keyboardType="numeric"
+                returnKeyType={Platform.OS === 'ios' ? 'default' : 'done'}
                 editable={!verificationState.isVerifyingCode && !isVerificationComplete}
                 maxLength={6}
               />
