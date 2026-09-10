@@ -11,7 +11,7 @@ import {
   chatMessageKeys,
   getChatRoomData,
 } from '@/entity/chat';
-import type { ChatRoomListItem } from '@/entity/chat';
+import type { ChatRoomListItem, ChatMessageResponse } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
@@ -21,6 +21,14 @@ import { ReportModal } from '~/entity/post/ui';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
+
+// 배열 정렬 방향에 기대지 않고 실제 최신 시각을 구한다 — REST/소켓 배열의 정렬 방향이
+// 다를 수 있다(#610). 파싱 불가능한 값은 최신 판정에 끼어들지 않도록 무시한다.
+const getLatestMessageTime = (messages: readonly ChatMessageResponse[]): number =>
+  messages.reduce((max, message) => {
+    const time = new Date(message.createdAt).getTime();
+    return Number.isFinite(time) && time > max ? time : max;
+  }, 0);
 
 interface ActionSheetRowProps {
   label: string;
@@ -145,7 +153,22 @@ export function ChatRoomList() {
           staleTime: 30 * 1000,
         })
         .then((data) => {
-          queryClient.setQueryData(chatMessageKeys.room(roomId), [...data.messages]);
+          // 서버는 Redis Stream 발행 후 DB에 비동기로 저장하므로, 이 REST snapshot에는
+          // 방금 보낸 메시지가 아직 없을 수 있다. 무조건 덮어쓰면 소켓 echo로 이미 반영된
+          // 최신 메시지가 재입장 시 일시적으로 사라진다(#610) — 기존 캐시와 snapshot 중
+          // 최대 createdAt이 더 큰 쪽을 그대로 쓴다. 배열 병합/ID union은 하지 않는다
+          // (소켓·REST 간 ID 표현 차이로 중복이 생길 수 있고, 서버 페이지 크기 제한을
+          // 클라이언트가 깨뜨리게 된다).
+          queryClient.setQueryData(
+            chatMessageKeys.room(roomId),
+            (oldData: ChatMessageResponse[] | undefined) => {
+              if (!oldData || oldData.length === 0) return [...data.messages];
+
+              return getLatestMessageTime(data.messages) > getLatestMessageTime(oldData)
+                ? [...data.messages]
+                : oldData;
+            }
+          );
         })
         .catch(() => {});
 
