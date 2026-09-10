@@ -485,11 +485,42 @@ describe('useMessageSync', () => {
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' })
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: MY_USER_ID,
+          })
         );
       });
 
       expect(removeMessage).toHaveBeenCalledWith('temp-1');
+    });
+
+    it('내가 보낸 echo가 아니면(isMine=false) content가 같아도 pending 메시지를 제거하지 않는다', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          { tempId: 'temp-1', roomId: ROOM_ID, messageType: 'TEXT', content: '안녕', imageIds: [] },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: OTHER_USER_ID,
+          })
+        );
+      });
+
+      expect(removeMessage).not.toHaveBeenCalled();
     });
 
     it('IMAGE 타입 pending 메시지를 imageIds 기준으로 매칭해 큐에서 제거한다', async () => {
@@ -516,6 +547,7 @@ describe('useMessageSync', () => {
             roomId: ROOM_ID,
             messageType: 'IMAGE',
             content: null,
+            senderId: MY_USER_ID,
             images: [
               { imageId: 10, imageUrl: 'url1' },
               { imageId: 20, imageUrl: 'url2' },
@@ -525,6 +557,83 @@ describe('useMessageSync', () => {
       });
 
       expect(removeMessage).toHaveBeenCalledWith('temp-img-1');
+    });
+
+    it('IMAGE 타입 echo에 images가 없으면(서버가 즉시 echo에 images를 채우지 않는 경우) 같은 방의 가장 오래된 IMAGE pending 메시지를 FIFO로 매칭해 제거한다', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          {
+            tempId: 'temp-img-first',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [10],
+          },
+          {
+            tempId: 'temp-img-second',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [20],
+          },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            senderId: MY_USER_ID,
+            images: undefined,
+          })
+        );
+      });
+
+      expect(removeMessage).toHaveBeenCalledWith('temp-img-first');
+      expect(removeMessage).not.toHaveBeenCalledWith('temp-img-second');
+    });
+
+    it('IMAGE 타입 echo에 images가 없어도 pending에 들고 있던 로컬 미리보기 이미지로 채워서 캐시에 저장한다(방을 나갔다 들어오기 전에도 사진이 보이도록)', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          {
+            tempId: 'temp-img-local',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [10],
+            images: [{ imageId: 10, imageUrl: 'file:///local/preview.jpg' }],
+          },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 55,
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            senderId: MY_USER_ID,
+            images: undefined,
+          })
+        );
+      });
+
+      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cached?.[0].images).toEqual([{ imageId: 10, imageUrl: 'file:///local/preview.jpg' }]);
     });
 
     it('다른 roomId 메시지도 room list는 업데이트한다', async () => {
@@ -608,7 +717,12 @@ describe('useMessageSync', () => {
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' })
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: MY_USER_ID,
+          })
         );
       });
 
@@ -639,6 +753,7 @@ describe('useMessageSync', () => {
             roomId: ROOM_ID,
             messageType: 'IMAGE',
             content: null,
+            senderId: MY_USER_ID,
             images: [{ imageId: 10, imageUrl: 'url1' }],
           })
         );

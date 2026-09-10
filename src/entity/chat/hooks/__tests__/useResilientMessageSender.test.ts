@@ -59,7 +59,9 @@ describe('useResilientMessageSender', () => {
     expect(messages[0].status).toBe(MESSAGE_STATUS.PENDING);
   });
 
-  it('content가 없고 IMAGE 타입이면 공백 문자를 전송한다', () => {
+  it('content가 없고 IMAGE 타입이면 빈 문자열을 전송한다(공백을 채우지 않는다)', () => {
+    // 서버는 IMAGE 타입에 content를 요구하지 않으므로 공백을 채워 보낼 필요가 없다 — 공백은
+    // truthy라 그대로 저장·echo되면 사진 밑에 빈 캡션 말풍선이 매번 뜨는 원인이 된다.
     const socketSendMessage = jest.fn();
     const { result } = renderHook(() =>
       useResilientMessageSender({ roomId: 1, isSocketConnected: true, socketSendMessage })
@@ -69,7 +71,7 @@ describe('useResilientMessageSender', () => {
       result.current.sendMessage(null, 'IMAGE', [10]);
     });
 
-    expect(socketSendMessage).toHaveBeenCalledWith(1, ' ', 'IMAGE', [10]);
+    expect(socketSendMessage).toHaveBeenCalledWith(1, '', 'IMAGE', [10]);
   });
 
   it('content가 없고 TEXT 타입이면 빈 문자열을 전송한다', () => {
@@ -299,5 +301,47 @@ describe('useResilientMessageSender', () => {
     });
 
     expect(socketSendMessage).toHaveBeenCalledWith(1, 'retry content', 'TEXT', []);
+  });
+
+  it('같은 roomId로 여러 인스턴스가 동시에 마운트되어도 재시도 트리거는 한 인스턴스만 실행한다', () => {
+    // Expo Router 스택에 채팅방/예약/후기 화면이 동시에 남아있으면 이 훅이 같은 roomId로
+    // 여러 번 마운트될 수 있다 — 이때 중복 전송되지 않는지 검증한다.
+    const socketSendMessageA = jest.fn();
+    const socketSendMessageB = jest.fn();
+
+    renderHook(() =>
+      useResilientMessageSender({
+        roomId: 1,
+        isSocketConnected: true,
+        socketSendMessage: socketSendMessageA,
+      })
+    );
+    renderHook(() =>
+      useResilientMessageSender({
+        roomId: 1,
+        isSocketConnected: true,
+        socketSendMessage: socketSendMessageB,
+      })
+    );
+
+    act(() => {
+      useChatQueueStore.setState({
+        pendingMessages: [
+          {
+            tempId: 'dup-check',
+            roomId: 1,
+            content: 'retry content',
+            messageType: 'TEXT',
+            imageIds: [],
+            status: MESSAGE_STATUS.PENDING,
+            createdAt: new Date().toISOString(),
+            retryCount: 1,
+          },
+        ],
+      });
+    });
+
+    const totalCalls = socketSendMessageA.mock.calls.length + socketSendMessageB.mock.calls.length;
+    expect(totalCalls).toBe(1);
   });
 });

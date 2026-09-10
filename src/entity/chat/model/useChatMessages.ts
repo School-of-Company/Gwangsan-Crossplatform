@@ -53,7 +53,7 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
       content: pending.content,
       messageType: pending.messageType,
       createdAt: pending.createdAt,
-      images: pending.imageIds.map((id) => ({ imageId: id, imageUrl: '' })),
+      images: pending.images ?? pending.imageIds.map((id) => ({ imageId: id, imageUrl: '' })),
       senderNickname: '나',
       senderId: -1,
       checked: false,
