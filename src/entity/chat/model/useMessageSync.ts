@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
-import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { chatMessageKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
 import type { TransactionStateChangedPayload } from '../lib/socketService';
@@ -22,24 +21,6 @@ export const useMessageSync = ({
   chatMessageQueryKey,
 }: UseMessageSyncProps) => {
   const queryClient = useQueryClient();
-  const userIdRef = useRef<number | null>(null);
-  const pendingMessagesRef = useRef<ChatMessageResponse[]>([]);
-  const processMessageRef = useRef<
-    ((message: ChatMessageResponse, userId: number) => void) | undefined
-  >(undefined);
-
-  useEffect(() => {
-    getCurrentUserId()
-      .then((id) => {
-        userIdRef.current = id;
-        const queued = pendingMessagesRef.current;
-        pendingMessagesRef.current = [];
-        queued.forEach((queuedMessage) => processMessageRef.current?.(queuedMessage, id));
-      })
-      .catch((error) => {
-        logger.error('Failed to get current user ID', error);
-      });
-  }, []);
 
   const handleConnect = useCallback(() => {
     if (chatRoomQueryKey) {
@@ -51,20 +32,16 @@ export const useMessageSync = ({
   }, [queryClient, chatRoomQueryKey, currentRoomId]);
 
   const processMessage = useCallback(
-    (message: ChatMessageResponse, userId: number) => {
+    (message: ChatMessageResponse) => {
       try {
-        const correctedMessage = {
-          ...message,
-          isMine: message.senderId === userId,
-        };
+        // 서버(REST·소켓)가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션
+        // 캐시(getCurrentUserId)와 senderId를 다시 비교해 재계산하지 않는다 — 그 재계산 과정의
+        // 캐시 타이밍 경합이 본인 메시지를 상대방 메시지로 뒤집어 보이게 하는 원인이었다(#619).
+        const isCurrentRoomMessage = currentRoomId && message.roomId === currentRoomId;
 
-        const isCurrentRoomMessage = currentRoomId && correctedMessage.roomId === currentRoomId;
-
-        if (isCurrentRoomMessage && !correctedMessage.isMine) {
-          useReadRoomsStore
-            .getState()
-            .markRead(correctedMessage.roomId, correctedMessage.messageId);
-          markChatAsRead(correctedMessage.roomId, correctedMessage.messageId).catch((error) => {
+        if (isCurrentRoomMessage && !message.isMine) {
+          useReadRoomsStore.getState().markRead(message.roomId, message.messageId);
+          markChatAsRead(message.roomId, message.messageId).catch((error) => {
             logger.error('markChatAsRead (auto) failed', error);
           });
         }
@@ -75,18 +52,18 @@ export const useMessageSync = ({
             // 상대방이 보낸 메시지가 우연히 같은 content/이미지 개수를 가져도 내가 보낸 pending
             // 항목을 지워버리지 않도록, 반드시 내가 보낸 echo에 대해서만 매칭한다.
             if (
-              !correctedMessage.isMine ||
-              msg.roomId !== correctedMessage.roomId ||
-              msg.messageType !== correctedMessage.messageType
+              !message.isMine ||
+              msg.roomId !== message.roomId ||
+              msg.messageType !== message.messageType
             ) {
               return false;
             }
             if (msg.messageType === 'IMAGE') {
-              if (correctedMessage.images && correctedMessage.images.length > 0) {
-                if (correctedMessage.images.length !== msg.imageIds.length) {
+              if (message.images && message.images.length > 0) {
+                if (message.images.length !== msg.imageIds.length) {
                   return false;
                 }
-                const receivedImageIds = new Set(correctedMessage.images.map((img) => img.imageId));
+                const receivedImageIds = new Set(message.images.map((img) => img.imageId));
                 return msg.imageIds.every((id) => receivedImageIds.has(id));
               }
               // 서버가 전송 직후 echo에는 images를 채워 보내지 않아(Gwangsan-Chatting-Server
@@ -95,7 +72,7 @@ export const useMessageSync = ({
               // 먼저 보낸(=서버가 가장 먼저 처리했을) 이미지 메시지를 골라 FIFO로 매칭한다.
               return true;
             }
-            return msg.content === correctedMessage.content;
+            return msg.content === message.content;
           });
 
           // echo에 images가 비어있으면(위 서버 이슈) 그대로 캐시에 넣을 경우 사진이 안 보이는
@@ -104,11 +81,11 @@ export const useMessageSync = ({
           // 실제 CDN URL은 다음 REST 갱신(재입장 등) 때 자연스럽게 대체된다.
           const messageToCache =
             matchingTemp &&
-            correctedMessage.messageType === 'IMAGE' &&
-            (!correctedMessage.images || correctedMessage.images.length === 0) &&
+            message.messageType === 'IMAGE' &&
+            (!message.images || message.images.length === 0) &&
             matchingTemp.images?.length
-              ? { ...correctedMessage, images: matchingTemp.images }
-              : correctedMessage;
+              ? { ...message, images: matchingTemp.images }
+              : message;
 
           queryClient.setQueryData(
             chatMessageQueryKey,
@@ -134,10 +111,10 @@ export const useMessageSync = ({
             if (!oldData) return oldData;
 
             return oldData.map((room) => {
-              if (room.roomId !== correctedMessage.roomId) return room;
-              if (room.messageId === correctedMessage.messageId) return room;
+              if (room.roomId !== message.roomId) return room;
+              if (room.messageId === message.messageId) return room;
 
-              const incomingTime = new Date(correctedMessage.createdAt).getTime();
+              const incomingTime = new Date(message.createdAt).getTime();
               const lastTime = new Date(room.lastMessageTime).getTime();
               const isStale = Number.isFinite(lastTime) && incomingTime < lastTime;
               if (isStale) return room;
@@ -145,16 +122,16 @@ export const useMessageSync = ({
               const isActiveRoom = room.roomId === currentRoomId;
               const nextUnreadCount = isActiveRoom
                 ? 0
-                : correctedMessage.isMine
+                : message.isMine
                   ? room.unreadMessageCount
                   : room.unreadMessageCount + 1;
 
               return {
                 ...room,
-                messageId: correctedMessage.messageId,
-                lastMessage: correctedMessage.content || '(사진)',
-                lastMessageType: correctedMessage.messageType,
-                lastMessageTime: correctedMessage.createdAt,
+                messageId: message.messageId,
+                lastMessage: message.content || '(사진)',
+                lastMessageType: message.messageType,
+                lastMessageTime: message.createdAt,
                 unreadMessageCount: nextUnreadCount,
               };
             });
@@ -166,19 +143,12 @@ export const useMessageSync = ({
     },
     [queryClient, currentRoomId, chatRoomQueryKey, chatMessageQueryKey]
   );
-  processMessageRef.current = processMessage;
 
   const handleReceiveMessage = useCallback(
     (message: ChatMessageResponse) => {
       if (!message || typeof message !== 'object') return;
 
-      const userId = userIdRef.current;
-      if (!userId) {
-        pendingMessagesRef.current.push(message);
-        return;
-      }
-
-      processMessage(message, userId);
+      processMessage(message);
     },
     [processMessage]
   );

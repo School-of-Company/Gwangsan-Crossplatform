@@ -3,7 +3,6 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useMessageSync } from '../useMessageSync';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import { markChatAsRead } from '../../api/markChatAsRead';
-import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import type { ChatMessageResponse, ChatRoomListItem } from '../chatTypes';
 import type { QueryClient } from '@tanstack/react-query';
 import { chatMessageKeys } from '../chatQueryKeys';
@@ -18,13 +17,8 @@ jest.mock('~/shared/store/useChatQueueStore', () => ({
   },
 }));
 
-jest.mock('~/shared/lib/getCurrentUserId', () => ({
-  getCurrentUserId: jest.fn(),
-}));
-
 const mockMarkChatAsRead = markChatAsRead as jest.Mock;
 const mockGetState = useChatQueueStore.getState as jest.Mock;
-const mockGetCurrentUserId = getCurrentUserId as jest.Mock;
 
 const MY_USER_ID = 42;
 const OTHER_USER_ID = 99;
@@ -68,7 +62,6 @@ describe('useMessageSync', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setupPendingMessages();
-    mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
     mockMarkChatAsRead.mockResolvedValue(undefined);
   });
 
@@ -86,65 +79,6 @@ describe('useMessageSync', () => {
     await act(async () => {});
     return rendered;
   };
-
-  describe('userId 초기화', () => {
-    it('마운트 시 getCurrentUserId를 한 번만 호출한다', async () => {
-      await renderSync();
-
-      expect(mockGetCurrentUserId).toHaveBeenCalledTimes(1);
-    });
-
-    it('userId가 초기화되기 전에 수신한 메시지는 유실하지 않고 큐에 저장했다가 확인 후 반영한다', async () => {
-      let resolveUserId: (id: number) => void = () => {};
-      mockGetCurrentUserId.mockReturnValue(
-        new Promise<number>((resolve) => {
-          resolveUserId = resolve;
-        })
-      );
-
-      const rendered = renderHookWithProviders(() =>
-        useMessageSync({
-          currentRoomId: ROOM_ID,
-          chatRoomQueryKey: CHAT_ROOM_KEY,
-          chatMessageQueryKey: CHAT_MSG_KEY,
-        })
-      );
-      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
-
-      act(() => {
-        rendered.result.current.handleReceiveMessage(makeMessage());
-      });
-
-      // userId 확인 전에는 아직 반영되지 않는다
-      expect(rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)).toHaveLength(
-        0
-      );
-
-      await act(async () => {
-        resolveUserId(MY_USER_ID);
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
-      expect(cached).toHaveLength(1);
-    });
-
-    it('getCurrentUserId 실패 시 메시지를 처리하지 않는다', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockGetCurrentUserId.mockRejectedValue(new Error('Auth error'));
-
-      const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
-
-      act(() => {
-        result.current.handleReceiveMessage(makeMessage());
-      });
-
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
-      expect(cached).toHaveLength(0);
-    });
-  });
 
   describe('handleConnect', () => {
     it('chatRoomQueryKey와 현재 방의 chatRoomData를 invalidate한다', async () => {
@@ -202,24 +136,27 @@ describe('useMessageSync', () => {
       expect(cached?.[0].messageId).toBe(1);
     });
 
-    it('senderId가 내 userId와 같으면 isMine을 true로 교정한다', async () => {
+    it('서버가 isMine:true로 보낸 메시지는 senderId와 무관하게 그대로 신뢰한다(#619)', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
+      // senderId는 상대방(OTHER_USER_ID)이어도 서버가 isMine:true를 명시했다면 그대로 따른다 —
+      // 클라이언트가 로컬 세션 캐시로 재계산하지 않는다.
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID, isMine: false }));
+        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID, isMine: true }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
       expect(cached?.[0].isMine).toBe(true);
     });
 
-    it('senderId가 다른 사용자이면 isMine을 false로 교정한다', async () => {
+    it('서버가 isMine:false로 보낸 메시지는 senderId와 무관하게 그대로 신뢰한다(#619)', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
+      // senderId는 나(MY_USER_ID)여도 서버가 isMine:false를 명시했다면 그대로 따른다.
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID, isMine: true }));
+        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID, isMine: false }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -294,7 +231,7 @@ describe('useMessageSync', () => {
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: MY_USER_ID })
+          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: MY_USER_ID, isMine: true })
         );
       });
 
@@ -490,6 +427,7 @@ describe('useMessageSync', () => {
             messageType: 'TEXT',
             content: '안녕',
             senderId: MY_USER_ID,
+            isMine: true,
           })
         );
       });
@@ -548,6 +486,7 @@ describe('useMessageSync', () => {
             messageType: 'IMAGE',
             content: null,
             senderId: MY_USER_ID,
+            isMine: true,
             images: [
               { imageId: 10, imageUrl: 'url1' },
               { imageId: 20, imageUrl: 'url2' },
@@ -591,6 +530,7 @@ describe('useMessageSync', () => {
             messageType: 'IMAGE',
             content: null,
             senderId: MY_USER_ID,
+            isMine: true,
             images: undefined,
           })
         );
@@ -627,6 +567,7 @@ describe('useMessageSync', () => {
             messageType: 'IMAGE',
             content: null,
             senderId: MY_USER_ID,
+            isMine: true,
             images: undefined,
           })
         );
@@ -722,6 +663,7 @@ describe('useMessageSync', () => {
             messageType: 'TEXT',
             content: '안녕',
             senderId: MY_USER_ID,
+            isMine: true,
           })
         );
       });
@@ -754,6 +696,7 @@ describe('useMessageSync', () => {
             messageType: 'IMAGE',
             content: null,
             senderId: MY_USER_ID,
+            isMine: true,
             images: [{ imageId: 10, imageUrl: 'url1' }],
           })
         );

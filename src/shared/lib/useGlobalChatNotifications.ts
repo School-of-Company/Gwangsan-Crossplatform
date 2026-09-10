@@ -5,7 +5,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
 import { chatSocket } from './socket';
 import { getData } from './getData';
-import { getCurrentUserId } from './getCurrentUserId';
 import { getChatRooms, chatRoomKeys } from '@/entity/chat';
 import type { ChatMessageResponse } from '@/entity/chat/model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
@@ -75,8 +74,9 @@ export const useGlobalChatNotifications = () => {
 
   useEffect(() => {
     const handleReceiveMessage = async (message: ChatMessageResponse) => {
-      const userId = await getCurrentUserId().catch(() => null);
-      if (!userId || message.senderId === userId) return;
+      // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
+      // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다(#619).
+      if (message.isMine) return;
 
       if (pathnameRef.current === `/chatting/${message.roomId}`) return;
 

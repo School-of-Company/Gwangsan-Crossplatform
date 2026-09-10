@@ -6,7 +6,6 @@ import { renderHookWithProviders as renderHook } from '~/test-utils';
 import { useGlobalChatNotifications } from '../useGlobalChatNotifications';
 import { chatSocket } from '../socket';
 import { getData } from '../getData';
-import { getCurrentUserId } from '../getCurrentUserId';
 import { getChatRooms } from '@/entity/chat';
 
 jest.mock('expo-router', () => ({ usePathname: jest.fn() }));
@@ -23,7 +22,6 @@ jest.mock('../socket', () => ({
   },
 }));
 jest.mock('../getData', () => ({ getData: jest.fn() }));
-jest.mock('../getCurrentUserId', () => ({ getCurrentUserId: jest.fn() }));
 jest.mock('@/entity/chat', () => ({
   getChatRooms: jest.fn(),
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
@@ -37,7 +35,6 @@ const mockChatSocket = chatSocket as unknown as {
   off: jest.Mock;
 };
 const mockGetData = getData as jest.Mock;
-const mockGetCurrentUserId = getCurrentUserId as jest.Mock;
 const mockGetChatRooms = getChatRooms as jest.Mock;
 const mockScheduleNotificationAsync = Notifications.scheduleNotificationAsync as jest.Mock;
 const mockSetBadgeCountAsync = Notifications.setBadgeCountAsync as jest.Mock;
@@ -62,7 +59,6 @@ beforeEach(() => {
   mockChatSocket.isConnected = false;
   mockChatSocket.connect.mockResolvedValue(undefined);
   mockGetData.mockResolvedValue('token');
-  mockGetCurrentUserId.mockResolvedValue(1);
   // baseMessage.roomId(5)가 항상 최신 목록에 있다고 가정 — 나감 여부 판정 로직을 별도로
   // 테스트하는 케이스에서만 다른 값으로 덮어쓴다.
   mockGetChatRooms.mockResolvedValue([{ roomId: 5 }]);
@@ -116,12 +112,11 @@ describe('useGlobalChatNotifications', () => {
     expect(mockChatSocket.off).toHaveBeenCalledWith('receiveMessage', handler);
   });
 
-  it('does not notify for messages sent by the current user', async () => {
-    mockGetCurrentUserId.mockResolvedValue(99); // matches baseMessage.senderId
+  it('does not notify for messages the server marked as isMine', async () => {
     renderHook(() => useGlobalChatNotifications());
     const handler = mockChatSocket.on.mock.calls[0][1];
 
-    await handler(baseMessage);
+    await handler({ ...baseMessage, isMine: true });
 
     expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
   });
@@ -161,16 +156,6 @@ describe('useGlobalChatNotifications', () => {
     expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.objectContaining({ body: '사진을 보냈습니다.' }) })
     );
-  });
-
-  it('does not notify when the current user id cannot be resolved', async () => {
-    mockGetCurrentUserId.mockRejectedValue(new Error('no user'));
-    renderHook(() => useGlobalChatNotifications());
-    const handler = mockChatSocket.on.mock.calls[0][1];
-
-    await handler(baseMessage);
-
-    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
   it('나간 방(최신 목록에 없는 roomId)에서 온 메시지는 알림을 만들지 않는다', async () => {
