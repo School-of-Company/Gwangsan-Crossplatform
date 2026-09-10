@@ -50,7 +50,7 @@ export default function CancelTradeView() {
           </View>
         </View>
         <Button variant="error" disabled={!data?.productId} onPress={handleToggleCancelTradeModal}>
-          취소하기
+          거래 취소
         </Button>
         <CancelTradeBottomSheet
           productId={data?.productId}

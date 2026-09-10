@@ -80,7 +80,7 @@ describe('CancelTradeView', () => {
 
     const { getByText } = render(<CancelTradeView />);
 
-    expect(getByText('취소하기')).toBeTruthy();
+    expect(getByText('거래 취소')).toBeTruthy();
   });
 
   it('imageUrls가 문자열 배열이면 각 이미지를 렌더링한다', () => {
@@ -156,26 +156,26 @@ describe('CancelTradeView', () => {
     expect(mockLoggerWarn).not.toHaveBeenCalled();
   });
 
-  it('취소하기 버튼을 누르면 CancelTradeBottomSheet의 isVisible이 토글된다', () => {
+  it('거래 취소 버튼을 누르면 CancelTradeBottomSheet의 isVisible이 토글된다', () => {
     mockUseGetReview.mockReturnValue({ data: makeReviewData({ productId: 10 }) });
 
     const { getByText, getByTestId } = render(<CancelTradeView />);
 
     expect(getByTestId('bottom-sheet').props.children).toBe('false-10');
 
-    fireEvent.press(getByText('취소하기'));
+    fireEvent.press(getByText('거래 취소'));
 
     expect(getByTestId('bottom-sheet').props.children).toBe('true-10');
   });
 
-  it('productId가 없으면 취소하기 버튼이 disabled 상태다', () => {
+  it('productId가 없으면 거래 취소 버튼이 disabled 상태다', () => {
     mockUseGetReview.mockReturnValue({ data: makeReviewData({ productId: undefined }) });
 
     const { getByText } = render(<CancelTradeView />);
 
-    fireEvent.press(getByText('취소하기'));
+    fireEvent.press(getByText('거래 취소'));
 
     // disabled 버튼은 onPress가 무시되어 바텀시트가 열리지 않아야 한다
-    expect(getByText('취소하기')).toBeTruthy();
+    expect(getByText('거래 취소')).toBeTruthy();
   });
 });
