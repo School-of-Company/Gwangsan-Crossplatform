@@ -388,6 +388,53 @@ describe('useTradeRequest', () => {
     });
   });
 
+  describe('유효하지 않은 파라미터', () => {
+    it('productId가 없으면 requestTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: undefined, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 신청 실패' })
+      );
+    });
+
+    it('sellerId가 없으면 requestTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: undefined })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 신청 실패' })
+      );
+    });
+
+    it('sellerId가 없으면 withdrawTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: undefined })
+      );
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(mockWithdrawTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 신청 취소 실패' })
+      );
+    });
+  });
+
   describe('거래 신청 취소', () => {
     it('withdrawTrade를 올바른 파라미터로 호출한다', async () => {
       mockGetItem.mockResolvedValue('true');

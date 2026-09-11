@@ -231,7 +231,7 @@ describe('useTradeHandlers', () => {
       );
     });
 
-    it('otherUserInfo.id가 없으면 requestTrade를 호출하지 않는다', async () => {
+    it('otherUserInfo.id가 없으면 requestTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
       const { result } = renderHookWithProviders(() =>
         useTradeHandlers({
           roomId: 1,
@@ -245,6 +245,9 @@ describe('useTradeHandlers', () => {
       });
 
       expect(mockRequestTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 수락 실패' })
+      );
     });
 
     it('productId가 없으면 requestTrade를 호출하지 않는다', async () => {
@@ -367,7 +370,7 @@ describe('useTradeHandlers', () => {
       );
     });
 
-    it('otherUserInfo.id가 없으면 withdrawTrade를 호출하지 않고 false를 반환한다', async () => {
+    it('otherUserInfo.id가 없으면 withdrawTrade를 호출하지 않고 false를 반환하며 에러 Toast를 표시한다', async () => {
       const { result } = renderHookWithProviders(() =>
         useTradeHandlers({
           roomId: 1,
@@ -381,6 +384,9 @@ describe('useTradeHandlers', () => {
       });
 
       expect(mockWithdrawTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 요청 실패' })
+      );
     });
   });
 

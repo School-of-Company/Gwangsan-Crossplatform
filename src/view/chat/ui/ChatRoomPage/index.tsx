@@ -209,8 +209,8 @@ export default function ChatRoomPage() {
 
   const { handleTradeRequest: executeTradeRequest, isLoading: isTradeRequestLoading } =
     useTradeRequest({
-      productId: tradeRequestInfo.productId || 0,
-      sellerId: tradeRequestInfo.sellerId || 0,
+      productId: tradeRequestInfo.productId,
+      sellerId: tradeRequestInfo.sellerId,
     });
 
   const handleMenuPress = useCallback(() => {
