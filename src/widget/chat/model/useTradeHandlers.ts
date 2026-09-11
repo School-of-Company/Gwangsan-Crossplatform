@@ -6,6 +6,7 @@ import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
 import type { RoomId } from '~/shared/types/chatType';
+import { logger } from '~/shared/lib/logger';
 
 interface UseTradeHandlersParams {
   readonly roomId: RoomId;
@@ -66,7 +67,18 @@ export const useTradeHandlers = ({
   const canWithdrawTradeRequest = hasTradeRequest && roomData?.product?.isCompletable === false;
 
   const handleTradeAccept = useCallback(async () => {
-    if (!roomData?.product?.id || !otherUserInfo.id) return;
+    if (!roomData?.product?.id || !otherUserInfo.id) {
+      logger.error('handleTradeAccept invalid params', {
+        productId: roomData?.product?.id,
+        otherMemberId: otherUserInfo.id,
+      });
+      Toast.show({
+        type: 'error',
+        text1: '거래 수락 실패',
+        text2: '상대방 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+      return;
+    }
 
     try {
       await requestTrade({
@@ -106,7 +118,18 @@ export const useTradeHandlers = ({
       return false;
     }
 
-    if (!roomData?.product?.id || !otherUserInfo.id) return false;
+    if (!roomData?.product?.id || !otherUserInfo.id) {
+      logger.error('handleTradeRequestButtonPress invalid params', {
+        productId: roomData?.product?.id,
+        otherMemberId: otherUserInfo.id,
+      });
+      Toast.show({
+        type: 'error',
+        text1: '거래 요청 실패',
+        text2: '상대방 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+      return false;
+    }
 
     try {
       await withdrawTrade({

@@ -32,8 +32,8 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const [refreshing, setRefreshing] = useState(false);
 
   const tradeRequest = useTradeRequest({
-    productId: data?.id ?? 0,
-    sellerId: data?.member.memberId ?? 0,
+    productId: data?.id,
+    sellerId: data?.member.memberId,
   });
 
   const modalHandlers = {
