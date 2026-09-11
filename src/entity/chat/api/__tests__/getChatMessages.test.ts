@@ -1,14 +1,9 @@
 import { getChatRoomData, getChatMessages } from '../getChatMessages';
 import { instance } from '@/shared/lib/axios';
-import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import Toast from 'react-native-toast-message';
 
 jest.mock('@/shared/lib/axios', () => ({
   instance: { get: jest.fn() },
-}));
-
-jest.mock('~/shared/lib/getCurrentUserId', () => ({
-  getCurrentUserId: jest.fn(),
 }));
 
 jest.mock('react-native-toast-message', () => ({
@@ -17,9 +12,6 @@ jest.mock('react-native-toast-message', () => ({
 }));
 
 const mockGet = instance.get as jest.Mock;
-const mockGetCurrentUserId = getCurrentUserId as jest.Mock;
-
-const MY_USER_ID = 42;
 
 const makeMessage = (overrides: Record<string, unknown> = {}) => ({
   messageId: 1,
@@ -28,7 +20,7 @@ const makeMessage = (overrides: Record<string, unknown> = {}) => ({
   messageType: 'TEXT',
   createdAt: '2024-01-01T00:00:00Z',
   senderNickname: '테스터',
-  senderId: MY_USER_ID,
+  senderId: 42,
   checked: false,
   isMine: false,
   ...overrides,
@@ -48,12 +40,13 @@ const makeProduct = () => ({
 describe('getChatRoomData', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
   });
 
-  describe('isMine 계산', () => {
-    it('senderId가 현재 userId와 같으면 isMine이 true이다', async () => {
-      const msg = makeMessage({ senderId: MY_USER_ID });
+  describe('isMine 신뢰(#619)', () => {
+    // 서버(REST)가 발신자 기준으로 이미 정확한 isMine을 계산해서 내려주므로, senderId와
+    // 로컬 세션(getCurrentUserId)을 다시 비교해 재계산하지 않고 서버 값을 그대로 사용한다.
+    it('서버가 isMine:true로 내려준 메시지는 senderId와 무관하게 그대로 유지한다', async () => {
+      const msg = makeMessage({ senderId: 99, isMine: true });
       mockGet.mockResolvedValue({ data: [msg] });
 
       const result = await getChatRoomData(100);
@@ -61,8 +54,8 @@ describe('getChatRoomData', () => {
       expect(result.messages[0].isMine).toBe(true);
     });
 
-    it('senderId가 현재 userId와 다르면 isMine이 false이다', async () => {
-      const msg = makeMessage({ senderId: 99 });
+    it('서버가 isMine:false로 내려준 메시지는 senderId와 무관하게 그대로 유지한다', async () => {
+      const msg = makeMessage({ senderId: 42, isMine: false });
       mockGet.mockResolvedValue({ data: [msg] });
 
       const result = await getChatRoomData(100);
@@ -70,24 +63,15 @@ describe('getChatRoomData', () => {
       expect(result.messages[0].isMine).toBe(false);
     });
 
-    it('여러 메시지가 있을 때 각각 isMine을 올바르게 계산한다', async () => {
-      const myMsg = makeMessage({ messageId: 1, senderId: MY_USER_ID });
-      const otherMsg = makeMessage({ messageId: 2, senderId: 99 });
+    it('여러 메시지가 있을 때 각 메시지의 isMine을 각각 그대로 유지한다', async () => {
+      const myMsg = makeMessage({ messageId: 1, senderId: 42, isMine: true });
+      const otherMsg = makeMessage({ messageId: 2, senderId: 99, isMine: false });
       mockGet.mockResolvedValue({ data: [myMsg, otherMsg] });
 
       const result = await getChatRoomData(100);
 
       expect(result.messages[0].isMine).toBe(true);
       expect(result.messages[1].isMine).toBe(false);
-    });
-
-    it('백엔드가 isMine을 내려줘도 userId 기반으로 덮어쓴다', async () => {
-      const msg = makeMessage({ senderId: MY_USER_ID, isMine: false });
-      mockGet.mockResolvedValue({ data: [msg] });
-
-      const result = await getChatRoomData(100);
-
-      expect(result.messages[0].isMine).toBe(true);
     });
   });
 
@@ -176,30 +160,12 @@ describe('getChatRoomData', () => {
         expect.objectContaining({ type: 'error', text1: '채팅방 데이터를 불러올 수 없습니다' })
       );
     });
-
-    it('API와 getCurrentUserId를 병렬로 호출한다', async () => {
-      const callOrder: string[] = [];
-      mockGet.mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10)); // API 호출 지연 시뮬레이션
-        callOrder.push('api');
-        return { data: [] };
-      });
-      mockGetCurrentUserId.mockImplementation(async () => {
-        callOrder.push('userId');
-        return MY_USER_ID;
-      });
-
-      await getChatRoomData(100);
-
-      expect(callOrder).toEqual(['userId', 'api']);
-    });
   });
 });
 
 describe('getChatMessages', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
   });
 
   it('메시지 배열만 반환한다', async () => {
@@ -212,9 +178,9 @@ describe('getChatMessages', () => {
     expect(result).toHaveLength(1);
   });
 
-  it('isMine이 올바르게 계산된 메시지를 반환한다', async () => {
-    const myMsg = makeMessage({ messageId: 1, senderId: MY_USER_ID });
-    const otherMsg = makeMessage({ messageId: 2, senderId: 99 });
+  it('서버가 계산한 isMine을 그대로 담은 메시지를 반환한다', async () => {
+    const myMsg = makeMessage({ messageId: 1, senderId: 42, isMine: true });
+    const otherMsg = makeMessage({ messageId: 2, senderId: 99, isMine: false });
     mockGet.mockResolvedValue({ data: [myMsg, otherMsg] });
 
     const result = await getChatMessages(100);
