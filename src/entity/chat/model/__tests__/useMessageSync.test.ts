@@ -191,7 +191,7 @@ describe('useMessageSync', () => {
       expect(cached?.[1].messageId).toBe(1);
     });
 
-    it('다른 roomId 메시지는 채팅 메시지 캐시에 추가하지 않는다', async () => {
+    it('다른 roomId 메시지는 현재 방의 채팅 메시지 캐시에 추가하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
@@ -201,6 +201,70 @@ describe('useMessageSync', () => {
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
       expect(cached).toHaveLength(0);
+    });
+
+    it('currentRoomId가 없는 전역 소켓 인스턴스에서도 echo를 그 방의 메시지 캐시에 반영한다(#626)', async () => {
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
+      );
+      await act(async () => {});
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        rendered.result.current.handleReceiveMessage(
+          makeMessage({ roomId: ROOM_ID, senderId: MY_USER_ID, isMine: true })
+        );
+      });
+
+      const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cached).toHaveLength(1);
+    });
+
+    it('currentRoomId가 없는 전역 소켓 인스턴스에서도 매칭되는 pending 메시지를 큐에서 제거한다(#626)', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          { tempId: 'temp-1', roomId: ROOM_ID, messageType: 'TEXT', content: '안녕', imageIds: [] },
+        ],
+        removeMessage,
+      });
+
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
+      );
+      await act(async () => {});
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        rendered.result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: MY_USER_ID,
+            isMine: true,
+          })
+        );
+      });
+
+      expect(removeMessage).toHaveBeenCalledWith('temp-1');
+    });
+
+    it('다른 방을 보고 있는 중에도 메시지가 온 방 자체의 캐시는 갱신된다(#626)', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(chatMessageKeys.room(OTHER_ROOM_ID), []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ roomId: OTHER_ROOM_ID, senderId: MY_USER_ID, isMine: true })
+        );
+      });
+
+      const cached = queryClient.getQueryData<ChatMessageResponse[]>(
+        chatMessageKeys.room(OTHER_ROOM_ID)
+      );
+      expect(cached).toHaveLength(1);
     });
 
     it('비활성 방의 상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
