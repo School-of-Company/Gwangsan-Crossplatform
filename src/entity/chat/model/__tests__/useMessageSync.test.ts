@@ -3,7 +3,6 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useMessageSync } from '../useMessageSync';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import { markChatAsRead } from '../../api/markChatAsRead';
-import { getCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import type { ChatMessageResponse, ChatRoomListItem } from '../chatTypes';
 import type { QueryClient } from '@tanstack/react-query';
 import { chatMessageKeys } from '../chatQueryKeys';
@@ -18,13 +17,8 @@ jest.mock('~/shared/store/useChatQueueStore', () => ({
   },
 }));
 
-jest.mock('~/shared/lib/getCurrentUserId', () => ({
-  getCurrentUserId: jest.fn(),
-}));
-
 const mockMarkChatAsRead = markChatAsRead as jest.Mock;
 const mockGetState = useChatQueueStore.getState as jest.Mock;
-const mockGetCurrentUserId = getCurrentUserId as jest.Mock;
 
 const MY_USER_ID = 42;
 const OTHER_USER_ID = 99;
@@ -68,7 +62,6 @@ describe('useMessageSync', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setupPendingMessages();
-    mockGetCurrentUserId.mockResolvedValue(MY_USER_ID);
     mockMarkChatAsRead.mockResolvedValue(undefined);
   });
 
@@ -86,65 +79,6 @@ describe('useMessageSync', () => {
     await act(async () => {});
     return rendered;
   };
-
-  describe('userId 초기화', () => {
-    it('마운트 시 getCurrentUserId를 한 번만 호출한다', async () => {
-      await renderSync();
-
-      expect(mockGetCurrentUserId).toHaveBeenCalledTimes(1);
-    });
-
-    it('userId가 초기화되기 전에 수신한 메시지는 유실하지 않고 큐에 저장했다가 확인 후 반영한다', async () => {
-      let resolveUserId: (id: number) => void = () => {};
-      mockGetCurrentUserId.mockReturnValue(
-        new Promise<number>((resolve) => {
-          resolveUserId = resolve;
-        })
-      );
-
-      const rendered = renderHookWithProviders(() =>
-        useMessageSync({
-          currentRoomId: ROOM_ID,
-          chatRoomQueryKey: CHAT_ROOM_KEY,
-          chatMessageQueryKey: CHAT_MSG_KEY,
-        })
-      );
-      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
-
-      act(() => {
-        rendered.result.current.handleReceiveMessage(makeMessage());
-      });
-
-      // userId 확인 전에는 아직 반영되지 않는다
-      expect(rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)).toHaveLength(
-        0
-      );
-
-      await act(async () => {
-        resolveUserId(MY_USER_ID);
-        await Promise.resolve();
-        await Promise.resolve();
-      });
-
-      const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
-      expect(cached).toHaveLength(1);
-    });
-
-    it('getCurrentUserId 실패 시 메시지를 처리하지 않는다', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockGetCurrentUserId.mockRejectedValue(new Error('Auth error'));
-
-      const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
-
-      act(() => {
-        result.current.handleReceiveMessage(makeMessage());
-      });
-
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
-      expect(cached).toHaveLength(0);
-    });
-  });
 
   describe('handleConnect', () => {
     it('chatRoomQueryKey와 현재 방의 chatRoomData를 invalidate한다', async () => {
@@ -202,24 +136,27 @@ describe('useMessageSync', () => {
       expect(cached?.[0].messageId).toBe(1);
     });
 
-    it('senderId가 내 userId와 같으면 isMine을 true로 교정한다', async () => {
+    it('서버가 isMine:true로 보낸 메시지는 senderId와 무관하게 그대로 신뢰한다(#619)', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
+      // senderId는 상대방(OTHER_USER_ID)이어도 서버가 isMine:true를 명시했다면 그대로 따른다 —
+      // 클라이언트가 로컬 세션 캐시로 재계산하지 않는다.
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID, isMine: false }));
+        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID, isMine: true }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
       expect(cached?.[0].isMine).toBe(true);
     });
 
-    it('senderId가 다른 사용자이면 isMine을 false로 교정한다', async () => {
+    it('서버가 isMine:false로 보낸 메시지는 senderId와 무관하게 그대로 신뢰한다(#619)', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
+      // senderId는 나(MY_USER_ID)여도 서버가 isMine:false를 명시했다면 그대로 따른다.
       act(() => {
-        result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID, isMine: true }));
+        result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID, isMine: false }));
       });
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
@@ -254,7 +191,7 @@ describe('useMessageSync', () => {
       expect(cached?.[1].messageId).toBe(1);
     });
 
-    it('다른 roomId 메시지는 채팅 메시지 캐시에 추가하지 않는다', async () => {
+    it('다른 roomId 메시지는 현재 방의 채팅 메시지 캐시에 추가하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_MSG_KEY, []);
 
@@ -264,6 +201,70 @@ describe('useMessageSync', () => {
 
       const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
       expect(cached).toHaveLength(0);
+    });
+
+    it('currentRoomId가 없는 전역 소켓 인스턴스에서도 echo를 그 방의 메시지 캐시에 반영한다(#626)', async () => {
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
+      );
+      await act(async () => {});
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        rendered.result.current.handleReceiveMessage(
+          makeMessage({ roomId: ROOM_ID, senderId: MY_USER_ID, isMine: true })
+        );
+      });
+
+      const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cached).toHaveLength(1);
+    });
+
+    it('currentRoomId가 없는 전역 소켓 인스턴스에서도 매칭되는 pending 메시지를 큐에서 제거한다(#626)', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          { tempId: 'temp-1', roomId: ROOM_ID, messageType: 'TEXT', content: '안녕', imageIds: [] },
+        ],
+        removeMessage,
+      });
+
+      const rendered = renderHookWithProviders(() =>
+        useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
+      );
+      await act(async () => {});
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        rendered.result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: MY_USER_ID,
+            isMine: true,
+          })
+        );
+      });
+
+      expect(removeMessage).toHaveBeenCalledWith('temp-1');
+    });
+
+    it('다른 방을 보고 있는 중에도 메시지가 온 방 자체의 캐시는 갱신된다(#626)', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(chatMessageKeys.room(OTHER_ROOM_ID), []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ roomId: OTHER_ROOM_ID, senderId: MY_USER_ID, isMine: true })
+        );
+      });
+
+      const cached = queryClient.getQueryData<ChatMessageResponse[]>(
+        chatMessageKeys.room(OTHER_ROOM_ID)
+      );
+      expect(cached).toHaveLength(1);
     });
 
     it('비활성 방의 상대방 메시지 수신 시 unreadMessageCount를 1 증가시킨다', async () => {
@@ -294,7 +295,7 @@ describe('useMessageSync', () => {
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: MY_USER_ID })
+          makeMessage({ messageId: 2, roomId: OTHER_ROOM_ID, senderId: MY_USER_ID, isMine: true })
         );
       });
 
@@ -485,11 +486,43 @@ describe('useMessageSync', () => {
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' })
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: MY_USER_ID,
+            isMine: true,
+          })
         );
       });
 
       expect(removeMessage).toHaveBeenCalledWith('temp-1');
+    });
+
+    it('내가 보낸 echo가 아니면(isMine=false) content가 같아도 pending 메시지를 제거하지 않는다', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          { tempId: 'temp-1', roomId: ROOM_ID, messageType: 'TEXT', content: '안녕', imageIds: [] },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: OTHER_USER_ID,
+          })
+        );
+      });
+
+      expect(removeMessage).not.toHaveBeenCalled();
     });
 
     it('IMAGE 타입 pending 메시지를 imageIds 기준으로 매칭해 큐에서 제거한다', async () => {
@@ -516,6 +549,8 @@ describe('useMessageSync', () => {
             roomId: ROOM_ID,
             messageType: 'IMAGE',
             content: null,
+            senderId: MY_USER_ID,
+            isMine: true,
             images: [
               { imageId: 10, imageUrl: 'url1' },
               { imageId: 20, imageUrl: 'url2' },
@@ -525,6 +560,85 @@ describe('useMessageSync', () => {
       });
 
       expect(removeMessage).toHaveBeenCalledWith('temp-img-1');
+    });
+
+    it('IMAGE 타입 echo에 images가 없으면(서버가 즉시 echo에 images를 채우지 않는 경우) 같은 방의 가장 오래된 IMAGE pending 메시지를 FIFO로 매칭해 제거한다', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          {
+            tempId: 'temp-img-first',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [10],
+          },
+          {
+            tempId: 'temp-img-second',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [20],
+          },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            senderId: MY_USER_ID,
+            isMine: true,
+            images: undefined,
+          })
+        );
+      });
+
+      expect(removeMessage).toHaveBeenCalledWith('temp-img-first');
+      expect(removeMessage).not.toHaveBeenCalledWith('temp-img-second');
+    });
+
+    it('IMAGE 타입 echo에 images가 없어도 pending에 들고 있던 로컬 미리보기 이미지로 채워서 캐시에 저장한다(방을 나갔다 들어오기 전에도 사진이 보이도록)', async () => {
+      const removeMessage = jest.fn();
+      mockGetState.mockReturnValue({
+        pendingMessages: [
+          {
+            tempId: 'temp-img-local',
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            imageIds: [10],
+            images: [{ imageId: 10, imageUrl: 'file:///local/preview.jpg' }],
+          },
+        ],
+        removeMessage,
+      });
+
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, []);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 55,
+            roomId: ROOM_ID,
+            messageType: 'IMAGE',
+            content: null,
+            senderId: MY_USER_ID,
+            isMine: true,
+            images: undefined,
+          })
+        );
+      });
+
+      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      expect(cached?.[0].images).toEqual([{ imageId: 10, imageUrl: 'file:///local/preview.jpg' }]);
     });
 
     it('다른 roomId 메시지도 room list는 업데이트한다', async () => {
@@ -608,7 +722,13 @@ describe('useMessageSync', () => {
 
       act(() => {
         result.current.handleReceiveMessage(
-          makeMessage({ roomId: ROOM_ID, messageType: 'TEXT', content: '안녕' })
+          makeMessage({
+            roomId: ROOM_ID,
+            messageType: 'TEXT',
+            content: '안녕',
+            senderId: MY_USER_ID,
+            isMine: true,
+          })
         );
       });
 
@@ -639,6 +759,8 @@ describe('useMessageSync', () => {
             roomId: ROOM_ID,
             messageType: 'IMAGE',
             content: null,
+            senderId: MY_USER_ID,
+            isMine: true,
             images: [{ imageId: 10, imageUrl: 'url1' }],
           })
         );
@@ -986,7 +1108,7 @@ describe('useMessageSync', () => {
       expect(cached?.product.createdAt).toBe('2024-06-01T00:00:00Z');
     });
 
-    it('payload의 createdAt이 null이면(거래 철회) 기존 createdAt을 지운다', async () => {
+    it('payload의 createdAt이 null이면(거래 취소) 기존 createdAt을 지운다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
         product: { id: 1, isCompleted: false, createdAt: '2024-01-01T00:00:00Z' },

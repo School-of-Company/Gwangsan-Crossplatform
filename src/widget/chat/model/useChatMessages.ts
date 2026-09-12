@@ -1,19 +1,21 @@
-import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FlatList } from 'react-native';
+import { useAnimatedRef, type AnimatedRef } from 'react-native-reanimated';
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse, ChatRoomListItem } from '~/entity/chat';
+import type { PendingMessageImage } from '~/shared/store/useChatQueueStore';
 
 interface UseChatMessagesParams {
   readonly roomId: RoomId;
 }
 
 interface UseChatMessagesReturn {
-  readonly flatListRef: React.RefObject<FlatList | null>;
+  readonly flatListRef: AnimatedRef<FlatList>;
   readonly messages: ChatMessageResponse[];
   readonly otherUserInfo: { nickname: string; id?: number };
   readonly isLoading: boolean;
@@ -21,7 +23,11 @@ interface UseChatMessagesReturn {
   readonly connectionState: 'connected' | 'connecting' | 'disconnected';
   readonly isBlockedByOtherUser: boolean;
   readonly messageHandlers: {
-    readonly sendMessage: (content: string | null, imageIds: number[]) => void;
+    readonly sendMessage: (
+      content: string | null,
+      imageIds: number[],
+      images?: PendingMessageImage[]
+    ) => void;
     readonly renderMessage: ({ item }: { item: ChatMessageResponse }) => null;
   };
   readonly scrollToEnd: (animated?: boolean) => void;
@@ -31,7 +37,7 @@ interface UseChatMessagesReturn {
 const CHAT_ROOM_QUERY_KEY = ['chatRooms', 'list'] as const;
 
 export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
-  const flatListRef = useRef<FlatList | null>(null);
+  const flatListRef = useAnimatedRef<FlatList>();
   const queryClient = useQueryClient();
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
@@ -83,9 +89,9 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
 
   const messageHandlers = {
     sendMessage: useCallback(
-      (content: string | null, imageIds: number[]) => {
+      (content: string | null, imageIds: number[], images?: PendingMessageImage[]) => {
         if (imageIds.length > 0) {
-          resilientSendMessage(content, 'IMAGE', imageIds);
+          resilientSendMessage(content, 'IMAGE', imageIds, images);
         } else if (content) {
           resilientSendMessage(content, 'TEXT', []);
         }

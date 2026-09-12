@@ -65,7 +65,7 @@ export const renderMessageImages = (
           ) : (
             <Image
               source={{ uri: image.imageUrl }}
-              className="h-48 w-48 rounded-lg"
+              className="h-48 w-48 rounded-2xl"
               resizeMode="cover"
               onLoadStart={() => imageLoader.handleImageLoadStart(image.imageId)}
               onLoadEnd={() => imageLoader.handleImageLoadEnd(image.imageId)}
@@ -74,14 +74,18 @@ export const renderMessageImages = (
           )}
           {imageLoader.isImageLoading(image.imageId) && (
             <View
-              className={`absolute inset-0 items-center justify-center rounded-lg ${config.loadingBgColor} bg-opacity-50`}>
+              className={`absolute inset-0 items-center justify-center rounded-2xl ${config.loadingBgColor} bg-opacity-50`}>
               <ActivityIndicator size="small" color="white" />
             </View>
           )}
         </View>
       ))}
       {message.content && (
-        <Text className={`mt-1 text-sm ${config.textColor}`}>{message.content}</Text>
+        // 사진 자체는 카드 없이 노출하되, 함께 보낸 문구는 배경이 없으면 흰 바탕에 묻히므로
+        // 말풍선과 동일한 배경의 작은 캡션으로 표시한다
+        <View className={`mt-1 self-start rounded-2xl px-3 py-2 ${config.bgColor}`}>
+          <Text className={`text-sm ${config.textColor}`}>{message.content}</Text>
+        </View>
       )}
     </View>
   );

@@ -8,6 +8,7 @@ if (isValidDsn) {
   Sentry.init({
     dsn,
     enabled: !__DEV__,
+    ignoreErrors: [/:8081\b/],
     tracesSampleRate: 0.2,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,

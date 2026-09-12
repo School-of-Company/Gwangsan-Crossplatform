@@ -7,8 +7,8 @@ import { useChatEntry } from '~/shared/lib/useChatEntry';
 import { logger } from '~/shared/lib/logger';
 
 interface UseTradeRequestOptions {
-  readonly productId: number;
-  readonly sellerId: number;
+  readonly productId?: number;
+  readonly sellerId?: number;
 }
 
 interface UseTradeRequestReturn {
@@ -55,6 +55,8 @@ export const useTradeRequest = ({
   const { navigateToChat, navigateToRoom } = useChatEntry();
 
   useEffect(() => {
+    if (!productId) return;
+
     let isMounted = true;
 
     getHasPendingRequest(productId).then((pending) => {
@@ -70,6 +72,16 @@ export const useTradeRequest = ({
 
   const handleTradeRequest = useCallback(async () => {
     if (isLoading || hasPendingRequest) return;
+
+    if (!productId || !sellerId) {
+      logger.error('handleTradeRequest invalid params', { productId, sellerId });
+      Toast.show({
+        type: 'error',
+        text1: '거래 신청 실패',
+        text2: '상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -119,6 +131,16 @@ export const useTradeRequest = ({
 
   const handleWithdrawTradeRequest = useCallback(async () => {
     if (isWithdrawing) return;
+
+    if (!productId || !sellerId) {
+      logger.error('handleWithdrawTradeRequest invalid params', { productId, sellerId });
+      Toast.show({
+        type: 'error',
+        text1: '거래 신청 취소 실패',
+        text2: '상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      });
+      return;
+    }
 
     try {
       setIsWithdrawing(true);

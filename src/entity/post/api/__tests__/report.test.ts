@@ -27,6 +27,7 @@ describe('report', () => {
 
       expect(mockPost).toHaveBeenCalledWith('/report', {
         sourceId: 5,
+        targetType: 'PRODUCT',
         reportType: 'SPAM_AD',
         content: '스팸 게시글입니다.',
         imageIds: [1, 2],
@@ -58,6 +59,7 @@ describe('report', () => {
 
       expect(mockPost).toHaveBeenCalledWith('/report', {
         sourceId: 99,
+        targetType: 'MEMBER',
         reportType: 'ABUSE_HATE_HARASSMENT',
         content: '욕설을 사용했습니다.',
         imageIds: [],

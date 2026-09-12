@@ -19,6 +19,10 @@ interface BottomSheetModalWrapperProps {
   isVisible: boolean;
   onClose: () => void;
   onAnimationComplete?: () => void;
+  // 시트가 다 열려서 슬라이드업 애니메이션이 끝난 직후 호출된다. 애니메이션 도중
+  // TextInput에 포커스를 주면(autoFocus) 안드로이드에서 한글 입력 중 자소가
+  // 분리되는 문제가 있어, 포커스는 이 콜백이 온 뒤에 주도록 한다.
+  onOpenAnimationComplete?: () => void;
   title: string;
   children: React.ReactNode;
   height?: number;
@@ -36,11 +40,20 @@ const APPLE_SHEET_EASING = Easing.bezier(0.32, 0.72, 0, 1);
 const DRAG_RESISTANCE = 0.7;
 // 여닫힘 속도를 동일하게 맞춘다
 const SHEET_TRANSITION_DURATION = 500;
+// 일부 안드로이드 키보드는 입력 중 예측 변환/후보 문구 바가 나타나거나 사라질 때마다
+// 높이가 조금 다른 채로 keyboardDidShow를 다시 쏜다(자체 숨김/노출이 아님). 이 변화에
+// 맞춰 시트를 매번 다시 애니메이션시키면, 한글 입력 조합 중인 TextInput의 위치가 자꾸
+// 바뀌면서 자소가 분리되어 보이는 문제가 생긴다. 실제 키보드 노출/숨김으로 볼 수 있는
+// 큰 변화(이 값보다 큰 변화)에만 반응해 그 문제를 피한다.
+const KEYBOARD_HEIGHT_CHANGE_THRESHOLD = 80;
+// 키보드가 올라왔을 때 시트 바닥이 키보드 상단에 완전히 붙어버리지 않도록 살짝 띄운다.
+const KEYBOARD_GAP = 12;
 
 export function BottomSheetModalWrapper({
   isVisible,
   onClose,
   onAnimationComplete,
+  onOpenAnimationComplete,
   title,
   children,
   height,
@@ -59,6 +72,10 @@ export function BottomSheetModalWrapper({
   const translateY = useRef(new Animated.Value(modalHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
+  // 시트가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
+  // 열릴 때(isVisible 효과)마다 false로 리셋된다.
+  const hasAnimatedOpenRef = useRef(false);
+  const lastKeyboardHeightRef = useRef(0);
 
   const panResponder = useMemo(
     () =>
@@ -103,8 +120,14 @@ export function BottomSheetModalWrapper({
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
+      const nextHeight = e.endCoordinates.height;
+      if (Math.abs(nextHeight - lastKeyboardHeightRef.current) < KEYBOARD_HEIGHT_CHANGE_THRESHOLD) {
+        return;
+      }
+      lastKeyboardHeightRef.current = nextHeight;
+
       Animated.timing(translateY, {
-        toValue: -e.endCoordinates.height,
+        toValue: -(nextHeight + KEYBOARD_GAP),
         duration: 250,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
@@ -112,6 +135,8 @@ export function BottomSheetModalWrapper({
     });
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      lastKeyboardHeightRef.current = 0;
+
       Animated.timing(translateY, {
         toValue: 0,
         duration: 250,
@@ -130,6 +155,7 @@ export function BottomSheetModalWrapper({
     if (isVisible) {
       translateY.setValue(modalHeight);
       backdropOpacity.setValue(0);
+      hasAnimatedOpenRef.current = false;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true);
     } else if (show) {
@@ -156,8 +182,13 @@ export function BottomSheetModalWrapper({
   // Modal(별도 네이티브 창) 없이 이미 떠 있는 화면 위에 바로 얹기 때문에, 토스트처럼
   // 창 생성 지연이 없다. 시트의 첫 layout이 실제로 커밋된 직후(onLayout)에만
   // 애니메이션을 시작해 첫 프레임이 끊기지 않게 하고, rAF로 한 프레임 더 미뤄 안전
-  // 여유를 둔다.
+  // 여유를 둔다. onLayout 이전에 시작하면 아직 native view가 붙지 않아
+  // useNativeDriver 애니메이션이 아무 효과 없이 즉시 끝나버리므로, 반드시 이 시점을
+  // 기다려야 한다.
   const handleSheetLayout = useCallback(() => {
+    if (hasAnimatedOpenRef.current) return;
+    hasAnimatedOpenRef.current = true;
+
     requestAnimationFrame(() => {
       Animated.parallel([
         Animated.timing(translateY, {
@@ -172,9 +203,11 @@ export function BottomSheetModalWrapper({
           useNativeDriver: true,
           easing: APPLE_SHEET_EASING,
         }),
-      ]).start();
+      ]).start(() => {
+        onOpenAnimationComplete?.();
+      });
     });
-  }, [translateY, backdropOpacity]);
+  }, [translateY, backdropOpacity, onOpenAnimationComplete]);
 
   // Modal의 onRequestClose를 대체 — 안드로이드 뒤로가기를 닫기 동작으로 처리한다
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   NativeScrollEvent,
@@ -24,6 +25,8 @@ import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetMyPosts } from '../../model/useGetMyPosts';
 import { useGetPosts } from '../../model/useGetPosts';
+import { useGetReviews } from '~/view/reviews/model/useGetReviews';
+import type { ReviewPostType } from '~/view/reviews/model/reviewPostType';
 
 type SellingTab = 'onSale' | 'sold';
 
@@ -90,11 +93,13 @@ const ActionSheetRow = ({
 
 const SellingPostCard = ({
   post,
-  reviewsMemberId,
+  receivedReviews,
+  isReviewsLoading,
   onMenuPress,
 }: {
   post: PostType;
-  reviewsMemberId?: number;
+  receivedReviews?: ReviewPostType[];
+  isReviewsLoading?: boolean;
   onMenuPress: (post: PostType) => void;
 }) => {
   const router = useRouter();
@@ -110,10 +115,13 @@ const SellingPostCard = ({
     onMenuPress(post);
   }, [onMenuPress, post]);
 
+  // 이 게시물(거래)에 대해 실제로 받은 후기가 있을 때만 버튼을 보여주고 그 상세로 이동한다
+  const matchedReview = receivedReviews?.find((review) => review.productId === id);
+
   const handleReviewsPress = useCallback(() => {
-    if (reviewsMemberId == null) return;
-    router.push(`/reviews/${reviewsMemberId}`);
-  }, [router, reviewsMemberId]);
+    if (!matchedReview) return;
+    router.push(`/cancelTrade/${matchedReview.reviewId}`);
+  }, [router, matchedReview]);
 
   const firstImage =
     imageUrls?.[0]?.imageUrl ??
@@ -171,7 +179,14 @@ const SellingPostCard = ({
             </TouchableOpacity>
           )}
         </View>
-        {!isTemporary && isCompleted && reviewsMemberId != null && (
+        {!isTemporary && isCompleted && isReviewsLoading && (
+          <View
+            className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
+            testID={`selling-card-reviews-loading-${id}`}>
+            <ActivityIndicator color="white" />
+          </View>
+        )}
+        {!isTemporary && isCompleted && !isReviewsLoading && matchedReview && (
           <TouchableOpacity
             onPress={handleReviewsPress}
             className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
@@ -188,12 +203,14 @@ const SellingPanel = memo(
   ({
     posts,
     emptyMessage,
-    reviewsMemberId,
+    receivedReviews,
+    isReviewsLoading,
     onMenuPress,
   }: {
     posts: PostType[];
     emptyMessage: string;
-    reviewsMemberId?: number;
+    receivedReviews?: ReviewPostType[];
+    isReviewsLoading?: boolean;
     onMenuPress: (post: PostType) => void;
   }) => (
     <ScrollView
@@ -205,7 +222,8 @@ const SellingPanel = memo(
           posts.map((post) => (
             <SellingPostCard
               post={post}
-              reviewsMemberId={reviewsMemberId}
+              receivedReviews={receivedReviews}
+              isReviewsLoading={isReviewsLoading}
               onMenuPress={onMenuPress}
               key={post.id}
             />
@@ -251,6 +269,13 @@ export default function SellingPageView() {
   );
   const soldPosts = useMemo(() => sellingPosts.filter((post) => post.isCompleted), [sellingPosts]);
   const reviewsMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
+  // react-query v5의 isLoading은 isPending && isFetching이라 아직 enabled:false로
+  // 대기 중인(= myInfo를 기다리는) 상태에서는 false를 반환한다. 그 시점에도 data는
+  // 여전히 undefined이므로, "아직 받아오지 못함"을 정확히 판별하려면 isPending을 써야 한다
+  const { data: receivedReviews, isPending: isReviewsLoading } = useGetReviews(
+    'receive',
+    reviewsMemberId != null ? String(reviewsMemberId) : undefined
+  );
 
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
@@ -354,7 +379,8 @@ export default function SellingPageView() {
         <SellingPanel
           posts={soldPosts}
           emptyMessage="판매 완료된 게시물이 없습니다."
-          reviewsMemberId={reviewsMemberId}
+          receivedReviews={receivedReviews}
+          isReviewsLoading={isReviewsLoading}
           onMenuPress={handleMenuPress}
         />
       </ScrollView>

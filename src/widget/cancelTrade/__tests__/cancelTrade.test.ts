@@ -21,12 +21,12 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('cancelTrade API', () => {
   it('cancelTrade를 호출하면 응답을 반환한다', async () => {
-    const mockRes = { status: 200, data: { success: true } };
+    const mockRes = { cancelled: false };
     mockCancelTrade.mockResolvedValue(mockRes);
 
-    const result = await cancelTrade('철회 사유', [1, 2], 99);
+    const result = await cancelTrade('취소 사유', [1, 2], 99);
 
-    expect(mockCancelTrade).toHaveBeenCalledWith('철회 사유', [1, 2], 99);
+    expect(mockCancelTrade).toHaveBeenCalledWith('취소 사유', [1, 2], 99);
     expect(result).toEqual(mockRes);
   });
 
@@ -49,10 +49,10 @@ describe('useCancelTrade', () => {
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 1 }));
 
     act(() => {
-      result.current.setReason('철회 사유입니다');
+      result.current.setReason('취소 사유입니다');
     });
 
-    expect(result.current.reason).toBe('철회 사유입니다');
+    expect(result.current.reason).toBe('취소 사유입니다');
   });
 
   it('setImageIds로 imageIds를 업데이트한다', () => {
@@ -101,30 +101,57 @@ describe('useCancelTrade', () => {
     expect(result.current.canSubmit).toBe(true);
   });
 
-  it('handleSubmit 성공 시 성공 Toast를 표시하고 onSuccess를 호출한다', async () => {
-    mockCancelTrade.mockResolvedValue({});
+  it('handleSubmit 성공 시(cancelled: false) 승인 대기 Toast를 표시하고 onSuccess를 호출한다', async () => {
+    mockCancelTrade.mockResolvedValue({ cancelled: false });
     const onSuccess = jest.fn();
 
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 5, onSuccess }));
 
     act(() => {
-      result.current.setReason('철회 사유');
+      result.current.setReason('취소 사유');
     });
 
     await act(async () => {
-      result.current.handleSubmit('철회 사유');
+      result.current.handleSubmit('취소 사유');
     });
 
     await waitFor(() =>
       expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', text1: '거래철회 완료' })
+        expect.objectContaining({ type: 'success', text1: '거래취소 접수' })
       )
     );
     expect(onSuccess).toHaveBeenCalled();
   });
 
+  it('handleSubmit 성공 시(cancelled: true) 철회 완료 Toast를 표시하고 광산 잔액 쿼리를 무효화한다', async () => {
+    mockCancelTrade.mockResolvedValue({ cancelled: true });
+    const onSuccess = jest.fn();
+
+    const { result, queryClient } = renderHookWithProviders(() =>
+      useCancelTrade({ productId: 5, onSuccess })
+    );
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    act(() => {
+      result.current.setReason('취소 사유');
+    });
+
+    await act(async () => {
+      result.current.handleSubmit('취소 사유');
+    });
+
+    await waitFor(() =>
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래취소 완료' })
+      )
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myInformation'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
   it('handleSubmit 실패 시 에러 Toast를 표시한다', async () => {
-    mockCancelTrade.mockRejectedValue(new Error('철회 실패'));
+    mockCancelTrade.mockRejectedValue(new Error('취소 실패'));
 
     const { result } = renderHookWithProviders(() => useCancelTrade({ productId: 5 }));
 
@@ -138,7 +165,7 @@ describe('useCancelTrade', () => {
 
     await waitFor(() =>
       expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '거래철회 실패', text2: '철회 실패' })
+        expect.objectContaining({ type: 'error', text1: '거래취소 실패', text2: '취소 실패' })
       )
     );
   });
@@ -160,8 +187,8 @@ describe('useCancelTrade', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'error',
-          text1: '거래철회 실패',
-          text2: '거래철회 처리 중 오류가 발생했습니다.',
+          text1: '거래취소 실패',
+          text2: '거래취소 처리 중 오류가 발생했습니다.',
         })
       )
     );
@@ -195,7 +222,7 @@ describe('useCancelTrade', () => {
     });
 
     expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', text1: '거래철회 실패' })
+      expect.objectContaining({ type: 'error', text1: '거래취소 실패' })
     );
   });
 

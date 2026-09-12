@@ -11,7 +11,7 @@ import {
   chatMessageKeys,
   getChatRoomData,
 } from '@/entity/chat';
-import type { ChatRoomListItem } from '@/entity/chat';
+import type { ChatRoomListItem, ChatMessageResponse } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
@@ -21,6 +21,14 @@ import { ReportModal } from '~/entity/post/ui';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
+
+// 배열 정렬 방향에 기대지 않고 실제 최신 시각을 구한다 — REST/소켓 배열의 정렬 방향이
+// 다를 수 있다(#610). 파싱 불가능한 값은 최신 판정에 끼어들지 않도록 무시한다.
+const getLatestMessageTime = (messages: readonly ChatMessageResponse[]): number =>
+  messages.reduce((max, message) => {
+    const time = new Date(message.createdAt).getTime();
+    return Number.isFinite(time) && time > max ? time : max;
+  }, 0);
 
 interface ActionSheetRowProps {
   label: string;
@@ -76,6 +84,9 @@ export function ChatRoomList() {
   const [exitingRoomId, setExitingRoomId] = useState<RoomId | null>(null);
   // 슬라이드 아웃이 끝나 실제로 목록에서 제거된 채팅방 — 이 시점부터 위/아래 항목이 붙는 애니메이션이 재생된다
   const [hiddenRoomIds, setHiddenRoomIds] = useState<Set<RoomId>>(() => new Set());
+  // 나가기 API 응답을 기다리는 중인 방 — 삭제가 서버에 반영되기 전 폴링 응답이 먼저 도착해도
+  // 재참여 복원 로직이 그 사이 잠깐 목록에 남아있는 값을 재참여로 오인하지 않게 막는다.
+  const [pendingDeleteRoomIds, setPendingDeleteRoomIds] = useState<Set<RoomId>>(() => new Set());
   // 차단 확인 AlertModal은 액션 시트가 닫힌 뒤에도 열려있어야 하므로 대상을 따로 보관한다.
   // memberId도 함께 저장해, 시트가 닫혀 actionTargetMemberId가 사라진 뒤에도
   // useBlockUser가 올바른 대상에 그대로 묶여 있게 한다.
@@ -109,6 +120,28 @@ export function ChatRoomList() {
     [chatRooms, hiddenRoomIds]
   );
 
+  // 상품의 '채팅하기'로 재참여하면 같은 roomId가 서버 목록에 다시 나타난다. hiddenRoomIds는
+  // 나가기 애니메이션용 임시 캐시라 자동으로 정리되지 않으므로, 재참여로 복원된 방을 그대로
+  // 두면 계속 숨겨진 채로 남는다(#609). useChatSocket의 blockStateRoomId와 같은 방식으로,
+  // effect 대신 렌더링 중 chatRooms 변화를 감지해 즉시 걷어낸다. 단, 그 방에 대한 나가기
+  // 요청이 아직 진행 중이면(삭제 완료 전에 폴링 응답이 먼저 도착한 경우) 되살리지 않는다.
+  const [prevChatRooms, setPrevChatRooms] = useState(chatRooms);
+  if (chatRooms !== prevChatRooms) {
+    setPrevChatRooms(chatRooms);
+
+    const restoredRoomIds = (chatRooms ?? [])
+      .map((room) => room.roomId)
+      .filter((roomId) => hiddenRoomIds.has(roomId) && !pendingDeleteRoomIds.has(roomId));
+
+    if (restoredRoomIds.length > 0) {
+      setHiddenRoomIds((prev) => {
+        const next = new Set(prev);
+        restoredRoomIds.forEach((roomId) => next.delete(roomId));
+        return next;
+      });
+    }
+  }
+
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
       // 채팅방에 들어가기 전에 데이터를 미리 받아오고 소켓 방에 미리 join해
@@ -120,7 +153,22 @@ export function ChatRoomList() {
           staleTime: 30 * 1000,
         })
         .then((data) => {
-          queryClient.setQueryData(chatMessageKeys.room(roomId), [...data.messages]);
+          // 서버는 Redis Stream 발행 후 DB에 비동기로 저장하므로, 이 REST snapshot에는
+          // 방금 보낸 메시지가 아직 없을 수 있다. 무조건 덮어쓰면 소켓 echo로 이미 반영된
+          // 최신 메시지가 재입장 시 일시적으로 사라진다(#610) — 기존 캐시와 snapshot 중
+          // 최대 createdAt이 더 큰 쪽을 그대로 쓴다. 배열 병합/ID union은 하지 않는다
+          // (소켓·REST 간 ID 표현 차이로 중복이 생길 수 있고, 서버 페이지 크기 제한을
+          // 클라이언트가 깨뜨리게 된다).
+          queryClient.setQueryData(
+            chatMessageKeys.room(roomId),
+            (oldData: ChatMessageResponse[] | undefined) => {
+              if (!oldData || oldData.length === 0) return [...data.messages];
+
+              return getLatestMessageTime(data.messages) > getLatestMessageTime(oldData)
+                ? [...data.messages]
+                : oldData;
+            }
+          );
         })
         .catch(() => {});
 
@@ -198,8 +246,27 @@ export function ChatRoomList() {
       });
       setExitingRoomId(null);
 
+      // mutate() 호출과 같은 틱에 pending 표시를 심어, 그 사이 도착하는 폴링 응답이
+      // 아직 삭제되지 않은 방을 재참여로 오인해 되살리지 않게 한다.
+      setPendingDeleteRoomIds((prev) => {
+        const next = new Set(prev);
+        next.add(roomId);
+        return next;
+      });
+
+      const clearPendingDelete = () => {
+        setPendingDeleteRoomIds((prev) => {
+          if (!prev.has(roomId)) return prev;
+          const next = new Set(prev);
+          next.delete(roomId);
+          return next;
+        });
+      };
+
       deleteChatRoomMutation.mutate(roomId, {
+        onSuccess: clearPendingDelete,
         onError: () => {
+          clearPendingDelete();
           // 나가기가 실패하면 토스트로 알리고 숨겼던 항목을 다시 목록에 되돌린다
           setHiddenRoomIds((prev) => {
             if (!prev.has(roomId)) return prev;

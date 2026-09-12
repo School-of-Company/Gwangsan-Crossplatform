@@ -10,12 +10,19 @@ export const MESSAGE_STATUS = {
 
 export type MessageStatus = (typeof MESSAGE_STATUS)[keyof typeof MESSAGE_STATUS];
 
+export interface PendingMessageImage {
+  imageId: number;
+  imageUrl: string;
+}
+
 export interface PendingMessage {
   tempId: string;
   roomId: RoomId;
   content: string | null;
   messageType: MessageType;
   imageIds: number[];
+  /** 서버 echo를 기다리지 않고 바로 미리보기를 그리기 위한 로컬 이미지(localUri 등) */
+  images?: PendingMessageImage[];
   status: MessageStatus;
   createdAt: string;
   retryCount: number;

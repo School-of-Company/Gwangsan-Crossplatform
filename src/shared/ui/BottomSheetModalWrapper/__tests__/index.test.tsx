@@ -1,5 +1,12 @@
 import React from 'react';
-import { BackHandler, Keyboard, PanResponder, Text, TouchableOpacity } from 'react-native';
+import {
+  Animated,
+  BackHandler,
+  Keyboard,
+  PanResponder,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { BottomSheetModalWrapper } from '../index';
 import { BottomSheetPortalOutlet } from '../../BottomSheetPortalOutlet';
@@ -294,6 +301,55 @@ describe('BottomSheetModalWrapper', () => {
 
       expect(listeners.keyboardDidHide).toBeDefined();
       expect(() => listeners.keyboardDidHide()).not.toThrow();
+    });
+
+    it('입력 중 예측 변환 바 높이 변화처럼 작은 변화(임계값 미만)는 무시해 시트를 다시 애니메이션하지 않는다', () => {
+      const listeners: Record<string, (e?: unknown) => void> = {};
+      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+        listeners[event as string] = cb as (e?: unknown) => void;
+        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+      });
+      const timingSpy = jest.spyOn(Animated, 'timing');
+
+      renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목">
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
+      timingSpy.mockClear();
+
+      // 예측 변환 바가 나타나며 살짝 높아진 정도(임계값 미만)
+      listeners.keyboardDidShow({ endCoordinates: { height: 330 } });
+
+      expect(timingSpy).not.toHaveBeenCalled();
+    });
+
+    it('실제 키보드 노출처럼 큰 변화(임계값 이상)는 시트를 다시 애니메이션한다', () => {
+      const listeners: Record<string, (e?: unknown) => void> = {};
+      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+        listeners[event as string] = cb as (e?: unknown) => void;
+        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+      });
+      const timingSpy = jest.spyOn(Animated, 'timing');
+
+      renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목">
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
+      timingSpy.mockClear();
+
+      // 다른 입력 타입으로 바뀌며 키보드 자체가 크게 바뀐 경우(임계값 이상)
+      listeners.keyboardDidShow({ endCoordinates: { height: 420 } });
+
+      expect(timingSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ toValue: -432 })
+      );
     });
   });
 

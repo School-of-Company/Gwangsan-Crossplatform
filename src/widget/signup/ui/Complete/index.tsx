@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Image, ActivityIndicator } from 'react-native';
 import { Button } from '@/shared/ui/Button';
 import gwangsanLogo from '@/shared/assets/png/gwangsanLogo.png';
@@ -13,8 +13,12 @@ export default function Complete() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasSubmittedRef = useRef(false);
 
   const handleSignup = useCallback(async () => {
+    if (hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
+
     try {
       setIsLoading(true);
       setError(null);

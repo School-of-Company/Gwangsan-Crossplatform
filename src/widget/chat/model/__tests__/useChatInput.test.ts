@@ -162,7 +162,7 @@ describe('useChatInput', () => {
         await result.current.handleSendMessage();
       });
 
-      expect(onSendMessage).toHaveBeenCalledWith('보낼 메시지', []);
+      expect(onSendMessage).toHaveBeenCalledWith('보낼 메시지', [], []);
       expect(result.current.textMessage).toBe('');
     });
 
@@ -175,7 +175,7 @@ describe('useChatInput', () => {
         await result.current.handleSendMessage();
       });
 
-      expect(onSendMessage).toHaveBeenCalledWith('텍스트', []);
+      expect(onSendMessage).toHaveBeenCalledWith('텍스트', [], []);
     });
 
     it('텍스트 없이 이미지만 있으면 content로 null을 전달한다', async () => {
@@ -198,7 +198,11 @@ describe('useChatInput', () => {
         await result.current.handleSendMessage();
       });
 
-      expect(onSendMessage).toHaveBeenCalledWith(null, [5]);
+      expect(onSendMessage).toHaveBeenCalledWith(
+        null,
+        [5],
+        [{ imageId: 5, imageUrl: 'file://5.jpg' }]
+      );
       expect(result.current.selectedImages).toEqual([]);
     });
   });

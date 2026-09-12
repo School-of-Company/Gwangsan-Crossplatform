@@ -59,9 +59,30 @@ export const useChatEntry = () => {
     [navigateToRoom]
   );
 
+  // 상품의 '채팅하기'로만 호출되는 명시적 재참여 경로. 나간 방이어도 GET으로 찾아 들어가면
+  // 숨김이 풀리지 않으므로, 항상 POST로 기존 방을 재사용해 요청자의 숨김을 해제한다.
+  // 과거 알림 클릭·거래신청 roomId 직행 같은 경로는 이 함수 대신 navigateToChat/navigateToRoom을
+  // 그대로 써서 자동 재참여로 취급되지 않게 한다.
+  const rejoinChat = useCallback(
+    async (productId: ProductId) => {
+      setIsLoading(true);
+
+      try {
+        const room = await createChatRoom(productId);
+        await navigateToRoom(room.roomId);
+      } catch {
+        // createChatRoom이 실패 시 이미 에러 Toast를 띄운다
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [navigateToRoom]
+  );
+
   return {
     navigateToChat,
     navigateToRoom,
+    rejoinChat,
     isLoading,
   };
 };
