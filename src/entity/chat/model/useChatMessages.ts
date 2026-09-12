@@ -35,6 +35,8 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
     enabled: enabled && !!roomId,
     refetchInterval,
     staleTime: 5000,
+    // 재입장 프리페치 캐시가 최신 메시지를 놓쳤을 수 있어 staleTime과 무관하게 항상 재조회한다(#626)
+    refetchOnMount: 'always',
   });
 
   if (query.error && onError) {

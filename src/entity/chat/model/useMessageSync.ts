@@ -46,7 +46,9 @@ export const useMessageSync = ({
           });
         }
 
-        if (isCurrentRoomMessage && chatMessageQueryKey) {
+        // 이 방을 지금 보고 있지 않아도 echo가 오면 pending 큐 확정·캐시 반영은 항상 해야 한다(#626)
+        {
+          const targetMessageQueryKey = chatMessageKeys.room(message.roomId);
           const queueState = useChatQueueStore.getState();
           const matchingTemp = queueState.pendingMessages.find((msg) => {
             // 상대방이 보낸 메시지가 우연히 같은 content/이미지 개수를 가져도 내가 보낸 pending
@@ -88,7 +90,7 @@ export const useMessageSync = ({
               : message;
 
           queryClient.setQueryData(
-            chatMessageQueryKey,
+            targetMessageQueryKey,
             (oldData: ChatMessageResponse[] | undefined) => {
               if (!oldData) return [messageToCache];
 
@@ -141,7 +143,7 @@ export const useMessageSync = ({
         logger.error('handleReceiveMessage error', error);
       }
     },
-    [queryClient, currentRoomId, chatRoomQueryKey, chatMessageQueryKey]
+    [queryClient, currentRoomId, chatRoomQueryKey]
   );
 
   const handleReceiveMessage = useCallback(
