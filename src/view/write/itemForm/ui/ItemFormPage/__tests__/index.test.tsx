@@ -286,7 +286,9 @@ describe('ItemFormPage', () => {
 
       expect(await findByText('수정하기')).toBeTruthy();
       expect(getByPlaceholderText('주제를 작성해주세요').props.value).toBe('기존 제목');
-      expect(getByPlaceholderText('내용을 작성해주세요').props.value).toBe('기존 내용');
+      // TextField는 IME 조합 끊김/포커스 시 값 유실을 막기 위해 `value`가 아니라
+      // `defaultValue`로 값을 반영한다(School-of-Company/Gwangsan-Crossplatform#642).
+      expect(getByPlaceholderText('내용을 작성해주세요').props.defaultValue).toBe('기존 내용');
       expect(getByPlaceholderText('광산을 입력해주세요').props.value).toBe('5000');
     });
 
