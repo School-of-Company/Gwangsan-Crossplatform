@@ -92,6 +92,21 @@ describe('SigninPage', () => {
     expect(mockPrevStep).toHaveBeenCalled();
   });
 
+  it('별칭→비밀번호는 오른쪽에서, 비밀번호→별칭(뒤로가기)은 왼쪽에서 슬라이드해 들어온다', () => {
+    mockUseSigninCurrentStep.mockReturnValue('nickname');
+    const { rerender, UNSAFE_getByType } = render(<SigninPage />);
+
+    mockUseSigninCurrentStep.mockReturnValue('password');
+    rerender(<SigninPage />);
+    const forwardEntering = UNSAFE_getByType('Animated.View' as never).props.entering;
+    expect(forwardEntering().initialValues.transform).toEqual([{ translateX: 32 }]);
+
+    mockUseSigninCurrentStep.mockReturnValue('nickname');
+    rerender(<SigninPage />);
+    const backEntering = UNSAFE_getByType('Animated.View' as never).props.entering;
+    expect(backEntering().initialValues.transform).toEqual([{ translateX: -32 }]);
+  });
+
   it('nickname 단계에서는 뒤로가기(beforeRemove)를 가로채지 않는다', () => {
     mockUseSigninCurrentStep.mockReturnValue('nickname');
 
