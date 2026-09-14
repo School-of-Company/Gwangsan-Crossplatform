@@ -135,7 +135,11 @@ export default function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  animation: 'none',
+                  // A→B로 이동하면 오른쪽에서 슬라이드해 들어오고, B에서 다시 A로 뒤로가면
+                  // 반대로(오른쪽으로 빠져나가며) 되돌아간다 — 네이티브 스택 트랜지션이라
+                  // pop 시 자동으로 반대 방향이 적용된다. 모든 페이지(Stack.Screen)에 공통
+                  // 적용되므로 화면마다 애니메이션이 서로 달라지는 문제가 없다.
+                  animation: 'slide_from_right',
                   gestureEnabled: true,
                   gestureDirection: 'horizontal',
                 }}>
