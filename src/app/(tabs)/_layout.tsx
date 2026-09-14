@@ -3,16 +3,15 @@ import { Animated, Easing } from 'react-native';
 import { AppFooter } from '~/widget/write/ui/AppFooter';
 
 const HORIZONTAL_SHIFT = 32;
-// 100ms는 감속 구간이 보일 틈도 없이 끝나버려 끊기듯 뚝 멈추는 느낌이 났다.
-// 감속이 눈에 보일 정도로 늘려 부드럽게 멈추도록 한다.
-const TRANSITION_DURATION = 220;
+const TRANSITION_DURATION = 100;
 
-// 페이드 없이 콘텐츠(sceneStyle)만 옆으로 살짝 슬라이드한다. 탭 바(AppFooter)는
-// tabBar prop으로 별도 렌더링되는 고정 UI라 이 애니메이션과 무관하게 항상 그 자리에
-// 머문다 — 콘텐츠만 움직이고 푸터는 가만히 있는 효과가 별도 처리 없이 그대로 나온다.
 function tabSlideInterpolator({ current }: { current: { progress: Animated.Value } }) {
   return {
     sceneStyle: {
+      opacity: current.progress.interpolate({
+        inputRange: [-1, 0, 1],
+        outputRange: [0, 1, 0],
+      }),
       transform: [
         {
           translateX: current.progress.interpolate({
