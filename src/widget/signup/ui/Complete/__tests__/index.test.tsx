@@ -88,7 +88,7 @@ describe('Complete — 가입 성공', () => {
 
     fireEvent.press(getByText('로그인 페이지로 돌아가기'));
 
-    expect(mockRouterNavigate).toHaveBeenCalledWith('/signin');
+    expect(mockRouterNavigate).toHaveBeenCalledWith('/signin/nickname');
     expect(useSignupStore.getState().formData.name).toBe('');
     expect(useSignupStore.getState().currentStep).toBe('terms');
   });

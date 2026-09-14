@@ -4,13 +4,13 @@ import { useSigninStore } from '@/shared/store/useSigninStore';
 import { useResetPasswordStore } from '@/shared/store/useResetPasswordStore';
 import type { SignupState, SigninState, ResetPasswordState } from './authState';
 
-export function useCurrentStep<TState extends SignupState | SigninState | ResetPasswordState>(
+export function useCurrentStep<TState extends SignupState | ResetPasswordState>(
   useStore: (selector: (state: TState) => TState['currentStep']) => TState['currentStep']
 ): TState['currentStep'] {
   return useStore((state) => state.currentStep);
 }
 
-export function useStepNavigation<TState extends SignupState | SigninState | ResetPasswordState>(
+export function useStepNavigation<TState extends SignupState | ResetPasswordState>(
   useStore: (selector: (state: TState) => unknown) => unknown
 ) {
   const nextStep = useStore((state: TState) => state.nextStep) as () => void;
@@ -49,14 +49,16 @@ export function useFormField<
 }
 
 export const useSignupCurrentStep = () => useCurrentStep<SignupState>(useSignupStore);
-export const useSigninCurrentStep = () => useCurrentStep<SigninState>(useSigninStore);
 export const useResetPasswordCurrentStep = () =>
   useCurrentStep<ResetPasswordState>(useResetPasswordStore);
 
 export const useSignupStepNavigation = () => useStepNavigation<SignupState>(useSignupStore);
-export const useSigninStepNavigation = () => useStepNavigation<SigninState>(useSigninStore);
 export const useResetPasswordStepNavigation = () =>
   useStepNavigation<ResetPasswordState>(useResetPasswordStore);
+
+// 별칭/비밀번호가 실제 라우트(/signin/nickname, /signin/password)로 분리돼 있어
+// 네이티브 스택 트랜지션을 그대로 타므로, 이 스토어는 formData만 들고 있으면 된다.
+export const useSigninResetStore = () => useSigninStore((state) => state.resetStore);
 
 export const useSignupFormField = <K extends keyof SignupState['formData']>(fieldName: K) =>
   useFormField<SignupState, K>(fieldName, useSignupStore);

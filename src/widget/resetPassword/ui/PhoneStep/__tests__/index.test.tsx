@@ -212,7 +212,7 @@ describe('PhoneStep — 다음/뒤로 동작', () => {
     fireEvent.press(getByTestId('back-button'));
 
     expect(mockResetStore).toHaveBeenCalled();
-    expect(mockRouterDismissTo).toHaveBeenCalledWith('/signin');
+    expect(mockRouterDismissTo).toHaveBeenCalledWith('/signin/nickname');
   });
 });
 

@@ -3,7 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import { signinWithDeviceInfo, saveCredentialsForBiometric } from '~/entity/auth/api/signin';
-import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import PasswordStep from '../index';
 
 jest.mock('expo-router', () => ({
@@ -29,7 +29,7 @@ jest.mock('~/shared/lib/socket', () => ({
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSigninFormField: jest.fn(),
-  useSigninStepNavigation: jest.fn(),
+  useSigninResetStore: jest.fn(),
 }));
 
 jest.mock('@/shared/ui/PasswordInput', () => {
@@ -74,7 +74,7 @@ jest.mock('~/entity/auth/ui/SigninForm', () => {
 const mockSigninWithDeviceInfo = signinWithDeviceInfo as jest.Mock;
 const mockSaveCredentials = saveCredentialsForBiometric as jest.Mock;
 const mockUseSigninFormField = useSigninFormField as jest.Mock;
-const mockUseSigninStepNavigation = useSigninStepNavigation as jest.Mock;
+const mockUseSigninResetStore = useSigninResetStore as jest.Mock;
 const mockRouterReplace = router.replace as jest.Mock;
 const mockCanDismiss = router.canDismiss as jest.Mock;
 const mockDismissAll = router.dismissAll as jest.Mock;
@@ -89,7 +89,7 @@ beforeEach(() => {
     if (field === 'nickname') return { value: '홍길동', updateField: jest.fn() };
     return { value: '', updateField: mockUpdateField };
   });
-  mockUseSigninStepNavigation.mockReturnValue({ resetStore: mockResetStore });
+  mockUseSigninResetStore.mockReturnValue(mockResetStore);
   mockSaveCredentials.mockResolvedValue(undefined);
   mockCanDismiss.mockReturnValue(false);
 });

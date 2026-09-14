@@ -1,7 +1,5 @@
 import type { SignupStep } from '../model/authState';
 
-type SigninStep = 'nickname' | 'password';
-
 type ResetPasswordStep = 'phoneNumber' | 'newPassword';
 
 const SIGNUP_STEPS: readonly SignupStep[] = [
@@ -17,8 +15,6 @@ const SIGNUP_STEPS: readonly SignupStep[] = [
   'recommender',
   'complete',
 ] as const;
-
-const SIGNIN_STEPS: readonly SigninStep[] = ['nickname', 'password'] as const;
 
 const RESET_PASSWORD_STEPS: readonly ResetPasswordStep[] = ['phoneNumber', 'newPassword'] as const;
 
@@ -48,18 +44,6 @@ export const getNextSignupStep = (currentStep: SignupStep): SignupStep => {
 
 export const getPrevSignupStep = (currentStep: SignupStep): SignupStep => {
   return getPrevStepInternal(currentStep, SIGNUP_STEPS);
-};
-
-export const getSigninStepIndex = (step: SigninStep): number => {
-  return getStepIndexInternal(step, SIGNIN_STEPS);
-};
-
-export const getNextSigninStep = (currentStep: SigninStep): SigninStep => {
-  return getNextStepInternal(currentStep, SIGNIN_STEPS);
-};
-
-export const getPrevSigninStep = (currentStep: SigninStep): SigninStep => {
-  return getPrevStepInternal(currentStep, SIGNIN_STEPS);
 };
 
 export const getResetPasswordStepIndex = (step: ResetPasswordStep): number => {

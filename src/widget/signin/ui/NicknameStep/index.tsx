@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
-import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
@@ -14,7 +14,7 @@ import { logger } from '~/shared/lib/logger';
 
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSigninFormField('nickname');
-  const { nextStep, resetStore } = useSigninStepNavigation();
+  const resetStore = useSigninResetStore();
   const [nickname, setNickname] = useState<string | undefined>(initialNickname as string);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +66,7 @@ export default function NicknameStep() {
       const trimmedNickname = nicknameSchema.parse(nickname);
       setError(null);
       updateField(trimmedNickname);
-      nextStep();
+      router.push('/signin/password');
     } catch (err) {
       if (err instanceof ZodError) {
         setError(err.errors[0].message);

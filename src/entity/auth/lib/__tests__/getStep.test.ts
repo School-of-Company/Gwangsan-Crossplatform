@@ -3,9 +3,6 @@ import {
   getSignupStepIndex,
   getNextSignupStep,
   getPrevSignupStep,
-  getSigninStepIndex,
-  getNextSigninStep,
-  getPrevSigninStep,
   getResetPasswordStepIndex,
   getNextResetPasswordStep,
   getPrevResetPasswordStep,
@@ -75,35 +72,6 @@ describe('getPrevSignupStep', () => {
 
   it('첫 번째 단계(terms)에서 prev는 terms를 반환한다', () => {
     expect(getPrevSignupStep('terms')).toBe('terms');
-  });
-});
-
-describe('getSigninStepIndex', () => {
-  it.each<[string, number]>([
-    ['nickname', 0],
-    ['password', 1],
-  ])('%s → %i', (step, expected) => {
-    expect(getSigninStepIndex(step as 'nickname' | 'password')).toBe(expected);
-  });
-});
-
-describe('getNextSigninStep', () => {
-  it('nickname → password', () => {
-    expect(getNextSigninStep('nickname')).toBe('password');
-  });
-
-  it('마지막 단계(password)에서 next는 password를 반환한다', () => {
-    expect(getNextSigninStep('password')).toBe('password');
-  });
-});
-
-describe('getPrevSigninStep', () => {
-  it('password → nickname', () => {
-    expect(getPrevSigninStep('password')).toBe('nickname');
-  });
-
-  it('첫 번째 단계(nickname)에서 prev는 nickname을 반환한다', () => {
-    expect(getPrevSigninStep('nickname')).toBe('nickname');
   });
 });
 

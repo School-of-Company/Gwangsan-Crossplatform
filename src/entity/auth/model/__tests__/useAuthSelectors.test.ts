@@ -7,11 +7,10 @@ import {
   useStepNavigation,
   useFormField,
   useSignupCurrentStep,
-  useSigninCurrentStep,
   useResetPasswordCurrentStep,
   useSignupStepNavigation,
-  useSigninStepNavigation,
   useResetPasswordStepNavigation,
+  useSigninResetStore,
   useSignupFormField,
   useSigninFormField,
   useResetPasswordFormField,
@@ -55,7 +54,6 @@ const mockSignupState: SignupState = {
 };
 
 const mockSigninState: SigninState = {
-  currentStep: 'nickname',
   formData: {
     nickname: 'user',
     password: 'pass',
@@ -64,9 +62,6 @@ const mockSigninState: SigninState = {
     osType: 'IOS',
   },
   setField: jest.fn(),
-  nextStep: jest.fn(),
-  prevStep: jest.fn(),
-  goToStep: jest.fn(),
   resetStore: jest.fn(),
 };
 
@@ -161,11 +156,6 @@ describe('convenience hooks', () => {
     expect(result.current).toBe('terms');
   });
 
-  it('useSigninCurrentStep은 signin store의 currentStep을 반환한다', () => {
-    const { result } = renderHook(() => useSigninCurrentStep());
-    expect(result.current).toBe('nickname');
-  });
-
   it('useResetPasswordCurrentStep은 reset store의 currentStep을 반환한다', () => {
     const { result } = renderHook(() => useResetPasswordCurrentStep());
     expect(result.current).toBe('phoneNumber');
@@ -177,10 +167,10 @@ describe('convenience hooks', () => {
     expect(mockSignupState.prevStep).toHaveBeenCalled();
   });
 
-  it('useSigninStepNavigation은 signin store의 네비게이션 함수를 반환한다', () => {
-    const { result } = renderHook(() => useSigninStepNavigation());
-    act(() => result.current.goToStep('password'));
-    expect(mockSigninState.goToStep).toHaveBeenCalledWith('password');
+  it('useSigninResetStore는 signin store의 resetStore를 반환한다', () => {
+    const { result } = renderHook(() => useSigninResetStore());
+    act(() => result.current());
+    expect(mockSigninState.resetStore).toHaveBeenCalled();
   });
 
   it('useResetPasswordStepNavigation은 reset store의 네비게이션 함수를 반환한다', () => {

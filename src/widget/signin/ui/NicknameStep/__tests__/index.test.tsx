@@ -3,7 +3,7 @@ import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
 import { setData } from '~/shared/lib/setData';
-import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { chatSocket } from '~/shared/lib/socket';
 import { logger } from '~/shared/lib/logger';
@@ -11,6 +11,7 @@ import NicknameStep from '../index';
 
 jest.mock('expo-router', () => ({
   router: {
+    push: jest.fn(),
     replace: jest.fn(),
     dismissTo: jest.fn(),
     canDismiss: jest.fn(() => false),
@@ -36,7 +37,7 @@ jest.mock('~/shared/lib/logger', () => ({
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSigninFormField: jest.fn(),
-  useSigninStepNavigation: jest.fn(),
+  useSigninResetStore: jest.fn(),
 }));
 
 jest.mock('@/shared/ui/Input', () => {
@@ -86,13 +87,13 @@ jest.mock('~/entity/auth/ui/SigninForm', () => {
 const mockGetCredentials = jest.mocked(getCredentialsForBiometric);
 const mockSetData = jest.mocked(setData);
 const mockUseSigninFormField = jest.mocked(useSigninFormField);
-const mockUseSigninStepNavigation = jest.mocked(useSigninStepNavigation);
+const mockUseSigninResetStore = jest.mocked(useSigninResetStore);
+const mockRouterPush = jest.mocked(router.push);
 const mockRouterReplace = jest.mocked(router.replace);
 const mockRouterDismissTo = jest.mocked(router.dismissTo);
 const mockCanDismiss = jest.mocked(router.canDismiss);
 const mockDismissAll = jest.mocked(router.dismissAll);
 
-const mockNextStep = jest.fn();
 const mockResetStore = jest.fn();
 const mockUpdateField = jest.fn();
 
@@ -100,12 +101,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 
   mockUseSigninFormField.mockReturnValue({ value: '', updateField: mockUpdateField });
-  mockUseSigninStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    resetStore: mockResetStore,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-  });
+  mockUseSigninResetStore.mockReturnValue(mockResetStore);
   mockGetCredentials.mockResolvedValue(null);
   mockSetData.mockResolvedValue();
   mockCanDismiss.mockReturnValue(false);
@@ -225,7 +221,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signin/password');
   });
 
   it('빈 닉네임으로 다음 버튼 클릭 시 에러 메시지를 표시한다', async () => {
@@ -236,7 +232,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
     await waitFor(() => {
       expect(getByTestId('error-message')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('특수문자 포함 닉네임은 에러 메시지를 표시한다', async () => {
@@ -248,7 +244,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
     await waitFor(() => {
       expect(getByTestId('error-message')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('닉네임 변경 시 기존 에러가 초기화된다', async () => {
@@ -272,7 +268,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
     fireEvent.press(getByTestId('next-button'));
 
     await waitFor(() => expect(getByText('일반 에러 메시지')).toBeTruthy());
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
 
     parseSpy.mockRestore();
   });
@@ -288,7 +284,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
     fireEvent.press(getByTestId('next-button'));
 
     await waitFor(() => expect(getByText('유효하지 않은 별칭입니다')).toBeTruthy());
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
 
     parseSpy.mockRestore();
   });
@@ -300,7 +296,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
     fireEvent(getByTestId('NicknameStep-nickname-input'), 'submitEditing');
 
     expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signin/password');
   });
 
   it('빈 닉네임으로 키보드 제출 시 다음 단계로 이동하지 않는다', () => {
@@ -308,7 +304,7 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
 
     fireEvent(getByTestId('NicknameStep-nickname-input'), 'submitEditing');
 
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
 

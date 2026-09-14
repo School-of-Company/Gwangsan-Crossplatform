@@ -147,7 +147,7 @@ describe('FindNicknamePage', () => {
 
     fireEvent.press(getByText('뒤로'));
 
-    expect(router.dismissTo).toHaveBeenCalledWith('/signin');
+    expect(router.dismissTo).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('완료 화면에서 로그인하러 가기 클릭 시 로그인 화면으로 이동한다', async () => {
@@ -162,7 +162,7 @@ describe('FindNicknamePage', () => {
 
     fireEvent.press(getByText('로그인하러 가기'));
 
-    expect(router.replace).toHaveBeenCalledWith('/signin');
+    expect(router.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('완료 화면에서 뒤로 버튼 클릭 시 dismissTo로 로그인 화면까지 되돌아간다', async () => {
@@ -177,6 +177,6 @@ describe('FindNicknamePage', () => {
 
     fireEvent.press(getByText('뒤로'));
 
-    expect(router.dismissTo).toHaveBeenCalledWith('/signin');
+    expect(router.dismissTo).toHaveBeenCalledWith('/signin/nickname');
   });
 });

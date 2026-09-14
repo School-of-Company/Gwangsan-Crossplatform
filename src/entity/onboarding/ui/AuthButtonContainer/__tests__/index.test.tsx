@@ -23,7 +23,7 @@ describe('AuthButtonContainer', () => {
 
     fireEvent.press(getByText('로그인'));
 
-    expect(mockPush).toHaveBeenCalledWith('/signin');
+    expect(mockPush).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('회원가입 버튼을 누르면 /signup으로 이동한다', () => {
