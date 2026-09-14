@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { TextField } from '@/shared/ui/TextField';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { descriptionSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import { ZodError } from 'zod';
 
 export default function DescriptionStep() {
   const { value: initialDescription, updateField } = useSignupFormField('description');
-  const { nextStep } = useSignupStepNavigation();
   const [description, setDescription] = useState(initialDescription);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export default function DescriptionStep() {
       descriptionSchema.parse(description);
       setError(null);
       updateField(description);
-      nextStep();
+      router.push('/signup/recommender');
     } catch (err) {
       if (err instanceof ZodError) {
         setError(err.errors[0].message);

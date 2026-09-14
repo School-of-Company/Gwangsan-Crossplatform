@@ -90,7 +90,6 @@ describe('Complete — 가입 성공', () => {
 
     expect(mockRouterNavigate).toHaveBeenCalledWith('/signin/nickname');
     expect(useSignupStore.getState().formData.name).toBe('');
-    expect(useSignupStore.getState().currentStep).toBe('terms');
   });
 });
 

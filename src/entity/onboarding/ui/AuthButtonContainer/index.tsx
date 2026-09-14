@@ -6,7 +6,7 @@ const AuthButtonContainer = () => {
   return (
     <View className="flex flex-col gap-3 px-6 pb-3">
       <Button onPress={() => router.push('/signin/nickname')}>로그인</Button>
-      <Button variant="neutral" onPress={() => router.push('/signup')}>
+      <Button variant="neutral" onPress={() => router.push('/signup/terms')}>
         회원가입
       </Button>
     </View>

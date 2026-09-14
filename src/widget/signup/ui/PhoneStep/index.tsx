@@ -2,8 +2,9 @@ import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { Platform, View } from 'react-native';
+import { router } from 'expo-router';
 import { useSignupPhoneVerification } from '~/entity/auth/model/useSignupPhoneVerification';
 
 export default function PhoneStep() {
@@ -11,7 +12,6 @@ export default function PhoneStep() {
     useSignupFormField('phoneNumber');
   const { value: initialVerificationCode, updateField: updateVerificationCode } =
     useSignupFormField('verificationCode');
-  const { nextStep } = useSignupStepNavigation();
 
   const {
     phoneNumber,
@@ -37,7 +37,7 @@ export default function PhoneStep() {
   const handleNext = () => {
     updatePhoneNumber(phoneNumber);
     updateVerificationCode(verificationCode);
-    nextStep();
+    router.push('/signup/dongName');
   };
 
   return (

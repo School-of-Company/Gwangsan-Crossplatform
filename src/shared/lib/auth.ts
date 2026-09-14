@@ -11,7 +11,7 @@ type AuthConfig = {
 export const authConfig: AuthConfig = {
   signInPage: '/signin/nickname',
   protectedPages: [],
-  publicPages: ['/signin/nickname', '/signin/password', '/signup', '/onboarding'],
+  publicPages: ['/signin/nickname', '/signin/password', '/signup/terms', '/onboarding'],
 } as const;
 
 export const getAccessToken = async (): Promise<string | null> => {

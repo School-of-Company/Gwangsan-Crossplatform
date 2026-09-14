@@ -1,16 +1,3 @@
-export type SignupStep =
-  | 'terms'
-  | 'name'
-  | 'nickname'
-  | 'password'
-  | 'phoneNumber'
-  | 'dongName'
-  | 'placeName'
-  | 'specialties'
-  | 'description'
-  | 'recommender'
-  | 'complete';
-
 type ResetPasswordStep = 'phoneNumber' | 'newPassword';
 
 export type SignupFormData = {
@@ -50,12 +37,8 @@ export type AuthResponse = {
 };
 
 export interface SignupState {
-  currentStep: SignupStep;
   formData: SignupFormData;
   setField: <K extends keyof SignupFormData>(field: K, value: SignupFormData[K]) => void;
-  nextStep: () => void;
-  prevStep: () => void;
-  goToStep: (step: SignupStep) => void;
   resetStore: () => void;
 }
 

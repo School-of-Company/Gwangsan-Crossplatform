@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import SpecialtiesStep from '../index';
+
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('@/shared/assets/svg/CheckIcon', () => {
@@ -42,20 +46,13 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockUpdateField = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseSignupFormField.mockReturnValue({ value: [], updateField: mockUpdateField });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
-  });
 });
 
 describe('SpecialtiesStep — 렌더링', () => {
@@ -100,7 +97,7 @@ describe('SpecialtiesStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getAllByText('특기를 선택해주세요')).toHaveLength(2);
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('특기를 선택하면 기존 에러가 초기화된다', async () => {
@@ -126,6 +123,6 @@ describe('SpecialtiesStep — 다음 단계로 이동', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith(['빨래하기']);
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/description');
   });
 });

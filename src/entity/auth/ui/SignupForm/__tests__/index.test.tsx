@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, Platform } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
-import { useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
 import SignupForm from '../index';
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -9,20 +9,16 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: any) => children,
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
 }));
-jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
-  useSignupStepNavigation: jest.fn(),
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn() },
 }));
 jest.mock('@/shared/assets/svg/BackArrow', () => {
   const React = require('react');
   return { __esModule: true, default: () => React.createElement('View', null) };
 });
 
-const mockPrevStep = jest.fn();
-const mockUseSignupStepNavigation = useSignupStepNavigation as jest.Mock;
-
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseSignupStepNavigation.mockReturnValue({ prevStep: mockPrevStep });
 });
 
 describe('SignupForm', () => {
@@ -82,7 +78,7 @@ describe('SignupForm', () => {
     expect(mockOnBack).toHaveBeenCalled();
   });
 
-  it('onBack prop이 없으면 뒤로 버튼 클릭 시 prevStep이 호출된다', () => {
+  it('onBack prop이 없으면 뒤로 버튼 클릭 시 router.back이 호출된다', () => {
     const { getByText } = render(
       <SignupForm title="T" description="D" onNext={jest.fn()}>
         <Text>child</Text>
@@ -90,7 +86,7 @@ describe('SignupForm', () => {
     );
 
     fireEvent.press(getByText('뒤로'));
-    expect(mockPrevStep).toHaveBeenCalled();
+    expect(router.back).toHaveBeenCalled();
   });
 
   it('Android 플랫폼에서도 정상 렌더링된다', () => {

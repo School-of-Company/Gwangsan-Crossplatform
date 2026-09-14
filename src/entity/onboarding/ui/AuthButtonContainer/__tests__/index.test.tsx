@@ -26,11 +26,11 @@ describe('AuthButtonContainer', () => {
     expect(mockPush).toHaveBeenCalledWith('/signin/nickname');
   });
 
-  it('회원가입 버튼을 누르면 /signup으로 이동한다', () => {
+  it('회원가입 버튼을 누르면 /signup/terms로 이동한다', () => {
     const { getByText } = render(<AuthButtonContainer />);
 
     fireEvent.press(getByText('회원가입'));
 
-    expect(mockPush).toHaveBeenCalledWith('/signup');
+    expect(mockPush).toHaveBeenCalledWith('/signup/terms');
   });
 });
