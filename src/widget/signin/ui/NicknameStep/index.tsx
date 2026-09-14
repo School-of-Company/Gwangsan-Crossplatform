@@ -54,7 +54,11 @@ export default function NicknameStep() {
 
   const handleBack = () => {
     resetStore();
-    router.replace('/onboarding');
+    // router.replace는 네이티브 스택의 pop 트랜지션을 타지 않아 뒤로가기인데도
+    // 앞으로 가는 것과 같은 방향으로 슬라이드됐다. dismissTo는 히스토리에서
+    // onboarding을 찾아 pop 애니메이션으로 되돌아가고, 못 찾을 때만(onboarding을
+    // 거치지 않고 들어온 경우) replace로 안전하게 대체한다.
+    router.dismissTo('/onboarding');
   };
 
   const validateAndNext = () => {

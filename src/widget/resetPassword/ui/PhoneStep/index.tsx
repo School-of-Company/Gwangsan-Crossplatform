@@ -19,7 +19,9 @@ export default function PhoneStep() {
 
   const handleBack = () => {
     resetStore();
-    router.replace('/signin');
+    // router.replace는 네이티브 스택의 pop 트랜지션을 타지 않아 방향이 뒤집혀 보인다.
+    // dismissTo로 히스토리의 signin까지 pop 애니메이션으로 되돌아간다.
+    router.dismissTo('/signin');
   };
 
   const {

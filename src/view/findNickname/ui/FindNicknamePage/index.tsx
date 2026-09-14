@@ -54,7 +54,7 @@ export default function FindNicknamePage() {
           <View className="flex-row items-center pt-4">
             <TouchableOpacity
               className="flex-row items-center"
-              onPress={() => router.replace('/signin')}>
+              onPress={() => router.dismissTo('/signin')}>
               <BackArrow />
               <Text className="ml-2 text-gray-500">뒤로</Text>
             </TouchableOpacity>
@@ -88,7 +88,7 @@ export default function FindNicknamePage() {
           <View className="flex-row items-center pt-4">
             <TouchableOpacity
               className="flex-row items-center"
-              onPress={() => router.replace('/signin')}>
+              onPress={() => router.dismissTo('/signin')}>
               <BackArrow />
               <Text className="ml-2 text-gray-500">뒤로</Text>
             </TouchableOpacity>

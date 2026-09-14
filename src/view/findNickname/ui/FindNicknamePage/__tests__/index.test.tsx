@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 import FindNicknamePage from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { replace: jest.fn(), push: jest.fn() },
+  router: { replace: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -142,12 +142,12 @@ describe('FindNicknamePage', () => {
     );
   });
 
-  it('뒤로 버튼 클릭 시 로그인 화면으로 이동한다', () => {
+  it('뒤로 버튼 클릭 시 dismissTo로 로그인 화면까지 되돌아간다', () => {
     const { getByText } = render(<FindNicknamePage />);
 
     fireEvent.press(getByText('뒤로'));
 
-    expect(router.replace).toHaveBeenCalledWith('/signin');
+    expect(router.dismissTo).toHaveBeenCalledWith('/signin');
   });
 
   it('완료 화면에서 로그인하러 가기 클릭 시 로그인 화면으로 이동한다', async () => {
@@ -165,7 +165,7 @@ describe('FindNicknamePage', () => {
     expect(router.replace).toHaveBeenCalledWith('/signin');
   });
 
-  it('완료 화면에서 뒤로 버튼 클릭 시 로그인 화면으로 이동한다', async () => {
+  it('완료 화면에서 뒤로 버튼 클릭 시 dismissTo로 로그인 화면까지 되돌아간다', async () => {
     mockUseFindNicknamePhoneVerification.mockReturnValue(
       makeHookReturn({ isVerificationComplete: true })
     );
@@ -177,6 +177,6 @@ describe('FindNicknamePage', () => {
 
     fireEvent.press(getByText('뒤로'));
 
-    expect(router.replace).toHaveBeenCalledWith('/signin');
+    expect(router.dismissTo).toHaveBeenCalledWith('/signin');
   });
 });

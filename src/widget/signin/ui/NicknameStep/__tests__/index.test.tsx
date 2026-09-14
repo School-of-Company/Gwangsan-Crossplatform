@@ -10,7 +10,12 @@ import { logger } from '~/shared/lib/logger';
 import NicknameStep from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { replace: jest.fn(), canDismiss: jest.fn(() => false), dismissAll: jest.fn() },
+  router: {
+    replace: jest.fn(),
+    dismissTo: jest.fn(),
+    canDismiss: jest.fn(() => false),
+    dismissAll: jest.fn(),
+  },
 }));
 
 jest.mock('~/entity/auth/api/signin', () => ({
@@ -83,6 +88,7 @@ const mockSetData = jest.mocked(setData);
 const mockUseSigninFormField = jest.mocked(useSigninFormField);
 const mockUseSigninStepNavigation = jest.mocked(useSigninStepNavigation);
 const mockRouterReplace = jest.mocked(router.replace);
+const mockRouterDismissTo = jest.mocked(router.dismissTo);
 const mockCanDismiss = jest.mocked(router.canDismiss);
 const mockDismissAll = jest.mocked(router.dismissAll);
 
@@ -307,12 +313,12 @@ describe('NicknameStep — 닉네임 입력 및 유효성 검사', () => {
 });
 
 describe('NicknameStep — 뒤로 버튼', () => {
-  it('뒤로 버튼 클릭 시 resetStore를 호출하고 /onboarding으로 이동한다', async () => {
+  it('뒤로 버튼 클릭 시 resetStore를 호출하고 dismissTo로 /onboarding까지 되돌아간다(뒤로가기 pop 애니메이션 유지)', async () => {
     const { getByTestId } = render(<NicknameStep />);
 
     fireEvent.press(getByTestId('back-button'));
 
     expect(mockResetStore).toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/onboarding');
+    expect(mockRouterDismissTo).toHaveBeenCalledWith('/onboarding');
   });
 });

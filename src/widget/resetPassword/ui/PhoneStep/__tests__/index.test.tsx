@@ -9,7 +9,7 @@ import { usePasswordResetPhoneVerification } from '~/entity/auth/model/usePasswo
 import PhoneStep from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { replace: jest.fn() },
+  router: { dismissTo: jest.fn() },
 }));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
@@ -94,7 +94,7 @@ jest.mock('~/entity/auth/ui/ResetPasswordForm', () => {
 const mockUseResetPasswordFormField = useResetPasswordFormField as jest.Mock;
 const mockUseResetPasswordStepNavigation = useResetPasswordStepNavigation as jest.Mock;
 const mockUsePasswordResetPhoneVerification = usePasswordResetPhoneVerification as jest.Mock;
-const mockRouterReplace = router.replace as jest.Mock;
+const mockRouterDismissTo = router.dismissTo as jest.Mock;
 
 const mockUpdatePhoneNumber = jest.fn();
 const mockUpdateVerificationCode = jest.fn();
@@ -206,13 +206,13 @@ describe('PhoneStep — 다음/뒤로 동작', () => {
     expect(mockNextStep).toHaveBeenCalled();
   });
 
-  it('뒤로 버튼 클릭 시 resetStore를 호출하고 /signin으로 이동한다', () => {
+  it('뒤로 버튼 클릭 시 resetStore를 호출하고 dismissTo로 /signin까지 되돌아간다', () => {
     const { getByTestId } = render(<PhoneStep />);
 
     fireEvent.press(getByTestId('back-button'));
 
     expect(mockResetStore).toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/signin');
+    expect(mockRouterDismissTo).toHaveBeenCalledWith('/signin');
   });
 });
 
