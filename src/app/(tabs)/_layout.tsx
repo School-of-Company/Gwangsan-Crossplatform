@@ -3,7 +3,9 @@ import { Animated, Easing } from 'react-native';
 import { AppFooter } from '~/widget/write/ui/AppFooter';
 
 const HORIZONTAL_SHIFT = 32;
-const TRANSITION_DURATION = 100;
+// 100ms는 감속 구간이 보일 틈도 없이 끝나버려 끊기듯 뚝 멈추는 느낌이 났다.
+// 감속이 눈에 보일 정도로 늘려 부드럽게 멈추도록 한다.
+const TRANSITION_DURATION = 220;
 
 // 페이드 없이 콘텐츠(sceneStyle)만 옆으로 살짝 슬라이드한다. 탭 바(AppFooter)는
 // tabBar prop으로 별도 렌더링되는 고정 UI라 이 애니메이션과 무관하게 항상 그 자리에
