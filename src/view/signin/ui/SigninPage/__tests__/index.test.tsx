@@ -3,7 +3,6 @@ import { render } from '@testing-library/react-native';
 import { useNavigation } from 'expo-router';
 import {
   useSigninCurrentStep,
-  useSigninDirection,
   useSigninStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
 import SigninPage from '../index';
@@ -14,7 +13,6 @@ jest.mock('expo-router', () => ({
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSigninCurrentStep: jest.fn(),
-  useSigninDirection: jest.fn(),
   useSigninStepNavigation: jest.fn(),
 }));
 
@@ -30,7 +28,6 @@ jest.mock('@/widget/signin', () => ({
 }));
 
 const mockUseSigninCurrentStep = useSigninCurrentStep as jest.Mock;
-const mockUseSigninDirection = useSigninDirection as jest.Mock;
 const mockUseSigninStepNavigation = useSigninStepNavigation as jest.Mock;
 const mockUseNavigation = useNavigation as jest.Mock;
 
@@ -40,7 +37,6 @@ const mockAddListener = jest.fn((_event: string, _handler: (...args: any[]) => v
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseSigninDirection.mockReturnValue(null);
   mockUseSigninStepNavigation.mockReturnValue({ prevStep: mockPrevStep, goToStep: mockGoToStep });
   mockUseNavigation.mockReturnValue({ addListener: mockAddListener });
 });

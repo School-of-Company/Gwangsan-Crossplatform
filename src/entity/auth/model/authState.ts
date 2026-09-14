@@ -13,8 +13,6 @@ export type SignupStep =
 
 type SigninStep = 'nickname' | 'password';
 
-export type SigninDirection = 'left' | 'right' | null;
-
 type ResetPasswordStep = 'phoneNumber' | 'newPassword';
 
 export type SignupFormData = {
@@ -65,7 +63,6 @@ export interface SignupState {
 
 export interface SigninState {
   currentStep: SigninStep;
-  direction: SigninDirection;
   formData: SigninFormData;
   setField: <K extends keyof SigninFormData>(field: K, value: SigninFormData[K]) => void;
   nextStep: () => void;

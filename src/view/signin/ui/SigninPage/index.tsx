@@ -2,16 +2,10 @@ import { memo, useEffect } from 'react';
 import { useNavigation } from 'expo-router';
 import {
   useSigninCurrentStep,
-  useSigninDirection,
   useSigninStepNavigation,
 } from '~/entity/auth/model/useAuthSelectors';
 import { NicknameStep, PasswordStep } from '@/widget/signin';
-import { SlideFadeTransition } from '@/shared/ui/SlideFadeTransition';
 import type { SigninState } from '~/entity/auth/model/authState';
-
-// 푸터 탭 전환(src/app/(tabs)/_layout.tsx의 tabSlideInterpolator)과 동일한 값
-const FOOTER_TRANSITION_OFFSET = 32;
-const FOOTER_TRANSITION_DURATION = 100;
 
 const STEP_COMPONENTS: Record<SigninState['currentStep'], React.ComponentType> = {
   nickname: NicknameStep,
@@ -20,7 +14,6 @@ const STEP_COMPONENTS: Record<SigninState['currentStep'], React.ComponentType> =
 
 function SigninPageView(): React.ReactNode {
   const currentStep = useSigninCurrentStep();
-  const direction = useSigninDirection();
   const { prevStep, goToStep } = useSigninStepNavigation();
   const navigation = useNavigation();
   const StepComponent = STEP_COMPONENTS[currentStep];
@@ -43,15 +36,7 @@ function SigninPageView(): React.ReactNode {
     return unsubscribe;
   }, [navigation, currentStep, prevStep]);
 
-  return (
-    <SlideFadeTransition
-      key={currentStep}
-      direction={direction}
-      offset={FOOTER_TRANSITION_OFFSET}
-      duration={FOOTER_TRANSITION_DURATION}>
-      <StepComponent />
-    </SlideFadeTransition>
-  );
+  return <StepComponent key={currentStep} />;
 }
 
 export default memo(SigninPageView);
