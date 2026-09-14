@@ -15,7 +15,7 @@ describe('SlideFadeTransition', () => {
     expect(UNSAFE_queryAllByType('Animated.View' as never)).toHaveLength(0);
   });
 
-  it('direction이 right이면 애니메이션 래퍼로 children을 감싼다', () => {
+  it('direction이 right이면 단일 슬라이드 래퍼로 children을 감싼다(페이드 없음)', () => {
     const { getByText, UNSAFE_queryAllByType } = render(
       <SlideFadeTransition direction="right">
         <Text>content</Text>
@@ -23,10 +23,10 @@ describe('SlideFadeTransition', () => {
     );
 
     expect(getByText('content')).toBeTruthy();
-    expect(UNSAFE_queryAllByType('Animated.View' as never)).toHaveLength(2);
+    expect(UNSAFE_queryAllByType('Animated.View' as never)).toHaveLength(1);
   });
 
-  it('direction이 left이면 애니메이션 래퍼로 children을 감싼다', () => {
+  it('direction이 left이면 단일 슬라이드 래퍼로 children을 감싼다(페이드 없음)', () => {
     const { getByText, UNSAFE_queryAllByType } = render(
       <SlideFadeTransition direction="left">
         <Text>content</Text>
@@ -34,7 +34,7 @@ describe('SlideFadeTransition', () => {
     );
 
     expect(getByText('content')).toBeTruthy();
-    expect(UNSAFE_queryAllByType('Animated.View' as never)).toHaveLength(2);
+    expect(UNSAFE_queryAllByType('Animated.View' as never)).toHaveLength(1);
   });
 
   it('offset이 지정되면 푸터 탭 전환과 동일한 단일 래퍼로 children을 감싼다', () => {

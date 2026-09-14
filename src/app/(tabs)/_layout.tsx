@@ -8,10 +8,6 @@ const TRANSITION_DURATION = 100;
 function tabSlideInterpolator({ current }: { current: { progress: Animated.Value } }) {
   return {
     sceneStyle: {
-      opacity: current.progress.interpolate({
-        inputRange: [-1, 0, 1],
-        outputRange: [0, 1, 0],
-      }),
       transform: [
         {
           translateX: current.progress.interpolate({

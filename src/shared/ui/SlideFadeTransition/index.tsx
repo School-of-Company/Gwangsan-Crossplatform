@@ -1,12 +1,5 @@
 import { ReactNode } from 'react';
-import Animated, {
-  Easing,
-  FadeIn,
-  FadeInLeft,
-  FadeInRight,
-  SlideInLeft,
-  SlideInRight,
-} from 'react-native-reanimated';
+import Animated, { Easing, SlideInLeft, SlideInRight } from 'react-native-reanimated';
 
 export type TabTransitionDirection = 'left' | 'right' | null;
 
@@ -18,11 +11,13 @@ const FOOTER_EASING = Easing.out(Easing.cubic);
 interface SlideFadeTransitionProps {
   direction: TabTransitionDirection;
   duration?: number;
-  /** 지정 시, 화면 폭 전체가 아니라 이 픽셀만큼만 이동 + 페이드하는 푸터 탭 전환과 동일한 애니메이션을 사용 */
+  /** 지정 시, 화면 폭 전체가 아니라 이 픽셀만큼만 이동하는 푸터 탭 전환과 동일한 애니메이션을 사용 */
   offset?: number;
   children: ReactNode;
 }
 
+// 페이드 없이 옆에서 슬라이드해 들어오는 애니메이션만 적용한다(과거에는 opacity 페이드를 함께
+// 썼으나 제거했다).
 export function SlideFadeTransition({
   direction,
   duration = FAST_DURATION,
@@ -33,10 +28,11 @@ export function SlideFadeTransition({
     return <>{children}</>;
   }
 
+  const SlideIn = direction === 'right' ? SlideInRight : SlideInLeft;
+
   if (offset != null) {
-    const FadeSlideIn = direction === 'right' ? FadeInRight : FadeInLeft;
     const translateX = direction === 'right' ? offset : -offset;
-    const entering = FadeSlideIn.duration(duration)
+    const entering = SlideIn.duration(duration)
       .easing(FOOTER_EASING)
       .withInitialValues({ transform: [{ translateX }] });
 
@@ -47,13 +43,9 @@ export function SlideFadeTransition({
     );
   }
 
-  const SlideIn = direction === 'right' ? SlideInRight : SlideInLeft;
-
   return (
-    <Animated.View key={direction} entering={FadeIn.duration(duration)} style={{ flex: 1 }}>
-      <Animated.View entering={SlideIn.duration(duration)} style={{ flex: 1 }}>
-        {children}
-      </Animated.View>
+    <Animated.View key={direction} entering={SlideIn.duration(duration)} style={{ flex: 1 }}>
+      {children}
     </Animated.View>
   );
 }
