@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { Input } from '@/shared/ui/Input';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { nicknameSchema } from '~/entity/auth/model/authSchema';
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import { ZodError } from 'zod';
 
 export default function RecommenderStep() {
   const { value: initialRecommender, updateField } = useSignupFormField('recommender');
-  const { nextStep } = useSignupStepNavigation();
   const [recommender, setRecommender] = useState(initialRecommender);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export default function RecommenderStep() {
       nicknameSchema.parse(recommender);
       setError(null);
       updateField(recommender);
-      nextStep();
+      router.push('/signup/complete');
     } catch (err) {
       if (err instanceof ZodError) {
         setError(err.errors[0].message);

@@ -2,16 +2,16 @@ import { useState, useRef } from 'react';
 import { PasswordInput } from '@/shared/ui/PasswordInput';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
 import { View, TextInput } from 'react-native';
+import { router } from 'expo-router';
 import { ZodError } from 'zod';
 
 export default function PasswordStep() {
   const { value: initialPassword, updateField: updatePassword } = useSignupFormField('password');
   const { value: initialPasswordConfirm, updateField: updatePasswordConfirm } =
     useSignupFormField('passwordConfirm');
-  const { nextStep } = useSignupStepNavigation();
 
   const [password, setPassword] = useState(initialPassword);
   const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
@@ -46,7 +46,7 @@ export default function PasswordStep() {
     if (!hasError) {
       updatePassword(password);
       updatePasswordConfirm(passwordConfirm);
-      nextStep();
+      router.push('/signup/phoneNumber');
     }
   };
 

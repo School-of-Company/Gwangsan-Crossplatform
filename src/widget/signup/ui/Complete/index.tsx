@@ -51,7 +51,7 @@ export default function Complete() {
   }, [handleSignup]);
 
   const handleNext = () => {
-    router.navigate('/signin');
+    router.navigate('/signin/nickname');
     resetStore();
   };
 

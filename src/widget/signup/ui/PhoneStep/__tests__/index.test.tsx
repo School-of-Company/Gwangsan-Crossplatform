@@ -1,9 +1,10 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
+import { router } from 'expo-router';
 import { sendSms } from '~/entity/auth/api/sendSms';
 import { verifySms } from '~/entity/auth/api/verifySms';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import PhoneStep from '../index';
 
 jest.mock('react-native-toast-message', () => ({
@@ -11,12 +12,15 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
+
 jest.mock('~/entity/auth/api/sendSms', () => ({ sendSms: jest.fn() }));
 jest.mock('~/entity/auth/api/verifySms', () => ({ verifySms: jest.fn() }));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -48,11 +52,10 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 const mockSendSms = jest.mocked(sendSms);
 const mockVerifySms = jest.mocked(verifySms);
 
-const mockNextStep = jest.fn();
 const mockUpdatePhoneNumber = jest.fn();
 const mockUpdateVerificationCode = jest.fn();
 
@@ -61,12 +64,6 @@ beforeEach(() => {
   mockUseSignupFormField.mockImplementation((field: string) => {
     if (field === 'phoneNumber') return { value: '', updateField: mockUpdatePhoneNumber };
     return { value: '', updateField: mockUpdateVerificationCode };
-  });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
   });
 });
 
@@ -144,6 +141,6 @@ describe('PhoneStep — 인증번호 확인 및 다음 단계', () => {
 
     expect(mockUpdatePhoneNumber).toHaveBeenCalledWith('01012345678');
     expect(mockUpdateVerificationCode).toHaveBeenCalledWith('123456');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/dongName');
   });
 });

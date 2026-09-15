@@ -21,6 +21,11 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
 
   const alignmentClass = alignment === 'right' ? 'self-end' : 'self-start ml-10';
 
+  // 예약 버튼은 Mode 기준 판매자(isSeller)가 아니라 게시글 작성자에게만 떠야 한다
+  // (School-of-Company/Gwangsan-Server#357, #397). 서버가 isAuthor를 내려주기 전까지는
+  // 기존 동작(isSeller)을 그대로 fallback으로 사용한다.
+  const canReserve = product.isAuthor ?? product.isSeller;
+
   return (
     <View className={`mb-4 ${alignmentClass}`}>
       <View className="overflow-hidden rounded-xl bg-gray-50">
@@ -45,7 +50,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
               ? `${otherPartyNickname}님이 거래하기를 원합니다`
               : `${otherPartyNickname}님에게 거래를 요청했어요`}
           </Text>
-          {product.isSeller && !product.isCompleted && !product.isReserved && (
+          {canReserve && !product.isCompleted && !product.isReserved && (
             <TouchableOpacity
               onPress={onOpenReservationModal}
               className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5">

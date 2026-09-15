@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { Button } from '@/shared/ui/Button';
 import { ReactNode, memo } from 'react';
-import { useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
 import BackArrow from '@/shared/assets/svg/BackArrow';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,7 +25,6 @@ function SignupForm({
   nextButtonText = '다음',
   isNextDisabled = false,
 }: SignupFormProps) {
-  const { prevStep } = useSignupStepNavigation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -37,7 +36,7 @@ function SignupForm({
         showsVerticalScrollIndicator={false}>
         <View className="gap-8 px-6">
           <View className="flex-row items-center pt-4">
-            <TouchableOpacity className="flex-row items-center" onPress={onBack || prevStep}>
+            <TouchableOpacity className="flex-row items-center" onPress={onBack || router.back}>
               <BackArrow />
               <Text className="ml-2 text-gray-500">뒤로</Text>
             </TouchableOpacity>

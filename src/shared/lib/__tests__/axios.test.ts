@@ -175,7 +175,7 @@ describe('response interceptor', () => {
     );
     expect(mockClearAuthTokens).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
-    expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
+    expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('토큰 갱신 성공 시 원래 요청을 새 토큰으로 재시도한다', async () => {
@@ -221,7 +221,7 @@ describe('response interceptor', () => {
     expect(mockSentry.captureException).toHaveBeenCalled();
     expect(mockClearAuthTokens).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
-    expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
+    expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('토큰 갱신 실패 원인이 Error가 아니면 String으로 변환해 Sentry에 기록한다', async () => {
@@ -260,7 +260,7 @@ describe('response interceptor', () => {
     await expect(instance.get('/secured-no-qc')).rejects.toThrow();
 
     expect(mockClearAuthTokens).toHaveBeenCalled();
-    expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
+    expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('router.replace 실패 시 console.warn을 호출하고 에러를 억제한다', async () => {
@@ -369,7 +369,7 @@ describe('response interceptor', () => {
     );
     expect(mockClearAuthTokens).not.toHaveBeenCalled();
     expect(queryClient.clear).not.toHaveBeenCalled();
-    expect(mockRouter.replace).not.toHaveBeenCalledWith('/signin');
+    expect(mockRouter.replace).not.toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('토큰 갱신 후 재시도 요청이 다시 401이면 로그인으로 이동한다', async () => {
@@ -394,7 +394,7 @@ describe('response interceptor', () => {
 
     expect(mockClearAuthTokens).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
-    expect(mockRouter.replace).toHaveBeenCalledWith('/signin');
+    expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('동시 401 발생 시 토큰 갱신 실패하면 두 번째 요청도 reject된다', async () => {

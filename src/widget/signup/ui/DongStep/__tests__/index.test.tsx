@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import DongStep from '../index';
+
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -37,20 +41,13 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockUpdateField = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseSignupFormField.mockReturnValue({ value: '', updateField: mockUpdateField });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
-  });
 });
 
 describe('DongStep — 렌더링', () => {
@@ -92,7 +89,7 @@ describe('DongStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getByText('동네를 입력해주세요')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('검색어 변경 시 기존 에러가 초기화된다', async () => {
@@ -169,7 +166,7 @@ describe('DongStep — 키보드 제출 및 포커스', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith('평동');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/placeName');
   });
 
   it('입력창에 포커스하면 검색 결과 목록이 다시 표시된다', () => {
@@ -197,6 +194,6 @@ describe('DongStep — 다음 단계로 이동', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith('평동');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/placeName');
   });
 });
