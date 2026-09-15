@@ -6,13 +6,10 @@ import {
   useCurrentStep,
   useStepNavigation,
   useFormField,
-  useSignupCurrentStep,
-  useSigninCurrentStep,
-  useSigninDirection,
   useResetPasswordCurrentStep,
-  useSignupStepNavigation,
-  useSigninStepNavigation,
   useResetPasswordStepNavigation,
+  useSigninResetStore,
+  useSignupResetStore,
   useSignupFormField,
   useSigninFormField,
   useResetPasswordFormField,
@@ -34,7 +31,6 @@ const mockUseSigninStore = useSigninStore as unknown as jest.Mock;
 const mockUseResetPasswordStore = useResetPasswordStore as unknown as jest.Mock;
 
 const mockSignupState: SignupState = {
-  currentStep: 'terms',
   formData: {
     name: '홍길동',
     nickname: 'gildong',
@@ -49,15 +45,10 @@ const mockSignupState: SignupState = {
     recommender: '',
   },
   setField: jest.fn(),
-  nextStep: jest.fn(),
-  prevStep: jest.fn(),
-  goToStep: jest.fn(),
   resetStore: jest.fn(),
 };
 
 const mockSigninState: SigninState = {
-  currentStep: 'nickname',
-  direction: null,
   formData: {
     nickname: 'user',
     password: 'pass',
@@ -66,9 +57,6 @@ const mockSigninState: SigninState = {
     osType: 'IOS',
   },
   setField: jest.fn(),
-  nextStep: jest.fn(),
-  prevStep: jest.fn(),
-  goToStep: jest.fn(),
   resetStore: jest.fn(),
 };
 
@@ -103,16 +91,16 @@ beforeEach(() => {
 describe('useCurrentStep', () => {
   it('스토어에서 currentStep을 반환한다', () => {
     const { result } = renderHook(() =>
-      useCurrentStep<SignupState>((sel) => mockUseSignupStore(sel))
+      useCurrentStep<ResetPasswordState>((sel) => mockUseResetPasswordStore(sel))
     );
-    expect(result.current).toBe('terms');
+    expect(result.current).toBe('phoneNumber');
   });
 });
 
 describe('useStepNavigation', () => {
   it('nextStep, prevStep, goToStep, resetStore를 반환한다', () => {
     const { result } = renderHook(() =>
-      useStepNavigation<SignupState>((sel) => mockUseSignupStore(sel))
+      useStepNavigation<ResetPasswordState>((sel) => mockUseResetPasswordStore(sel))
     );
 
     expect(typeof result.current.nextStep).toBe('function');
@@ -123,14 +111,14 @@ describe('useStepNavigation', () => {
 
   it('nextStep을 호출하면 스토어의 nextStep이 실행된다', () => {
     const { result } = renderHook(() =>
-      useStepNavigation<SignupState>((sel) => mockUseSignupStore(sel))
+      useStepNavigation<ResetPasswordState>((sel) => mockUseResetPasswordStore(sel))
     );
 
     act(() => {
       result.current.nextStep();
     });
 
-    expect(mockSignupState.nextStep).toHaveBeenCalled();
+    expect(mockResetState.nextStep).toHaveBeenCalled();
   });
 });
 
@@ -158,42 +146,27 @@ describe('useFormField', () => {
 });
 
 describe('convenience hooks', () => {
-  it('useSignupCurrentStep은 signup store의 currentStep을 반환한다', () => {
-    const { result } = renderHook(() => useSignupCurrentStep());
-    expect(result.current).toBe('terms');
-  });
-
-  it('useSigninCurrentStep은 signin store의 currentStep을 반환한다', () => {
-    const { result } = renderHook(() => useSigninCurrentStep());
-    expect(result.current).toBe('nickname');
-  });
-
-  it('useSigninDirection은 signin store의 direction을 반환한다', () => {
-    const { result } = renderHook(() => useSigninDirection());
-    expect(result.current).toBe(null);
-  });
-
   it('useResetPasswordCurrentStep은 reset store의 currentStep을 반환한다', () => {
     const { result } = renderHook(() => useResetPasswordCurrentStep());
     expect(result.current).toBe('phoneNumber');
-  });
-
-  it('useSignupStepNavigation은 signup store의 네비게이션 함수를 반환한다', () => {
-    const { result } = renderHook(() => useSignupStepNavigation());
-    act(() => result.current.prevStep());
-    expect(mockSignupState.prevStep).toHaveBeenCalled();
-  });
-
-  it('useSigninStepNavigation은 signin store의 네비게이션 함수를 반환한다', () => {
-    const { result } = renderHook(() => useSigninStepNavigation());
-    act(() => result.current.goToStep('password'));
-    expect(mockSigninState.goToStep).toHaveBeenCalledWith('password');
   });
 
   it('useResetPasswordStepNavigation은 reset store의 네비게이션 함수를 반환한다', () => {
     const { result } = renderHook(() => useResetPasswordStepNavigation());
     act(() => result.current.resetStore());
     expect(mockResetState.resetStore).toHaveBeenCalled();
+  });
+
+  it('useSigninResetStore는 signin store의 resetStore를 반환한다', () => {
+    const { result } = renderHook(() => useSigninResetStore());
+    act(() => result.current());
+    expect(mockSigninState.resetStore).toHaveBeenCalled();
+  });
+
+  it('useSignupResetStore는 signup store의 resetStore를 반환한다', () => {
+    const { result } = renderHook(() => useSignupResetStore());
+    act(() => result.current());
+    expect(mockSignupState.resetStore).toHaveBeenCalled();
   });
 
   it('useSignupFormField는 signup store의 필드 값을 반환한다', () => {

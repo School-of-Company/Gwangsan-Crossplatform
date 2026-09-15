@@ -243,7 +243,7 @@ describe('NewPasswordStep — 비밀번호 재설정 제출', () => {
     fireEvent.press(getByText('확인'));
 
     expect(mockResetStore).toHaveBeenCalled();
-    expect(mockRouterReplace).toHaveBeenCalledWith('/signin');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('실패 시 실패 AlertModal을 표시한다', async () => {

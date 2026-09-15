@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import RecommenderStep from '../index';
+
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -37,20 +41,13 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockUpdateField = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseSignupFormField.mockReturnValue({ value: '', updateField: mockUpdateField });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
-  });
 });
 
 describe('RecommenderStep — 렌더링', () => {
@@ -72,7 +69,7 @@ describe('RecommenderStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getByText('별칭을 입력해주세요')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('허용되지 않는 특수문자가 포함되면 에러 메시지를 표시한다', async () => {
@@ -84,7 +81,7 @@ describe('RecommenderStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getByText('한글, 영문, 숫자만 입력 가능합니다')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('입력 변경 시 기존 에러가 초기화된다', async () => {
@@ -109,7 +106,7 @@ describe('RecommenderStep — 다음 단계로 이동', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/complete');
   });
 
   it('키보드 제출(onSubmitEditing) 시 유효한 값이면 다음 단계로 이동한다', () => {
@@ -120,7 +117,7 @@ describe('RecommenderStep — 다음 단계로 이동', () => {
     fireEvent(input, 'onSubmitEditing');
 
     expect(mockUpdateField).toHaveBeenCalledWith('홍길동');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/complete');
   });
 
   it('키보드 제출(onSubmitEditing) 시 빈 값이면 다음 단계로 이동하지 않는다', () => {
@@ -129,7 +126,7 @@ describe('RecommenderStep — 다음 단계로 이동', () => {
     const input = getByPlaceholderText('추천인 별칭을 입력해주세요');
     fireEvent(input, 'onSubmitEditing');
 
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
 
@@ -146,7 +143,7 @@ describe('RecommenderStep — 예외 처리', () => {
     await waitFor(() => {
       expect(getByText('일반 에러 메시지')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('updateField에서 Error가 아닌 값이 throw되면 기본 에러 메시지를 표시한다', async () => {
@@ -161,6 +158,6 @@ describe('RecommenderStep — 예외 처리', () => {
     await waitFor(() => {
       expect(getByText('유효하지 않은 별칭입니다')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });

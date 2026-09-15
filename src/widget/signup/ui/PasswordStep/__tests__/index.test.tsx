@@ -1,13 +1,17 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema } from '~/entity/auth/model/authSchema';
 import * as authSchemaModule from '~/entity/auth/model/authSchema';
 import PasswordStep from '../index';
 
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
+
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -39,9 +43,8 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockUpdatePassword = jest.fn();
 const mockUpdatePasswordConfirm = jest.fn();
 
@@ -50,12 +53,6 @@ beforeEach(() => {
   mockUseSignupFormField.mockImplementation((field: string) => {
     if (field === 'password') return { value: '', updateField: mockUpdatePassword };
     return { value: '', updateField: mockUpdatePasswordConfirm };
-  });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
   });
 });
 
@@ -81,7 +78,7 @@ describe('PasswordStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getByText('비밀번호는 8자 이상이어야 합니다')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('비밀번호와 확인이 일치하지 않으면 에러 메시지를 표시한다', async () => {
@@ -94,7 +91,7 @@ describe('PasswordStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getByText('비밀번호가 일치하지 않습니다')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('입력 변경 시 각각의 에러가 초기화된다', async () => {
@@ -137,7 +134,7 @@ describe('PasswordStep — 유효성 검사', () => {
     fireEvent.changeText(getByPlaceholderText('비밀번호를 다시 입력해주세요'), 'password1');
     fireEvent.press(getByTestId('next-button'));
 
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/phoneNumber');
 
     parseSpy.mockRestore();
   });
@@ -155,7 +152,7 @@ describe('PasswordStep — 유효성 검사', () => {
     fireEvent.changeText(getByPlaceholderText('비밀번호를 다시 입력해주세요'), 'password1');
     fireEvent.press(getByTestId('next-button'));
 
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/phoneNumber');
 
     factorySpy.mockRestore();
   });
@@ -168,7 +165,7 @@ describe('PasswordStep — 키보드 제출', () => {
     const passwordInput = getByPlaceholderText('비밀번호를 입력해주세요');
 
     expect(() => fireEvent(passwordInput, 'onSubmitEditing')).not.toThrow();
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('비밀번호 확인란에서 제출 시 두 값이 모두 채워져 있으면 다음 단계로 이동한다', () => {
@@ -181,7 +178,7 @@ describe('PasswordStep — 키보드 제출', () => {
 
     expect(mockUpdatePassword).toHaveBeenCalledWith('password1');
     expect(mockUpdatePasswordConfirm).toHaveBeenCalledWith('password1');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/phoneNumber');
   });
 
   it('비밀번호 확인란에서 제출 시 값이 비어 있으면 다음 단계로 이동하지 않는다', () => {
@@ -190,7 +187,7 @@ describe('PasswordStep — 키보드 제출', () => {
     const confirmInput = getByPlaceholderText('비밀번호를 다시 입력해주세요');
     fireEvent(confirmInput, 'onSubmitEditing');
 
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
 
@@ -204,6 +201,6 @@ describe('PasswordStep — 다음 단계로 이동', () => {
 
     expect(mockUpdatePassword).toHaveBeenCalledWith('password1');
     expect(mockUpdatePasswordConfirm).toHaveBeenCalledWith('password1');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/phoneNumber');
   });
 });

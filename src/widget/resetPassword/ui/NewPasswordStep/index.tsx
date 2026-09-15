@@ -108,7 +108,7 @@ export default function NewPasswordStep() {
   const handleConfirmSuccess = useCallback(() => {
     setIsSuccessAlertVisible(false);
     resetStore();
-    router.replace('/signin');
+    router.replace('/signin/nickname');
   }, [resetStore]);
 
   const handleCloseErrorAlert = useCallback(() => {

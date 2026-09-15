@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupResetStore } from '~/entity/auth/model/useAuthSelectors';
 import TermsStep from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
 }));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
-  useSignupStepNavigation: jest.fn(),
+  useSignupResetStore: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -48,20 +48,15 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
   };
 });
 
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockUseSignupResetStore = jest.mocked(useSignupResetStore);
 const mockRouterBack = jest.mocked(router.back);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockResetStore = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: mockResetStore,
-  });
+  mockUseSignupResetStore.mockReturnValue(mockResetStore);
 });
 
 describe('TermsStep — 렌더링', () => {
@@ -158,13 +153,13 @@ describe('TermsStep — 약관 내용 확인', () => {
 });
 
 describe('TermsStep — 다음 단계로 이동', () => {
-  it('모두 동의 후 다음 클릭 시 nextStep이 호출된다', () => {
+  it('모두 동의 후 다음 클릭 시 다음 단계로 이동한다', () => {
     const { getByTestId, getByText } = render(<TermsStep />);
 
     fireEvent.press(getByText('약관 전체 동의'));
     fireEvent.press(getByTestId('next-button'));
 
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/name');
   });
 });
 

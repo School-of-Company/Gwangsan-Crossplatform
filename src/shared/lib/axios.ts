@@ -172,7 +172,7 @@ instance.interceptors.response.use(
         }
 
         try {
-          router.replace('/signin');
+          router.replace('/signin/nickname');
         } catch (routerError) {
           logger.warn('Router navigation failed', routerError);
         }

@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import DescriptionStep from '../index';
+
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -37,20 +41,13 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockUpdateField = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseSignupFormField.mockReturnValue({ value: '', updateField: mockUpdateField });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
-  });
 });
 
 describe('DescriptionStep — 렌더링', () => {
@@ -83,7 +80,7 @@ describe('DescriptionStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getByText('자기소개는 최소 1자 이상 작성해주세요')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
     expect(mockUpdateField).not.toHaveBeenCalled();
   });
 
@@ -117,7 +114,7 @@ describe('DescriptionStep — 다음 단계로 이동', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith('안녕하세요 반갑습니다');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/recommender');
   });
 
   it('키보드 제출(onSubmitEditing) 시 유효한 값이면 다음 단계로 이동한다', () => {
@@ -128,7 +125,7 @@ describe('DescriptionStep — 다음 단계로 이동', () => {
     fireEvent(input, 'onSubmitEditing');
 
     expect(mockUpdateField).toHaveBeenCalledWith('안녕하세요 반갑습니다');
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/recommender');
   });
 
   it('키보드 제출(onSubmitEditing) 시 빈 값이면 다음 단계로 이동하지 않는다', () => {
@@ -137,7 +134,7 @@ describe('DescriptionStep — 다음 단계로 이동', () => {
     const input = getByPlaceholderText('자신을 소개하는 글을 작성해주세요.');
     fireEvent(input, 'onSubmitEditing');
 
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
 
@@ -157,7 +154,7 @@ describe('DescriptionStep — 예외 처리', () => {
     await waitFor(() => {
       expect(getByText('일반 에러 메시지')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
   it('updateField에서 Error가 아닌 값이 throw되면 기본 에러 메시지를 표시한다', async () => {
@@ -175,6 +172,6 @@ describe('DescriptionStep — 예외 처리', () => {
     await waitFor(() => {
       expect(getByText('유효하지 않은 자기소개입니다')).toBeTruthy();
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });

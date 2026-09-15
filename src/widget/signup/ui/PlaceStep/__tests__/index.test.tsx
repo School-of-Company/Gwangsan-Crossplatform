@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { router } from 'expo-router';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import PlaceStep from '../index';
+
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+}));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
-  useSignupStepNavigation: jest.fn(),
 }));
 
 jest.mock('~/entity/auth/ui/SignupForm', () => {
@@ -37,20 +41,13 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 });
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
-const mockUseSignupStepNavigation = jest.mocked(useSignupStepNavigation);
+const mockRouterPush = jest.mocked(router.push);
 
-const mockNextStep = jest.fn();
 const mockUpdateField = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseSignupFormField.mockReturnValue({ value: 0, updateField: mockUpdateField });
-  mockUseSignupStepNavigation.mockReturnValue({
-    nextStep: mockNextStep,
-    prevStep: jest.fn(),
-    goToStep: jest.fn(),
-    resetStore: jest.fn(),
-  });
 });
 
 describe('PlaceStep — 렌더링', () => {
@@ -94,7 +91,7 @@ describe('PlaceStep — 유효성 검사', () => {
     await waitFor(() => {
       expect(getAllByText('지점을 선택해주세요')).toHaveLength(3);
     });
-    expect(mockNextStep).not.toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
 
@@ -125,6 +122,6 @@ describe('PlaceStep — 다음 단계로 이동', () => {
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith(11);
-    expect(mockNextStep).toHaveBeenCalled();
+    expect(mockRouterPush).toHaveBeenCalledWith('/signup/specialties');
   });
 });

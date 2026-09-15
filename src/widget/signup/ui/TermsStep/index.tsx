@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { router } from 'expo-router';
 import { Checkbox } from '@/shared/ui/Checkbox';
 import { TERMS_CONTENT } from '../../const/TERMS_CONTENT';
@@ -23,7 +23,7 @@ const AGREEMENTS: AgreementItem[] = [
 ];
 
 function TermsStep() {
-  const { nextStep, resetStore } = useSignupStepNavigation();
+  const resetStore = useSignupResetStore();
   const [checked, setChecked] = useState<Record<AgreementKey, boolean>>({
     terms: false,
     privacy: false,
@@ -57,7 +57,7 @@ function TermsStep() {
     <SignupForm
       title="약관 동의"
       description="안전한 서비스 이용을 위해 약관에 동의해주세요"
-      onNext={nextStep}
+      onNext={() => router.push('/signup/name')}
       onBack={handleBack}
       nextButtonText="동의하고 계속"
       isNextDisabled={!allAgreed}>

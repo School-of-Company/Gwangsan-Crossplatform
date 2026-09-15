@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PasswordInput } from '@/shared/ui/PasswordInput';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
-import { useSigninFormField, useSigninStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema } from '~/entity/auth/model/authSchema';
 import { signinWithDeviceInfo, saveCredentialsForBiometric } from '~/entity/auth/api/signin';
 import { View } from 'react-native';
@@ -15,7 +15,7 @@ import { logger } from '~/shared/lib/logger';
 
 export default function PasswordStep() {
   const { value: initialPassword, updateField } = useSigninFormField('password');
-  const { resetStore } = useSigninStepNavigation();
+  const resetStore = useSigninResetStore();
   const [password, setPassword] = useState<string | undefined>(initialPassword as string);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

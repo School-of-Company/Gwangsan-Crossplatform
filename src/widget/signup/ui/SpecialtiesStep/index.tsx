@@ -2,13 +2,13 @@ import { useState } from 'react';
 import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
 import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField, useSignupStepNavigation } from '~/entity/auth/model/useAuthSelectors';
+import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import { SPECIALTIES } from '@/shared/consts/specialties';
 
 export default function SpecialtiesStep() {
   const { value: initialSpecialties, updateField } = useSignupFormField('specialties');
-  const { nextStep } = useSignupStepNavigation();
 
   const [selectedSpecialties, setSelectedSpecialties] = useState(initialSpecialties);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export default function SpecialtiesStep() {
     }
 
     updateField(selectedSpecialties);
-    nextStep();
+    router.push('/signup/description');
   };
 
   const handleSpecialtiesSelect = (specialties: string[]) => {
