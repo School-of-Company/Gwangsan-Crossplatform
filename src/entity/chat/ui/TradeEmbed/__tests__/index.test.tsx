@@ -100,6 +100,40 @@ describe('TradeEmbed', () => {
     expect(queryByText('예약하기')).toBeNull();
   });
 
+  it('RECEIVER 게시글처럼 isSeller는 false여도 isAuthor가 true면 예약하기 버튼을 표시한다(#397)', () => {
+    const { getByText } = render(
+      <TradeEmbed
+        product={createProduct({ isSeller: false, isAuthor: true, isReserved: false })}
+        showButtons
+      />
+    );
+
+    expect(getByText('예약하기')).toBeTruthy();
+  });
+
+  it('isSeller는 true여도 isAuthor가 false면(게시글 작성자가 아닌 Mode상 판매자) 예약하기 버튼을 표시하지 않는다(#397)', () => {
+    const { queryByText } = render(
+      <TradeEmbed
+        product={createProduct({ isSeller: true, isAuthor: false, isReserved: false })}
+        showButtons
+      />
+    );
+
+    expect(queryByText('예약하기')).toBeNull();
+  });
+
+  it('서버가 isAuthor를 아직 내려주지 않으면(undefined) 기존 isSeller 기준으로 동작한다', () => {
+    const { getByText, rerender, queryByText } = render(
+      <TradeEmbed product={createProduct({ isSeller: true, isReserved: false })} showButtons />
+    );
+    expect(getByText('예약하기')).toBeTruthy();
+
+    rerender(
+      <TradeEmbed product={createProduct({ isSeller: false, isReserved: false })} showButtons />
+    );
+    expect(queryByText('예약하기')).toBeNull();
+  });
+
   it('이미 예약 중이면 예약하기 버튼을 표시하지 않는다', () => {
     const { queryByText } = render(
       <TradeEmbed product={createProduct({ isSeller: true, isReserved: true })} showButtons />

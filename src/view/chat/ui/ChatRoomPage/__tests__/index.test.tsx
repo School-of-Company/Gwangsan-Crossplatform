@@ -413,6 +413,32 @@ describe('ChatRoomPage', () => {
     expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
+  it('RECEIVER 게시글처럼 isSeller는 false여도 isAuthor가 true면 예약 컨트롤이 노출된다(#397)', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: {
+        product: { id: 1, isCompleted: false, isSeller: false, isAuthor: true, isReserved: false },
+      },
+    });
+
+    const { getByTestId, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-request-button')).toBeNull();
+    expect(getByTestId('trade-seller-button')).toBeTruthy();
+  });
+
+  it('isSeller는 true여도 isAuthor가 false면(게시글 작성자가 아닌 Mode상 판매자) 예약 컨트롤 대신 거래요청 버튼이 노출된다(#397)', () => {
+    mockUseChatRoomData.mockReturnValue({
+      data: {
+        product: { id: 1, isCompleted: false, isSeller: true, isAuthor: false, isReserved: false },
+      },
+    });
+
+    const { getByTestId, queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('trade-seller-button')).toBeNull();
+    expect(getByTestId('trade-request-button')).toBeTruthy();
+  });
+
   it('키보드가 올라온 상태에서 예약하기를 누르면 키보드를 먼저 닫고, 키보드가 완전히 내려간 뒤에 바텀시트를 연다', () => {
     const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
     const listeners: Record<string, () => void> = {};

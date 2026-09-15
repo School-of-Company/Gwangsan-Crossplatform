@@ -67,7 +67,10 @@ export default function ChatRoomPage() {
     [messages, isBlocked]
   );
   const isTradeCompleted = Boolean(roomData?.product?.isCompleted);
-  const isSeller = Boolean(roomData?.product?.isSeller);
+  // 예약 생성/취소·거래완료 컨트롤은 Mode 기준 판매자(isSeller)가 아니라 게시글 작성자만
+  // 볼 수 있어야 한다(School-of-Company/Gwangsan-Server#357, #397). 서버가 isAuthor를
+  // 내려주기 전까지는 기존 동작(isSeller)을 그대로 fallback으로 사용한다.
+  const canManageReservation = Boolean(roomData?.product?.isAuthor ?? roomData?.product?.isSeller);
   const isReserved = Boolean(roomData?.product?.isReserved);
   const productId = roomData?.product?.id;
 
@@ -273,7 +276,7 @@ export default function ChatRoomPage() {
   const shouldShowTopTradeControl = menuConfig.shouldShowMenuButton && !isTradeCompleted;
 
   const renderTopTradeControl = () =>
-    isSeller ? (
+    canManageReservation ? (
       <View className="flex-row items-center gap-2">
         <TouchableOpacity
           testID="trade-seller-button"
