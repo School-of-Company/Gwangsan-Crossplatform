@@ -43,17 +43,34 @@ describe('ReviewPost', () => {
     expect(images).toHaveLength(1);
   });
 
-  it('imageUrls가 있으면 각 이미지를 렌더링한다', () => {
+  it('imageUrls가 여러 개면 첫 번째 이미지만 렌더링하고 +N 뱃지를 표시한다', () => {
     const review = makeReview({
       imageUrls: [
         { imageId: 1, imageUrl: 'https://example.com/1.jpg' },
         { imageId: 2, imageUrl: 'https://example.com/2.jpg' },
       ],
     });
-    const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
+    const { UNSAFE_getAllByType, getByText } = render(<ReviewPost review={review} />);
     const Image = require('react-native').Image;
 
-    expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
+    expect(UNSAFE_getAllByType(Image)).toHaveLength(1);
+    expect(getByText('+1')).toBeTruthy();
+  });
+
+  it('이미지가 여러 장이어도 후기 내용(밝기 게이지, 텍스트)이 항상 보인다', () => {
+    const review = makeReview({
+      content: '아주 만족스러운 거래였어요.',
+      imageUrls: [
+        { imageId: 1, imageUrl: 'https://example.com/1.jpg' },
+        { imageId: 2, imageUrl: 'https://example.com/2.jpg' },
+        { imageId: 3, imageUrl: 'https://example.com/3.jpg' },
+        { imageId: 4, imageUrl: 'https://example.com/4.jpg' },
+      ],
+    });
+    const { getByText } = render(<ReviewPost review={review} />);
+
+    expect(getByText('아주 만족스러운 거래였어요.')).toBeTruthy();
+    expect(getByText('작성자 홍길동')).toBeTruthy();
   });
 
   it('mode="toss"면 작성자 이름 대신 내가 작성한 후기임을 표시한다', () => {
@@ -81,18 +98,27 @@ describe('ReviewPost', () => {
     expect(queryByText('내가 작성한 후기')).toBeNull();
   });
 
-  it('images가 있으면 각 이미지를 렌더링한다', () => {
+  it('images가 여러 개면 첫 번째 이미지만 렌더링하고 +N 뱃지를 표시한다', () => {
     const review = makeReview({
       images: [
         { imageId: 1, imageUrl: 'https://example.com/1.jpg' },
         { imageId: 2, imageUrl: 'https://example.com/2.jpg' },
       ],
     });
-    const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
+    const { UNSAFE_getAllByType, getByText } = render(<ReviewPost review={review} />);
     const Image = require('react-native').Image;
 
-    const images = UNSAFE_getAllByType(Image);
-    expect(images).toHaveLength(2);
+    expect(UNSAFE_getAllByType(Image)).toHaveLength(1);
+    expect(getByText('+1')).toBeTruthy();
+  });
+
+  it('이미지가 한 개이면 +N 뱃지를 표시하지 않는다', () => {
+    const review = makeReview({
+      images: [{ imageId: 1, imageUrl: 'https://example.com/1.jpg' }],
+    });
+    const { queryByText } = render(<ReviewPost review={review} />);
+
+    expect(queryByText(/^\+\d+/)).toBeNull();
   });
 
   it('클릭 시 cancelTrade 페이지로 이동한다', () => {

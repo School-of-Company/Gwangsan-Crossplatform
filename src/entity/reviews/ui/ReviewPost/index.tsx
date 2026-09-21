@@ -15,28 +15,28 @@ export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps
     R.push('/cancelTrade/' + review.reviewId);
   }, [R, review]);
   const images = review.imageUrls ?? review.images ?? [];
+  const additionalImagesCount = images.length - 1;
   return (
     <View className="overflow-hidden rounded-2xl bg-gray-50">
       <TouchableOpacity
         onPress={handleClick}
         activeOpacity={0.7}
         className="flex-row items-center gap-4 px-5 py-5">
-        {images.length > 0 ? (
-          <View className="flex-row gap-2">
-            {images.map((image, index) => (
-              <Image
-                key={index}
-                source={{ uri: image.imageUrl }}
-                style={{ width: 80, height: 80, borderRadius: 12 }}
-              />
-            ))}
-          </View>
-        ) : (
+        <View className="relative">
           <Image
-            source={require('~/shared/assets/png/gwangsanLogo.png')}
+            source={
+              images[0]
+                ? { uri: images[0].imageUrl }
+                : require('~/shared/assets/png/gwangsanLogo.png')
+            }
             style={{ width: 80, height: 80, borderRadius: 12 }}
           />
-        )}
+          {additionalImagesCount > 0 && (
+            <View className="absolute bottom-1 right-1 rounded-md bg-black/50 px-2 py-1">
+              <Text className="text-xs text-white">+{additionalImagesCount}</Text>
+            </View>
+          )}
+        </View>
         <View className="flex-1 gap-1">
           <LightBar value={review.light} />
           <Text className="text-sm text-gray-700" numberOfLines={2}>
