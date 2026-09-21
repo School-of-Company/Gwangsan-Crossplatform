@@ -124,6 +124,18 @@ describe('ImageUploader', () => {
       );
       expect(getButtons(container)).toHaveLength(2);
     });
+
+    it('현재 이미지 개수와 최대 개수를 "n/max" 형태로 표시한다', () => {
+      const { getByText } = renderWithProviders(
+        <ImageUploader images={['file://a.jpg', 'file://b.jpg']} maxImages={5} />
+      );
+      expect(getByText('2/5')).toBeTruthy();
+    });
+
+    it('이미지가 없으면 "0/max"로 표시한다', () => {
+      const { getByText } = renderWithProviders(<ImageUploader maxImages={5} />);
+      expect(getByText('0/5')).toBeTruthy();
+    });
   });
 
   describe('pickImage', () => {
