@@ -15,14 +15,14 @@ export default function Introduce({ specialty, introduce }: IntroduceProps) {
           specialty.map((v, i) => {
             return (
               <Text
-                className="rounded-[30px] border border-gray-300 px-3 py-2 text-gray-300"
+                className="rounded-[30px] border border-gray-300 px-3 py-2 text-label text-gray-700"
                 key={i}>
                 {v}
               </Text>
             );
           })}
       </View>
-      <Text className="">{introduce}</Text>
+      <Text className="text-body4 text-gray-800">{introduce}</Text>
     </View>
   );
 }
