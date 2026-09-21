@@ -15,7 +15,12 @@ export const verifySms = async (phoneNumber: string, code: string) => {
     const responseText = await response.text();
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const data = JSON.parse(responseText);
+        if (data.message) errorMessage = data.message;
+      } catch {}
+      throw new Error(errorMessage);
     }
 
     let data;
