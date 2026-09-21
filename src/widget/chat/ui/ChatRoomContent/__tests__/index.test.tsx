@@ -68,8 +68,10 @@ jest.mock('~/entity/chat', () => {
   const { Text } = require('react-native');
   return {
     TradeEmbed: ({ product }: any) => <Text testID={`trade-embed-${product.id}`} />,
-    TradeReservedEmbed: ({ scheduledAt, placeName }: any) => (
-      <Text testID="trade-reserved-embed">{`${scheduledAt ?? ''}-${placeName ?? ''}`}</Text>
+    TradeReservedEmbed: ({ scheduledAt, placeName, reserverNickname }: any) => (
+      <Text testID="trade-reserved-embed">
+        {`${scheduledAt ?? ''}-${placeName ?? ''}-${reserverNickname ?? ''}`}
+      </Text>
     ),
     TradeCompletedEmbed: ({ hasReviewed, onReviewButtonPress }: any) => (
       <Text testID="trade-completed-embed" onPress={onReviewButtonPress}>
@@ -319,6 +321,7 @@ describe('ChatRoomContent', () => {
           product,
           showButtons: true,
           otherPartyNickname: '요청자',
+          reserverNickname: '나',
         }}
       />
     );
@@ -334,7 +337,7 @@ describe('ChatRoomContent', () => {
     ]);
     expect(getByTestId('trade-embed-65')).toBeTruthy();
     expect(getByTestId('trade-reserved-embed').props.children).toBe(
-      '2026-08-28T14:00:00-상무역 2번 출구'
+      '2026-08-28T14:00:00-상무역 2번 출구-나'
     );
   });
 

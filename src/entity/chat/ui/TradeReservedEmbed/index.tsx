@@ -16,14 +16,14 @@ export interface TradeReservedEmbedProps {
   readonly alignment?: 'left' | 'right';
   readonly scheduledAt?: string | null;
   readonly placeName?: string | null;
-  readonly otherPartyNickname?: string;
+  readonly reserverNickname?: string;
   readonly onOpenMap?: () => void;
 }
 
 const TradeReservedEmbedComponent: React.FC<TradeReservedEmbedProps> = ({
   scheduledAt,
   placeName,
-  otherPartyNickname,
+  reserverNickname,
   onOpenMap,
 }) => {
   const detailLabel = scheduledAt
@@ -35,7 +35,7 @@ const TradeReservedEmbedComponent: React.FC<TradeReservedEmbedProps> = ({
       <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-3">
         <View className="flex-1">
           <Text testID="trade-reserved-notice" className="text-base font-bold text-gray-900">
-            {otherPartyNickname ? `${otherPartyNickname}님이 예약을 했어요` : '예약을 했어요'}
+            {reserverNickname ? `${reserverNickname}님이 예약을 했어요` : '예약을 했어요'}
           </Text>
           {detailLabel && (
             <Text testID="trade-reservation-detail" className="mt-1 text-xs text-gray-600">
