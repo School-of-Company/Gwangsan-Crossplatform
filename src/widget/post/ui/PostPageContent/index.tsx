@@ -82,7 +82,9 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
               {isMyPost
                 ? isDeleting
                   ? '삭제 처리 중...'
-                  : '이 게시글 삭제하기'
+                  : data.isReserved
+                    ? '예약 중에는 삭제할 수 없어요'
+                    : '이 게시글 삭제하기'
                 : '이 게시글 신고하기'}
             </Text>
           </TouchableOpacity>

@@ -89,6 +89,16 @@ describe('PostPageContent', () => {
       expect(getByText('삭제 처리 중...')).toBeTruthy();
     });
 
+    it('data.isReserved가 true이면 "예약 중에는 삭제할 수 없어요"를 표시한다', () => {
+      const { getByText } = render(
+        <PostPageContent
+          {...makeProps({ isMyPost: true, data: { ...makeProps().data, isReserved: true } })}
+        />
+      );
+
+      expect(getByText('예약 중에는 삭제할 수 없어요')).toBeTruthy();
+    });
+
     it('"수정하기" 버튼을 표시한다', () => {
       const { getByText } = render(<PostPageContent {...makeProps({ isMyPost: true })} />);
 

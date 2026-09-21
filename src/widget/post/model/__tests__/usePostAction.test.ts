@@ -450,6 +450,34 @@ describe('usePostAction', () => {
 
       expect(result.current.isDeleteAlertVisible).toBe(false);
     });
+
+    it('예약 중인 게시글이면 삭제 확인창을 열지 않고 안내 Toast를 표시한다', () => {
+      setupMocks({ isReserved: true });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(false);
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '삭제할 수 없어요',
+          text2: '예약 중인 게시글은 삭제할 수 없습니다. 예약을 취소한 후 다시 시도해 주세요.',
+        })
+      );
+    });
+
+    it('예약 중이 아니면 정상적으로 삭제 확인창을 연다', () => {
+      setupMocks({ isReserved: false });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(true);
+      expect(Toast.show).not.toHaveBeenCalled();
+    });
   });
 
   describe('actionHandlers.onRefresh', () => {

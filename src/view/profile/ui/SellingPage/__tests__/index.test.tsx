@@ -331,6 +331,41 @@ describe('SellingPageView', () => {
     expect((deletePost as jest.Mock).mock.calls[0][0]).toBe(1);
   });
 
+  it('예약 중인 게시글은 "삭제하기"를 눌러도 확인창이 뜨지 않고 안내 Toast를 표시한다', () => {
+    mockUseGetMyPosts.mockReturnValue({
+      data: [
+        {
+          id: 1,
+          title: '판매중글',
+          type: 'OBJECT',
+          mode: 'GIVER',
+          gwangsan: 3,
+          isCompleted: false,
+          isReserved: true,
+        },
+      ],
+      error: null,
+      isError: false,
+    });
+
+    const { getByTestId, getByText, queryByText } = renderWithProviders(<SellingPageView />);
+
+    fireEvent.press(getByTestId('selling-card-menu-1'));
+    expect(getByText('예약 중에는 삭제할 수 없어요')).toBeTruthy();
+
+    fireEvent.press(getByText('예약 중에는 삭제할 수 없어요'));
+
+    expect(queryByText('이 게시글을 삭제하시겠습니까?')).toBeNull();
+    expect(deletePost).not.toHaveBeenCalled();
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        text1: '삭제할 수 없어요',
+        text2: '예약 중인 게시글은 삭제할 수 없습니다. 예약을 취소한 후 다시 시도해 주세요.',
+      })
+    );
+  });
+
   it('삭제 확인 AlertModal에서 취소를 누르면 deletePost를 호출하지 않는다', () => {
     mockUseGetMyPosts.mockReturnValue({
       data: [
