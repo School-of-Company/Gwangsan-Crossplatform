@@ -351,6 +351,75 @@ describe('BottomSheetModalWrapper', () => {
         expect.objectContaining({ toValue: -432 })
       );
     });
+
+    it('키보드 높이가 줄어드는 변화는 임계값을 넘더라도 시트를 다시 애니메이션하지 않는다', () => {
+      const listeners: Record<string, (e?: unknown) => void> = {};
+      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+        listeners[event as string] = cb as (e?: unknown) => void;
+        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+      });
+      const timingSpy = jest.spyOn(Animated, 'timing');
+
+      renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목">
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      listeners.keyboardDidShow({ endCoordinates: { height: 400 } });
+      timingSpy.mockClear();
+
+      // 예측 변환 바가 사라지며 키보드가 낮아진 경우 — 따라 내려가면 시트가 흔들린다.
+      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
+
+      expect(timingSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('포털 등록', () => {
+    it('children이 바뀌어도 포털에서 시트를 제거했다가 다시 등록하지 않는다', () => {
+      const onClose = jest.fn();
+      const tree = (content: string) => (
+        <>
+          <BottomSheetModalWrapper isVisible onClose={onClose} title="제목">
+            <Text>{content}</Text>
+          </BottomSheetModalWrapper>
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      const { rerender, getByText } = render(tree('내용'));
+
+      const sheetCounts: number[] = [];
+      const unsubscribe = useBottomSheetPortalStore.subscribe((state) =>
+        sheetCounts.push(Object.keys(state.sheets).length)
+      );
+
+      act(() => {
+        rerender(tree('내용이 한 글자 늘었다'));
+      });
+      unsubscribe();
+
+      // 한 번이라도 0이 되면 시트 트리가 통째로 언마운트되며 입력 포커스/키보드가 사라진다.
+      expect(sheetCounts).not.toContain(0);
+      expect(getByText('내용이 한 글자 늘었다')).toBeTruthy();
+    });
+
+    it('언마운트되면 포털에서 시트를 제거한다', () => {
+      const { unmount } = renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목">
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      expect(Object.keys(useBottomSheetPortalStore.getState().sheets)).toHaveLength(1);
+
+      act(() => {
+        unmount();
+      });
+
+      expect(Object.keys(useBottomSheetPortalStore.getState().sheets)).toHaveLength(0);
+    });
   });
 
   it('안드로이드 하드웨어 뒤로가기 버튼을 누르면 onClose를 호출한다', () => {
