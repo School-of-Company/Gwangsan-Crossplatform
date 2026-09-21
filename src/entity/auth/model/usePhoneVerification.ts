@@ -3,7 +3,9 @@ import { TextInput } from 'react-native';
 import { phoneSchema, verificationCodeSchema } from '~/entity/auth/model/authSchema';
 import { ZodError } from 'zod';
 import Toast from 'react-native-toast-message';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { getErrorMessage, isNetworkOrTimeoutError } from '~/shared/lib/errorHandler';
+
+const NETWORK_ERROR_MESSAGE = '네트워크 연결을 확인한 후 다시 시도해주세요.';
 
 interface VerificationState {
   isVerifying: boolean;
@@ -92,7 +94,9 @@ export const usePhoneVerification = ({
         if (err instanceof ZodError) {
           setPhoneError(err.errors[0].message);
         } else {
-          const errorMessage = getErrorMessage(err);
+          const errorMessage = isNetworkOrTimeoutError(err)
+            ? NETWORK_ERROR_MESSAGE
+            : getErrorMessage(err);
           setPhoneError(errorMessage);
           Toast.show({
             type: 'error',
@@ -144,7 +148,9 @@ export const usePhoneVerification = ({
         if (err instanceof ZodError) {
           setVerificationError(err.errors[0].message);
         } else {
-          const errorMessage = getErrorMessage(err);
+          const errorMessage = isNetworkOrTimeoutError(err)
+            ? NETWORK_ERROR_MESSAGE
+            : getErrorMessage(err);
           setVerificationError(errorMessage);
           Toast.show({
             type: 'error',
