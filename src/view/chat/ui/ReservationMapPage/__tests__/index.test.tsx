@@ -444,6 +444,46 @@ describe('ReservationMapPage', () => {
     expect(mockSearchNearbyPlaces).toHaveBeenLastCalledWith(movedCoordinate, 1000);
   });
 
+  it('지도 이동으로 재조회하는 동안에도 이전 목록을 유지하고 스켈레톤으로 교체하지 않는다', async () => {
+    setPlatform('android');
+    mockGetCurrentLocation.mockResolvedValue({ latitude: 1, longitude: 1 });
+    mockSearchNearbyPlaces.mockResolvedValueOnce([makePlace({ id: 'p1', place_name: '스타벅스' })]);
+
+    const { getByText, queryByText, getByTestId, queryByTestId } = render(<ReservationMapPage />);
+    await flush();
+
+    expect(getByText('스타벅스')).toBeTruthy();
+
+    let resolveSecondFetch!: (places: unknown[]) => void;
+    mockSearchNearbyPlaces.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSecondFetch = resolve;
+      })
+    );
+
+    await act(async () => {
+      lastKakaoMapWebViewProps.onCameraMove({ coordinates: { latitude: 9, longitude: 9 } });
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(NEARBY_DEBOUNCE_MS);
+    });
+    await flush();
+
+    // 재조회가 진행 중인 동안에도 이전 목록이 그대로 남아있고, 목록 전체가
+    // 스켈레톤으로 교체되지 않는다. 대신 눈에 덜 띄는 인라인 스피너만 추가된다.
+    expect(getByText('스타벅스')).toBeTruthy();
+    expect(getByTestId('nearby-places-refetch-spinner')).toBeTruthy();
+
+    await act(async () => {
+      resolveSecondFetch([makePlace({ id: 'p2', place_name: '이디야' })]);
+    });
+    await flush();
+
+    expect(queryByText('스타벅스')).toBeNull();
+    expect(getByText('이디야')).toBeTruthy();
+    expect(queryByTestId('nearby-places-refetch-spinner')).toBeNull();
+  });
+
   it('주변 장소를 선택하면 좌표/장소명을 저장하고 이전 화면으로 돌아간다', async () => {
     mockGetCurrentLocation.mockResolvedValue({ latitude: 3, longitude: 4 });
     mockSearchNearbyPlaces.mockResolvedValue([

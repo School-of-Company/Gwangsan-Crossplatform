@@ -110,6 +110,7 @@ export function ReservationMapPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [nearbyPlaces, setNearbyPlaces] = useState<KakaoPlace[]>([]);
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [hasLoadedNearbyOnce, setHasLoadedNearbyOnce] = useState(false);
   const [currentAddress, setCurrentAddress] = useState('');
   const [isPlaceNameSheetVisible, setIsPlaceNameSheetVisible] = useState(false);
   const [placeNameDraft, setPlaceNameDraft] = useState('');
@@ -156,7 +157,10 @@ export function ReservationMapPage() {
         setCurrentAddress('');
       }
     } finally {
-      if (nearbyRequestIdRef.current === requestId) setIsLoadingNearby(false);
+      if (nearbyRequestIdRef.current === requestId) {
+        setIsLoadingNearby(false);
+        setHasLoadedNearbyOnce(true);
+      }
     }
   }, []);
 
@@ -373,42 +377,53 @@ export function ReservationMapPage() {
               </View>
             </TouchableOpacity>
 
-            {isLoadingNearby ? (
+            {isLoadingNearby && !hasLoadedNearbyOnce ? (
               <NearbyPlacesSkeleton />
             ) : nearbyPlaces.length > 0 ? (
-              nearbyPlaces.map((place, index) => (
-                <TouchableOpacity
-                  key={place.id}
-                  className={`flex-row items-center gap-3 px-4 py-3 ${
-                    index < nearbyPlaces.length - 1 ? 'border-b border-gray-100' : ''
-                  }`}
-                  onPress={() => handleSelectNearbyPlace(place)}>
-                  <View className="h-10 w-10 items-center justify-center">
-                    <Icon name="location" size={28} color={MARKER_COLOR} />
-                  </View>
-                  <View className="flex-1 gap-1">
-                    <View className="flex-row items-center gap-1">
-                      <Text className="text-body5 font-semibold text-gray-900" numberOfLines={1}>
-                        {place.place_name}
-                      </Text>
-                      <Text className="caption text-gray-400" numberOfLines={1}>
-                        {[
-                          getCategoryLabel(place.category_name),
-                          formatDistanceLabel(place.distance),
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
+              <>
+                {nearbyPlaces.map((place, index) => (
+                  <TouchableOpacity
+                    key={place.id}
+                    className={`flex-row items-center gap-3 px-4 py-3 ${
+                      index < nearbyPlaces.length - 1 ? 'border-b border-gray-100' : ''
+                    }`}
+                    onPress={() => handleSelectNearbyPlace(place)}>
+                    <View className="h-10 w-10 items-center justify-center">
+                      <Icon name="location" size={28} color={MARKER_COLOR} />
+                    </View>
+                    <View className="flex-1 gap-1">
+                      <View className="flex-row items-center gap-1">
+                        <Text className="text-body5 font-semibold text-gray-900" numberOfLines={1}>
+                          {place.place_name}
+                        </Text>
+                        <Text className="caption text-gray-400" numberOfLines={1}>
+                          {[
+                            getCategoryLabel(place.category_name),
+                            formatDistanceLabel(place.distance),
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </Text>
+                      </View>
+                      <Text className="caption text-gray-500" numberOfLines={1}>
+                        {place.road_address_name || place.address_name}
                       </Text>
                     </View>
-                    <Text className="caption text-gray-500" numberOfLines={1}>
-                      {place.road_address_name || place.address_name}
-                    </Text>
+                    <View className="rounded-full bg-gray-200 px-4 py-2">
+                      <Text className="label text-gray-700">선택</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                {isLoadingNearby && (
+                  <View testID="nearby-places-refetch-spinner" className="items-center py-3">
+                    <ActivityIndicator size="small" color={MARKER_COLOR} />
                   </View>
-                  <View className="rounded-full bg-gray-200 px-4 py-2">
-                    <Text className="label text-gray-700">선택</Text>
-                  </View>
-                </TouchableOpacity>
-              ))
+                )}
+              </>
+            ) : isLoadingNearby ? (
+              <View testID="nearby-places-refetch-spinner" className="items-center py-3">
+                <ActivityIndicator size="small" color={MARKER_COLOR} />
+              </View>
             ) : (
               <Text className="caption px-4 py-3 text-gray-400">주변 장소를 찾을 수 없어요.</Text>
             )}
