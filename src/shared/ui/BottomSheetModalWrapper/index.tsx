@@ -48,6 +48,9 @@ const SHEET_TRANSITION_DURATION = 500;
 const KEYBOARD_HEIGHT_CHANGE_THRESHOLD = 80;
 // 키보드가 올라왔을 때 시트 바닥이 키보드 상단에 완전히 붙어버리지 않도록 살짝 띄운다.
 const KEYBOARD_GAP = 12;
+// 키보드를 피해 시트를 밀어 올릴 때, 시트 상단(제목/드롭다운)이 화면 밖으로 나가지
+// 않도록 안전 영역 아래로 최소한 남겨 두는 여백.
+const SHEET_MIN_TOP_GAP = 24;
 
 export function BottomSheetModalWrapper({
   isVisible,
@@ -68,7 +71,17 @@ export function BottomSheetModalWrapper({
   const screenHeight = Dimensions.get('window').height;
   const modalHeight = height ?? (screenHeight * 2) / 3;
 
+  // 키보드를 피해 밀어 올릴 수 있는 최대량. 이보다 더 올리면 시트 상단이 화면 위로
+  // 잘려 나간다(기존에 제목/드롭다운이 사라져 보이던 원인).
+  const maxKeyboardTranslate = Math.max(
+    0,
+    screenHeight - modalHeight - insets.top - SHEET_MIN_TOP_GAP
+  );
+
   const [show, setShow] = useState(isVisible);
+  // 밀어 올리고도 키보드에 가려지는 높이. 시트 내부 하단 패딩으로 보정해 버튼이
+  // 키보드 뒤로 숨지 않게 한다.
+  const [keyboardOverlap, setKeyboardOverlap] = useState(0);
   const translateY = useRef(new Animated.Value(modalHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
@@ -126,8 +139,11 @@ export function BottomSheetModalWrapper({
       }
       lastKeyboardHeightRef.current = nextHeight;
 
+      const translate = Math.min(nextHeight + KEYBOARD_GAP, maxKeyboardTranslate);
+      setKeyboardOverlap(Math.max(0, nextHeight - translate));
+
       Animated.timing(translateY, {
-        toValue: -(nextHeight + KEYBOARD_GAP),
+        toValue: -translate,
         duration: 250,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
@@ -136,6 +152,7 @@ export function BottomSheetModalWrapper({
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
       lastKeyboardHeightRef.current = 0;
+      setKeyboardOverlap(0);
 
       Animated.timing(translateY, {
         toValue: 0,
@@ -149,7 +166,7 @@ export function BottomSheetModalWrapper({
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, [translateY]);
+  }, [translateY, maxKeyboardTranslate]);
 
   useEffect(() => {
     if (isVisible) {
@@ -246,7 +263,7 @@ export function BottomSheetModalWrapper({
             className="rounded-t-[20px] bg-white">
             <Pressable
               className="flex-1 px-4 pt-4"
-              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+              style={{ paddingBottom: Math.max(insets.bottom, 16) + keyboardOverlap }}
               onPress={(e) => e.stopPropagation()}>
               <View className="items-center py-2">
                 <View className="h-1 w-10 rounded-full bg-gray-200" />
@@ -284,6 +301,7 @@ export function BottomSheetModalWrapper({
     modalHeight,
     translateY,
     insets.bottom,
+    keyboardOverlap,
     hasHeader,
     title,
     showCloseButton,

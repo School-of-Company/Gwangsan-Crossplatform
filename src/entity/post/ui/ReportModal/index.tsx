@@ -1,5 +1,5 @@
 import { useMemo, useCallback, memo, useState } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Dimensions, ScrollView } from 'react-native';
 import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
@@ -7,6 +7,7 @@ import { BottomSheetModalWrapper } from '~/shared/ui';
 import { REPORT_TYPES, type ReportType } from '~/entity/post/model/reportType';
 import { useReport } from '../../model/useReport';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
+import { useBottomSheetScrollLock } from '~/shared/lib/useBottomSheetScrollLock';
 
 interface ReportModalProps {
   productId?: number;
@@ -24,6 +25,7 @@ const ReportModal = ({
   onAnimationComplete,
 }: ReportModalProps) => {
   const [images, setImages] = useState<string[]>([]);
+  const { dragLockRef, handleScroll } = useBottomSheetScrollLock();
 
   const {
     reportType,
@@ -92,9 +94,18 @@ const ReportModal = ({
       isVisible={isVisible}
       onClose={handleClose}
       onAnimationComplete={onAnimationComplete}
+      dragLockRef={dragLockRef}
       title="신고하기">
-      <View className="flex-1 flex-col justify-between gap-4">
-        <View className="gap-6">
+      <View className="flex-1 flex-col gap-4">
+        {/* 키보드가 올라오면 시트 안에서 쓸 수 있는 높이가 줄어들기 때문에,
+            내용은 스크롤로 감싸고 제출 버튼만 하단에 고정한다. */}
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ gap: 24, paddingBottom: 8 }}
+          keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}>
           <Dropdown
             label="신고유형"
             items={REPORT_TYPES}
@@ -121,7 +132,7 @@ const ReportModal = ({
               onUploadStateChange={handleUploadStateChange}
             />
           </View>
-        </View>
+        </ScrollView>
 
         <Button variant="error" disabled={isFormDisabled} onPress={handleFormSubmit}>
           {getSubmitButtonText}

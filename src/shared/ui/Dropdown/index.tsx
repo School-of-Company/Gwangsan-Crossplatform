@@ -29,7 +29,11 @@ export function Dropdown<T extends string>({
       : undefined;
 
   return (
-    <View className={`${width} relative flex gap-2`}>
+    // 열린 동안만 위로 띄운다. zIndex만으로는 안드로이드에서 뒤 요소에 가려질 수 있어
+    // elevation도 함께 올린다.
+    <View
+      className={`${width} relative flex gap-2`}
+      style={{ zIndex: show ? 50 : 0, elevation: show ? 50 : 0 }}>
       {label && <Text className="text-label text-black">{label}</Text>}
       <TouchableOpacity
         className={`rounded-xl border ${show ? 'border-sub2-500' : 'border-gray-400'} px-4 py-5 text-body5`}
@@ -40,7 +44,9 @@ export function Dropdown<T extends string>({
         </View>
       </TouchableOpacity>
       {show && (
-        <View className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 last:border-b-0">
+        <View
+          className="absolute left-0 top-full z-50 w-full overflow-hidden rounded-xl bg-gray-50"
+          style={{ elevation: 50 }}>
           <ScrollView
             style={{ maxHeight: 200 }}
             nestedScrollEnabled={true}
