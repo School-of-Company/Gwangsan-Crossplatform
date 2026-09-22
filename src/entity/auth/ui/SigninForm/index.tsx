@@ -16,6 +16,9 @@ interface SigninFormProps {
   isNextDisabled?: boolean;
 }
 
+// 링크 자체 패딩(위아래 8)에 더해 최소 44pt 터치 영역을 보장한다.
+const linkHitSlop = { top: 8, bottom: 8, left: 8, right: 8 };
+
 function SigninForm({
   title,
   description,
@@ -49,17 +52,23 @@ function SigninForm({
 
           <View className="mt-8">{children}</View>
 
-          <View className="mt-4 flex-row justify-center gap-4">
-            <Text
-              className="text-sm text-gray-500 underline"
+          <View className="mt-4 flex-row justify-center gap-1">
+            <TouchableOpacity
+              testID="SigninForm-find-nickname-link"
+              accessibilityRole="link"
+              hitSlop={linkHitSlop}
+              className="px-2 py-2"
               onPress={() => router.push('/findNickname')}>
-              별칭 찾기
-            </Text>
-            <Text
-              className="text-sm text-gray-500 underline"
+              <Text className="text-body4 text-gray-500 underline">별칭 찾기</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="SigninForm-reset-password-link"
+              accessibilityRole="link"
+              hitSlop={linkHitSlop}
+              className="px-2 py-2"
               onPress={() => router.push('/resetPassword')}>
-              비밀번호 변경하기
-            </Text>
+              <Text className="text-body4 text-gray-500 underline">비밀번호 변경하기</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
