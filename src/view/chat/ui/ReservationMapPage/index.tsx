@@ -32,6 +32,7 @@ import {
 } from '~/shared/api/kakaoLocalSearch';
 import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
 import { logger } from '~/shared/lib/logger';
+import { formatDisplayAddress } from '~/shared/lib/formatAddress';
 import { KakaoMapWebView } from '~/view/chat/ui/ReservationMapPage/KakaoMapWebView';
 import { ReservationPlaceNameSheet } from '~/view/chat/ui/ReservationPlaceNameSheet';
 
@@ -110,6 +111,7 @@ export function ReservationMapPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [nearbyPlaces, setNearbyPlaces] = useState<KakaoPlace[]>([]);
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [hasLoadedNearbyOnce, setHasLoadedNearbyOnce] = useState(false);
   const [currentAddress, setCurrentAddress] = useState('');
   const [isPlaceNameSheetVisible, setIsPlaceNameSheetVisible] = useState(false);
   const [placeNameDraft, setPlaceNameDraft] = useState('');
@@ -156,7 +158,10 @@ export function ReservationMapPage() {
         setCurrentAddress('');
       }
     } finally {
-      if (nearbyRequestIdRef.current === requestId) setIsLoadingNearby(false);
+      if (nearbyRequestIdRef.current === requestId) {
+        setIsLoadingNearby(false);
+        setHasLoadedNearbyOnce(true);
+      }
     }
   }, []);
 
@@ -303,7 +308,7 @@ export function ReservationMapPage() {
                       {place.place_name}
                     </Text>
                     <Text className="caption text-gray-500" numberOfLines={1}>
-                      {place.road_address_name || place.address_name}
+                      {formatDisplayAddress(place.road_address_name || place.address_name)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -365,7 +370,7 @@ export function ReservationMapPage() {
                 <Text className="caption text-gray-500" numberOfLines={2}>
                   {isLoadingNearby
                     ? '주소를 확인하는 중...'
-                    : currentAddress || '주소를 찾을 수 없어요.'}
+                    : formatDisplayAddress(currentAddress) || '주소를 찾을 수 없어요.'}
                 </Text>
               </View>
               <View className="rounded-full bg-gray-200 px-4 py-2">
@@ -373,7 +378,11 @@ export function ReservationMapPage() {
               </View>
             </TouchableOpacity>
 
-            {isLoadingNearby ? (
+            {/* 지도 하단 패널은 위쪽 지도 View와 flex-1 형제 관계라, 재조회(refetch) 중에
+                여기 높이가 잠깐이라도 바뀌면 지도가 그만큼 늘었다 줄었다 하며 움직이는
+                것처럼 보인다. 그래서 재조회 중에도 이전 목록 위에 스피너를 더 얹지 않고
+                그대로 유지한다 — 로딩 중이라는 건 위 주소 캡션이 이미 알려준다. */}
+            {isLoadingNearby && !hasLoadedNearbyOnce ? (
               <NearbyPlacesSkeleton />
             ) : nearbyPlaces.length > 0 ? (
               nearbyPlaces.map((place, index) => (
@@ -401,7 +410,7 @@ export function ReservationMapPage() {
                       </Text>
                     </View>
                     <Text className="caption text-gray-500" numberOfLines={1}>
-                      {place.road_address_name || place.address_name}
+                      {formatDisplayAddress(place.road_address_name || place.address_name)}
                     </Text>
                   </View>
                   <View className="rounded-full bg-gray-200 px-4 py-2">
@@ -409,6 +418,10 @@ export function ReservationMapPage() {
                   </View>
                 </TouchableOpacity>
               ))
+            ) : isLoadingNearby ? (
+              <View testID="nearby-places-refetch-spinner" className="items-center py-3">
+                <ActivityIndicator size="small" color={MARKER_COLOR} />
+              </View>
             ) : (
               <Text className="caption px-4 py-3 text-gray-400">주변 장소를 찾을 수 없어요.</Text>
             )}
@@ -419,7 +432,7 @@ export function ReservationMapPage() {
       <ReservationPlaceNameSheet
         isVisible={isPlaceNameSheetVisible}
         onClose={() => setIsPlaceNameSheetVisible(false)}
-        address={currentAddress}
+        address={formatDisplayAddress(currentAddress)}
         placeName={placeNameDraft}
         onChangePlaceName={setPlaceNameDraft}
         onConfirm={handleConfirmPlaceName}
