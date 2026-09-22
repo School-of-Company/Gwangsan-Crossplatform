@@ -8,85 +8,109 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
 });
 jest.mock('@/shared/assets/svg/CheckIcon', () => {
   const React = require('react');
-  return { __esModule: true, default: () => React.createElement('View', null) };
+  return { __esModule: true, default: () => React.createElement('View', { testID: 'check-icon' }) };
 });
 
 const defaultItems = ['수영', '요가', '필라테스'];
 
 describe('SpecialtiesDropdown', () => {
-  it('placeholder 텍스트를 렌더링한다', () => {
-    const { getByText } = render(
-      <SpecialtiesDropdown items={defaultItems} placeholder="선택해주세요" />
-    );
-
-    expect(getByText('선택해주세요')).toBeTruthy();
-  });
-
   it('label이 있으면 label을 렌더링한다', () => {
     const { getByText } = render(<SpecialtiesDropdown items={defaultItems} label="특기 선택" />);
 
     expect(getByText('특기 선택')).toBeTruthy();
   });
 
-  it('드롭다운 클릭 시 항목들이 표시된다', () => {
-    const { getByText, queryByText } = render(<SpecialtiesDropdown items={defaultItems} />);
-
-    expect(queryByText('수영')).toBeNull();
-
-    fireEvent.press(getByText('선택해주세요'));
+  it('별도 클릭 없이 항목들이 바로(칩 형태로) 표시된다', () => {
+    const { getByText } = render(<SpecialtiesDropdown items={defaultItems} />);
 
     expect(getByText('수영')).toBeTruthy();
     expect(getByText('요가')).toBeTruthy();
     expect(getByText('필라테스')).toBeTruthy();
   });
 
-  it('항목 선택 시 onSelect가 호출된다', () => {
+  it('아무것도 선택하지 않았으면 placeholder 안내 문구를 표시한다', () => {
+    const { getByText } = render(
+      <SpecialtiesDropdown items={defaultItems} placeholder="특기를 선택해주세요" />
+    );
+
+    expect(getByText('특기를 선택해주세요')).toBeTruthy();
+  });
+
+  it('하나라도 선택하면 placeholder 안내 문구가 사라진다', () => {
+    const { getByText, queryByText } = render(
+      <SpecialtiesDropdown items={defaultItems} placeholder="특기를 선택해주세요" />
+    );
+
+    fireEvent.press(getByText('수영'));
+
+    expect(queryByText('특기를 선택해주세요')).toBeNull();
+  });
+
+  it('칩을 누르면 onSelect가 선택된 항목 배열과 함께 호출된다', () => {
     const mockOnSelect = jest.fn();
     const { getByText } = render(
       <SpecialtiesDropdown items={defaultItems} onSelect={mockOnSelect} />
     );
 
-    fireEvent.press(getByText('선택해주세요'));
     fireEvent.press(getByText('수영'));
 
     expect(mockOnSelect).toHaveBeenCalledWith(['수영']);
   });
 
-  it('selectedItems prop으로 초기 선택 항목을 설정한다', () => {
+  it('선택된 칩을 다시 누르면 선택이 해제된다', () => {
+    const mockOnSelect = jest.fn();
     const { getByText } = render(
+      <SpecialtiesDropdown items={defaultItems} onSelect={mockOnSelect} />
+    );
+
+    fireEvent.press(getByText('수영'));
+    fireEvent.press(getByText('수영'));
+
+    expect(mockOnSelect).toHaveBeenLastCalledWith([]);
+  });
+
+  it('selectedItems prop으로 초기 선택 항목을 표시한다(체크 아이콘 노출)', () => {
+    const { getByText, getAllByTestId } = render(
       <SpecialtiesDropdown items={defaultItems} selectedItems={['요가']} onSelect={jest.fn()} />
     );
 
     expect(getByText('요가')).toBeTruthy();
+    expect(getAllByTestId('check-icon')).toHaveLength(1);
   });
 
-  it('allowCustomInput이 true이면 "직접 입력..." 항목이 표시된다', () => {
+  it('allowCustomInput이 true이면 "직접 입력" 칩이 표시된다', () => {
     const { getByText } = render(<SpecialtiesDropdown items={defaultItems} allowCustomInput />);
 
-    fireEvent.press(getByText('선택해주세요'));
-
-    expect(getByText('직접 입력...')).toBeTruthy();
+    expect(getByText('직접 입력')).toBeTruthy();
   });
 
-  it('"직접 입력..." 클릭 시 커스텀 입력 필드가 활성화된다', () => {
+  it('allowCustomInput이 false이면 "직접 입력" 칩이 표시되지 않는다', () => {
+    const { queryByText } = render(<SpecialtiesDropdown items={defaultItems} />);
+
+    expect(queryByText('직접 입력')).toBeNull();
+  });
+
+  it('"직접 입력" 클릭 시 커스텀 입력 필드가 활성화된다', () => {
     const { getByText, getByPlaceholderText } = render(
       <SpecialtiesDropdown items={defaultItems} allowCustomInput />
     );
 
-    fireEvent.press(getByText('선택해주세요'));
-    fireEvent.press(getByText('직접 입력...'));
+    fireEvent.press(getByText('직접 입력'));
 
-    expect(getByPlaceholderText('새로운 특기 입력')).toBeTruthy();
+    expect(getByPlaceholderText('새로운 특기')).toBeTruthy();
   });
 
-  it('두 번 클릭하면 드롭다운이 토글된다', () => {
-    const { getByText, queryByText } = render(<SpecialtiesDropdown items={defaultItems} />);
+  it('커스텀 입력을 제출하면 새 칩으로 추가되고 onSelect가 호출된다', () => {
+    const mockOnSelect = jest.fn();
+    const { getByText, getByPlaceholderText } = render(
+      <SpecialtiesDropdown items={defaultItems} allowCustomInput onSelect={mockOnSelect} />
+    );
 
-    const trigger = getByText('선택해주세요');
-    fireEvent.press(trigger);
-    expect(getByText('수영')).toBeTruthy();
+    fireEvent.press(getByText('직접 입력'));
+    fireEvent.changeText(getByPlaceholderText('새로운 특기'), '독서');
+    fireEvent(getByPlaceholderText('새로운 특기'), 'onSubmitEditing');
 
-    fireEvent.press(trigger);
-    expect(queryByText('수영')).toBeNull();
+    expect(mockOnSelect).toHaveBeenCalledWith(['독서']);
+    expect(getByText('독서')).toBeTruthy();
   });
 });
