@@ -139,5 +139,23 @@ describe('useGetReviews', () => {
         expect(queryClient.getQueryState(['reviews', 'toss', null])).toBeDefined()
       );
     });
+
+    it('options.enabled가 false이면 조회하지 않는다(비활성 탭 조회 제한)', () => {
+      const { result } = renderHookWithProviders(() =>
+        useGetReviews('toss', undefined, { enabled: false })
+      );
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(mockGetTossReview).not.toHaveBeenCalled();
+    });
+
+    it('options를 생략하면 기존과 동일하게 조회한다(하위 호환)', async () => {
+      mockGetTossReview.mockResolvedValue([]);
+
+      const { result } = renderHookWithProviders(() => useGetReviews('toss'));
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(mockGetTossReview).toHaveBeenCalled();
+    });
   });
 });
