@@ -59,7 +59,7 @@ function SigninForm({
               hitSlop={linkHitSlop}
               className="px-2 py-2"
               onPress={() => router.push('/findNickname')}>
-              <Text className="text-sm text-gray-500 underline">별칭 찾기</Text>
+              <Text className="text-body4 text-gray-500 underline">별칭 찾기</Text>
             </TouchableOpacity>
             <TouchableOpacity
               testID="SigninForm-reset-password-link"
@@ -67,7 +67,7 @@ function SigninForm({
               hitSlop={linkHitSlop}
               className="px-2 py-2"
               onPress={() => router.push('/resetPassword')}>
-              <Text className="text-sm text-gray-500 underline">비밀번호 변경하기</Text>
+              <Text className="text-body4 text-gray-500 underline">비밀번호 변경하기</Text>
             </TouchableOpacity>
           </View>
         </View>
