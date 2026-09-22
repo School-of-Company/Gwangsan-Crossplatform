@@ -12,6 +12,10 @@ jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSignupFormField: jest.fn(),
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
+}));
+
 jest.mock('@/shared/assets/svg/CheckIcon', () => {
   const React = require('react');
   return { __esModule: true, default: () => React.createElement('View', null) };

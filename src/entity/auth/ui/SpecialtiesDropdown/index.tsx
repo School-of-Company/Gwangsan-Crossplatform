@@ -1,7 +1,8 @@
 import Icon from '@expo/vector-icons/Ionicons';
-import { Text, TouchableOpacity, View, TextInput } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useMultiSelect } from '../../model/useMultiSelect';
 import { useCustomInput } from '../../model/useCustomInput';
+import { CustomInputCard } from '../CustomInputCard';
 
 interface SpecialtiesDropdownProps<T extends string> {
   label?: string;
@@ -54,35 +55,29 @@ export default function SpecialtiesDropdown<T extends string>({
           );
         })}
 
-        {allowCustomInput && !customInput.isAddingCustomItem && (
+        {allowCustomInput && (
           <TouchableOpacity
-            onPress={() => customInput.activateCustomInput()}
+            onPress={customInput.activateCustomInput}
             className="flex-row items-center gap-1.5 rounded-full border border-dashed border-gray-300 bg-white px-4 py-2.5">
             <Icon name="add" size={16} color="#0075C2" />
             <Text className="text-body5 text-[#0075C2]">직접 입력</Text>
           </TouchableOpacity>
         )}
-
-        {allowCustomInput && customInput.isAddingCustomItem && (
-          <View className="flex-row items-center gap-1.5 rounded-full border border-main-500 bg-white py-1.5 pl-4 pr-1.5">
-            <TextInput
-              ref={customInput.customInputRef}
-              className="min-w-[64px] text-body5"
-              placeholder="새로운 특기"
-              value={customInput.customItemText}
-              onChangeText={customInput.updateCustomItemText}
-              onSubmitEditing={customInput.handleSubmitCustomItem}
-              autoFocus
-            />
-            <TouchableOpacity className="p-1" onPress={customInput.handleSubmitCustomItem}>
-              <Icon name="checkmark-circle" size={22} color="#0075C2" />
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
       {multiSelect.selectedItems.length === 0 && placeholder && (
         <Text className="text-caption text-gray-500">{placeholder}</Text>
+      )}
+
+      {allowCustomInput && (
+        <CustomInputCard
+          isVisible={customInput.isAddingCustomItem}
+          placeholder="예: 목공, 사진 촬영"
+          onSubmit={customInput.handleSubmitCustomItem}
+          onClose={customInput.deactivateCustomInput}
+          inputRef={customInput.customInputRef}
+          onOpenAnimationComplete={customInput.focusInput}
+        />
       )}
     </View>
   );
