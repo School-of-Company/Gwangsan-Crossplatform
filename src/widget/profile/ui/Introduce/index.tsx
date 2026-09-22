@@ -9,7 +9,7 @@ export default function Introduce({ specialty, introduce }: IntroduceProps) {
   return (
     <View className="px-6">
       <Text className="mb-6 text-titleSmall">소개</Text>
-      <View className="mb-3 flex-row gap-3">
+      <View testID="introduce-specialty-list" className="mb-3 flex-row flex-wrap gap-3">
         {specialty &&
           specialty.length > 0 &&
           specialty.map((v, i) => {

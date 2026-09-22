@@ -23,6 +23,23 @@ describe('Introduce', () => {
     expect(getByText('수리')).toBeTruthy();
   });
 
+  it('specialty가 5개를 넘어도 모두 렌더링한다', () => {
+    const specialty = ['목공', '요리', '수리', '청소', '운전', '텃밭'];
+    const { getByText } = render(<Introduce specialty={specialty} />);
+
+    specialty.forEach((v) => expect(getByText(v)).toBeTruthy());
+  });
+
+  it('특기 태그 컨테이너가 줄바꿈되도록 flexWrap이 적용된다', () => {
+    const { getByTestId } = render(<Introduce specialty={['목공', '요리']} />);
+
+    // NativeWind는 jest 환경에서 className을 style로 변환하지 않으므로 클래스 자체를 검증한다.
+    const list = getByTestId('introduce-specialty-list');
+
+    expect(list.props.className).toContain('flex-row');
+    expect(list.props.className).toContain('flex-wrap');
+  });
+
   it('specialty가 없으면 특기 태그를 렌더링하지 않는다', () => {
     const { queryByText } = render(<Introduce />);
 
