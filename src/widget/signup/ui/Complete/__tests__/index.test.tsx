@@ -7,7 +7,7 @@ import { signup } from '~/entity/auth/api/signup';
 import Complete from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { navigate: jest.fn() },
+  router: { navigate: jest.fn(), replace: jest.fn() },
 }));
 
 jest.mock('react-native-toast-message', () => ({
@@ -21,6 +21,7 @@ jest.mock('~/entity/auth/api/signup', () => ({
 
 const mockSignup = jest.mocked(signup);
 const mockRouterNavigate = jest.mocked(router.navigate);
+const mockRouterReplace = jest.mocked(router.replace);
 const mockToastShow = jest.mocked(Toast.show);
 
 const sampleFormData = {
@@ -108,7 +109,7 @@ describe('Complete — 가입 실패', () => {
     );
   });
 
-  it('"다시 시도" 클릭 시 스토어를 초기화하고 /onboarding으로 이동한다', async () => {
+  it('"다시 시도" 클릭 시 입력했던 정보를 유지한 채 추천인 입력 단계로 이동한다', async () => {
     mockSignup.mockRejectedValue(new Error('실패'));
 
     const { getByText } = render(<Complete />);
@@ -117,7 +118,7 @@ describe('Complete — 가입 실패', () => {
 
     fireEvent.press(getByText('다시 시도'));
 
-    expect(mockRouterNavigate).toHaveBeenCalledWith('/onboarding');
-    expect(useSignupStore.getState().formData.name).toBe('');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/signup/recommender');
+    expect(useSignupStore.getState().formData.name).toBe('홍길동');
   });
 });
