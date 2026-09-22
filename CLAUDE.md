@@ -40,3 +40,14 @@ EXPO_PUBLIC_SENTRY_DSN / SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN
 `ci.yml` lint+tsc+test on PR → `main`/`develop`.
 `test-ios.yml` — Detox E2E (PR → `main` only, or `/run-e2e` comment on any PR).
 `ios_cd.yml` / `android_cd.yml` — EAS cloud builds.
+`pr-template-check.yml` — fails the PR if the body is missing a filled-in `## 💡 PR 요약`
+section (bots exempted).
+
+## PR Description
+
+Every PR body (written by a human, Claude Code, or any other tool) MUST follow
+`.github/pull_request_template.md` (`## 💡 PR 요약`, `## 📋 작업 내용`, `## 🤝 리뷰 시 참고사항`
+— only PR 요약 is required, the other two may be deleted if unused). This is enforced by
+`pr-template-check.yml`, not just a suggestion. When creating a PR here, use the `/write-pr`
+command, or otherwise build the `gh pr create --body` content from that template — never a
+free-form structure.
