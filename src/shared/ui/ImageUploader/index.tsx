@@ -253,7 +253,10 @@ const ImageUploader = ({
 
   return (
     <View>
-      <Text className="mb-2 text-lg text-black">{title}</Text>
+      <View className="mb-2 flex-row items-center justify-between">
+        <Text className="text-lg text-black">{title}</Text>
+        <Text className="text-sm text-gray-500">{`${images.length}/${maxImages}`}</Text>
+      </View>
       <View className="flex-row flex-wrap items-center gap-3">
         {images.map((uri, idx) => {
           const status = getImageStatus(uri);
