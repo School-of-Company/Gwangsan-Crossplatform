@@ -1,4 +1,5 @@
 import React from 'react';
+import { Animated } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import SpecialtiesDropdown from '../index';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
@@ -159,22 +160,38 @@ describe('SpecialtiesDropdown', () => {
   });
 
   it('추가하기 버튼을 누르면 새 칩으로 추가되고 onSelect가 호출되며 카드가 닫힌다', async () => {
-    const mockOnSelect = jest.fn();
-    const { getByText, getByPlaceholderText, queryByPlaceholderText } = renderDropdown(
-      <SpecialtiesDropdown items={defaultItems} allowCustomInput onSelect={mockOnSelect} />
-    );
+    // CustomInputCard의 닫힘 애니메이션은 실제 300ms 타이머로 진행된다. 전체 스위트가
+    // 병렬로 도는 coverage CI에서는 CPU 경합 때문에 애니메이션이 끝나는 시점이
+    // 들쭉날쭉해져 실타이머에 의존하면 간헐적으로 실패한다. Animated.timing이 즉시
+    // 끝나도록 대체해 타이밍이 아니라 로직(언마운트 여부)만 검증한다.
+    const timingSpy = jest.spyOn(Animated, 'timing').mockImplementation(((
+      value: Animated.Value,
+      config: Animated.TimingAnimationConfig
+    ) => ({
+      start: (callback?: Animated.EndCallback) => {
+        value.setValue(config.toValue as number);
+        callback?.({ finished: true });
+      },
+      stop: () => {},
+      reset: () => {},
+    })) as typeof Animated.timing);
 
-    fireEvent.press(getByText('직접 입력'));
-    fireEvent.changeText(getByPlaceholderText('예: 목공, 사진 촬영'), '독서');
-    fireEvent.press(getByText('추가하기'));
+    try {
+      const mockOnSelect = jest.fn();
+      const { getByText, getByPlaceholderText, queryByPlaceholderText } = renderDropdown(
+        <SpecialtiesDropdown items={defaultItems} allowCustomInput onSelect={mockOnSelect} />
+      );
 
-    expect(mockOnSelect).toHaveBeenCalledWith(['독서']);
-    expect(getByText('독서')).toBeTruthy();
-    // CustomInputCard의 닫힘 애니메이션(300ms 실타이머)이 끝나야 언마운트되므로,
-    // coverage 계측 등으로 느려진 CI 환경까지 감안해 기본 타임아웃(1000ms)보다 여유를 둔다.
-    await waitFor(() => expect(queryByPlaceholderText('예: 목공, 사진 촬영')).toBeNull(), {
-      timeout: 3000,
-    });
+      fireEvent.press(getByText('직접 입력'));
+      fireEvent.changeText(getByPlaceholderText('예: 목공, 사진 촬영'), '독서');
+      fireEvent.press(getByText('추가하기'));
+
+      expect(mockOnSelect).toHaveBeenCalledWith(['독서']);
+      expect(getByText('독서')).toBeTruthy();
+      await waitFor(() => expect(queryByPlaceholderText('예: 목공, 사진 촬영')).toBeNull());
+    } finally {
+      timingSpy.mockRestore();
+    }
   });
 
   it('입력창에서 제출(엔터)해도 새 칩으로 추가된다', () => {
