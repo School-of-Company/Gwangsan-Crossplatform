@@ -324,21 +324,17 @@ describe('SellingPageView', () => {
   });
 
   it('예약 중인 게시글은 "삭제하기"를 눌러도 확인창이 뜨지 않고 안내 Toast를 표시한다', () => {
-    mockUseGetMyPosts.mockReturnValue({
-      data: [
-        {
-          id: 1,
-          title: '판매중글',
-          type: 'OBJECT',
-          mode: 'GIVER',
-          gwangsan: 3,
-          isCompleted: false,
-          isReserved: true,
-        },
-      ],
-      error: null,
-      isError: false,
-    });
+    setSellingPosts([
+      {
+        id: 1,
+        title: '판매중글',
+        type: 'OBJECT',
+        mode: 'GIVER',
+        gwangsan: 3,
+        isCompleted: false,
+        isReserved: true,
+      },
+    ]);
 
     const { getByTestId, getByText, queryByText } = renderWithProviders(<SellingPageView />);
 
