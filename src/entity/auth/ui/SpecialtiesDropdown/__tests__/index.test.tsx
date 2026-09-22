@@ -170,7 +170,11 @@ describe('SpecialtiesDropdown', () => {
 
     expect(mockOnSelect).toHaveBeenCalledWith(['독서']);
     expect(getByText('독서')).toBeTruthy();
-    await waitFor(() => expect(queryByPlaceholderText('예: 목공, 사진 촬영')).toBeNull());
+    // CustomInputCard의 닫힘 애니메이션(300ms 실타이머)이 끝나야 언마운트되므로,
+    // coverage 계측 등으로 느려진 CI 환경까지 감안해 기본 타임아웃(1000ms)보다 여유를 둔다.
+    await waitFor(() => expect(queryByPlaceholderText('예: 목공, 사진 촬영')).toBeNull(), {
+      timeout: 3000,
+    });
   });
 
   it('입력창에서 제출(엔터)해도 새 칩으로 추가된다', () => {
