@@ -4,7 +4,7 @@ import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { SearchIcon } from '@/shared/assets/svg/SearchIcon';
-import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { DONG } from '@/shared/consts/dong';
 
@@ -26,6 +26,7 @@ export default function DongStep() {
     setSearchText(selectedDong);
     setShowResults(false);
     if (error) setError(null);
+    Keyboard.dismiss();
   };
 
   const handleNext = () => {
