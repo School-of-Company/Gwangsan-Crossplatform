@@ -1,4 +1,5 @@
 import React from 'react';
+import { Keyboard } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
@@ -77,6 +78,16 @@ describe('DongStep — 검색 및 선택', () => {
 
     expect(getByPlaceholderText('동네를 검색해주세요').props.value).toBe('평동');
     expect(queryByText('첨단1동')).toBeNull();
+  });
+
+  it('동네를 선택하면 키보드가 내려간다', () => {
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss');
+    const { getByPlaceholderText, getByText } = render(<DongStep />);
+
+    fireEvent.changeText(getByPlaceholderText('동네를 검색해주세요'), '평');
+    fireEvent.press(getByText('평동'));
+
+    expect(dismissSpy).toHaveBeenCalled();
   });
 });
 
