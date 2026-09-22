@@ -32,6 +32,7 @@ import {
 } from '~/shared/api/kakaoLocalSearch';
 import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
 import { logger } from '~/shared/lib/logger';
+import { formatDisplayAddress } from '~/shared/lib/formatAddress';
 import { KakaoMapWebView } from '~/view/chat/ui/ReservationMapPage/KakaoMapWebView';
 import { ReservationPlaceNameSheet } from '~/view/chat/ui/ReservationPlaceNameSheet';
 
@@ -307,7 +308,7 @@ export function ReservationMapPage() {
                       {place.place_name}
                     </Text>
                     <Text className="caption text-gray-500" numberOfLines={1}>
-                      {place.road_address_name || place.address_name}
+                      {formatDisplayAddress(place.road_address_name || place.address_name)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -369,7 +370,7 @@ export function ReservationMapPage() {
                 <Text className="caption text-gray-500" numberOfLines={2}>
                   {isLoadingNearby
                     ? '주소를 확인하는 중...'
-                    : currentAddress || '주소를 찾을 수 없어요.'}
+                    : formatDisplayAddress(currentAddress) || '주소를 찾을 수 없어요.'}
                 </Text>
               </View>
               <View className="rounded-full bg-gray-200 px-4 py-2">
@@ -377,49 +378,46 @@ export function ReservationMapPage() {
               </View>
             </TouchableOpacity>
 
+            {/* 지도 하단 패널은 위쪽 지도 View와 flex-1 형제 관계라, 재조회(refetch) 중에
+                여기 높이가 잠깐이라도 바뀌면 지도가 그만큼 늘었다 줄었다 하며 움직이는
+                것처럼 보인다. 그래서 재조회 중에도 이전 목록 위에 스피너를 더 얹지 않고
+                그대로 유지한다 — 로딩 중이라는 건 위 주소 캡션이 이미 알려준다. */}
             {isLoadingNearby && !hasLoadedNearbyOnce ? (
               <NearbyPlacesSkeleton />
             ) : nearbyPlaces.length > 0 ? (
-              <>
-                {nearbyPlaces.map((place, index) => (
-                  <TouchableOpacity
-                    key={place.id}
-                    className={`flex-row items-center gap-3 px-4 py-3 ${
-                      index < nearbyPlaces.length - 1 ? 'border-b border-gray-100' : ''
-                    }`}
-                    onPress={() => handleSelectNearbyPlace(place)}>
-                    <View className="h-10 w-10 items-center justify-center">
-                      <Icon name="location" size={28} color={MARKER_COLOR} />
-                    </View>
-                    <View className="flex-1 gap-1">
-                      <View className="flex-row items-center gap-1">
-                        <Text className="text-body5 font-semibold text-gray-900" numberOfLines={1}>
-                          {place.place_name}
-                        </Text>
-                        <Text className="caption text-gray-400" numberOfLines={1}>
-                          {[
-                            getCategoryLabel(place.category_name),
-                            formatDistanceLabel(place.distance),
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </Text>
-                      </View>
-                      <Text className="caption text-gray-500" numberOfLines={1}>
-                        {place.road_address_name || place.address_name}
+              nearbyPlaces.map((place, index) => (
+                <TouchableOpacity
+                  key={place.id}
+                  className={`flex-row items-center gap-3 px-4 py-3 ${
+                    index < nearbyPlaces.length - 1 ? 'border-b border-gray-100' : ''
+                  }`}
+                  onPress={() => handleSelectNearbyPlace(place)}>
+                  <View className="h-10 w-10 items-center justify-center">
+                    <Icon name="location" size={28} color={MARKER_COLOR} />
+                  </View>
+                  <View className="flex-1 gap-1">
+                    <View className="flex-row items-center gap-1">
+                      <Text className="text-body5 font-semibold text-gray-900" numberOfLines={1}>
+                        {place.place_name}
+                      </Text>
+                      <Text className="caption text-gray-400" numberOfLines={1}>
+                        {[
+                          getCategoryLabel(place.category_name),
+                          formatDistanceLabel(place.distance),
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </Text>
                     </View>
-                    <View className="rounded-full bg-gray-200 px-4 py-2">
-                      <Text className="label text-gray-700">선택</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-                {isLoadingNearby && (
-                  <View testID="nearby-places-refetch-spinner" className="items-center py-3">
-                    <ActivityIndicator size="small" color={MARKER_COLOR} />
+                    <Text className="caption text-gray-500" numberOfLines={1}>
+                      {formatDisplayAddress(place.road_address_name || place.address_name)}
+                    </Text>
                   </View>
-                )}
-              </>
+                  <View className="rounded-full bg-gray-200 px-4 py-2">
+                    <Text className="label text-gray-700">선택</Text>
+                  </View>
+                </TouchableOpacity>
+              ))
             ) : isLoadingNearby ? (
               <View testID="nearby-places-refetch-spinner" className="items-center py-3">
                 <ActivityIndicator size="small" color={MARKER_COLOR} />
@@ -434,7 +432,7 @@ export function ReservationMapPage() {
       <ReservationPlaceNameSheet
         isVisible={isPlaceNameSheetVisible}
         onClose={() => setIsPlaceNameSheetVisible(false)}
-        address={currentAddress}
+        address={formatDisplayAddress(currentAddress)}
         placeName={placeNameDraft}
         onChangePlaceName={setPlaceNameDraft}
         onConfirm={handleConfirmPlaceName}

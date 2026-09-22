@@ -11,6 +11,7 @@ import { ReservationCalendarSheet } from '~/view/chat/ui/ReservationCalendarShee
 import { ReservationTimeSheet } from '~/view/chat/ui/ReservationTimeSheet';
 import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
 import { logger } from '~/shared/lib/logger';
+import { formatDisplayAddress } from '~/shared/lib/formatAddress';
 import type { RoomId } from '~/shared/types/chatType';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -134,7 +135,7 @@ export default function ReservationPage() {
                 <Text numberOfLines={1}>{placeName || '장소를 선택해주세요'}</Text>
                 {hasLocation ? (
                   <Text className="caption text-gray-500" numberOfLines={1}>
-                    {address}
+                    {formatDisplayAddress(address)}
                   </Text>
                 ) : null}
               </View>
