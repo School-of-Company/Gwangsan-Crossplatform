@@ -1,4 +1,3 @@
-import CheckIcon from '@/shared/assets/svg/CheckIcon';
 import Icon from '@expo/vector-icons/Ionicons';
 import { Text, TouchableOpacity, View, TextInput } from 'react-native';
 import { useMultiSelect } from '../../model/useMultiSelect';
@@ -41,11 +40,13 @@ export default function SpecialtiesDropdown<T extends string>({
           return (
             <TouchableOpacity
               key={item}
+              testID={`specialty-chip-${item}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
               onPress={() => multiSelect.handleSelect(item)}
-              className={`flex-row items-center gap-1.5 rounded-full border px-4 py-2.5 ${
+              className={`rounded-full border px-4 py-2.5 ${
                 isSelected ? 'border-main-500 bg-main-500' : 'border-gray-200 bg-white'
               }`}>
-              {isSelected && <CheckIcon color="#fff" />}
               <Text className={`text-body5 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                 {item}
               </Text>

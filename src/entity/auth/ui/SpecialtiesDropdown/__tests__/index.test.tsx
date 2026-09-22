@@ -6,10 +6,6 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
   const React = require('react');
   return { __esModule: true, default: () => React.createElement('View', null) };
 });
-jest.mock('@/shared/assets/svg/CheckIcon', () => {
-  const React = require('react');
-  return { __esModule: true, default: () => React.createElement('View', { testID: 'check-icon' }) };
-});
 
 const defaultItems = ['수영', '요가', '필라테스'];
 
@@ -69,13 +65,14 @@ describe('SpecialtiesDropdown', () => {
     expect(mockOnSelect).toHaveBeenLastCalledWith([]);
   });
 
-  it('selectedItems prop으로 초기 선택 항목을 표시한다(체크 아이콘 노출)', () => {
-    const { getByText, getAllByTestId } = render(
+  it('selectedItems prop으로 초기 선택 항목을 표시하고, 선택된 칩만 selected 상태로 표시된다', () => {
+    const { getByText, getByTestId } = render(
       <SpecialtiesDropdown items={defaultItems} selectedItems={['요가']} onSelect={jest.fn()} />
     );
 
     expect(getByText('요가')).toBeTruthy();
-    expect(getAllByTestId('check-icon')).toHaveLength(1);
+    expect(getByTestId('specialty-chip-요가').props.accessibilityState.selected).toBe(true);
+    expect(getByTestId('specialty-chip-수영').props.accessibilityState.selected).toBe(false);
   });
 
   it('allowCustomInput이 true이면 "직접 입력" 칩이 표시된다', () => {
