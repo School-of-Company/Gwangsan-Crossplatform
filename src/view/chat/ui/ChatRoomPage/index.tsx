@@ -170,6 +170,7 @@ export default function ChatRoomPage() {
     useChatUIState({
       roomId,
       otherUserInfo,
+      myNickname: myInfo?.nickname,
       hasTradeRequest,
       shouldShowButtons,
       onOpenReservationModal: handleOpenReservationConfirm,
