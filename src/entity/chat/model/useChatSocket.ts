@@ -46,8 +46,11 @@ export const useChatSocket = ({
 
   const [isBlockedByOtherUser, setIsBlockedByOtherUser] = useState(false);
   // 방을 옮기면 이전 방에서의 차단 안내가 새 방까지 이어지지 않도록 초기화한다.
+  // roomId가 없는 라우트 파라미터에서 Number(id)로 NaN이 나올 수 있는데, NaN !== NaN은
+  // 항상 true라 일반 비교로는 이 렌더 중 상태 업데이트가 무한 반복된다("Too many
+  // re-renders"). Object.is는 NaN도 자기 자신과 같다고 판정해 그 무한루프를 막는다.
   const [blockStateRoomId, setBlockStateRoomId] = useState(currentRoomId);
-  if (currentRoomId !== blockStateRoomId) {
+  if (!Object.is(currentRoomId, blockStateRoomId)) {
     setBlockStateRoomId(currentRoomId);
     setIsBlockedByOtherUser(false);
   }
