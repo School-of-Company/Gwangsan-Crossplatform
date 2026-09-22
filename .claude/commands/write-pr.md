@@ -1,5 +1,9 @@
 Write a PR description for the current branch against the base branch (default: `develop`). Do NOT push or create the PR — output only.
 
+This command's output structure is a copy of `.github/pull_request_template.md`, which is
+the required, CI-enforced PR template for this repo (see "PR Template Check" workflow). If
+that file changes, update this command to match.
+
 ## Steps
 
 ### 1. Gather information
@@ -37,15 +41,18 @@ Print exactly this block (ready to copy-paste):
 
 **Body:**
 ```markdown
-## Summary
+## 💡 PR 요약
 
-- <bullet: what changed and why>
+- <what changed and why, focused on why>
+
+## 📋 작업 내용
+
+- <bullet: concrete work done>
 - ...
 
-## Test plan
+## 🤝 리뷰 시 참고사항
 
-- [ ] <concrete thing to verify>
-- [ ] ...
+- <trade-offs, open questions, or things worth flagging to reviewers — omit this section entirely if there's nothing to add>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
@@ -54,6 +61,6 @@ Print exactly this block (ready to copy-paste):
 
 Rules:
 - Title must follow `<type>: <summary>` format (type: feat / fix / chore / refactor / docs / test)
-- Summary bullets focus on **why**, not just what
-- Test plan items must be concrete and checkable — no vague "verify it works"
+- `## 💡 PR 요약` is always required and must never be left as a placeholder — CI (`pr-template-check.yml`) fails the PR otherwise
+- `## 📋 작업 내용` and `## 🤝 리뷰 시 참고사항` are optional — omit a section entirely if there's nothing real to put in it, don't leave placeholder text
 - Do not push, create, or open a PR — output only

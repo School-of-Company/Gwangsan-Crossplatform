@@ -1,0 +1,42 @@
+name: PR Template Check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches: [main, develop]
+
+jobs:
+  check-template:
+    name: Check PR Description Template
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]' && github.actor != 'dependabot[bot]'
+    steps:
+      - name: Verify PR body follows .github/pull_request_template.md
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const heading = '## 💡 PR 요약';
+
+            if (!body.includes(heading)) {
+              core.setFailed(
+                `PR 설명에 "${heading}" 섹션이 없습니다.\n` +
+                'PR 설명은 .github/pull_request_template.md 를 기반으로 작성해야 합니다 ' +
+                '(사람이 직접 작성하든 AI(Claude Code 등)로 생성하든 동일하게 적용됩니다). ' +
+                '다른 섹션(작업 내용, 리뷰 시 참고사항)은 필요 없으면 지워도 되지만, PR 요약은 필수입니다.'
+              );
+              return;
+            }
+
+            const match = body.match(/## 💡 PR 요약\s*\n([\s\S]*?)(\n## |$)/);
+            const summary = (match?.[1] || '')
+              .replace(/^>.*$/gm, '')       // 안내용 블록쿼트 제거
+              .replace(/\{변경사항\}/g, '') // 미작성 플레이스홀더 제거
+              .replace(/^-\s*$/gm, '')      // 빈 불릿 제거
+              .trim();
+
+            if (!summary) {
+              core.setFailed(
+                `"${heading}" 섹션이 비어 있습니다. 변경 내용을 간략히 작성해주세요.`
+              );
+            }
