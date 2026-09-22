@@ -98,6 +98,14 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const actionHandlers = {
     onDelete: useCallback(() => {
       if (!data) return;
+      if (data.isReserved) {
+        Toast.show({
+          type: 'error',
+          text1: '삭제할 수 없어요',
+          text2: '예약 중인 게시글은 삭제할 수 없습니다. 예약을 취소한 후 다시 시도해 주세요.',
+        });
+        return;
+      }
       setIsDeleteAlertVisible(true);
     }, [data]),
     onConfirmDelete: useCallback(() => {

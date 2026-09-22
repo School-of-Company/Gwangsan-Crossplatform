@@ -337,6 +337,15 @@ export default function SellingPageView() {
 
   const handleDeletePress = useCallback(() => {
     if (!actionTargetPost) return;
+    if (actionTargetPost.isReserved) {
+      setActionTargetPost(null);
+      Toast.show({
+        type: 'error',
+        text1: '삭제할 수 없어요',
+        text2: '예약 중인 게시글은 삭제할 수 없습니다. 예약을 취소한 후 다시 시도해 주세요.',
+      });
+      return;
+    }
     setDeleteTargetPostId(actionTargetPost.id);
     setActionTargetPost(null);
   }, [actionTargetPost]);
@@ -397,7 +406,13 @@ export default function SellingPageView() {
           </View>
           <View className="overflow-hidden rounded-2xl bg-gray-50">
             <ActionSheetRow
-              label={deletePostMutation.isPending ? '삭제 중...' : '삭제하기'}
+              label={
+                deletePostMutation.isPending
+                  ? '삭제 중...'
+                  : actionTargetPost?.isReserved
+                    ? '예약 중에는 삭제할 수 없어요'
+                    : '삭제하기'
+              }
               labelClassName="text-error-500"
               disabled={deletePostMutation.isPending}
               onPress={handleDeletePress}
