@@ -93,13 +93,13 @@ describe('PostPageContent', () => {
       expect(getByTestId('mini-profile')).toBeTruthy();
     });
 
-    it('판매자 프로필을 커버 이미지 바로 아래가 아니라 제목/본문 다음에 렌더링한다', () => {
+    it('판매자 프로필을 커버 이미지 바로 아래, 제목/본문보다 먼저 렌더링한다', () => {
       const { toJSON } = render(<PostPageContent {...makeProps()} />);
       // 트리를 앞에서부터 훑어 텍스트/testID가 나온 순서가 곧 렌더 순서다.
       const order = collectRenderOrder(toJSON());
 
-      expect(order.indexOf('테스트 제목')).toBeLessThan(order.indexOf('mini-profile'));
-      expect(order.indexOf('테스트 내용입니다.')).toBeLessThan(order.indexOf('mini-profile'));
+      expect(order.indexOf('mini-profile')).toBeLessThan(order.indexOf('테스트 제목'));
+      expect(order.indexOf('mini-profile')).toBeLessThan(order.indexOf('테스트 내용입니다.'));
     });
   });
 

@@ -104,6 +104,13 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
           <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
         )}
 
+        <MiniProfile
+          nickname={data.member.nickname}
+          placeName={data.member.placeName}
+          light={data.member.light}
+          memberId={data.member.memberId}
+        />
+
         <View className="gap-6 p-6">
           <View className="flex-row items-center gap-2">
             <Text className="shrink text-titleSmall">{data.title}</Text>
@@ -116,13 +123,6 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
           <Text className="text-body3">{data.gwangsan} 광산</Text>
           <Text>{data.content}</Text>
         </View>
-
-        <MiniProfile
-          nickname={data.member.nickname}
-          placeName={data.member.placeName}
-          light={data.member.light}
-          memberId={data.member.memberId}
-        />
 
         <View className="px-6">
           <TouchableOpacity
