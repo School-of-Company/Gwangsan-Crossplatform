@@ -1,8 +1,20 @@
-import React from 'react';
-import { Image, ScrollView, Text, View, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useRef, useState } from 'react';
+import {
+  Image,
+  ScrollView,
+  Text,
+  View,
+  TouchableOpacity,
+  RefreshControl,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import MiniProfile from '~/entity/post/ui/miniProfile';
-import { Button } from '~/shared/ui';
+import { Button, SlideIndicator } from '~/shared/ui';
 import type { PostDetailResponse } from '~/entity/post/api/getItem';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface PostPageContentProps {
   readonly data: PostDetailResponse;
@@ -40,6 +52,19 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
   onReviewButtonPress,
   onRefresh,
 }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const imageScrollRef = useRef<ScrollView>(null);
+
+  const handleImageIndicatorPress = (index: number) => {
+    imageScrollRef.current?.scrollTo({ x: SCREEN_WIDTH * index, animated: true });
+    setCurrentImageIndex(index);
+  };
+
+  const handleImageScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    setCurrentImageIndex(Math.round(contentOffsetX / SCREEN_WIDTH));
+  };
+
   return (
     <View className="flex-1">
       <ScrollView
@@ -47,11 +72,34 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
         contentContainerStyle={{ paddingBottom: 24 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {data.images && data.images.length > 0 ? (
-          <Image
-            source={{ uri: data.images[0].imageUrl }}
-            className="h-[280px] w-full"
-            resizeMode="cover"
-          />
+          <View className="relative">
+            <ScrollView
+              ref={imageScrollRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleImageScrollEnd}
+              scrollEventThrottle={16}>
+              {data.images.map((image, index) => (
+                <Image
+                  key={image.imageId ?? index}
+                  source={{ uri: image.imageUrl }}
+                  style={{ width: SCREEN_WIDTH, height: 280 }}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+
+            {data.images.length > 1 && (
+              <View className="absolute bottom-4 left-0 right-0">
+                <SlideIndicator
+                  total={data.images.length}
+                  current={currentImageIndex}
+                  onPress={handleImageIndicatorPress}
+                />
+              </View>
+            )}
+          </View>
         ) : (
           <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
         )}
@@ -84,7 +132,9 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
               {isMyPost
                 ? isDeleting
                   ? '삭제 처리 중...'
-                  : '이 게시글 삭제하기'
+                  : data.isReserved
+                    ? '예약 중에는 삭제할 수 없어요'
+                    : '이 게시글 삭제하기'
                 : '이 게시글 신고하기'}
             </Text>
           </TouchableOpacity>

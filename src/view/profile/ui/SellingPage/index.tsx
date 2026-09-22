@@ -1,10 +1,13 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  FlatList,
+  ListRenderItemInfo,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -23,8 +26,8 @@ import { ProductType, TYPE } from '~/shared/types/type';
 import { deletePost } from '~/entity/post/api/deletePost';
 import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
-import { useGetMyPosts } from '../../model/useGetMyPosts';
-import { useGetPosts } from '../../model/useGetPosts';
+import { useGetSellingPosts } from '../../model/useGetSellingPosts';
+import { sellingPostsQueryKeys } from '../../model/sellingPostsQueryKeys';
 import { useGetReviews } from '~/view/reviews/model/useGetReviews';
 import type { ReviewPostType } from '~/view/reviews/model/reviewPostType';
 
@@ -199,42 +202,110 @@ const SellingPostCard = ({
   );
 };
 
+interface SellingPanelProps {
+  testIDPrefix: string;
+  posts: PostType[];
+  emptyMessage: string;
+  receivedReviews?: ReviewPostType[];
+  isReviewsLoading?: boolean;
+  isPending: boolean;
+  isRefetching: boolean;
+  isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
+  onEndReached: () => void;
+  onRetryNextPage: () => void;
+  onRefresh: () => void;
+  onMenuPress: (post: PostType) => void;
+}
+
+// 게시글이 많아질 수 있어 목록은 FlatList로 가상화하고, 끝에 닿으면 다음 페이지를
+// 이어서 받는다. 추가 로딩 실패는 목록을 비우지 않고 하단에서 재시도로 복구한다.
 const SellingPanel = memo(
   ({
+    testIDPrefix,
     posts,
     emptyMessage,
     receivedReviews,
     isReviewsLoading,
+    isPending,
+    isRefetching,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    onEndReached,
+    onRetryNextPage,
+    onRefresh,
     onMenuPress,
-  }: {
-    posts: PostType[];
-    emptyMessage: string;
-    receivedReviews?: ReviewPostType[];
-    isReviewsLoading?: boolean;
-    onMenuPress: (post: PostType) => void;
-  }) => (
-    <ScrollView
-      style={{ width: SCREEN_WIDTH }}
-      showsVerticalScrollIndicator={false}
-      nestedScrollEnabled>
-      <View className="gap-4 px-6 pb-9">
-        {posts.length > 0 ? (
-          posts.map((post) => (
-            <SellingPostCard
-              post={post}
-              receivedReviews={receivedReviews}
-              isReviewsLoading={isReviewsLoading}
-              onMenuPress={onMenuPress}
-              key={post.id}
-            />
-          ))
-        ) : (
-          <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>
-        )}
-      </View>
-    </ScrollView>
-  )
+  }: SellingPanelProps) => {
+    const renderItem = useCallback(
+      ({ item }: ListRenderItemInfo<PostType>) => (
+        <SellingPostCard
+          post={item}
+          receivedReviews={receivedReviews}
+          isReviewsLoading={isReviewsLoading}
+          onMenuPress={onMenuPress}
+        />
+      ),
+      [receivedReviews, isReviewsLoading, onMenuPress]
+    );
+
+    const renderFooter = useCallback(() => {
+      if (isFetchNextPageError) {
+        return (
+          <TouchableOpacity
+            testID={`${testIDPrefix}-retry`}
+            onPress={onRetryNextPage}
+            className="items-center rounded-lg bg-gray-50 px-5 py-3">
+            <Text className="text-label text-gray-700">
+              더 불러오지 못했습니다. 다시 시도하려면 누르세요.
+            </Text>
+          </TouchableOpacity>
+        );
+      }
+
+      if (isFetchingNextPage) {
+        return (
+          <View testID={`${testIDPrefix}-loading-more`} className="items-center py-4">
+            <ActivityIndicator color="#8FC31D" />
+          </View>
+        );
+      }
+
+      return null;
+    }, [isFetchNextPageError, isFetchingNextPage, onRetryNextPage, testIDPrefix]);
+
+    const renderEmpty = useCallback(() => {
+      if (isPending) {
+        return (
+          <View testID={`${testIDPrefix}-loading`} className="pt-20">
+            <ActivityIndicator color="#8FC31D" />
+          </View>
+        );
+      }
+
+      return <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>;
+    }, [isPending, emptyMessage, testIDPrefix]);
+
+    return (
+      <FlatList
+        testID={testIDPrefix}
+        style={{ width: SCREEN_WIDTH }}
+        data={posts}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        contentContainerStyle={{ gap: 16, paddingHorizontal: 24, paddingBottom: 36 }}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.4}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+      />
+    );
+  }
 );
+
+const keyExtractor = (post: PostType) => String(post.id);
 
 export default function SellingPageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -249,25 +320,14 @@ export default function SellingPageView() {
 
   const { data: profileData } = useGetProfile(id);
   const { data: myProfileData } = useGetMyProfile(isMe);
-  const { data: myPostsData, error: myPostsError, isError: myPostsIsError } = useGetMyPosts(isMe);
-  const {
-    data: otherPostsData,
-    error: otherPostsError,
-    isError: otherPostsIsError,
-  } = useGetPosts(id);
+  // 판매중/판매완료를 전체 받은 뒤 로컬에서 나누지 않고, completed를 서버 필터로 넘겨
+  // 탭별로 따로 커서를 관리한다. 판매중(completed=false)에는 예약중도 포함된다.
+  const sellingPostsMemberId = isMe ? undefined : id;
+  const onSaleQuery = useGetSellingPosts({ memberId: sellingPostsMemberId, completed: false });
+  const soldQuery = useGetSellingPosts({ memberId: sellingPostsMemberId, completed: true });
 
-  const postsData = isMe ? myPostsData : otherPostsData;
-  const isError = isMe ? myPostsIsError : otherPostsIsError;
-  const error = isMe ? myPostsError : otherPostsError;
-  const sellingPosts = useMemo(
-    () => (Array.isArray(postsData) ? postsData.filter((post) => post.mode === MODE.GIVER) : []),
-    [postsData]
-  );
-  const onSalePosts = useMemo(
-    () => sellingPosts.filter((post) => !post.isCompleted),
-    [sellingPosts]
-  );
-  const soldPosts = useMemo(() => sellingPosts.filter((post) => post.isCompleted), [sellingPosts]);
+  const isError = onSaleQuery.isError || soldQuery.isError;
+  const error = onSaleQuery.error ?? soldQuery.error;
   const reviewsMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
   // react-query v5의 isLoading은 isPending && isFetching이라 아직 enabled:false로
   // 대기 중인(= myInfo를 기다리는) 상태에서는 false를 반환한다. 그 시점에도 data는
@@ -280,7 +340,9 @@ export default function SellingPageView() {
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myPosts', 'current'] });
+      queryClient.invalidateQueries({ queryKey: sellingPostsQueryKeys.all });
+      // 구매 목록(PurchasedPage)은 아직 기존 전체 조회를 쓰므로 함께 무효화한다.
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
       Toast.show({
         type: 'success',
         text1: '게시글 삭제 완료',
@@ -337,6 +399,15 @@ export default function SellingPageView() {
 
   const handleDeletePress = useCallback(() => {
     if (!actionTargetPost) return;
+    if (actionTargetPost.isReserved) {
+      setActionTargetPost(null);
+      Toast.show({
+        type: 'error',
+        text1: '삭제할 수 없어요',
+        text2: '예약 중인 게시글은 삭제할 수 없습니다. 예약을 취소한 후 다시 시도해 주세요.',
+      });
+      return;
+    }
     setDeleteTargetPostId(actionTargetPost.id);
     setActionTargetPost(null);
   }, [actionTargetPost]);
@@ -372,15 +443,31 @@ export default function SellingPageView() {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleMomentumScrollEnd}>
         <SellingPanel
-          posts={onSalePosts}
+          testIDPrefix="selling-panel-onSale"
+          posts={onSaleQuery.posts}
           emptyMessage="판매 중인 게시물이 없습니다."
+          isPending={onSaleQuery.isPending}
+          isRefetching={onSaleQuery.isRefetching}
+          isFetchingNextPage={onSaleQuery.isFetchingNextPage}
+          isFetchNextPageError={onSaleQuery.isFetchNextPageError}
+          onEndReached={onSaleQuery.loadMore}
+          onRetryNextPage={onSaleQuery.retryNextPage}
+          onRefresh={onSaleQuery.refetch}
           onMenuPress={handleMenuPress}
         />
         <SellingPanel
-          posts={soldPosts}
+          testIDPrefix="selling-panel-sold"
+          posts={soldQuery.posts}
           emptyMessage="판매 완료된 게시물이 없습니다."
           receivedReviews={receivedReviews}
           isReviewsLoading={isReviewsLoading}
+          isPending={soldQuery.isPending}
+          isRefetching={soldQuery.isRefetching}
+          isFetchingNextPage={soldQuery.isFetchingNextPage}
+          isFetchNextPageError={soldQuery.isFetchNextPageError}
+          onEndReached={soldQuery.loadMore}
+          onRetryNextPage={soldQuery.retryNextPage}
+          onRefresh={soldQuery.refetch}
           onMenuPress={handleMenuPress}
         />
       </ScrollView>
@@ -397,7 +484,13 @@ export default function SellingPageView() {
           </View>
           <View className="overflow-hidden rounded-2xl bg-gray-50">
             <ActionSheetRow
-              label={deletePostMutation.isPending ? '삭제 중...' : '삭제하기'}
+              label={
+                deletePostMutation.isPending
+                  ? '삭제 중...'
+                  : actionTargetPost?.isReserved
+                    ? '예약 중에는 삭제할 수 없어요'
+                    : '삭제하기'
+              }
               labelClassName="text-error-500"
               disabled={deletePostMutation.isPending}
               onPress={handleDeletePress}

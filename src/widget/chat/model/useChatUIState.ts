@@ -7,6 +7,7 @@ import type { RoomId } from '~/shared/types/chatType';
 interface UseChatUIStateParams {
   readonly roomId: RoomId;
   readonly otherUserInfo: { nickname: string; id?: number };
+  readonly myNickname?: string;
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
   readonly onOpenReservationModal: () => void;
@@ -19,6 +20,7 @@ interface UseChatUIStateReturn {
     readonly product: any;
     readonly showButtons: boolean;
     readonly otherPartyNickname: string;
+    readonly reserverNickname?: string;
     readonly onOpenReservationModal?: () => void;
     readonly onOpenMap?: () => void;
   };
@@ -47,6 +49,7 @@ interface UseChatUIStateReturn {
 export const useChatUIState = ({
   roomId,
   otherUserInfo,
+  myNickname,
   hasTradeRequest,
   shouldShowButtons,
   onOpenReservationModal,
@@ -65,12 +68,19 @@ export const useChatUIState = ({
     roomData?.product?.reservationLatitude != null &&
     roomData?.product?.reservationLongitude != null;
 
+  // 예약은 게시글 작성자만 실행할 수 있다(product.isAuthor, 서버가 내려주기 전까지는
+  // isSeller를 fallback으로 사용). 뷰어 본인이 그 작성자라면 예약카드에는 상대방이
+  // 아니라 내 닉네임이 표시돼야 한다.
+  const isViewerReserver = Boolean(roomData?.product?.isAuthor ?? roomData?.product?.isSeller);
+  const reserverNickname = isViewerReserver ? myNickname : otherUserInfo.nickname;
+
   const tradeEmbedConfig = useMemo(
     () => ({
       shouldShow: hasTradeRequest,
       product: roomData?.product,
       showButtons: shouldShowButtons,
       otherPartyNickname: otherUserInfo.nickname,
+      reserverNickname,
       onOpenReservationModal: shouldShowButtons ? onOpenReservationModal : undefined,
       onOpenMap: hasReservationLocation ? onOpenMap : undefined,
     }),
@@ -79,6 +89,7 @@ export const useChatUIState = ({
       roomData?.product,
       shouldShowButtons,
       otherUserInfo.nickname,
+      reserverNickname,
       onOpenReservationModal,
       hasReservationLocation,
       onOpenMap,

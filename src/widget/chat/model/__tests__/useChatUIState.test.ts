@@ -160,6 +160,36 @@ describe('useChatUIState', () => {
       expect(result.current.tradeEmbedConfig.onOpenMap).toBeUndefined();
     });
 
+    it('뷰어가 게시글 작성자(isAuthor)이면 reserverNickname은 내 닉네임이다', () => {
+      setupMocks({ roomData: { product: { isAuthor: true, isSeller: false } } });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, myNickname: '나' })
+      );
+
+      expect(result.current.tradeEmbedConfig.reserverNickname).toBe('나');
+    });
+
+    it('뷰어가 게시글 작성자가 아니면 reserverNickname은 상대방 닉네임이다', () => {
+      setupMocks({ roomData: { product: { isAuthor: false, isSeller: true } } });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, myNickname: '나' })
+      );
+
+      expect(result.current.tradeEmbedConfig.reserverNickname).toBe('상대방');
+    });
+
+    it('서버가 isAuthor를 내려주지 않으면 isSeller를 기준으로 판단한다', () => {
+      setupMocks({ roomData: { product: { isSeller: true } } });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatUIState({ ...defaultProps, myNickname: '나' })
+      );
+
+      expect(result.current.tradeEmbedConfig.reserverNickname).toBe('나');
+    });
+
     it('예약 위치 좌표가 있으면 onOpenMap이 제공된다', () => {
       setupMocks({
         roomData: { product: { id: 1, reservationLatitude: 35.14, reservationLongitude: 126.79 } },

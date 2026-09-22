@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { PostPageContent } from '../index';
 
@@ -7,16 +8,20 @@ jest.mock('~/entity/post/ui/miniProfile', () => {
   return () => <View testID="mini-profile" />;
 });
 
-jest.mock('~/shared/ui', () => ({
-  Button: ({ children, onPress, disabled }: any) => {
-    const { TouchableOpacity, Text } = require('react-native');
-    return (
-      <TouchableOpacity onPress={onPress} disabled={disabled}>
-        <Text>{children}</Text>
-      </TouchableOpacity>
-    );
-  },
-}));
+jest.mock('~/shared/ui', () => {
+  const { SlideIndicator } = jest.requireActual('~/shared/ui/SlideIndicator');
+  return {
+    SlideIndicator,
+    Button: ({ children, onPress, disabled }: any) => {
+      const { TouchableOpacity, Text } = require('react-native');
+      return (
+        <TouchableOpacity onPress={onPress} disabled={disabled}>
+          <Text>{children}</Text>
+        </TouchableOpacity>
+      );
+    },
+  };
+});
 
 const makeData = (overrides = {}) => ({
   id: 1,
@@ -98,6 +103,54 @@ describe('PostPageContent', () => {
     });
   });
 
+  describe('사진 여러 장', () => {
+    const multiImageData = makeData({
+      images: [
+        { imageId: 1, imageUrl: 'https://example.com/1.jpg' },
+        { imageId: 2, imageUrl: 'https://example.com/2.jpg' },
+        { imageId: 3, imageUrl: 'https://example.com/3.jpg' },
+      ],
+    });
+
+    it('images 배열의 모든 사진을 렌더링한다', () => {
+      const { UNSAFE_getAllByType } = render(
+        <PostPageContent {...makeProps({ data: multiImageData })} />
+      );
+
+      const uris = UNSAFE_getAllByType(Image)
+        .map((node: any) => node.props.source?.uri)
+        .filter(Boolean);
+
+      expect(uris).toEqual([
+        'https://example.com/1.jpg',
+        'https://example.com/2.jpg',
+        'https://example.com/3.jpg',
+      ]);
+    });
+
+    it('사진이 2장 이상이면 슬라이드 인디케이터를 표시한다', () => {
+      const { UNSAFE_root } = render(<PostPageContent {...makeProps({ data: multiImageData })} />);
+
+      const dots = UNSAFE_root.findAll(
+        (node) =>
+          typeof node.props.className === 'string' && node.props.className.includes('rounded-full')
+      );
+      expect(dots.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('사진이 1장이면 슬라이드 인디케이터를 표시하지 않는다', () => {
+      const { UNSAFE_root } = render(<PostPageContent {...makeProps()} />);
+
+      const dots = UNSAFE_root.findAll(
+        (node) =>
+          typeof node.props.className === 'string' &&
+          (node.props.className.includes('bg-lime-500') ||
+            node.props.className.includes('bg-gray-300'))
+      );
+      expect(dots.length).toBe(0);
+    });
+  });
+
   describe('내 게시글 (isMyPost=true)', () => {
     it('"이 게시글 삭제하기"를 표시한다', () => {
       const { getByText } = render(<PostPageContent {...makeProps({ isMyPost: true })} />);
@@ -111,6 +164,16 @@ describe('PostPageContent', () => {
       );
 
       expect(getByText('삭제 처리 중...')).toBeTruthy();
+    });
+
+    it('data.isReserved가 true이면 "예약 중에는 삭제할 수 없어요"를 표시한다', () => {
+      const { getByText } = render(
+        <PostPageContent
+          {...makeProps({ isMyPost: true, data: { ...makeProps().data, isReserved: true } })}
+        />
+      );
+
+      expect(getByText('예약 중에는 삭제할 수 없어요')).toBeTruthy();
     });
 
     it('"수정하기" 버튼을 표시한다', () => {

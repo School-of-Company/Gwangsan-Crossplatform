@@ -20,6 +20,16 @@ describe('useMultiSelect', () => {
     expect(result.current.selectedItems).toEqual(['운동', '독서']);
   });
 
+  it('initialSelectedItems 중 기본 목록에 없는 항목도 allItems에 포함되어 계속 보인다', () => {
+    const { result } = renderHook(() =>
+      useMultiSelect({ items: ITEMS, initialSelectedItems: ['댄스'] })
+    );
+
+    expect(result.current.allItems).toContain('댄스');
+    expect(result.current.selectedItems).toContain('댄스');
+    expect(result.current.isSelected('댄스')).toBe(true);
+  });
+
   describe('handleSelect', () => {
     it('선택하지 않은 항목을 선택하면 selectedItems에 추가된다', () => {
       const { result } = renderHook(() => useMultiSelect({ items: ITEMS }));

@@ -77,7 +77,7 @@ export default function ChatRoomPage() {
   // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
   const { data: myReceivedReviews } = useQuery({
     queryKey: ['reviews', 'receive', 'current'],
-    queryFn: getMyReceivedReview,
+    queryFn: () => getMyReceivedReview(),
     enabled: isTradeCompleted && !!myInfo,
   });
   const tradeReview = myReceivedReviews?.find((review) => review.productId === productId);
@@ -170,6 +170,7 @@ export default function ChatRoomPage() {
     useChatUIState({
       roomId,
       otherUserInfo,
+      myNickname: myInfo?.nickname,
       hasTradeRequest,
       shouldShowButtons,
       onOpenReservationModal: handleOpenReservationConfirm,

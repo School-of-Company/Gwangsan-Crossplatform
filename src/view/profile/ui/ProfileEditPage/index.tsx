@@ -1,5 +1,5 @@
-import { View, ScrollView, ActivityIndicator } from 'react-native';
-import { KeyboardStickyView } from 'react-native-keyboard-controller';
+import { View, ActivityIndicator } from 'react-native';
+import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useState, useEffect } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
@@ -69,9 +69,10 @@ export default function ProfileEditPageView() {
     <SafeAreaView className="flex-1 bg-white">
       <Header headerTitle="내 정보 수정" />
 
-      <ScrollView
-        className="flex-1 px-6 py-4"
+      <KeyboardAwareScrollView
+        style={{ flex: 1, paddingHorizontal: 24, paddingVertical: 16 }}
         contentContainerStyle={{ paddingBottom: 200 }}
+        bottomOffset={24}
         showsVerticalScrollIndicator={false}>
         <View className="gap-6">
           <Input
@@ -99,7 +100,7 @@ export default function ProfileEditPageView() {
             maxLength={300}
           />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
         <View className="bg-white px-5 pb-3 pt-5">

@@ -124,6 +124,18 @@ describe('ImageUploader', () => {
       );
       expect(getButtons(container)).toHaveLength(2);
     });
+
+    it('현재 이미지 개수와 최대 개수를 "n/max" 형태로 표시한다', () => {
+      const { getByText } = renderWithProviders(
+        <ImageUploader images={['file://a.jpg', 'file://b.jpg']} maxImages={5} />
+      );
+      expect(getByText('2/5')).toBeTruthy();
+    });
+
+    it('이미지가 없으면 "0/max"로 표시한다', () => {
+      const { getByText } = renderWithProviders(<ImageUploader maxImages={5} />);
+      expect(getByText('0/5')).toBeTruthy();
+    });
   });
 
   describe('pickImage', () => {
@@ -185,6 +197,69 @@ describe('ImageUploader', () => {
 
       await waitFor(() => expect(onImageIdsChange).toHaveBeenCalledWith([10]));
       expect(onImagesChange).toHaveBeenCalledWith(['file://photo.jpg']);
+    });
+
+    it('같은 사진(assetId 동일)을 다시 선택하면 uri가 달라도 중복 안내를 표시하고 추가하지 않는다', async () => {
+      const mutateAsync = setupUploadMock(
+        jest.fn().mockResolvedValue({ imageId: 10, imageUrl: 'https://example.com/img.jpg' })
+      );
+      const Toast = require('react-native-toast-message');
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery
+        .mockResolvedValueOnce({
+          canceled: false,
+          assets: [{ uri: 'file://tmp-1.jpg', assetId: 'asset-1' }],
+        })
+        .mockResolvedValueOnce({
+          canceled: false,
+          assets: [{ uri: 'file://tmp-2.jpg', assetId: 'asset-1' }],
+        });
+
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onImagesChange={onImagesChange} />
+      );
+
+      fireEvent.press(getButtons(container)[0]);
+      await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+
+      onImagesChange.mockClear();
+      fireEvent.press(getButtons(container)[getButtons(container).length - 1]);
+
+      await waitFor(() =>
+        expect(Toast.show).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'error', text1: '중복된 사진' })
+        )
+      );
+      expect(mutateAsync).toHaveBeenCalledTimes(1);
+      expect(onImagesChange).not.toHaveBeenCalled();
+    });
+
+    it('assetId가 없으면 동일한 uri를 다시 선택했을 때 중복 안내를 표시한다', async () => {
+      const Toast = require('react-native-toast-message');
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [{ uri: 'file://same.jpg' }],
+      });
+
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onImagesChange={onImagesChange} />
+      );
+
+      fireEvent.press(getButtons(container)[0]);
+      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith(['file://same.jpg']));
+
+      onImagesChange.mockClear();
+      fireEvent.press(getButtons(container)[getButtons(container).length - 1]);
+
+      await waitFor(() =>
+        expect(Toast.show).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'error', text1: '중복된 사진' })
+        )
+      );
+      expect(onImagesChange).not.toHaveBeenCalled();
     });
   });
 
