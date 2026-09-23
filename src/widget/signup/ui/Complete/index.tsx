@@ -56,8 +56,9 @@ export default function Complete() {
   };
 
   const handleRetry = () => {
-    resetStore();
-    router.navigate('/onboarding');
+    hasSubmittedRef.current = false;
+    setError(null);
+    router.replace('/signup/recommender');
   };
 
   if (isLoading) {

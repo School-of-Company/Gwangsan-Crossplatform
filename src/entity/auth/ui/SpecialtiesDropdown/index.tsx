@@ -1,9 +1,8 @@
-import CheckIcon from '@/shared/assets/svg/CheckIcon';
 import Icon from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
-import { Text, TouchableOpacity, View, ScrollView, TextInput } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useMultiSelect } from '../../model/useMultiSelect';
 import { useCustomInput } from '../../model/useCustomInput';
+import { CustomInputCard } from '../CustomInputCard';
 
 interface SpecialtiesDropdownProps<T extends string> {
   label?: string;
@@ -22,8 +21,6 @@ export default function SpecialtiesDropdown<T extends string>({
   onSelect,
   allowCustomInput = false,
 }: SpecialtiesDropdownProps<T>) {
-  const [show, setShow] = useState(false);
-
   const multiSelect = useMultiSelect({
     items,
     initialSelectedItems: externalSelectedItems,
@@ -34,80 +31,53 @@ export default function SpecialtiesDropdown<T extends string>({
     onSubmit: multiSelect.addCustomItem,
   });
 
-  const handleSelect = (item: string) => {
-    if (item === '직접 입력...') {
-      customInput.activateCustomInput();
-      return;
-    }
-
-    multiSelect.handleSelect(item);
-  };
-
-  const displayText = multiSelect.displayText || placeholder || '선택해주세요';
-
   return (
-    <View className="relative flex w-full gap-2">
+    <View className="w-full gap-2">
       {label && <Text>{label}</Text>}
-      <TouchableOpacity
-        className="w-full rounded-xl border border-yellow-400 bg-white px-5 py-5"
-        onPress={() => setShow((prev) => !prev)}>
-        <View className="flex-row items-center justify-between">
-          <Text className="text-body5">{displayText}</Text>
-          <Icon name={show ? 'chevron-up' : 'chevron-down'} size={16} color="#000" />
-        </View>
-      </TouchableOpacity>
-      {show && (
-        <View className="fixed z-10 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md">
-          <ScrollView className="w-full">
-            {multiSelect.allItems.map((item) => {
-              const isSelected = multiSelect.isSelected(item);
-              return (
-                <TouchableOpacity
-                  key={item}
-                  className={`flex-row items-center px-5 py-4 ${
-                    isSelected ? 'bg-blue-50' : 'bg-white'
-                  }`}
-                  onPress={() => handleSelect(item)}>
-                  <View className="mr-3 h-8 w-8 items-center justify-center">
-                    {isSelected && <CheckIcon />}
-                  </View>
-                  <Text className="text-body5">{item}</Text>
-                </TouchableOpacity>
-              );
-            })}
 
-            {allowCustomInput && !customInput.isAddingCustomItem && (
-              <TouchableOpacity
-                className="flex-row items-center bg-white px-5 py-4"
-                onPress={() => handleSelect('직접 입력...')}>
-                <View className="mr-3 h-8 w-8 items-center justify-center">
-                  <Icon name="add-circle-outline" size={20} color="#0075C2" />
-                </View>
-                <Text className="text-body5 text-[#0075C2]">직접 입력...</Text>
-              </TouchableOpacity>
-            )}
+      <View className="flex-row flex-wrap gap-2">
+        {multiSelect.allItems.map((item) => {
+          const isSelected = multiSelect.isSelected(item);
+          return (
+            <TouchableOpacity
+              key={item}
+              testID={`specialty-chip-${item}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => multiSelect.handleSelect(item)}
+              className={`rounded-full border px-4 py-2.5 ${
+                isSelected ? 'border-main-500 bg-main-500' : 'border-gray-200 bg-white'
+              }`}>
+              <Text className={`text-body5 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                {item}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
 
-            {allowCustomInput && customInput.isAddingCustomItem && (
-              <View className="flex-row items-center bg-white px-5 py-4">
-                <View className="mr-3 h-8 w-8 items-center justify-center">
-                  <Icon name="add-circle-outline" size={20} color="#0075C2" />
-                </View>
-                <TextInput
-                  ref={customInput.customInputRef}
-                  className="flex-1 border-b border-gray-300 text-body5"
-                  placeholder="새로운 특기 입력"
-                  value={customInput.customItemText}
-                  onChangeText={customInput.updateCustomItemText}
-                  onSubmitEditing={customInput.handleSubmitCustomItem}
-                  autoFocus
-                />
-                <TouchableOpacity className="ml-2 p-2" onPress={customInput.handleSubmitCustomItem}>
-                  <Icon name="checkmark-circle" size={20} color="#0075C2" />
-                </TouchableOpacity>
-              </View>
-            )}
-          </ScrollView>
-        </View>
+        {allowCustomInput && (
+          <TouchableOpacity
+            onPress={customInput.activateCustomInput}
+            className="flex-row items-center gap-1.5 rounded-full border border-dashed border-gray-300 bg-white px-4 py-2.5">
+            <Icon name="add" size={16} color="#0075C2" />
+            <Text className="text-body5 text-[#0075C2]">직접 입력</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {multiSelect.selectedItems.length === 0 && placeholder && (
+        <Text className="text-caption text-gray-500">{placeholder}</Text>
+      )}
+
+      {allowCustomInput && (
+        <CustomInputCard
+          isVisible={customInput.isAddingCustomItem}
+          placeholder="예: 목공, 사진 촬영"
+          onSubmit={customInput.handleSubmitCustomItem}
+          onClose={customInput.deactivateCustomInput}
+          inputRef={customInput.customInputRef}
+          onOpenAnimationComplete={customInput.focusInput}
+        />
       )}
     </View>
   );

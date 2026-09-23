@@ -233,16 +233,6 @@ describe('usePostAction', () => {
   });
 
   describe('modalHandlers', () => {
-    it('openReportModal / closeReportModal이 isReportModalVisible을 토글한다', () => {
-      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
-
-      act(() => result.current.modalHandlers.openReportModal());
-      expect(result.current.isReportModalVisible).toBe(true);
-
-      act(() => result.current.modalHandlers.closeReportModal());
-      expect(result.current.isReportModalVisible).toBe(false);
-    });
-
     it('openReviewModal / closeReviewModal이 isReviewModalVisible을 토글한다', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
@@ -372,6 +362,29 @@ describe('usePostAction', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
+    it('goToReport가 productId/memberId를 붙여 신고 페이지로 이동한다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.navigationHandlers.goToReport());
+
+      expect(mockPush).toHaveBeenCalledWith('/report?productId=1&memberId=42');
+    });
+
+    it('게시글 데이터가 없으면 goToReport가 router.push를 호출하지 않는다', () => {
+      mockUseGetItem.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.navigationHandlers.goToReport());
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
     it('goToChat이 rejoinChat을 data.id로 호출한다', async () => {
       const mockRejoinChat = jest.fn().mockResolvedValue({});
       mockUseChatEntry.mockReturnValue({ rejoinChat: mockRejoinChat, isLoading: false });
@@ -449,6 +462,34 @@ describe('usePostAction', () => {
       act(() => result.current.actionHandlers.onDelete());
 
       expect(result.current.isDeleteAlertVisible).toBe(false);
+    });
+
+    it('예약 중인 게시글이면 삭제 확인창을 열지 않고 안내 Toast를 표시한다', () => {
+      setupMocks({ isReserved: true });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(false);
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '삭제할 수 없어요',
+          text2: '예약 중인 게시글은 삭제할 수 없습니다. 예약을 취소한 후 다시 시도해 주세요.',
+        })
+      );
+    });
+
+    it('예약 중이 아니면 정상적으로 삭제 확인창을 연다', () => {
+      setupMocks({ isReserved: false });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.actionHandlers.onDelete());
+
+      expect(result.current.isDeleteAlertVisible).toBe(true);
+      expect(Toast.show).not.toHaveBeenCalled();
     });
   });
 

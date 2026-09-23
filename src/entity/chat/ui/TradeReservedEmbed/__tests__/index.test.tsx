@@ -10,7 +10,7 @@ describe('TradeReservedEmbed', () => {
   });
 
   it('닉네임이 있으면 누가 예약했는지 보여준다', () => {
-    const { getByTestId } = render(<TradeReservedEmbed otherPartyNickname="상무동주민" />);
+    const { getByTestId } = render(<TradeReservedEmbed reserverNickname="상무동주민" />);
 
     expect(getByTestId('trade-reserved-notice').props.children).toBe(
       '상무동주민님이 예약을 했어요'

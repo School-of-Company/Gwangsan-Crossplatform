@@ -12,18 +12,6 @@ jest.mock('~/entity/profile/model/useBlockUser', () => ({
   useBlockUser: jest.fn(),
 }));
 
-jest.mock('~/entity/post/ui', () => {
-  const { TouchableOpacity, Text } = require('react-native');
-  return {
-    ReportModal: ({ isVisible, onClose }: { isVisible: boolean; onClose: () => void }) =>
-      isVisible ? (
-        <TouchableOpacity testID="report-modal-close" onPress={onClose}>
-          <Text>신고 모달 닫기</Text>
-        </TouchableOpacity>
-      ) : null,
-  };
-});
-
 jest.mock('~/shared/ui', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
   return {
@@ -191,7 +179,7 @@ describe('Information', () => {
       expect(queryByText('타인님을 차단하시겠습니까?')).toBeNull();
     });
 
-    it('신고하기를 누르면 메뉴를 닫고 신고 모달을 연다', async () => {
+    it('신고하기를 누르면 메뉴를 닫고 신고 페이지로 이동한다', async () => {
       const { UNSAFE_getByType, getByText, queryByText } = render(
         <Information name="타인" id={2} isMe={false} />
       );
@@ -200,6 +188,7 @@ describe('Information', () => {
       fireEvent.press(getByText('신고하기'));
 
       await waitFor(() => expect(queryByText('신고하기')).toBeNull());
+      expect(mockPush).toHaveBeenCalledWith('/report?memberId=2');
     });
 
     it('메뉴에서 취소를 누르면 메뉴가 닫힌다', () => {
@@ -215,19 +204,16 @@ describe('Information', () => {
       expect(queryByText('차단하기')).toBeNull();
     });
 
-    it('신고 모달의 onClose를 호출하면 isReportVisible이 false가 된다', async () => {
-      const { UNSAFE_getByType, getByText, getByTestId, queryByTestId } = render(
-        <Information name="타인" id={2} isMe={false} />
+    it('id가 없으면 신고하기를 눌러도 이동하지 않는다', async () => {
+      const { UNSAFE_getByType, getByText, queryByText } = render(
+        <Information name="타인" isMe={false} />
       );
 
       fireEvent.press(UNSAFE_getByType(TouchableOpacity));
       fireEvent.press(getByText('신고하기'));
 
-      await waitFor(() => expect(getByTestId('report-modal-close')).toBeTruthy());
-
-      fireEvent.press(getByTestId('report-modal-close'));
-
-      await waitFor(() => expect(queryByTestId('report-modal-close')).toBeNull());
+      await waitFor(() => expect(queryByText('신고하기')).toBeNull());
+      expect(mockPush).not.toHaveBeenCalled();
     });
 
     it('block/unblock이 진행 중이면 더보기 버튼이 비활성화된다', () => {

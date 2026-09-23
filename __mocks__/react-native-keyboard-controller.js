@@ -1,8 +1,24 @@
 const React = require('react');
-const { View, Animated } = require('react-native');
+const { View, Animated, ScrollView } = require('react-native');
 
 const KeyboardAvoidingView = ({ children, ...props }) => React.createElement(View, props, children);
 const KeyboardStickyView = ({ children, ...props }) => React.createElement(View, props, children);
+
+const KeyboardAwareScrollView = React.forwardRef(
+  (
+    {
+      children,
+      bottomOffset,
+      disableScrollOnKeyboardHide,
+      enabled,
+      extraKeyboardSpace,
+      mode,
+      ScrollViewComponent,
+      ...props
+    },
+    ref
+  ) => React.createElement(ScrollView, { ref, ...props }, children)
+);
 
 const KeyboardProvider = ({ children }) => children;
 
@@ -20,6 +36,7 @@ const useReanimatedKeyboardAnimation = () => ({
 module.exports = {
   KeyboardAvoidingView,
   KeyboardStickyView,
+  KeyboardAwareScrollView,
   KeyboardProvider,
   useKeyboardHandler,
   useKeyboardContext,

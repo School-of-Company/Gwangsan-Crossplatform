@@ -28,26 +28,6 @@ jest.mock('~/entity/profile/model/useBlockUser', () => ({
   useBlockUser: jest.fn(),
 }));
 
-jest.mock('~/entity/post/ui', () => {
-  const { TouchableOpacity, Text } = require('react-native');
-  return {
-    ReportModal: ({
-      memberId,
-      isVisible,
-      onClose,
-    }: {
-      memberId?: number;
-      isVisible: boolean;
-      onClose: () => void;
-    }) =>
-      isVisible ? (
-        <TouchableOpacity testID="report-modal-close" onPress={onClose}>
-          <Text>{`신고 모달 (memberId: ${memberId})`}</Text>
-        </TouchableOpacity>
-      ) : null,
-  };
-});
-
 jest.mock('@/entity/chat', () => ({
   useChatRooms: jest.fn(),
   useChatSocket: jest.fn(),
@@ -669,7 +649,7 @@ describe('ChatRoomList', () => {
       expect(queryByText('광산주민님을 차단하시겠습니까?')).toBeNull();
     });
 
-    it('신고하기를 누르면 메뉴를 닫고 해당 사용자의 memberId로 신고 모달을 연다', async () => {
+    it('신고하기를 누르면 메뉴를 닫고 해당 사용자의 memberId로 신고 페이지로 이동한다', async () => {
       const { getByTestId, getByText, queryByText } = render(
         <>
           <ChatRoomList />
@@ -680,30 +660,13 @@ describe('ChatRoomList', () => {
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('신고하기'));
 
+      expect(mockPush).toHaveBeenCalledWith('/report?memberId=42');
+
       // 바텀시트 닫힘 애니메이션(SHEET_TRANSITION_DURATION=500ms)이 끝나야 언마운트되는데,
       // CI에서 커버리지 계측 + 전체 스위트 동시 실행 시 리소스 경합으로 3000ms를 넘기는 경우가 있어
       // 여유를 크게 둔다. it()의 타임아웃도 함께 늘려야 waitFor가 끝까지 기다릴 수 있다.
       await waitFor(() => expect(queryByText('신고하기')).toBeNull(), { timeout: 10000 });
-      expect(getByText('신고 모달 (memberId: 42)')).toBeTruthy();
     }, 15000);
-
-    it('신고 모달의 onClose를 호출하면 모달이 닫힌다', async () => {
-      const { getByTestId, getByText, queryByTestId } = render(
-        <>
-          <ChatRoomList />
-          <BottomSheetPortalOutlet />
-        </>
-      );
-
-      fireEvent(getByTestId('room-7'), 'longPress');
-      fireEvent.press(getByText('신고하기'));
-
-      await waitFor(() => expect(getByTestId('report-modal-close')).toBeTruthy());
-
-      fireEvent.press(getByTestId('report-modal-close'));
-
-      await waitFor(() => expect(queryByTestId('report-modal-close')).toBeNull());
-    });
 
     it('메뉴에서 닫기를 누르면 메뉴가 닫힌다', async () => {
       const { getByTestId, getByText, queryByText } = render(

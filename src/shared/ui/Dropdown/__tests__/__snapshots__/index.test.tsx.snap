@@ -3,6 +3,12 @@
 exports[`Dropdown 스냅샷 - 닫힌 상태 1`] = `
 <View
   className="full relative flex gap-2"
+  style={
+    {
+      "elevation": 0,
+      "zIndex": 0,
+    }
+  }
 >
   <Text
     className="text-label text-black"
@@ -57,6 +63,12 @@ exports[`Dropdown 스냅샷 - 닫힌 상태 1`] = `
 exports[`Dropdown 스냅샷 - 열린 상태 1`] = `
 <View
   className="full relative flex gap-2"
+  style={
+    {
+      "elevation": 50,
+      "zIndex": 50,
+    }
+  }
 >
   <Text
     className="text-label text-black"
@@ -106,7 +118,12 @@ exports[`Dropdown 스냅샷 - 열린 상태 1`] = `
     </View>
   </View>
   <View
-    className="absolute left-0 top-full z-50 w-full rounded-xl border-b border-b-gray-300 bg-gray-50 last:border-b-0"
+    className="absolute left-0 top-full z-50 w-full overflow-hidden rounded-xl bg-gray-50"
+    style={
+      {
+        "elevation": 50,
+      }
+    }
   >
     <RCTScrollView
       nestedScrollEnabled={true}

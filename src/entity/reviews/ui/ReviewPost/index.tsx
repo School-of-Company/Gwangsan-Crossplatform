@@ -15,21 +15,30 @@ export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps
     R.push('/cancelTrade/' + review.reviewId);
   }, [R, review]);
   const images = review.imageUrls ?? review.images ?? [];
+  // 썸네일을 개수만큼 가로로 늘어놓으면 형제인 본문 영역(flex-1)이 밀려 사라지므로
+  // 대표 이미지 한 장만 고정 크기로 보여주고 나머지는 +N 배지로 알린다.
+  const thumbnail = images[0];
+  const hiddenImageCount = Math.max(images.length - 1, 0);
+
   return (
     <View className="overflow-hidden rounded-2xl bg-gray-50">
       <TouchableOpacity
         onPress={handleClick}
         activeOpacity={0.7}
         className="flex-row items-center gap-4 px-5 py-5">
-        {images.length > 0 ? (
-          <View className="flex-row gap-2">
-            {images.map((image, index) => (
-              <Image
-                key={index}
-                source={{ uri: image.imageUrl }}
-                style={{ width: 80, height: 80, borderRadius: 12 }}
-              />
-            ))}
+        {thumbnail ? (
+          <View className="relative">
+            <Image
+              source={{ uri: thumbnail.imageUrl }}
+              style={{ width: 80, height: 80, borderRadius: 12 }}
+            />
+            {hiddenImageCount > 0 && (
+              <View
+                testID="review-post-hidden-image-count"
+                className="absolute bottom-1 right-1 rounded-full bg-black/60 px-2 py-0.5">
+                <Text className="text-caption text-white">+{hiddenImageCount}</Text>
+              </View>
+            )}
           </View>
         ) : (
           <Image
