@@ -233,16 +233,6 @@ describe('usePostAction', () => {
   });
 
   describe('modalHandlers', () => {
-    it('openReportModal / closeReportModal이 isReportModalVisible을 토글한다', () => {
-      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
-
-      act(() => result.current.modalHandlers.openReportModal());
-      expect(result.current.isReportModalVisible).toBe(true);
-
-      act(() => result.current.modalHandlers.closeReportModal());
-      expect(result.current.isReportModalVisible).toBe(false);
-    });
-
     it('openReviewModal / closeReviewModal이 isReviewModalVisible을 토글한다', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
 
@@ -368,6 +358,29 @@ describe('usePostAction', () => {
       const { result } = renderHookWithProviders(() => usePostAction({ id: '' }));
 
       act(() => result.current.navigationHandlers.goToEdit());
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('goToReport가 productId/memberId를 붙여 신고 페이지로 이동한다', () => {
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.navigationHandlers.goToReport());
+
+      expect(mockPush).toHaveBeenCalledWith('/report?productId=1&memberId=42');
+    });
+
+    it('게시글 데이터가 없으면 goToReport가 router.push를 호출하지 않는다', () => {
+      mockUseGetItem.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      act(() => result.current.navigationHandlers.goToReport());
 
       expect(mockPush).not.toHaveBeenCalled();
     });

@@ -23,11 +23,6 @@ jest.mock('~/widget/post/ui/PostPageContent', () => ({
   },
 }));
 
-jest.mock('~/entity/post/ui/ReportModal', () => {
-  const { View } = require('react-native');
-  return () => <View testID="report-modal" />;
-});
-
 jest.mock('~/entity/post/ui/ReviewsModal', () => {
   const { View } = require('react-native');
   return () => <View testID="reviews-modal" />;
@@ -76,7 +71,6 @@ const makeUsePostActionReturn = (overrides = {}) => ({
   isMyPost: false,
   refreshing: false,
   isDeleting: false,
-  isReportModalVisible: false,
   isReviewModalVisible: false,
   isDeleteAlertVisible: false,
   reviewLight: 60,
@@ -84,8 +78,6 @@ const makeUsePostActionReturn = (overrides = {}) => ({
   isChatLoading: false,
   isTradeRequestLoading: false,
   modalHandlers: {
-    openReportModal: jest.fn(),
-    closeReportModal: jest.fn(),
     openReviewModal: jest.fn(),
     closeReviewModal: jest.fn(),
     closeDeleteAlert: jest.fn(),
@@ -96,7 +88,7 @@ const makeUsePostActionReturn = (overrides = {}) => ({
     onContentsChange: jest.fn(),
     onAnimationComplete: jest.fn(),
   },
-  navigationHandlers: { goToEdit: jest.fn(), goToChat: jest.fn() },
+  navigationHandlers: { goToEdit: jest.fn(), goToChat: jest.fn(), goToReport: jest.fn() },
   actionHandlers: {
     onDelete: jest.fn(),
     onConfirmDelete: jest.fn(),
@@ -175,10 +167,9 @@ describe('PostPageView', () => {
       expect(getByTestId('header-title').props.children).toBe('필요해요');
     });
 
-    it('ReportModal과 ReviewsModal을 렌더링한다', () => {
+    it('ReviewsModal을 렌더링한다', () => {
       const { getByTestId } = render(<PostPageView />);
 
-      expect(getByTestId('report-modal')).toBeTruthy();
       expect(getByTestId('reviews-modal')).toBeTruthy();
     });
 
@@ -225,8 +216,6 @@ describe('PostPageView', () => {
         makeUsePostActionReturn({
           isDeleteAlertVisible: true,
           modalHandlers: {
-            openReportModal: jest.fn(),
-            closeReportModal: jest.fn(),
             openReviewModal: jest.fn(),
             closeReviewModal: jest.fn(),
             closeDeleteAlert,

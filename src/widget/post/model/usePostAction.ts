@@ -21,7 +21,6 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const { deletePost, isLoading: isDeleting } = useDeletePost();
   const { rejoinChat, isLoading: isChatLoading } = useChatEntry();
 
-  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(!!review);
   const [isDeleteAlertVisible, setIsDeleteAlertVisible] = useState(false);
 
@@ -37,8 +36,6 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   });
 
   const modalHandlers = {
-    openReportModal: useCallback(() => setIsReportModalVisible(true), []),
-    closeReportModal: useCallback(() => setIsReportModalVisible(false), []),
     openReviewModal: useCallback(() => setIsReviewModalVisible(true), []),
     closeReviewModal: useCallback(() => setIsReviewModalVisible(false), []),
     closeDeleteAlert: useCallback(() => setIsDeleteAlertVisible(false), []),
@@ -88,6 +85,10 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
         router.push(`/write?id=${id}`);
       }
     }, [id, router]),
+    goToReport: useCallback(() => {
+      if (!data) return;
+      router.push(`/report?productId=${data.id}&memberId=${data.member.memberId}`);
+    }, [data, router]),
     goToChat: useCallback(async () => {
       if (data?.id) {
         await rejoinChat(data.id);
@@ -169,7 +170,6 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     isMyPost,
     refreshing,
     isDeleting,
-    isReportModalVisible,
     isReviewModalVisible,
     isDeleteAlertVisible,
     reviewLight,
