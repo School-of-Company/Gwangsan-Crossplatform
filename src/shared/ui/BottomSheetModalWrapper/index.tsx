@@ -28,10 +28,6 @@ interface BottomSheetModalWrapperProps {
   height?: number;
   hasHeader?: boolean;
   showCloseButton?: boolean;
-  // 시트 내부에 세로 스크롤/드래그 콘텐츠(휠 피커 등)가 있을 때, 해당 콘텐츠를
-  // 터치하는 동안 true로 세팅해 아래로 끌어 닫는 제스처가 그 터치를 가로채지
-  // 않게 한다. 값이 바뀌어도 리렌더가 필요 없도록 ref로 전달한다.
-  dragLockRef?: React.MutableRefObject<boolean>;
 }
 
 // iOS 시트 프레젠테이션에서 쓰이는 곡선
@@ -48,6 +44,9 @@ const SHEET_TRANSITION_DURATION = 500;
 const KEYBOARD_HEIGHT_CHANGE_THRESHOLD = 80;
 // 키보드가 올라왔을 때 시트 바닥이 키보드 상단에 완전히 붙어버리지 않도록 살짝 띄운다.
 const KEYBOARD_GAP = 12;
+// 키보드를 피해 시트를 밀어 올릴 때, 시트 상단(제목/드롭다운)이 화면 밖으로 나가지
+// 않도록 안전 영역 아래로 최소한 남겨 두는 여백.
+const SHEET_MIN_TOP_GAP = 24;
 
 export function BottomSheetModalWrapper({
   isVisible,
@@ -59,7 +58,6 @@ export function BottomSheetModalWrapper({
   height,
   hasHeader = true,
   showCloseButton = false,
-  dragLockRef,
 }: BottomSheetModalWrapperProps) {
   const id = useId();
   const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
@@ -68,7 +66,17 @@ export function BottomSheetModalWrapper({
   const screenHeight = Dimensions.get('window').height;
   const modalHeight = height ?? (screenHeight * 2) / 3;
 
+  // 키보드를 피해 밀어 올릴 수 있는 최대량. 이보다 더 올리면 시트 상단이 화면 위로
+  // 잘려 나간다(기존에 제목/드롭다운이 사라져 보이던 원인).
+  const maxKeyboardTranslate = Math.max(
+    0,
+    screenHeight - modalHeight - insets.top - SHEET_MIN_TOP_GAP
+  );
+
   const [show, setShow] = useState(isVisible);
+  // 밀어 올리고도 키보드에 가려지는 높이. 시트 내부 하단 패딩으로 보정해 버튼이
+  // 키보드 뒤로 숨지 않게 한다.
+  const [keyboardOverlap, setKeyboardOverlap] = useState(0);
   const translateY = useRef(new Animated.Value(modalHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragStartValue = useRef(0);
@@ -86,9 +94,7 @@ export function BottomSheetModalWrapper({
         onStartShouldSetPanResponder: () => false,
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          !dragLockRef?.current &&
-          gestureState.dy > 8 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
+          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
         onPanResponderGrant: () => {
           translateY.stopAnimation((value) => {
             dragStartValue.current = value;
@@ -115,19 +121,26 @@ export function BottomSheetModalWrapper({
         },
         onPanResponderTerminationRequest: () => false,
       }),
-    [modalHeight, onClose, translateY, dragLockRef]
+    [modalHeight, onClose, translateY]
   );
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
       const nextHeight = e.endCoordinates.height;
-      if (Math.abs(nextHeight - lastKeyboardHeightRef.current) < KEYBOARD_HEIGHT_CHANGE_THRESHOLD) {
+      // 이미 키보드가 떠 있는 상태라면 "임계값 이상으로 더 높아질 때"만 따라 올라간다.
+      // 높이가 줄어드는 변화(예측 변환 바가 사라지는 등)까지 따라 내려가면, 입력 도중
+      // 올라갔다 내려갔다를 반복하며 시트가 계속 흔들리게 된다. 줄어든 만큼은 시트 아래
+      // 여백으로만 남아 입력 자체에는 영향이 없으므로 무시하는 편이 안정적이다.
+      if (nextHeight - lastKeyboardHeightRef.current < KEYBOARD_HEIGHT_CHANGE_THRESHOLD) {
         return;
       }
       lastKeyboardHeightRef.current = nextHeight;
 
+      const translate = Math.min(nextHeight + KEYBOARD_GAP, maxKeyboardTranslate);
+      setKeyboardOverlap(Math.max(0, nextHeight - translate));
+
       Animated.timing(translateY, {
-        toValue: -(nextHeight + KEYBOARD_GAP),
+        toValue: -translate,
         duration: 250,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
@@ -136,6 +149,7 @@ export function BottomSheetModalWrapper({
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
       lastKeyboardHeightRef.current = 0;
+      setKeyboardOverlap(0);
 
       Animated.timing(translateY, {
         toValue: 0,
@@ -149,7 +163,7 @@ export function BottomSheetModalWrapper({
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, [translateY]);
+  }, [translateY, maxKeyboardTranslate]);
 
   useEffect(() => {
     if (isVisible) {
@@ -221,14 +235,10 @@ export function BottomSheetModalWrapper({
     return () => subscription.remove();
   }, [show, onClose]);
 
-  useEffect(() => {
-    if (!show) {
-      removeSheet(id);
-      return undefined;
-    }
-
-    setSheet(
-      id,
+  // 시트 내용은 children이 바뀔 때마다 새로 만들어지지만, 포털에서 제거했다가 다시
+  // 등록하지는 않는다(아래 effect 참고).
+  const sheetNode = useMemo(
+    () => (
       <View className="flex-1">
         <Animated.View
           className="absolute inset-0 bg-black/50"
@@ -246,7 +256,7 @@ export function BottomSheetModalWrapper({
             className="rounded-t-[20px] bg-white">
             <Pressable
               className="flex-1 px-4 pt-4"
-              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+              style={{ paddingBottom: Math.max(insets.bottom, 16) + keyboardOverlap }}
               onPress={(e) => e.stopPropagation()}>
               <View className="items-center py-2">
                 <View className="h-1 w-10 rounded-full bg-gray-200" />
@@ -269,26 +279,36 @@ export function BottomSheetModalWrapper({
           </Animated.View>
         </Pressable>
       </View>
-    );
+    ),
+    [
+      backdropOpacity,
+      onClose,
+      panResponder,
+      handleSheetLayout,
+      modalHeight,
+      translateY,
+      insets.bottom,
+      keyboardOverlap,
+      hasHeader,
+      title,
+      showCloseButton,
+      children,
+    ]
+  );
 
-    return () => removeSheet(id);
-  }, [
-    show,
-    id,
-    setSheet,
-    removeSheet,
-    backdropOpacity,
-    onClose,
-    panResponder,
-    handleSheetLayout,
-    modalHeight,
-    translateY,
-    insets.bottom,
-    hasHeader,
-    title,
-    showCloseButton,
-    children,
-  ]);
+  useEffect(() => {
+    if (!show) {
+      removeSheet(id);
+      return;
+    }
+
+    setSheet(id, sheetNode);
+  }, [show, id, setSheet, removeSheet, sheetNode]);
+
+  // 포털에서 빼는 건 언마운트 때만 한다. 내용이 바뀔 때마다 remove → set을 반복하면
+  // 시트 트리 전체가 잠깐 사라졌다 다시 붙으면서, 입력 중이던 TextInput이 포커스를
+  // 잃고 키보드가 내려가 "한 글자 입력할 때마다 시트가 사라지는" 증상이 생긴다.
+  useEffect(() => () => removeSheet(id), [id, removeSheet]);
 
   return null;
 }

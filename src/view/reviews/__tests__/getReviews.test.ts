@@ -24,6 +24,23 @@ describe('getReceiveReview', () => {
     expect(result).toEqual(reviews);
   });
 
+  it('params가 있으면 size/cursor를 쿼리 파라미터로 전달한다', async () => {
+    const reviews = [{ reviewId: '1', content: '후기' }];
+    mockGet.mockResolvedValue({ data: reviews });
+
+    await getReceiveReview('3', { size: 20, cursor: 100 });
+
+    expect(mockGet).toHaveBeenCalledWith('/review/3', { params: { size: 20, cursor: 100 } });
+  });
+
+  it('cursor 없이 size만 있으면(첫 페이지) cursor를 보내지 않는다', async () => {
+    mockGet.mockResolvedValue({ data: [] });
+
+    await getReceiveReview('3', { size: 20 });
+
+    expect(mockGet).toHaveBeenCalledWith('/review/3', { params: { size: 20 } });
+  });
+
   it('API 실패 시 getErrorMessage로 변환된 에러를 던진다', async () => {
     mockGet.mockRejectedValue(new Error('Server error'));
 
@@ -40,6 +57,14 @@ describe('getMyReceivedReview', () => {
 
     expect(mockGet).toHaveBeenCalledWith('/review/current');
     expect(result).toEqual(reviews);
+  });
+
+  it('params가 있으면 size/cursor를 쿼리 파라미터로 전달한다', async () => {
+    mockGet.mockResolvedValue({ data: [] });
+
+    await getMyReceivedReview({ size: 20, cursor: 50 });
+
+    expect(mockGet).toHaveBeenCalledWith('/review/current', { params: { size: 20, cursor: 50 } });
   });
 
   it('API 실패 시 getErrorMessage로 변환된 에러를 던진다', async () => {

@@ -5,8 +5,10 @@ import { useGetReview } from '../../../model/useGetReview';
 import { logger } from '~/shared/lib/logger';
 import CancelTradeView from '../index';
 
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
+  useRouter: () => ({ push: mockPush }),
   router: { back: jest.fn() },
 }));
 
@@ -17,13 +19,6 @@ jest.mock('../../../model/useGetReview', () => ({
 jest.mock('~/shared/lib/logger', () => ({
   logger: { warn: jest.fn(), error: jest.fn() },
 }));
-
-jest.mock('~/widget/cancelTrade/ui/CancelTradeBottomSheet', () => {
-  const { Text } = require('react-native');
-  return function MockCancelTradeBottomSheet({ isVisible, productId }: any) {
-    return <Text testID="bottom-sheet">{`${isVisible}-${productId ?? 'none'}`}</Text>;
-  };
-});
 
 jest.mock('~/shared/ui', () => {
   const { Text, TouchableOpacity, View } = require('react-native');
@@ -156,16 +151,14 @@ describe('CancelTradeView', () => {
     expect(mockLoggerWarn).not.toHaveBeenCalled();
   });
 
-  it('거래 취소 버튼을 누르면 CancelTradeBottomSheet의 isVisible이 토글된다', () => {
+  it('거래 취소 버튼을 누르면 거래취소 사유 페이지로 이동한다', () => {
     mockUseGetReview.mockReturnValue({ data: makeReviewData({ productId: 10 }) });
 
-    const { getByText, getByTestId } = render(<CancelTradeView />);
-
-    expect(getByTestId('bottom-sheet').props.children).toBe('false-10');
+    const { getByText } = render(<CancelTradeView />);
 
     fireEvent.press(getByText('거래 취소'));
 
-    expect(getByTestId('bottom-sheet').props.children).toBe('true-10');
+    expect(mockPush).toHaveBeenCalledWith('/cancelTrade/1/reason');
   });
 
   it('productId가 없으면 거래 취소 버튼이 disabled 상태다', () => {

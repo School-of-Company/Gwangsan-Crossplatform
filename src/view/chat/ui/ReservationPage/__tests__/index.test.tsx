@@ -276,6 +276,22 @@ describe('ReservationPage', () => {
     expect(getByText('광산구 어딘가')).toBeTruthy();
   });
 
+  it('주소 앞에 "전남광주통합특별시"가 붙어 있으면 화면에는 그 뒤부터만 보여준다', () => {
+    mockUseReservationLocationStore.mockReturnValue(
+      makeLocationStoreReturn({
+        latitude: 37.1,
+        longitude: 126.9,
+        address: '전남광주통합특별시 광산구 어딘가',
+        placeName: '스타벅스',
+      })
+    );
+
+    const { getByText, queryByText } = render(<ReservationPage />);
+
+    expect(getByText('광산구 어딘가')).toBeTruthy();
+    expect(queryByText(/전남광주통합특별시/)).toBeNull();
+  });
+
   describe('canConfirm 게이팅', () => {
     it('날짜/시간/장소가 모두 없으면 예약하기를 눌러도 handleReservation이 호출되지 않는다', () => {
       const { getAllByText } = render(<ReservationPage />);

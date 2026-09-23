@@ -124,4 +124,26 @@ describe('SigninForm', () => {
     fireEvent.press(getByText('비밀번호 변경하기'));
     expect(router.push).toHaveBeenCalledWith('/resetPassword');
   });
+
+  it('두 링크 모두 hitSlop을 가진 터치 가능한 link 역할 요소로 렌더링된다', () => {
+    const { getByTestId } = render(
+      <SigninForm title="T" description="D" onNext={jest.fn()}>
+        <Text>child</Text>
+      </SigninForm>
+    );
+
+    const links = [
+      ['SigninForm-find-nickname-link', '/findNickname'],
+      ['SigninForm-reset-password-link', '/resetPassword'],
+    ] as const;
+
+    links.forEach(([testID, path]) => {
+      const link = getByTestId(testID);
+
+      expect(link.props.accessibilityRole ?? link.props.role).toBe('link');
+      expect(link.props.hitSlop).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
+      fireEvent.press(link);
+      expect(router.push).toHaveBeenCalledWith(path);
+    });
+  });
 });

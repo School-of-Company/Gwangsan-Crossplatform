@@ -188,6 +188,25 @@ describe('ReservationMapPage', () => {
     expect(getByText('스타벅스')).toBeTruthy();
   });
 
+  it('주소 앞에 "전남광주통합특별시"가 붙어 있으면 화면에는 그 뒤부터만 보여준다', async () => {
+    mockGetCurrentLocation.mockResolvedValue({ latitude: 10, longitude: 20 });
+    mockSearchNearbyPlaces.mockResolvedValue([
+      makePlace({
+        id: 'p1',
+        place_name: '스타벅스',
+        road_address_name: '전남광주통합특별시 광산구 하남산단6번로 123',
+      }),
+    ]);
+    mockGetAddressName.mockResolvedValue('전남광주통합특별시 광산구 상무대로 100');
+
+    const { getAllByText, getByText, queryByText } = render(<ReservationMapPage />);
+    await flush();
+
+    expect(getAllByText('광산구 상무대로 100').length).toBeGreaterThan(0);
+    expect(getByText('광산구 하남산단6번로 123')).toBeTruthy();
+    expect(queryByText(/전남광주통합특별시/)).toBeNull();
+  });
+
   it('위치 정보 조회에 실패하면 기본 좌표(광산구청)로 대체하고 인근 장소를 조회한다', async () => {
     mockGetCurrentLocation.mockRejectedValue(new Error('위치 권한이 필요합니다.'));
 
@@ -442,6 +461,48 @@ describe('ReservationMapPage', () => {
 
     expect(mockSearchNearbyPlaces).toHaveBeenCalledTimes(2);
     expect(mockSearchNearbyPlaces).toHaveBeenLastCalledWith(movedCoordinate, 1000);
+  });
+
+  it('지도 이동으로 재조회하는 동안에도 이전 목록을 그대로 유지해 패널 높이가 바뀌지 않는다', async () => {
+    setPlatform('android');
+    mockGetCurrentLocation.mockResolvedValue({ latitude: 1, longitude: 1 });
+    mockSearchNearbyPlaces.mockResolvedValueOnce([makePlace({ id: 'p1', place_name: '스타벅스' })]);
+
+    const { getByText, queryByText, queryByTestId } = render(<ReservationMapPage />);
+    await flush();
+
+    expect(getByText('스타벅스')).toBeTruthy();
+
+    let resolveSecondFetch!: (places: unknown[]) => void;
+    mockSearchNearbyPlaces.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSecondFetch = resolve;
+      })
+    );
+
+    await act(async () => {
+      lastKakaoMapWebViewProps.onCameraMove({ coordinates: { latitude: 9, longitude: 9 } });
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(NEARBY_DEBOUNCE_MS);
+    });
+    await flush();
+
+    // 재조회가 진행 중인 동안에도 이전 목록이 그대로 남아있고, 목록 전체가
+    // 스켈레톤으로 교체되거나 그 위에 스피너 행이 추가되지 않는다 — 지도 하단
+    // 패널과 지도 View가 flex-1 형제라, 패널 높이가 잠깐이라도 바뀌면 지도가
+    // 그만큼 움직이는 것처럼 보이기 때문이다.
+    expect(getByText('스타벅스')).toBeTruthy();
+    expect(queryByTestId('nearby-places-refetch-spinner')).toBeNull();
+
+    await act(async () => {
+      resolveSecondFetch([makePlace({ id: 'p2', place_name: '이디야' })]);
+    });
+    await flush();
+
+    expect(queryByText('스타벅스')).toBeNull();
+    expect(getByText('이디야')).toBeTruthy();
+    expect(queryByTestId('nearby-places-refetch-spinner')).toBeNull();
   });
 
   it('주변 장소를 선택하면 좌표/장소명을 저장하고 이전 화면으로 돌아간다', async () => {

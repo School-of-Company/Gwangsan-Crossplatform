@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Animated,
   BackHandler,
+  Dimensions,
   Keyboard,
   PanResponder,
   Text,
@@ -177,23 +178,6 @@ describe('BottomSheetModalWrapper', () => {
       expect(handlers.onPanResponderTerminationRequest()).toBe(false);
     });
 
-    it('dragLockRef가 true이면 아래로 끄는 제스처를 가로채지 않는다', () => {
-      mockPanResponderPassthrough();
-      const dragLockRef = { current: true };
-      const container = renderSheet(
-        <BottomSheetModalWrapper
-          isVisible
-          onClose={jest.fn()}
-          title="제목"
-          height={300}
-          dragLockRef={dragLockRef}>
-          <Text>내용</Text>
-        </BottomSheetModalWrapper>
-      );
-      const handlers = getSheetHandlers(container);
-      expect(handlers.onMoveShouldSetPanResponderCapture({}, { dy: 50, dx: 0 })).toBe(false);
-    });
-
     it('세로 이동이 뚜렷하면(dy>8, 대각선 아님) 제스처를 가로챈다', () => {
       mockPanResponderPassthrough();
       const container = renderSheet(
@@ -283,7 +267,9 @@ describe('BottomSheetModalWrapper', () => {
       );
 
       expect(listeners.keyboardDidShow).toBeDefined();
-      expect(() => listeners.keyboardDidShow({ endCoordinates: { height: 300 } })).not.toThrow();
+      expect(() =>
+        act(() => listeners.keyboardDidShow({ endCoordinates: { height: 300 } }))
+      ).not.toThrow();
     });
 
     it('키보드가 숨겨지면 시트 위치를 원위치로 되돌린다', () => {
@@ -300,7 +286,7 @@ describe('BottomSheetModalWrapper', () => {
       );
 
       expect(listeners.keyboardDidHide).toBeDefined();
-      expect(() => listeners.keyboardDidHide()).not.toThrow();
+      expect(() => act(() => listeners.keyboardDidHide())).not.toThrow();
     });
 
     it('입력 중 예측 변환 바 높이 변화처럼 작은 변화(임계값 미만)는 무시해 시트를 다시 애니메이션하지 않는다', () => {
@@ -317,16 +303,43 @@ describe('BottomSheetModalWrapper', () => {
         </BottomSheetModalWrapper>
       );
 
-      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 300 } }));
       timingSpy.mockClear();
 
       // 예측 변환 바가 나타나며 살짝 높아진 정도(임계값 미만)
-      listeners.keyboardDidShow({ endCoordinates: { height: 330 } });
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 330 } }));
 
       expect(timingSpy).not.toHaveBeenCalled();
     });
 
     it('실제 키보드 노출처럼 큰 변화(임계값 이상)는 시트를 다시 애니메이션한다', () => {
+      const listeners: Record<string, (e?: unknown) => void> = {};
+      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+        listeners[event as string] = cb as (e?: unknown) => void;
+        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+      });
+      const timingSpy = jest.spyOn(Animated, 'timing');
+
+      // 위로 올릴 여유가 충분한 낮은 시트로 두어 이동량 제한(clamp)과 무관하게 검증한다.
+      renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목" height={300}>
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 300 } }));
+      timingSpy.mockClear();
+
+      // 다른 입력 타입으로 바뀌며 키보드 자체가 크게 바뀐 경우(임계값 이상)
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 420 } }));
+
+      expect(timingSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ toValue: -432 })
+      );
+    });
+
+    it('키보드 높이가 줄어드는 변화는 임계값을 넘더라도 시트를 다시 애니메이션하지 않는다', () => {
       const listeners: Record<string, (e?: unknown) => void> = {};
       jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
         listeners[event as string] = cb as (e?: unknown) => void;
@@ -340,16 +353,109 @@ describe('BottomSheetModalWrapper', () => {
         </BottomSheetModalWrapper>
       );
 
-      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 400 } }));
       timingSpy.mockClear();
 
-      // 다른 입력 타입으로 바뀌며 키보드 자체가 크게 바뀐 경우(임계값 이상)
-      listeners.keyboardDidShow({ endCoordinates: { height: 420 } });
+      // 예측 변환 바가 사라지며 키보드가 낮아진 경우 — 따라 내려가면 시트가 흔들린다.
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 300 } }));
+
+      expect(timingSpy).not.toHaveBeenCalled();
+    });
+
+    it('시트 상단이 화면 밖으로 밀려나지 않도록 키보드 이동량을 제한한다', () => {
+      const listeners: Record<string, (e?: unknown) => void> = {};
+      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+        listeners[event as string] = cb as (e?: unknown) => void;
+        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+      });
+      const timingSpy = jest.spyOn(Animated, 'timing');
+
+      // 시트 위로 200px만 남는 높이 → 안전 여백 24를 빼면 최대 176px까지만 올릴 수 있다.
+      const sheetHeight = Dimensions.get('window').height - 200;
+      renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목" height={sheetHeight}>
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+      timingSpy.mockClear();
+
+      act(() => listeners.keyboardDidShow({ endCoordinates: { height: 400 } }));
 
       expect(timingSpy).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ toValue: -432 })
+        expect.objectContaining({ toValue: -176 })
       );
+    });
+
+    it('밀어 올리고도 키보드에 가려지는 만큼 시트 하단 패딩으로 보정한다', () => {
+      const listeners: Record<string, (e?: unknown) => void> = {};
+      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
+        listeners[event as string] = cb as (e?: unknown) => void;
+        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
+      });
+
+      const sheetHeight = Dimensions.get('window').height - 200;
+      const { UNSAFE_getByProps } = renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목" height={sheetHeight}>
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      act(() => {
+        listeners.keyboardDidShow({ endCoordinates: { height: 400 } });
+      });
+
+      // 400까지 올려야 하지만 176까지만 올릴 수 있으므로 224가 키보드에 가려진다.
+      const content = UNSAFE_getByProps({ className: 'flex-1 px-4 pt-4' });
+      expect(content.props.style).toEqual(
+        expect.objectContaining({ paddingBottom: 16 + (400 - 176) })
+      );
+    });
+  });
+
+  describe('포털 등록', () => {
+    it('children이 바뀌어도 포털에서 시트를 제거했다가 다시 등록하지 않는다', () => {
+      const onClose = jest.fn();
+      const tree = (content: string) => (
+        <>
+          <BottomSheetModalWrapper isVisible onClose={onClose} title="제목">
+            <Text>{content}</Text>
+          </BottomSheetModalWrapper>
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      const { rerender, getByText } = render(tree('내용'));
+
+      const sheetCounts: number[] = [];
+      const unsubscribe = useBottomSheetPortalStore.subscribe((state) =>
+        sheetCounts.push(Object.keys(state.sheets).length)
+      );
+
+      act(() => {
+        rerender(tree('내용이 한 글자 늘었다'));
+      });
+      unsubscribe();
+
+      // 한 번이라도 0이 되면 시트 트리가 통째로 언마운트되며 입력 포커스/키보드가 사라진다.
+      expect(sheetCounts).not.toContain(0);
+      expect(getByText('내용이 한 글자 늘었다')).toBeTruthy();
+    });
+
+    it('언마운트되면 포털에서 시트를 제거한다', () => {
+      const { unmount } = renderSheet(
+        <BottomSheetModalWrapper isVisible onClose={jest.fn()} title="제목">
+          <Text>내용</Text>
+        </BottomSheetModalWrapper>
+      );
+
+      expect(Object.keys(useBottomSheetPortalStore.getState().sheets)).toHaveLength(1);
+
+      act(() => {
+        unmount();
+      });
+
+      expect(Object.keys(useBottomSheetPortalStore.getState().sheets)).toHaveLength(0);
     });
   });
 

@@ -118,6 +118,11 @@ const ImageUploader = ({
     imagesRef.current = images;
   }, [images]);
 
+  // 갤러리에서 같은 사진을 다시 선택하면 매번 새 임시 uri가 발급되므로 uri만으로는
+  // 중복을 판별할 수 없다. 라이브러리 원본 자산을 가리키는 assetId를 uri별로 기억해두고
+  // 우선적으로 비교한다.
+  const assetIdsByUriRef = useRef<Map<string, string>>(new Map());
+
   const removeImageByUri = useCallback(
     (uri: string) => {
       const currentImages = imagesRef.current;
@@ -127,13 +132,28 @@ const ImageUploader = ({
       const newImages = currentImages.filter((img) => img !== uri);
       onImagesChange?.(newImages);
 
+      assetIdsByUriRef.current.delete(uri);
       setImageStatuses((prev) => prev.filter((item) => item.uri !== uri));
     },
     [onImagesChange]
   );
 
+  const isDuplicateSelection = useCallback(
+    (uri: string, assetId?: string | null) => {
+      if (assetId) {
+        return Array.from(assetIdsByUriRef.current.values()).includes(assetId);
+      }
+      return images.includes(uri);
+    },
+    [images]
+  );
+
   const handleImageSelected = useCallback(
-    async (uri: string) => {
+    async (uri: string, assetId?: string | null) => {
+      if (assetId) {
+        assetIdsByUriRef.current.set(uri, assetId);
+      }
+
       onImagesChange?.([...images, uri]);
 
       const newStatus: ImageStatus = { uri, status: 'uploading' };
@@ -180,12 +200,21 @@ const ImageUploader = ({
           return;
         }
 
-        await handleImageSelected(asset.uri);
+        if (isDuplicateSelection(asset.uri, asset.assetId)) {
+          Toast.show({
+            type: 'error',
+            text1: '중복된 사진',
+            text2: '이미 추가된 사진입니다.',
+          });
+          return;
+        }
+
+        await handleImageSelected(asset.uri, asset.assetId);
       }
     } catch (error) {
       logger.error('이미지 선택 중 오류', error);
     }
-  }, [handleImageSelected]);
+  }, [handleImageSelected, isDuplicateSelection]);
 
   const pickFromCamera = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -201,12 +230,23 @@ const ImageUploader = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        await handleImageSelected(result.assets[0].uri);
+        const asset = result.assets[0];
+
+        if (isDuplicateSelection(asset.uri, asset.assetId)) {
+          Toast.show({
+            type: 'error',
+            text1: '중복된 사진',
+            text2: '이미 추가된 사진입니다.',
+          });
+          return;
+        }
+
+        await handleImageSelected(asset.uri, asset.assetId);
       }
     } catch (error) {
       logger.error('카메라 촬영 중 오류', error);
     }
-  }, [handleImageSelected]);
+  }, [handleImageSelected, isDuplicateSelection]);
 
   const pickImage = useCallback(() => {
     if (readonly || images.length >= maxImages) return;
@@ -253,7 +293,10 @@ const ImageUploader = ({
 
   return (
     <View>
-      <Text className="mb-2 text-lg text-black">{title}</Text>
+      <View className="mb-2 flex-row items-center justify-between">
+        <Text className="text-lg text-black">{title}</Text>
+        <Text className="text-sm text-gray-500">{`${images.length}/${maxImages}`}</Text>
+      </View>
       <View className="flex-row flex-wrap items-center gap-3">
         {images.map((uri, idx) => {
           const status = getImageStatus(uri);

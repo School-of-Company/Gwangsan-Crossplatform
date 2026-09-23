@@ -7,6 +7,7 @@ import { useSocketConnection } from '../useSocketConnection';
 import { useMessageSync } from '../useMessageSync';
 import { useSocketEventHandlers } from '../useSocketEventHandlers';
 import { useChatQueueStore, MESSAGE_STATUS } from '@/shared/store/useChatQueueStore';
+import type { RoomId } from '@/shared/types/chatType';
 
 jest.mock('@/shared/lib/socket', () => ({
   createChatSocketManager: jest.fn(() => ({})),
@@ -329,6 +330,15 @@ describe('useChatSocket', () => {
       rerender({ roomId: 2 });
 
       expect(result.current.isBlockedByOtherUser).toBe(false);
+    });
+
+    it('currentRoomId가 NaN이어도 무한 렌더 없이 렌더링된다', () => {
+      // roomId가 없는 라우트 파라미터에서 Number(id)로 NaN이 나올 수 있다. NaN !== NaN은
+      // 항상 true라 일반 비교로 초기화 로직을 만들면 렌더 중 상태 업데이트가 멈추지 않아
+      // "Too many re-renders" 크래시로 이어진다.
+      expect(() => {
+        renderHook(() => useChatSocket({ currentRoomId: NaN as unknown as RoomId }));
+      }).not.toThrow();
     });
   });
 });
