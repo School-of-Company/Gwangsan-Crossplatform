@@ -94,8 +94,7 @@ export function BottomSheetModalWrapper({
         onStartShouldSetPanResponder: () => false,
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          gestureState.dy > 8 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
+          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5,
         onPanResponderGrant: () => {
           translateY.stopAnimation((value) => {
             dragStartValue.current = value;
