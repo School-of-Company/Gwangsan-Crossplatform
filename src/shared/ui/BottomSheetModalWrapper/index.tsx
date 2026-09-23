@@ -127,7 +127,11 @@ export function BottomSheetModalWrapper({
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
       const nextHeight = e.endCoordinates.height;
-      if (Math.abs(nextHeight - lastKeyboardHeightRef.current) < KEYBOARD_HEIGHT_CHANGE_THRESHOLD) {
+      // 이미 키보드가 떠 있는 상태라면 "임계값 이상으로 더 높아질 때"만 따라 올라간다.
+      // 높이가 줄어드는 변화(예측 변환 바가 사라지는 등)까지 따라 내려가면, 입력 도중
+      // 올라갔다 내려갔다를 반복하며 시트가 계속 흔들리게 된다. 줄어든 만큼은 시트 아래
+      // 여백으로만 남아 입력 자체에는 영향이 없으므로 무시하는 편이 안정적이다.
+      if (nextHeight - lastKeyboardHeightRef.current < KEYBOARD_HEIGHT_CHANGE_THRESHOLD) {
         return;
       }
       lastKeyboardHeightRef.current = nextHeight;
@@ -231,14 +235,10 @@ export function BottomSheetModalWrapper({
     return () => subscription.remove();
   }, [show, onClose]);
 
-  useEffect(() => {
-    if (!show) {
-      removeSheet(id);
-      return undefined;
-    }
-
-    setSheet(
-      id,
+  // 시트 내용은 children이 바뀔 때마다 새로 만들어지지만, 포털에서 제거했다가 다시
+  // 등록하지는 않는다(아래 effect 참고).
+  const sheetNode = useMemo(
+    () => (
       <View className="flex-1">
         <Animated.View
           className="absolute inset-0 bg-black/50"
@@ -279,27 +279,36 @@ export function BottomSheetModalWrapper({
           </Animated.View>
         </Pressable>
       </View>
-    );
+    ),
+    [
+      backdropOpacity,
+      onClose,
+      panResponder,
+      handleSheetLayout,
+      modalHeight,
+      translateY,
+      insets.bottom,
+      keyboardOverlap,
+      hasHeader,
+      title,
+      showCloseButton,
+      children,
+    ]
+  );
 
-    return () => removeSheet(id);
-  }, [
-    show,
-    id,
-    setSheet,
-    removeSheet,
-    backdropOpacity,
-    onClose,
-    panResponder,
-    handleSheetLayout,
-    modalHeight,
-    translateY,
-    insets.bottom,
-    keyboardOverlap,
-    hasHeader,
-    title,
-    showCloseButton,
-    children,
-  ]);
+  useEffect(() => {
+    if (!show) {
+      removeSheet(id);
+      return;
+    }
+
+    setSheet(id, sheetNode);
+  }, [show, id, setSheet, removeSheet, sheetNode]);
+
+  // 포털에서 빼는 건 언마운트 때만 한다. 내용이 바뀔 때마다 remove → set을 반복하면
+  // 시트 트리 전체가 잠깐 사라졌다 다시 붙으면서, 입력 중이던 TextInput이 포커스를
+  // 잃고 키보드가 내려가 "한 글자 입력할 때마다 시트가 사라지는" 증상이 생긴다.
+  useEffect(() => () => removeSheet(id), [id, removeSheet]);
 
   return null;
 }
