@@ -122,7 +122,9 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
           </View>
           <Text className="text-body3">{data.gwangsan} 광산</Text>
           <Text>{data.content}</Text>
+        </View>
 
+        <View className="px-6">
           <TouchableOpacity
             onPress={isMyPost ? onDeletePress : onReportPress}
             disabled={isDeleting}>

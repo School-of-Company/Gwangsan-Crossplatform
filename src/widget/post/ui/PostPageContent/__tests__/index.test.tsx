@@ -60,6 +60,21 @@ const makeProps = (overrides = {}) => ({
   ...overrides,
 });
 
+const collectRenderOrder = (node: any, acc: string[] = []): string[] => {
+  if (node == null) return acc;
+  if (typeof node === 'string') {
+    acc.push(node);
+    return acc;
+  }
+  if (Array.isArray(node)) {
+    node.forEach((child) => collectRenderOrder(child, acc));
+    return acc;
+  }
+  if (node.props?.testID) acc.push(node.props.testID);
+  collectRenderOrder(node.children, acc);
+  return acc;
+};
+
 beforeEach(() => jest.clearAllMocks());
 
 describe('PostPageContent', () => {
@@ -76,6 +91,15 @@ describe('PostPageContent', () => {
       const { getByTestId } = render(<PostPageContent {...makeProps()} />);
 
       expect(getByTestId('mini-profile')).toBeTruthy();
+    });
+
+    it('판매자 프로필을 커버 이미지 바로 아래, 제목/본문보다 먼저 렌더링한다', () => {
+      const { toJSON } = render(<PostPageContent {...makeProps()} />);
+      // 트리를 앞에서부터 훑어 텍스트/testID가 나온 순서가 곧 렌더 순서다.
+      const order = collectRenderOrder(toJSON());
+
+      expect(order.indexOf('mini-profile')).toBeLessThan(order.indexOf('테스트 제목'));
+      expect(order.indexOf('mini-profile')).toBeLessThan(order.indexOf('테스트 내용입니다.'));
     });
   });
 
