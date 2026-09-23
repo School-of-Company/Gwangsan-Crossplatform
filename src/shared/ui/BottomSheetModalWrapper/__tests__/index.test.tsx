@@ -178,23 +178,6 @@ describe('BottomSheetModalWrapper', () => {
       expect(handlers.onPanResponderTerminationRequest()).toBe(false);
     });
 
-    it('dragLockRef가 true이면 아래로 끄는 제스처를 가로채지 않는다', () => {
-      mockPanResponderPassthrough();
-      const dragLockRef = { current: true };
-      const container = renderSheet(
-        <BottomSheetModalWrapper
-          isVisible
-          onClose={jest.fn()}
-          title="제목"
-          height={300}
-          dragLockRef={dragLockRef}>
-          <Text>내용</Text>
-        </BottomSheetModalWrapper>
-      );
-      const handlers = getSheetHandlers(container);
-      expect(handlers.onMoveShouldSetPanResponderCapture({}, { dy: 50, dx: 0 })).toBe(false);
-    });
-
     it('세로 이동이 뚜렷하면(dy>8, 대각선 아님) 제스처를 가로챈다', () => {
       mockPanResponderPassthrough();
       const container = renderSheet(

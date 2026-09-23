@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { ReportModal } from '~/entity/post/ui';
 import { AlertModal, BottomSheetModalWrapper } from '~/shared/ui';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import ProfileHeader from '../ProfileHeader';
@@ -16,7 +15,6 @@ interface InformationProps {
 export default function Information({ name, id, isMe, isBlocked = false }: InformationProps) {
   const R = useRouter();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [isReportVisible, setIsReportVisible] = useState(false);
   const [isBlockAlertVisible, setIsBlockAlertVisible] = useState(false);
   const { block, unblock } = useBlockUser(id);
 
@@ -52,12 +50,10 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
 
   const handleReportPress = useCallback(() => {
     setIsMenuVisible(false);
-    setIsReportVisible(true);
-  }, []);
-
-  const handleCloseReport = useCallback(() => {
-    setIsReportVisible(false);
-  }, []);
+    if (id != null) {
+      R.push(`/report?memberId=${id}`);
+    }
+  }, [R, id]);
 
   return (
     <>
@@ -92,8 +88,6 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
           </TouchableOpacity>
         </View>
       </BottomSheetModalWrapper>
-
-      <ReportModal memberId={id} isVisible={isReportVisible} onClose={handleCloseReport} />
 
       <AlertModal
         isVisible={isBlockAlertVisible}

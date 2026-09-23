@@ -17,7 +17,6 @@ import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
-import { ReportModal } from '~/entity/post/ui';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
@@ -77,9 +76,6 @@ export function ChatRoomList() {
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
   // 채팅방별 액션 시트(차단/신고/나가기)가 열려있는 채팅방
   const [actionTargetRoomId, setActionTargetRoomId] = useState<RoomId | null>(null);
-  // 신고 모달은 액션 시트가 닫힌 뒤에도 열려있어야 하므로 대상 memberId를 따로 보관한다
-  const [reportTargetMemberId, setReportTargetMemberId] = useState<number | undefined>(undefined);
-  const [isReportVisible, setIsReportVisible] = useState(false);
   // 슬라이드 아웃 애니메이션이 진행 중인 채팅방 (목록 데이터에는 아직 남아있음)
   const [exitingRoomId, setExitingRoomId] = useState<RoomId | null>(null);
   // 슬라이드 아웃이 끝나 실제로 목록에서 제거된 채팅방 — 이 시점부터 위/아래 항목이 붙는 애니메이션이 재생된다
@@ -227,14 +223,11 @@ export function ChatRoomList() {
   }, [blockTarget, block, queryClient]);
 
   const handleReportPress = useCallback(() => {
-    setReportTargetMemberId(actionTargetMemberId);
     setActionTargetRoomId(null);
-    setIsReportVisible(true);
-  }, [actionTargetMemberId]);
-
-  const handleCloseReport = useCallback(() => {
-    setIsReportVisible(false);
-  }, []);
+    if (actionTargetMemberId != null) {
+      router.push(`/report?memberId=${actionTargetMemberId}`);
+    }
+  }, [actionTargetMemberId, router]);
 
   const handleChatRoomExited = useCallback(
     (roomId: RoomId) => {
@@ -354,12 +347,6 @@ export function ChatRoomList() {
           </View>
         </View>
       </BottomSheetModalWrapper>
-
-      <ReportModal
-        memberId={reportTargetMemberId}
-        isVisible={isReportVisible}
-        onClose={handleCloseReport}
-      />
 
       <AlertModal
         isVisible={blockTarget !== null}

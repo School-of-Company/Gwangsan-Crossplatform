@@ -1,19 +1,18 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Header, LightBar } from '~/shared/ui';
 import { useGetReview } from '../../model/useGetReview';
-import CancelTradeBottomSheet from '~/widget/cancelTrade/ui/CancelTradeBottomSheet';
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { logger } from '~/shared/lib/logger';
 
 export default function CancelTradeView() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { data } = useGetReview(id ?? '');
-  const [showCancelTradeModal, setShowCancelTradeModal] = useState(false);
-  const handleToggleCancelTradeModal = useCallback(() => {
-    setShowCancelTradeModal((prev) => !prev);
-  }, []);
+  const router = useRouter();
+  const handleGoToCancelTrade = useCallback(() => {
+    router.push(`/cancelTrade/${id}/reason`);
+  }, [router, id]);
 
   useEffect(() => {
     if (data && !data.productId) {
@@ -49,14 +48,9 @@ export default function CancelTradeView() {
             <LightBar value={data?.light ?? 0} />
           </View>
         </View>
-        <Button variant="error" disabled={!data?.productId} onPress={handleToggleCancelTradeModal}>
+        <Button variant="error" disabled={!data?.productId} onPress={handleGoToCancelTrade}>
           거래 취소
         </Button>
-        <CancelTradeBottomSheet
-          productId={data?.productId}
-          isVisible={showCancelTradeModal}
-          onClose={handleToggleCancelTradeModal}
-        />
       </View>
     </SafeAreaView>
   );

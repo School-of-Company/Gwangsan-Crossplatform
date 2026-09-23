@@ -3,7 +3,6 @@ import { ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePostAction } from '@/widget/post/model/usePostAction';
 import { PostPageContent } from '@/widget/post/ui/PostPageContent';
-import ReportModal from '~/entity/post/ui/ReportModal';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { AlertModal, Header } from '~/shared/ui';
 
@@ -17,7 +16,6 @@ export default function PostPageView() {
     isMyPost,
     refreshing,
     isDeleting,
-    isReportModalVisible,
     isReviewModalVisible,
     isDeleteAlertVisible,
     reviewLight,
@@ -61,19 +59,12 @@ export default function PostPageView() {
         review={review}
         computedValues={computedValues}
         onDeletePress={actionHandlers.onDelete}
-        onReportPress={modalHandlers.openReportModal}
+        onReportPress={navigationHandlers.goToReport}
         onEditPress={navigationHandlers.goToEdit}
         onChatPress={navigationHandlers.goToChat}
         onTradeRequest={actionHandlers.onTradeRequest}
         onReviewButtonPress={modalHandlers.openReviewModal}
         onRefresh={actionHandlers.onRefresh}
-      />
-
-      <ReportModal
-        productId={data?.id || 0}
-        memberId={data?.member.memberId}
-        isVisible={isReportModalVisible}
-        onClose={modalHandlers.closeReportModal}
       />
 
       <ReviewsModal
