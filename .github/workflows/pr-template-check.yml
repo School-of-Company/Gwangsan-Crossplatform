@@ -9,7 +9,9 @@ jobs:
   check-template:
     name: Check PR Description Template
     runs-on: ubuntu-latest
-    if: github.actor != 'github-actions[bot]' && github.actor != 'dependabot[bot]'
+    if: |
+      github.actor != 'github-actions[bot]' && github.actor != 'dependabot[bot]' &&
+      !(github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop')
     steps:
       - name: Verify PR body follows .github/pull_request_template.md
         uses: actions/github-script@v7
