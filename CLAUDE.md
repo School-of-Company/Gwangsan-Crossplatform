@@ -41,7 +41,9 @@ EXPO_PUBLIC_SENTRY_DSN / SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN
 `test-ios.yml` — Detox E2E (PR → `main` only, or `/run-e2e` comment on any PR).
 `ios_cd.yml` / `android_cd.yml` — EAS cloud builds.
 `pr-template-check.yml` — fails the PR if the body is missing a filled-in `## 💡 PR 요약`
-section (bots exempted).
+section (bots exempted). Exception: for `develop` → `main` PRs, the body isn't checked;
+instead the title must exactly be `v{version}`, where `{version}` comes from `app.json`
+(`expo.version`) and must match `ios/app/Info.plist` (`CFBundleShortVersionString`).
 
 ## PR Description
 

@@ -11,7 +11,53 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor != 'github-actions[bot]' && github.actor != 'dependabot[bot]'
     steps:
+      - name: Checkout
+        if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop'
+        uses: actions/checkout@v4
+
+      - name: Verify develop → main PR title matches app version
+        if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const appJson = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            const appVersion = appJson?.expo?.version;
+
+            const plist = fs.readFileSync('ios/app/Info.plist', 'utf8');
+            const plistMatch = plist.match(
+              /<key>CFBundleShortVersionString<\/key>\s*<string>([^<]+)<\/string>/
+            );
+            const plistVersion = plistMatch?.[1];
+
+            if (!appVersion || !plistVersion) {
+              core.setFailed(
+                'app.json(expo.version) 또는 ios/app/Info.plist(CFBundleShortVersionString) 에서 ' +
+                '버전을 읽지 못했습니다.'
+              );
+              return;
+            }
+
+            if (appVersion !== plistVersion) {
+              core.setFailed(
+                `app.json 버전(${appVersion})과 Info.plist 버전(${plistVersion})이 일치하지 않습니다. ` +
+                '두 파일의 버전을 맞춰주세요.'
+              );
+              return;
+            }
+
+            const expectedTitle = `v${appVersion}`;
+            const title = context.payload.pull_request.title || '';
+
+            if (title.trim() !== expectedTitle) {
+              core.setFailed(
+                `develop → main PR 제목은 "${expectedTitle}" 이어야 합니다. (현재: "${title}")`
+              );
+            }
+
       - name: Verify PR body follows .github/pull_request_template.md
+        if: '!(github.event.pull_request.base.ref == ''main'' && github.event.pull_request.head.ref == ''develop'')'
         uses: actions/github-script@v7
         with:
           script: |
