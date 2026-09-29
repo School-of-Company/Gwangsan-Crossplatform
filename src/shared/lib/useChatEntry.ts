@@ -2,9 +2,13 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+import { AxiosError } from 'axios';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { findChatRoom, createChatRoom, getChatRooms, chatRoomKeys } from '@/entity/chat';
 import type { RoomId, ProductId } from '@/shared/types/chatType';
+
+const isNotFoundError = (error: unknown) =>
+  error instanceof AxiosError && error.response?.status === 404;
 
 export const useChatEntry = () => {
   const router = useRouter();
@@ -36,22 +40,18 @@ export const useChatEntry = () => {
       try {
         const room = await findChatRoom(productId);
         await navigateToRoom(room.roomId);
-      } catch (error: any) {
-        if (error.message === '해당하는 채팅방을 찾을 수 없습니다.') {
+      } catch (error) {
+        // 채팅방이 아직 없으면(404) 새로 만든다. 예전에는 서버 문구("해당하는 채팅방을 찾을 수
+        // 없습니다.")로 판단해, 문구가 바뀌면 채팅방을 만들지 못했다(#739)
+        if (isNotFoundError(error)) {
           try {
             const newRoom = await createChatRoom(productId);
             await navigateToRoom(newRoom.roomId);
-          } catch (error: any) {
-            Toast.show({
-              type: 'error',
-              text1: error.message,
-            });
+          } catch (createError) {
+            Toast.show({ type: 'error', text1: getErrorMessage(createError) });
           }
         } else {
-          Toast.show({
-            type: 'error',
-            text1: error.message,
-          });
+          Toast.show({ type: 'error', text1: getErrorMessage(error) });
         }
       } finally {
         setIsLoading(false);
