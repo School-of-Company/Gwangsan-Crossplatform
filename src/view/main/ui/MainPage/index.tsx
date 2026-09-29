@@ -19,7 +19,7 @@ export default function MainPageView() {
   }, [isError, error]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header />
       <ScrollView className="flex-1">
         <MainSlideViewer />

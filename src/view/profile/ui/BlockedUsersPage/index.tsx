@@ -36,7 +36,7 @@ const BlockedUserRow = ({ member }: BlockedUserRowProps) => {
       <TouchableOpacity
         onPress={handleUnblockPress}
         disabled={unblock.isPending}
-        className={`rounded-lg bg-[#F3F4F5] px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
+        className={`rounded-lg bg-surface-muted px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
         <Text className="text-sm font-medium text-gray-900">
           {unblock.isPending ? '해제 중...' : '차단 해제'}
         </Text>
@@ -69,7 +69,7 @@ export default function BlockedUsersPageView() {
   }, [isError]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="차단 목록" showBackButton />
       <FlatList
         data={blockList ?? []}

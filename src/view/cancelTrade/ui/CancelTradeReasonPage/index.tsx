@@ -74,7 +74,7 @@ export default function CancelTradeReasonPage() {
   // 후기 조회가 실패하면 버튼이 이유 없이 비활성화된 채로 남거나 빈 화면만 보였다(#740)
   if (!data && (isReviewLoading || isReviewError)) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="거래취소하기" />
         {isReviewError ? (
           <ErrorFallback onRetry={() => refetchReview()} />
@@ -88,7 +88,7 @@ export default function CancelTradeReasonPage() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="거래취소하기" />
       <ScrollView
         className="flex-1"
@@ -115,7 +115,7 @@ export default function CancelTradeReasonPage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button variant="error" disabled={isFormDisabled} onPress={handleFormSubmit}>
             {submitButtonText}
           </Button>
