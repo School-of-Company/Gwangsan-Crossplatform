@@ -872,4 +872,26 @@ describe('ChatRoomPage', () => {
 
     expect(getByTestId('message-count').props.children).toBe(2);
   });
+
+  describe('채팅방 데이터 폴링(#731)', () => {
+    it('소켓이 연결되어 있으면 채팅방 데이터 폴링을 멈춘다', () => {
+      render(<ChatRoomPage />);
+
+      expect(mockUseChatRoomData).toHaveBeenCalledWith(
+        expect.objectContaining({ roomId: 10, pausePolling: true })
+      );
+    });
+
+    it('소켓이 끊겨 있으면 폴링으로 보완한다', () => {
+      mockUseChatMessages.mockReturnValue(
+        makeChatMessagesReturn({ connectionState: 'disconnected' })
+      );
+
+      render(<ChatRoomPage />);
+
+      expect(mockUseChatRoomData).toHaveBeenCalledWith(
+        expect.objectContaining({ pausePolling: false })
+      );
+    });
+  });
 });
