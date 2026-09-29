@@ -1,6 +1,6 @@
 import { extractOtherUserInfo, checkIsMyPost, ensureMessagesArray } from '../userUtils';
 import { getData } from '../getData';
-import type { ChatMessageResponse } from '~/entity/chat/model/chatTypes';
+import type { ChatMessageResponse } from '~/shared/types/chatType';
 
 jest.mock('../getData', () => ({
   getData: jest.fn(),

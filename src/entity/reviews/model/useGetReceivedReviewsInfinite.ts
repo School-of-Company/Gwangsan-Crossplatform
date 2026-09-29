@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getMyReceivedReview, getReceiveReview } from '../api/getReviews';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { ReviewPostType } from './reviewPostType';
 
 export const RECEIVED_REVIEWS_PAGE_SIZE = 20;

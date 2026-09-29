@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../api/getReviews';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { ReviewPostType } from './reviewPostType';
 
 export type ReviewsMode = 'receive' | 'toss';

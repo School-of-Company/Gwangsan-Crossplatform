@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../../api/getReviews';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { useGetReviews } from '../useGetReviews';
 
 jest.mock('../../api/getReviews', () => ({
@@ -10,7 +10,7 @@ jest.mock('../../api/getReviews', () => ({
   getTossReview: jest.fn(),
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+jest.mock('~/shared/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 
