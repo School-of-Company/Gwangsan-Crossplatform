@@ -201,7 +201,36 @@ jest.mock('@/shared/ui/Header', () => ({
   },
 }));
 
+jest.mock('@/widget/chat/ui/MessageActionOverlay', () => ({
+  MessageActionOverlay: ({
+    visible,
+    anchor,
+    canEdit,
+    onEdit,
+    onDelete,
+    onClose,
+    children,
+  }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    if (!visible) return null;
+    return (
+      <View testID="message-action-overlay">
+        <Text testID="overlay-anchor">{JSON.stringify(anchor)}</Text>
+        <Text testID="overlay-can-edit">{String(canEdit)}</Text>
+        {children}
+        <TouchableOpacity testID="overlay-edit" onPress={onEdit} />
+        <TouchableOpacity testID="overlay-delete" onPress={onDelete} />
+        <TouchableOpacity testID="overlay-close" onPress={onClose} />
+      </View>
+    );
+  },
+}));
+
 jest.mock('@/widget/chat', () => ({
+  MyMessage: ({ message }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="overlay-focused-message">{message.content}</Text>;
+  },
   ChatInput: ({
     onSendMessage,
     disabled,
@@ -243,6 +272,10 @@ const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseChatUIState = useChatUIState as jest.Mock;
 const mockUseMessageActions = useMessageActions as jest.Mock;
 const mockMessageActions = {
+  menu: null as null | { message: any; anchor: any; canEdit: boolean },
+  closeMenu: jest.fn(),
+  selectEdit: jest.fn(),
+  selectDelete: jest.fn(),
   editingMessage: null as { messageId: number; content: string } | null,
   isDeleteConfirmVisible: false,
   openMessageMenu: jest.fn(),
@@ -972,6 +1005,44 @@ describe('ChatRoomPage', () => {
       const { queryByTestId } = render(<ChatRoomPage />);
 
       expect(queryByTestId('alert-modal')).toBeNull();
+    });
+  });
+
+  describe('메시지 메뉴 오버레이', () => {
+    const menu = {
+      message: { messageId: 3, content: '꾹 누른 메시지', isMine: true },
+      anchor: { x: 120, y: 400, width: 200, height: 48 },
+      canEdit: true,
+    };
+
+    it('메뉴가 열리면 누른 말풍선을 강조한 오버레이를 띄운다', () => {
+      mockUseMessageActions.mockReturnValue({ ...mockMessageActions, menu });
+
+      const { getByTestId } = render(<ChatRoomPage />);
+
+      expect(getByTestId('message-action-overlay')).toBeTruthy();
+      expect(getByTestId('overlay-focused-message').props.children).toBe('꾹 누른 메시지');
+      expect(JSON.parse(getByTestId('overlay-anchor').props.children)).toEqual(menu.anchor);
+      expect(getByTestId('overlay-can-edit').props.children).toBe('true');
+    });
+
+    it('오버레이의 수정·삭제·닫기를 메뉴 동작에 연결한다', () => {
+      mockUseMessageActions.mockReturnValue({ ...mockMessageActions, menu });
+
+      const { getByTestId } = render(<ChatRoomPage />);
+      fireEvent.press(getByTestId('overlay-edit'));
+      fireEvent.press(getByTestId('overlay-delete'));
+      fireEvent.press(getByTestId('overlay-close'));
+
+      expect(mockMessageActions.selectEdit).toHaveBeenCalled();
+      expect(mockMessageActions.selectDelete).toHaveBeenCalled();
+      expect(mockMessageActions.closeMenu).toHaveBeenCalled();
+    });
+
+    it('메뉴가 닫혀 있으면 오버레이를 띄우지 않는다', () => {
+      const { queryByTestId } = render(<ChatRoomPage />);
+
+      expect(queryByTestId('message-action-overlay')).toBeNull();
     });
   });
 });

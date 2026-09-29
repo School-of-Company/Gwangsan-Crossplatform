@@ -19,7 +19,8 @@ import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
-import { ChatInput } from '@/widget/chat';
+import { ChatInput, MyMessage } from '@/widget/chat';
+import { MessageActionOverlay } from '@/widget/chat/ui/MessageActionOverlay';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
@@ -419,6 +420,18 @@ export default function ChatRoomPage() {
         onClose={() => setIsReservationConfirmVisible(false)}
         onConfirm={handleReservationConfirmProceed}
       />
+
+      <MessageActionOverlay
+        visible={messageActions.menu !== null}
+        anchor={messageActions.menu?.anchor ?? null}
+        canEdit={messageActions.menu?.canEdit ?? false}
+        onEdit={messageActions.selectEdit}
+        onDelete={messageActions.selectDelete}
+        onClose={messageActions.closeMenu}>
+        {messageActions.menu && (
+          <MyMessage message={messageActions.menu.message} showTime={false} />
+        )}
+      </MessageActionOverlay>
 
       <AlertModal
         isVisible={messageActions.isDeleteConfirmVisible}
