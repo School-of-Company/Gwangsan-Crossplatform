@@ -5,6 +5,7 @@ import { AlertModal } from '~/shared/ui/AlertModal';
 import { useChatInput } from '../../model/useChatInput';
 import { ImagePreview } from '../ImagePreview';
 import type { EditingMessage } from '../../model/useMessageActions';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface ChatInputProps {
   onSendMessage: (
@@ -28,6 +29,7 @@ const ChatInputComponent = ({
   onSubmitEdit,
   onCancelEdit,
 }: ChatInputProps) => {
+  const colors = useThemeColors();
   const chatInput = useChatInput({
     onSendMessage,
     disabled,
@@ -60,13 +62,13 @@ const ChatInputComponent = ({
     chatInput.selectedImages.length < 5;
 
   return (
-    <View className="bg-white">
+    <View className="bg-background">
       {isEditing ? (
         <View
           testID="chat-input-editing-banner"
           className="flex-row items-center justify-between border-t border-gray-200 px-4 pt-3">
           <View className="flex-row items-center gap-1.5">
-            <Icon name="create-outline" size={16} color="#8F9094" />
+            <Icon name="create-outline" size={16} color={colors['gray-500']} />
             <Text className="text-label text-gray-700">메시지 수정 중</Text>
           </View>
           <TouchableOpacity
@@ -74,7 +76,7 @@ const ChatInputComponent = ({
             onPress={onCancelEdit}
             accessibilityLabel="메시지 수정 취소"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Icon name="close" size={20} color="#8F9094" />
+            <Icon name="close" size={20} color={colors['gray-500']} />
           </TouchableOpacity>
         </View>
       ) : (
@@ -88,7 +90,7 @@ const ChatInputComponent = ({
             value={chatInput.textMessage}
             onChangeText={chatInput.updateMessage}
             placeholder="채팅을 입력해주세요"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors['gray-400']}
             className="min-h-[48px] flex-1 px-4 py-3 text-base text-gray-900"
             multiline={false}
             onSubmitEditing={handleSend}
@@ -106,12 +108,12 @@ const ChatInputComponent = ({
               disabled={!canSelectImage}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               {chatInput.isUploading ? (
-                <ActivityIndicator size="small" color="#8F9094" />
+                <ActivityIndicator size="small" color={colors['gray-500']} />
               ) : (
                 <Icon
                   name="camera-outline"
                   size={24}
-                  color={canSelectImage ? '#8F9094' : '#D1D5DB'}
+                  color={canSelectImage ? colors['gray-500'] : colors.muted}
                 />
               )}
             </TouchableOpacity>

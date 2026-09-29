@@ -75,7 +75,7 @@
     ],
     "orientation": "portrait",
     "icon": "./src/shared/assets/png/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./src/shared/assets/png/adaptive-icon-foreground.png",
       "resizeMode": "contain",

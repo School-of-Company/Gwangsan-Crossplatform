@@ -13,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { formatDate } from '@/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
+import { useThemeColors } from '~/shared/lib/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const EXIT_DURATION = 220;
@@ -21,8 +22,16 @@ const REFLOW_DURATION = 220;
 
 const TRADE_STATUS = {
   completed: { label: '거래완료', bg: 'bg-gray-100', text: 'text-gray-600' },
-  reserved: { label: '예약중', bg: 'bg-sub2-100', text: 'text-sub2-700' },
-  ongoing: { label: '거래중', bg: 'bg-main-100', text: 'text-main-700' },
+  reserved: {
+    label: '예약중',
+    bg: 'bg-sub2-100 dark:bg-sub2-900',
+    text: 'text-sub2-700 dark:text-sub2-300',
+  },
+  ongoing: {
+    label: '거래중',
+    bg: 'bg-main-100 dark:bg-main-900',
+    text: 'text-main-700 dark:text-main-300',
+  },
 } as const;
 
 const getTradeStatus = (product: ChatRoomListItem['product']) => {
@@ -51,6 +60,7 @@ const ChatRoomItemComponent = ({
   isExiting = false,
   onExited,
 }: ChatRoomItemProps) => {
+  const colors = useThemeColors();
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
 
@@ -151,7 +161,7 @@ const ChatRoomItemComponent = ({
             onPress={handleMenuPress}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="-mr-1 p-1">
-            <Ionicons name="ellipsis-vertical" size={16} color="#9CA3AF" />
+            <Ionicons name="ellipsis-vertical" size={16} color={colors['gray-400']} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>

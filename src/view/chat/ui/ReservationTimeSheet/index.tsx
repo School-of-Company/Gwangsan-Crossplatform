@@ -102,7 +102,7 @@ function WheelColumn<T>({ items, initialIndex, onChangeIndex, renderLabel }: Whe
         <Animated.View style={[{ paddingVertical: SIDE_PADDING }, contentStyle]}>
           {items.map((item, i) => (
             <View key={i} style={{ height: ITEM_HEIGHT }} className="items-center justify-center">
-              <Text className="titleSmall text-black">{renderLabel(item)}</Text>
+              <Text className="titleSmall text-foreground">{renderLabel(item)}</Text>
             </View>
           ))}
         </Animated.View>

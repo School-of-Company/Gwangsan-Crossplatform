@@ -65,6 +65,7 @@
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.15",
     "expo-status-bar": "~56.0.4",
+    "expo-system-ui": "~56.0.5",
     "expo-task-manager": "~56.0.27",
     "immer": "^11.1.18",
     "nativewind": "latest",

@@ -8,6 +8,7 @@ import {
   type ChatMessageResponse,
 } from '@/entity/chat';
 import Icon from '@expo/vector-icons/Ionicons';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface OtherMessageProps {
   message: ChatMessageResponse;
@@ -25,12 +26,13 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({
   showTime = true,
 }) => {
   const imageLoader = useImageLoader();
+  const colors = useThemeColors();
 
   const messageConfig: MessageRenderConfig = {
     variant: 'received',
     bgColor: 'bg-gray-100',
     textColor: 'text-gray-900',
-    errorIconColor: '#9CA3AF',
+    errorIconColor: colors['gray-400'],
     errorBgColor: 'bg-gray-100',
     errorTextColor: 'text-gray-600',
     loadingBgColor: 'bg-gray-500',
@@ -56,7 +58,7 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({
             onPress={handleProfilePress}
             disabled={!onProfilePress}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Icon name="person" size={16} color="#9CA3AF" />
+            <Icon name="person" size={16} color={colors['gray-400']} />
           </TouchableOpacity>
         ) : (
           <View className="mr-2 h-8 w-8" />

@@ -13,6 +13,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
+import { useThemeColors } from '~/shared/lib/theme';
 import type { MessageAnchor } from '../../model/useMessageActions';
 
 // 하단 메뉴 한 줄 높이와 카드 사이 간격. 말풍선이 메뉴에 가려지는지 계산할 때 쓴다
@@ -61,6 +62,7 @@ export function MessageActionOverlay({
   children,
 }: MessageActionOverlayProps) {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -135,7 +137,7 @@ export function MessageActionOverlay({
           bottom: SHEET_BOTTOM_MARGIN + insets.bottom,
           transform: [{ translateY: sheetTranslate }],
         }}>
-        <View className="overflow-hidden rounded-2xl bg-white">
+        <View className="overflow-hidden rounded-2xl bg-surface">
           {canEdit && (
             <TouchableOpacity
               testID="message-action-edit"
@@ -144,7 +146,7 @@ export function MessageActionOverlay({
               style={{ height: ROW_HEIGHT }}
               className="flex-row items-center justify-between border-b border-gray-100 px-5">
               <Text className="text-body2 text-gray-900">수정</Text>
-              <Icon name="create-outline" size={22} color="#3C3C3E" />
+              <Icon name="create-outline" size={22} color={colors['gray-900']} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -162,7 +164,7 @@ export function MessageActionOverlay({
           onPress={onClose}
           activeOpacity={0.6}
           style={{ height: ROW_HEIGHT, marginTop: SHEET_GAP }}
-          className="items-center justify-center rounded-2xl bg-white">
+          className="items-center justify-center rounded-2xl bg-surface">
           <Text className="text-body1 text-gray-900">취소</Text>
         </TouchableOpacity>
       </Animated.View>
