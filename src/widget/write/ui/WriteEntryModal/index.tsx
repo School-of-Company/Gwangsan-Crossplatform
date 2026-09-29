@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { BottomSheetModalWrapper } from '~/shared/ui';
+import { BottomSheetModalWrapper, SelectionCard } from '~/shared/ui';
 import { MODE_OPTIONS, TYPE_OPTIONS } from '~/widget/write/model/options';
 import { ProductType, TYPE } from '~/widget/write/model/type';
 import { ModeType, MODE } from '~/widget/write/model/mode';
@@ -15,21 +15,9 @@ interface WriteEntryModalProps {
 
 type Stage = 'category' | 'mode';
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 2,
-  },
-});
-
 const TYPE_ICONS: Record<ProductType, React.ReactNode> = {
-  [TYPE.OBJECT]: <Ionicons name="bag-outline" size={36} color="#222" />,
-  [TYPE.SERVICE]: <MaterialCommunityIcons name="headset" size={36} color="#222" />,
+  [TYPE.OBJECT]: <Ionicons name="bag-outline" size={36} color="#3C3C3E" />,
+  [TYPE.SERVICE]: <MaterialCommunityIcons name="headset" size={36} color="#3C3C3E" />,
 };
 
 const MODE_ICONS: Record<ProductType, Record<ModeType, keyof typeof Ionicons.glyphMap>> = {
@@ -84,25 +72,27 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
       <View className="flex-row justify-center gap-4">
         {stage === 'category'
           ? TYPE_OPTIONS.map((option) => (
-              <TouchableOpacity
+              <SelectionCard
                 key={option.value}
-                style={styles.card}
-                className="flex-1 items-center justify-center gap-3 py-8"
-                onPress={() => handleSelectType(option.value)}>
-                {TYPE_ICONS[option.value]}
-                <Text className="text-body3 font-semibold text-black">{option.label}</Text>
-              </TouchableOpacity>
+                icon={TYPE_ICONS[option.value]}
+                label={option.label}
+                onPress={() => handleSelectType(option.value)}
+              />
             ))
           : selectedType &&
             MODE_OPTIONS[selectedType].map((option) => (
-              <TouchableOpacity
+              <SelectionCard
                 key={option.value}
-                style={styles.card}
-                className="flex-1 items-center justify-center gap-3 py-8"
-                onPress={() => handleSelectMode(option.value)}>
-                <Ionicons name={MODE_ICONS[selectedType][option.value]} size={36} color="#222" />
-                <Text className="text-body3 font-semibold text-black">{option.label}</Text>
-              </TouchableOpacity>
+                icon={
+                  <Ionicons
+                    name={MODE_ICONS[selectedType][option.value]}
+                    size={36}
+                    color="#3C3C3E"
+                  />
+                }
+                label={option.label}
+                onPress={() => handleSelectMode(option.value)}
+              />
             ))}
       </View>
     </BottomSheetModalWrapper>

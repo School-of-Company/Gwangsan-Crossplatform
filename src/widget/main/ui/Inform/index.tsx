@@ -1,23 +1,8 @@
 import { router } from 'expo-router';
-import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-
-const styles = StyleSheet.create({
-  commonCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 2,
-    alignItems: 'center',
-    width: '40%',
-    height: '64%',
-  },
-});
+import { SelectionCard } from '~/shared/ui';
 
 const handlePress = (where: string) => {
   router.push('/post?type=' + where);
@@ -34,21 +19,19 @@ export default function Inform({ dong, place, head }: InformProps) {
     <View className="flex gap-2 bg-white p-7">
       <Text className="text-titleSmall">{head}</Text>
       <Text className="text-body2">{dong + ' ' + place}</Text>
-      <View className="flex w-full flex-row items-center justify-around pb-10">
-        <TouchableOpacity
+      <View className="w-full flex-row gap-4 pb-10 pt-2">
+        <SelectionCard
+          icon={<Ionicons name="bag-outline" size={40} color="#3C3C3E" />}
+          label="물건"
           onPress={() => handlePress('OBJECT')}
-          style={styles.commonCard}
-          className="flex h-full justify-between gap-5">
-          <Ionicons name="bag-outline" size={44} color="black" />
-          <Text className="font-cafe24 text-3xl">물건</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+          className="aspect-square"
+        />
+        <SelectionCard
+          icon={<MaterialCommunityIcons name="headset" size={40} color="#3C3C3E" />}
+          label="서비스"
           onPress={() => handlePress('SERVICE')}
-          style={styles.commonCard}
-          className="flex items-center justify-between gap-5">
-          <MaterialCommunityIcons name="headset" size={44} color="black" />
-          <Text className="font-cafe24 text-3xl">서비스</Text>
-        </TouchableOpacity>
+          className="aspect-square"
+        />
       </View>
     </View>
   );

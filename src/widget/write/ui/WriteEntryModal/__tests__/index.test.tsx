@@ -7,6 +7,7 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('~/shared/ui', () => ({
+  SelectionCard: jest.requireActual('~/shared/ui/SelectionCard').SelectionCard,
   BottomSheetModalWrapper: ({ isVisible, children, title, onClose }: any) => {
     if (!isVisible) return null;
     const { View, Text, TouchableOpacity } = require('react-native');

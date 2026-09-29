@@ -15,3 +15,4 @@ export { SlideIndicator } from './SlideIndicator';
 export { Card } from './Card';
 export { PillTabs } from './PillTabs';
 export type { PillTabOption } from './PillTabs';
+export { SelectionCard } from './SelectionCard';
