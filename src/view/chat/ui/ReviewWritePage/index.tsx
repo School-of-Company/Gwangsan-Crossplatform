@@ -14,6 +14,7 @@ import { useGetItem } from '~/entity/post';
 import { createReview } from '~/entity/post/api/createReview';
 import { logger } from '~/shared/lib/logger';
 import type { RoomId } from '~/shared/types/chatType';
+import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
 
 export default function ReviewWritePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,7 +45,7 @@ export default function ReviewWritePage() {
         content: contents.trim(),
         light,
       });
-      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
       Toast.show({ type: 'success', text1: '리뷰가 성공적으로 작성되었습니다.' });
       router.back();
     } catch (error) {

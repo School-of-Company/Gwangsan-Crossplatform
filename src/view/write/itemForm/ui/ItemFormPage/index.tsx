@@ -17,8 +17,8 @@ import { getModeLabel, getTypeLabel } from '~/widget/write/model/options';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { ProductType } from '~/widget/write/model/type';
-import { ModeType } from '~/widget/write/model/mode';
+import { ProductType } from '~/shared/types/type';
+import { ModeType } from '~/shared/types/mode';
 import { useEditPost } from '~/entity/post/model/useEditPost';
 import { useGetItem } from '~/entity/post';
 

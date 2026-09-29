@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import MainPageView from '../index';
 
 jest.mock('react-native-toast-message', () => ({
@@ -9,7 +9,7 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+jest.mock('~/shared/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 

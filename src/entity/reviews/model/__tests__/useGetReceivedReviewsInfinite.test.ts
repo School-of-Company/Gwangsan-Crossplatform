@@ -1,7 +1,7 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { getMyReceivedReview, getReceiveReview } from '../../api/getReviews';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import {
   useGetReceivedReviewsInfinite,
   RECEIVED_REVIEWS_PAGE_SIZE,
@@ -12,7 +12,7 @@ jest.mock('../../api/getReviews', () => ({
   getReceiveReview: jest.fn(),
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+jest.mock('~/shared/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 

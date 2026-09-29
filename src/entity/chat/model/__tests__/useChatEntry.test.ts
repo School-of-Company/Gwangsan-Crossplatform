@@ -1,14 +1,17 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatEntry } from '../useChatEntry';
-import { findChatRoom, createChatRoom, getChatRooms, chatRoomKeys } from '@/entity/chat';
+import { findChatRoom } from '../../api/findChatRoom';
+import { createChatRoom } from '../../api/createChatRoom';
+import { getChatRooms } from '../../api/getChatRooms';
+import { chatRoomKeys } from '../useChatRooms';
 import Toast from 'react-native-toast-message';
 import { AxiosError, AxiosHeaders } from 'axios';
 
-jest.mock('@/entity/chat', () => ({
-  findChatRoom: jest.fn(),
-  createChatRoom: jest.fn(),
-  getChatRooms: jest.fn(),
+jest.mock('../../api/findChatRoom', () => ({ findChatRoom: jest.fn() }));
+jest.mock('../../api/createChatRoom', () => ({ createChatRoom: jest.fn() }));
+jest.mock('../../api/getChatRooms', () => ({ getChatRooms: jest.fn() }));
+jest.mock('../useChatRooms', () => ({
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
 }));
 

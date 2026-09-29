@@ -14,9 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header, PillTabs } from '~/shared/ui';
 import { ReviewPost } from '~/entity/reviews/ui';
-import { useGetReviews, ReviewsMode } from '../../model/useGetReviews';
-import { useGetReceivedReviewsInfinite } from '../../model/useGetReceivedReviewsInfinite';
-import { ReviewPostType } from '../../model/reviewPostType';
+import { useGetReviews, ReviewsMode } from '../../../../entity/reviews/model/useGetReviews';
+import { useGetReceivedReviewsInfinite } from '../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
+import { ReviewPostType } from '../../../../entity/reviews/model/reviewPostType';
 
 interface ReviewsPageViewProps {
   mode: ReviewsMode;

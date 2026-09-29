@@ -2,15 +2,15 @@ import React from 'react';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useMessageActions } from '~/widget/chat/model/useMessageActions';
-import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
+import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Toast from 'react-native-toast-message';
@@ -22,7 +22,7 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+jest.mock('~/shared/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 
@@ -82,11 +82,11 @@ jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
 
-jest.mock('~/entity/post/hooks/useTradeRequest', () => ({
+jest.mock('~/widget/post/model/useTradeRequest', () => ({
   useTradeRequest: jest.fn(),
 }));
 
-jest.mock('~/view/reviews/api/getReviews', () => ({
+jest.mock('~/entity/reviews/api/getReviews', () => ({
   getMyReceivedReview: jest.fn(),
   getTossReview: jest.fn(),
 }));

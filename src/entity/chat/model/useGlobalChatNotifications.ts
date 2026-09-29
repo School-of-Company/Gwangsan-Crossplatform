@@ -3,11 +3,11 @@ import { AppState } from 'react-native';
 import { usePathname } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
-import { chatSocket } from './socket';
-import { getData } from './getData';
-import { getChatRooms, chatRoomKeys } from '@/entity/chat';
-import type { ChatMessageResponse } from '@/entity/chat/model/chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import { chatSocket } from '~/shared/lib/socket';
+import { getData } from '~/shared/lib/getData';
+import { getChatRooms } from '../api/getChatRooms';
+import { chatRoomKeys } from './useChatRooms';
+import type { ChatMessageResponse, RoomId } from '@/shared/types/chatType';
 
 // 나간 방은 GET /chat/rooms 목록에서 제외되므로, 그 목록에 없다는 사실 자체가 "나감" 신호다.
 // staleTime을 0으로 둬 항상 최신 상태를 확인한다 — 비어있거나 오래된 캐시로 나감 여부를 판정하면

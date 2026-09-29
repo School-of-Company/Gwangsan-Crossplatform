@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getMyReceivedReview, getReceiveReview, getTossReview } from '../api/getReviews';
+import { getMyReceivedReview, getReceiveReview, getTossReview } from '../getReviews';
 
 jest.mock('~/shared/lib/axios', () => ({
   instance: { get: jest.fn() },

@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { publicInstance } from '@/shared/lib/publicInstance';
 import { logger } from '@/shared/lib/logger';
-import type { ChatRoomListItem } from '@/entity/chat/model/chatTypes';
+import type { ChatRoomListItem } from '@/shared/types/chatType';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
 const LAST_UNREAD_KEY = 'chatLastUnreadState';

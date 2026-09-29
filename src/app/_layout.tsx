@@ -18,8 +18,8 @@ import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
 import { RootErrorBoundary } from '@/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
-import { useChatEntry } from '@/shared/lib/useChatEntry';
-import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
+import { useChatEntry } from '@/entity/chat/model/useChatEntry';
+import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
 import { useThemeColors } from '@/shared/lib/theme';
 

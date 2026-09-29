@@ -5,6 +5,7 @@ import { markChatAsRead } from '../api/markChatAsRead';
 import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chatTypes';
 import { logger } from '~/shared/lib/logger';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
+import { chatMessageKeys } from './chatQueryKeys';
 
 export const chatRoomKeys = {
   all: ['chatRooms'] as const,
@@ -95,7 +96,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
         });
       };
 
-      const messages = queryClient.getQueryData(['chatMessages', roomId]) as
+      const messages = queryClient.getQueryData(chatMessageKeys.room(roomId)) as
         ChatMessageResponse[] | undefined;
       const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
 

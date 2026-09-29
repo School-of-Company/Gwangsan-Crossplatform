@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../../api/getReviews';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { useGetReviews } from '../useGetReviews';
 
 jest.mock('../../api/getReviews', () => ({
@@ -10,7 +10,7 @@ jest.mock('../../api/getReviews', () => ({
   getTossReview: jest.fn(),
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+jest.mock('~/shared/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 
@@ -130,14 +130,12 @@ describe('useGetReviews', () => {
       expect(result.current.error).toBeTruthy();
     });
 
-    it('queryKey가 [reviews, toss, null]이다', async () => {
+    it('queryKey가 채팅방 화면과 같은 [reviews, toss]이다(#741)', async () => {
       mockGetTossReview.mockResolvedValue([]);
 
       const { queryClient } = renderHookWithProviders(() => useGetReviews('toss', '5'));
 
-      await waitFor(() =>
-        expect(queryClient.getQueryState(['reviews', 'toss', null])).toBeDefined()
-      );
+      await waitFor(() => expect(queryClient.getQueryState(['reviews', 'toss'])).toBeDefined());
     });
 
     it('options.enabled가 false이면 조회하지 않는다(비활성 탭 조회 제한)', () => {

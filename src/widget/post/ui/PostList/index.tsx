@@ -5,8 +5,8 @@ import { ModeType } from '~/shared/types/mode';
 import { useCallback, useMemo, useState } from 'react';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
-import { returnValue } from '~/view/post/model/handleCategory';
-import { Category } from '~/view/post/model/category';
+import { returnValue } from '~/entity/post/model/handleCategory';
+import { Category } from '~/entity/post/model/category';
 import { VirtualList } from 'scrolloop/native';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 

@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '~/entity/main/ui/header';
 import { GwangsanBanner, Inform, MainSlideViewer } from '~/widget/main';
-import { useGetMyInformation } from '../../../../entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '../../../../shared/model/useGetMyInformation';
 import Toast from 'react-native-toast-message';
 
 export default function MainPageView() {

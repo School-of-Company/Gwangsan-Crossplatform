@@ -1,6 +1,6 @@
 import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
-import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
+import { SigninFormData, AuthResponse } from '~/shared/types/authState';
 import { publicInstance } from '~/shared/lib/publicInstance';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';

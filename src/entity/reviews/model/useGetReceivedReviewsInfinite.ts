@@ -1,7 +1,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getMyReceivedReview, getReceiveReview } from '../api/getReviews';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { ReviewPostType } from './reviewPostType';
+import { reviewKeys } from './reviewQueryKeys';
 
 export const RECEIVED_REVIEWS_PAGE_SIZE = 20;
 
@@ -13,13 +14,10 @@ export const useGetReceivedReviewsInfinite = (memberId?: string, enabled = true)
   const isMyReceived = !!myInfo && String(myInfo.memberId) === memberId;
 
   return useInfiniteQuery({
-    queryKey: [
-      'reviews',
-      'receive',
-      'infinite',
+    queryKey: reviewKeys.receivedInfinite(
       isMyReceived ? 'current' : memberId,
-      RECEIVED_REVIEWS_PAGE_SIZE,
-    ],
+      RECEIVED_REVIEWS_PAGE_SIZE
+    ),
     queryFn: ({ pageParam }: { pageParam?: number }) => {
       const params = {
         size: RECEIVED_REVIEWS_PAGE_SIZE,
