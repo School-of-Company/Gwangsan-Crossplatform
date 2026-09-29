@@ -13,6 +13,7 @@ import { useReservationLocationStore } from '~/shared/store/useReservationLocati
 import { logger } from '~/shared/lib/logger';
 import { formatDisplayAddress } from '~/shared/lib/formatAddress';
 import type { RoomId } from '~/shared/types/chatType';
+import { useThemeColors } from '~/shared/lib/theme';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const DATE_OPTION_COUNT = 21;
@@ -29,6 +30,7 @@ export default function ReservationPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
   const router = useRouter();
+  const colors = useThemeColors();
 
   const { data: roomData } = useChatRoomData({ roomId });
   const { otherUserInfo } = useChatMessages({ roomId });
@@ -96,7 +98,7 @@ export default function ReservationPage() {
   ]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
       <Header headerTitle="예약하기" />
       <View className="flex-1 justify-between gap-4 px-4 py-4">
         <View className="gap-4">
@@ -107,39 +109,43 @@ export default function ReservationPage() {
           ) : null}
 
           <View className="w-full gap-2">
-            <Text className="text-label text-black">날짜</Text>
+            <Text className="text-label text-foreground">날짜</Text>
             <TouchableOpacity
               className="flex-row items-center justify-between rounded-xl border border-gray-400 px-4 py-5"
               onPress={() => setIsCalendarVisible(true)}>
-              <Text>{date ? formatDateLabel(date) : '날짜를 선택해주세요'}</Text>
-              <Icon name="calendar-outline" size={18} color="#000" />
+              <Text className="text-foreground">
+                {date ? formatDateLabel(date) : '날짜를 선택해주세요'}
+              </Text>
+              <Icon name="calendar-outline" size={18} color={colors.foreground} />
             </TouchableOpacity>
           </View>
 
           <View className="w-full gap-2">
-            <Text className="text-label text-black">시간</Text>
+            <Text className="text-label text-foreground">시간</Text>
             <TouchableOpacity
               className="flex-row items-center justify-between rounded-xl border border-gray-400 px-4 py-5"
               onPress={() => setIsTimeSheetVisible(true)}>
-              <Text>{time || '시간을 선택해주세요'}</Text>
-              <Icon name="time-outline" size={18} color="#000" />
+              <Text className="text-foreground">{time || '시간을 선택해주세요'}</Text>
+              <Icon name="time-outline" size={18} color={colors.foreground} />
             </TouchableOpacity>
           </View>
 
           <View className="w-full gap-2">
-            <Text className="text-label text-black">장소</Text>
+            <Text className="text-label text-foreground">장소</Text>
             <TouchableOpacity
               className="flex-row items-center justify-between rounded-xl border border-gray-400 px-4 py-5"
               onPress={() => router.push(`/chatting/${id}/reservation/map`)}>
               <View className="flex-1 gap-1">
-                <Text numberOfLines={1}>{placeName || '장소를 선택해주세요'}</Text>
+                <Text className="text-foreground" numberOfLines={1}>
+                  {placeName || '장소를 선택해주세요'}
+                </Text>
                 {hasLocation ? (
                   <Text className="caption text-gray-500" numberOfLines={1}>
                     {formatDisplayAddress(address)}
                   </Text>
                 ) : null}
               </View>
-              <Icon name="location-outline" size={18} color="#000" />
+              <Icon name="location-outline" size={18} color={colors.foreground} />
             </TouchableOpacity>
           </View>
         </View>

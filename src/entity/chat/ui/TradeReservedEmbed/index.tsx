@@ -32,7 +32,7 @@ const TradeReservedEmbedComponent: React.FC<TradeReservedEmbedProps> = ({
 
   return (
     <View className="mb-4 w-full">
-      <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-3">
+      <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-surface px-4 py-3">
         <View className="flex-1">
           <Text testID="trade-reserved-notice" className="text-base font-bold text-gray-900">
             {reserverNickname ? `${reserverNickname}님이 예약을 했어요` : '예약을 했어요'}

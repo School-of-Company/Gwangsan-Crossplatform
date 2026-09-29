@@ -31,7 +31,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({
     bgColor: 'bg-orange-400',
     textColor: 'text-white',
     errorIconColor: '#FB923C',
-    errorBgColor: 'bg-orange-100',
+    errorBgColor: 'bg-orange-100 dark:bg-orange-950',
     errorTextColor: 'text-orange-600',
     loadingBgColor: 'bg-orange-400',
   };
@@ -77,7 +77,7 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({
       {message.status === MESSAGE_STATUS.FAILED && (
         <TouchableOpacity onPress={handleRetry} className="mt-1 flex-row items-center">
           <Icon name="refresh-outline" size={14} color="#DF454A" />
-          <Text className="ml-1 text-xs">재전송</Text>
+          <Text className="ml-1 text-xs text-foreground">재전송</Text>
         </TouchableOpacity>
       )}
     </View>

@@ -81,7 +81,7 @@ const TradePostCard = ({
           transition={200}
         />
         <View className="flex-1 gap-1">
-          <Text className="text-lg font-semibold" numberOfLines={1}>
+          <Text className="text-lg font-semibold text-foreground" numberOfLines={1}>
             {title}
           </Text>
           <Text className="text-sm text-gray-500">{gwangsan} 광산</Text>
@@ -178,7 +178,7 @@ export default function PurchasedPageView() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header
         headerTitle={isMe ? '거래내역' : `${profileData?.nickname ?? ''}님의 거래 내역`}
         showBackButton

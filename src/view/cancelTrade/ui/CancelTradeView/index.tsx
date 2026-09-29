@@ -28,7 +28,7 @@ export default function CancelTradeView() {
     .filter((u: unknown): u is string => typeof u === 'string' && u.length > 0);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="리뷰 상세" />
       <View className="flex-1 justify-between px-4">
         <View className="gap-6">
@@ -44,8 +44,8 @@ export default function CancelTradeView() {
             />
           )}
           <View>
-            <Text className="text-titleSmall">{data?.title}</Text>
-            <Text>{data?.content}</Text>
+            <Text className="text-titleSmall text-foreground">{data?.title}</Text>
+            <Text className="text-foreground">{data?.content}</Text>
             <LightBar value={data?.light ?? 0} />
           </View>
         </View>

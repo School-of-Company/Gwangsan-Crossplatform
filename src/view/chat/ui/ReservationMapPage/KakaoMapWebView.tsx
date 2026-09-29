@@ -108,7 +108,7 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
         style={{ flex: 1, backgroundColor: 'transparent' }}
       />
       {hasLoadError ? (
-        <View className="absolute inset-0 items-center justify-center bg-white px-8">
+        <View className="absolute inset-0 items-center justify-center bg-background px-8">
           <Text className="text-center text-body5 text-gray-500">
             지도를 불러오지 못했습니다. 네트워크 상태를 확인해주세요.
           </Text>
@@ -119,7 +119,7 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
           </TouchableOpacity>
         </View>
       ) : isMapReady ? null : (
-        <View className="absolute inset-0 items-center justify-center bg-white">
+        <View className="absolute inset-0 items-center justify-center bg-background">
           <ActivityIndicator />
         </View>
       )}

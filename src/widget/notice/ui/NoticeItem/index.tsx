@@ -23,7 +23,7 @@ const NoticeItem = ({ id, title, content, createdAt = '', images }: NoticeItemPr
   const hasImages = images && images.length > 0;
 
   return (
-    <TouchableOpacity onPress={handlePress} className="mb-3 bg-white p-4" activeOpacity={0.7}>
+    <TouchableOpacity onPress={handlePress} className="mb-3 bg-background p-4" activeOpacity={0.7}>
       <View className="flex-row">
         {hasImages && (
           <View className="mr-3">

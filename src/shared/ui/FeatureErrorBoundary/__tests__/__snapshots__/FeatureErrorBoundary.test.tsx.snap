@@ -2,7 +2,7 @@
 
 exports[`FeatureErrorBoundary - 스냅샷 에러 상태 기본 fallback 스냅샷 1`] = `
 <View
-  className="flex-1 items-center justify-center gap-4 bg-white px-6"
+  className="flex-1 items-center justify-center gap-4 bg-background px-6"
 >
   <Text
     className="text-center text-lg font-semibold text-gray-800"

@@ -73,7 +73,8 @@ export default function Post({
       </View>
       <View className="flex-1">
         <View className="flex-row items-center gap-1.5">
-          <Text className={`shrink text-lg font-semibold ${isTemporary ? 'opacity-70' : ''}`}>
+          <Text
+            className={`shrink text-lg font-semibold text-foreground ${isTemporary ? 'opacity-70' : ''}`}>
             {title}
           </Text>
           {isReserved && (

@@ -51,7 +51,7 @@ function CardBody({
           <Animated.View
             onLayout={onLayout}
             style={{ transform: [{ translateY }] }}
-            className="w-full gap-6 rounded-2xl bg-white p-6">
+            className="w-full gap-6 rounded-2xl bg-surface p-6">
             <Input
               ref={inputRef}
               label=""
