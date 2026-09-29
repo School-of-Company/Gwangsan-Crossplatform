@@ -21,7 +21,7 @@ import { ChatInput } from '@/widget/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
-import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';

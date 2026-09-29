@@ -7,7 +7,7 @@ import SellingPageView from '../index';
 import { useGetProfile } from '~/view/profile/model/useGetProfile';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
 import { useGetSellingPosts } from '~/view/profile/model/useGetSellingPosts';
-import { useGetReviews } from '~/view/reviews/model/useGetReviews';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
 import { deletePost } from '~/entity/post/api/deletePost';
 
 jest.mock('expo-router', () => ({
@@ -29,7 +29,7 @@ jest.mock('react-native-toast-message', () => ({
 jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetSellingPosts', () => ({ useGetSellingPosts: jest.fn() }));
-jest.mock('~/view/reviews/model/useGetReviews', () => ({ useGetReviews: jest.fn() }));
+jest.mock('~/entity/reviews/model/useGetReviews', () => ({ useGetReviews: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {

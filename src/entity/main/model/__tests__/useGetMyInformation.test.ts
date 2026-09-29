@@ -1,11 +1,11 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import * as Sentry from '@sentry/react-native';
-import { getMyInformation } from '../../../../view/main/api/getMyInformation';
+import { getMyInformation } from '../../api/getMyInformation';
 import { setData } from '~/shared/lib/setData';
 import { useGetMyInformation } from '../useGetMyInformation';
 
-jest.mock('../../../../view/main/api/getMyInformation', () => ({
+jest.mock('../../api/getMyInformation', () => ({
   getMyInformation: jest.fn(),
 }));
 

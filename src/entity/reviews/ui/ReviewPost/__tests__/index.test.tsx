@@ -1,7 +1,7 @@
 import { render, fireEvent } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import ReviewPost from '../index';
-import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+import { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
 
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(),

@@ -1,6 +1,6 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { LightBar } from '~/shared/ui';
-import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+import { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 

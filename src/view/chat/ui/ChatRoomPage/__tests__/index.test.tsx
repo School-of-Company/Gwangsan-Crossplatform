@@ -9,7 +9,7 @@ import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Toast from 'react-native-toast-message';
@@ -63,7 +63,7 @@ jest.mock('~/widget/post/model/useTradeRequest', () => ({
   useTradeRequest: jest.fn(),
 }));
 
-jest.mock('~/view/reviews/api/getReviews', () => ({
+jest.mock('~/entity/reviews/api/getReviews', () => ({
   getMyReceivedReview: jest.fn(),
   getTossReview: jest.fn(),
 }));

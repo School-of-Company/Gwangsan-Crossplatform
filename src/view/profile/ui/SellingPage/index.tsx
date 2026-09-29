@@ -28,8 +28,8 @@ import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetSellingPosts } from '../../model/useGetSellingPosts';
 import { sellingPostsQueryKeys } from '../../model/sellingPostsQueryKeys';
-import { useGetReviews } from '~/view/reviews/model/useGetReviews';
-import type { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
+import type { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
 
 type SellingTab = 'onSale' | 'sold';
 
