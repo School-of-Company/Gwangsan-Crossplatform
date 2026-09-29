@@ -1,7 +1,8 @@
-import { View, Text, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import type { UseImageLoaderReturn } from '../model/useImageLoader';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 export interface MessageRenderConfig {
   variant: 'sent' | 'received';
@@ -63,10 +64,9 @@ export const renderMessageImages = (
               <Text className={`mt-1 text-xs ${config.errorTextColor}`}>이미지 로드 실패</Text>
             </View>
           ) : (
-            <Image
+            <CachedImage
               source={{ uri: image.imageUrl }}
               className="h-48 w-48 rounded-2xl"
-              resizeMode="cover"
               onLoadStart={() => imageLoader.handleImageLoadStart(image.imageId)}
               onLoadEnd={() => imageLoader.handleImageLoadEnd(image.imageId)}
               onError={() => imageLoader.handleImageError(image.imageId)}
