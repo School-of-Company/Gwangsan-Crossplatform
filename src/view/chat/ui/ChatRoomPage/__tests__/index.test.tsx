@@ -7,6 +7,7 @@ import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
+import { useMessageActions } from '~/widget/chat/model/useMessageActions';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
@@ -53,6 +54,28 @@ jest.mock('~/widget/chat/model/useTradeHandlers', () => ({
 
 jest.mock('~/widget/chat/model/useChatUIState', () => ({
   useChatUIState: jest.fn(),
+}));
+
+jest.mock('~/widget/chat/model/useMessageActions', () => ({
+  useMessageActions: jest.fn(),
+}));
+
+jest.mock('@/shared/ui/AlertModal', () => ({
+  AlertModal: ({ isVisible, message, confirmText, onConfirm, onCancel }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    if (!isVisible) return null;
+    return (
+      <View testID="alert-modal">
+        <Text>{message}</Text>
+        <TouchableOpacity testID="alert-modal-confirm" onPress={onConfirm}>
+          <Text>{confirmText}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="alert-modal-cancel" onPress={onCancel}>
+          <Text>취소</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  },
 }));
 
 jest.mock('~/entity/chat/model/useChatRoomData', () => ({
@@ -106,10 +129,16 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
     hasReviewedTrade,
     renderHeader,
     onScrollToEnd,
+    onMyMessageLongPress,
   }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-room-content">
+        <TouchableOpacity
+          testID="content-my-message-long-press"
+          onPress={() => onMyMessageLongPress?.({ messageId: 3, isMine: true })}>
+          <Text>longPress</Text>
+        </TouchableOpacity>
         {renderHeader()}
         <Text testID="message-count">{messages.length}</Text>
         <Text testID="show-review-button">{String(showReviewButton)}</Text>
@@ -173,10 +202,24 @@ jest.mock('@/shared/ui/Header', () => ({
 }));
 
 jest.mock('@/widget/chat', () => ({
-  ChatInput: ({ onSendMessage, disabled, onFocus }: any) => {
+  ChatInput: ({
+    onSendMessage,
+    disabled,
+    onFocus,
+    editingMessage,
+    onSubmitEdit,
+    onCancelEdit,
+  }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-input">
+        <Text testID="chat-input-editing">{editingMessage?.content ?? ''}</Text>
+        <TouchableOpacity testID="chat-input-submit-edit" onPress={() => onSubmitEdit?.('수정')}>
+          <Text>submitEdit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="chat-input-cancel-edit" onPress={onCancelEdit}>
+          <Text>cancelEdit</Text>
+        </TouchableOpacity>
         <Text testID="chat-input-disabled">{String(disabled)}</Text>
         <TouchableOpacity testID="chat-input-send" onPress={() => onSendMessage('hi', [])}>
           <Text>send</Text>
@@ -198,6 +241,16 @@ const mockUseChatMessages = useChatMessages as jest.Mock;
 const mockUseChatAction = useChatAction as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseChatUIState = useChatUIState as jest.Mock;
+const mockUseMessageActions = useMessageActions as jest.Mock;
+const mockMessageActions = {
+  editingMessage: null as { messageId: number; content: string } | null,
+  isDeleteConfirmVisible: false,
+  openMessageMenu: jest.fn(),
+  cancelEdit: jest.fn(),
+  submitEdit: jest.fn(),
+  cancelDelete: jest.fn(),
+  confirmDelete: jest.fn(),
+};
 const mockUseTradeRequest = useTradeRequest as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
@@ -263,6 +316,7 @@ beforeEach(() => {
   });
   mockUseTradeHandlers.mockReturnValue(makeTradeHandlersReturn());
   mockUseChatUIState.mockReturnValue(makeChatUIStateReturn());
+  mockUseMessageActions.mockReturnValue({ ...mockMessageActions });
   mockUseTradeRequest.mockReturnValue({
     handleTradeRequest: jest.fn().mockResolvedValue(undefined),
     isLoading: false,
@@ -871,5 +925,53 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('message-count').props.children).toBe(2);
+  });
+
+  describe('메시지 수정/삭제', () => {
+    it('내 메시지를 길게 누르면 수정/삭제 메뉴를 연다', () => {
+      const { getByTestId } = render(<ChatRoomPage />);
+
+      fireEvent.press(getByTestId('content-my-message-long-press'));
+
+      expect(mockMessageActions.openMessageMenu).toHaveBeenCalledWith(
+        expect.objectContaining({ messageId: 3 })
+      );
+    });
+
+    it('수정 중인 메시지를 입력창에 넘기고, 제출/취소를 연결한다', () => {
+      mockUseMessageActions.mockReturnValue({
+        ...mockMessageActions,
+        editingMessage: { messageId: 3, content: '원래 내용' },
+      });
+
+      const { getByTestId } = render(<ChatRoomPage />);
+
+      expect(getByTestId('chat-input-editing').props.children).toBe('원래 내용');
+      fireEvent.press(getByTestId('chat-input-submit-edit'));
+      expect(mockMessageActions.submitEdit).toHaveBeenCalledWith('수정');
+      fireEvent.press(getByTestId('chat-input-cancel-edit'));
+      expect(mockMessageActions.cancelEdit).toHaveBeenCalled();
+    });
+
+    it('삭제 확인 모달을 띄우고, 확인하면 삭제한다', () => {
+      mockUseMessageActions.mockReturnValue({
+        ...mockMessageActions,
+        isDeleteConfirmVisible: true,
+      });
+
+      const { getByTestId, getByText } = render(<ChatRoomPage />);
+
+      expect(getByText('메시지를 삭제할까요?\n상대방 화면에서도 삭제됩니다.')).toBeTruthy();
+      fireEvent.press(getByTestId('alert-modal-confirm'));
+      expect(mockMessageActions.confirmDelete).toHaveBeenCalled();
+      fireEvent.press(getByTestId('alert-modal-cancel'));
+      expect(mockMessageActions.cancelDelete).toHaveBeenCalled();
+    });
+
+    it('삭제 확인 전에는 모달을 띄우지 않는다', () => {
+      const { queryByTestId } = render(<ChatRoomPage />);
+
+      expect(queryByTestId('alert-modal')).toBeNull();
+    });
   });
 });
