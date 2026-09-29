@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity } from 'react-native';
-import { memo, useMemo } from 'react';
+import { View, Text, TouchableOpacity, Pressable } from 'react-native';
+import { memo, useMemo, useRef } from 'react';
 import Icon from '@expo/vector-icons/Ionicons';
 import {
   useImageLoader,
@@ -9,12 +9,16 @@ import {
 } from '@/entity/chat';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { EnhancedChatMessage } from '~/entity/chat/model/useChatMessages';
+import type { MessageAnchor } from '../../model/useMessageActions';
+import { measureAnchor } from '../../model/measureAnchor';
 
 interface MyMessageProps {
   message: EnhancedChatMessage;
   isLast?: boolean;
   isFollowedByGrouped?: boolean;
   showTime?: boolean;
+  // 수정/삭제할 수 있는 메시지일 때만 전달된다(ChatRoomContent에서 판단)
+  onLongPress?: (message: EnhancedChatMessage, anchor: MessageAnchor) => void;
 }
 
 const MyMessageComponent: React.FC<MyMessageProps> = ({
@@ -22,8 +26,10 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({
   isLast = false,
   isFollowedByGrouped = false,
   showTime = true,
+  onLongPress,
 }) => {
   const imageLoader = useImageLoader();
+  const bubbleRef = useRef<View>(null);
   const retryMessage = useChatQueueStore((state) => state.retry);
 
   const messageConfig: MessageRenderConfig = {
@@ -55,6 +61,12 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({
     }
   };
 
+  // 메뉴에서 같은 자리에 말풍선을 띄울 수 있도록 화면상 위치를 재서 넘긴다
+  const handleLongPress = () => {
+    if (!onLongPress) return;
+    measureAnchor(bubbleRef.current, (anchor) => onLongPress(message, anchor));
+  };
+
   if (!content) return null;
 
   return (
@@ -62,16 +74,22 @@ const MyMessageComponent: React.FC<MyMessageProps> = ({
       <View className="flex-row items-end">
         <View className="mr-2 items-end">
           {statusIndicator}
+          {message.editedAt ? <Text className="text-xs text-gray-400">(수정됨)</Text> : null}
           {showTime && (
             <Text className="text-xs text-gray-500">{formatMessageTime(message.createdAt)}</Text>
           )}
         </View>
-        <View
+        <Pressable
+          ref={bubbleRef}
+          testID={`my-message-bubble-${message.messageId}`}
+          onLongPress={onLongPress ? handleLongPress : undefined}
+          disabled={!onLongPress}
+          accessibilityHint={onLongPress ? '길게 눌러 수정하거나 삭제할 수 있어요' : undefined}
           className={
             isImageMessage ? 'max-w-[280px]' : 'max-w-[280px] rounded-3xl bg-orange-400 px-4 py-3'
           }>
           {content}
-        </View>
+        </Pressable>
       </View>
 
       {message.status === MESSAGE_STATUS.FAILED && (

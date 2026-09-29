@@ -185,6 +185,8 @@ PODS:
     - ExpoModulesCore
   - ExpoBackgroundFetch (56.0.27):
     - ExpoModulesCore
+  - ExpoBlur (56.0.4):
+    - ExpoModulesCore
   - ExpoDevice (56.0.4):
     - ExpoModulesCore
   - ExpoDomWebView (56.0.6):
@@ -2640,6 +2642,7 @@ DEPENDENCIES:
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBackgroundFetch (from `../node_modules/expo-background-fetch/ios`)
+  - ExpoBlur (from `../node_modules/expo-blur/ios`)
   - ExpoDevice (from `../node_modules/expo-device/ios`)
   - "ExpoDomWebView (from `../node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
@@ -2795,6 +2798,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-asset/ios"
   ExpoBackgroundFetch:
     :path: "../node_modules/expo-background-fetch/ios"
+  ExpoBlur:
+    :path: "../node_modules/expo-blur/ios"
   ExpoDevice:
     :path: "../node_modules/expo-device/ios"
   ExpoDomWebView:
@@ -3041,6 +3046,7 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: 65402d4affb8b418aa6cec29b3abb0e313c8f443
   ExpoAsset: 3f825e3c30de2d3e8a280b97602a8a607ce864fe
   ExpoBackgroundFetch: 2374d0909677d444c7827b66e6fc7061be37856d
+  ExpoBlur: 234b3c1f42a35851428e10fa9d347701ae707c4d
   ExpoDevice: f527f8bbefa6efa12f8ef63e9038dd1d5d903697
   ExpoDomWebView: 4e53b05879dc73ba374f76bff93dd64c8a0d91b3
   ExpoFileSystem: 9d47583cbcc53ab2411901c601cd0a7ca18b3c11

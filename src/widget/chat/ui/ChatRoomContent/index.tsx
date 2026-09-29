@@ -27,8 +27,10 @@ import {
   formatMessageTime,
   getMessageDateKey,
   formatDateDividerLabel,
+  canModifyMessage,
 } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+import type { MessageAnchor } from '../../model/useMessageActions';
 import { useThemeColors } from '~/shared/lib/theme';
 
 interface TradeEmbedConfig {
@@ -90,6 +92,7 @@ interface ChatRoomContentProps {
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
   readonly hasReviewedTrade?: boolean;
+  readonly onMyMessageLongPress?: (message: EnhancedChatMessage, anchor: MessageAnchor) => void;
 }
 
 // 빈 화면 안내는 콘텐츠 영역 전체 높이 기준으로 가운데 정렬되는데, KeyboardStickyView는
@@ -119,6 +122,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onReviewButtonPress,
   showReviewButton,
   hasReviewedTrade,
+  onMyMessageLongPress,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -293,6 +297,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
               isLast={item.data.messageId === lastMyMessageId}
               isFollowedByGrouped={isFollowedByGrouped}
               showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+              onLongPress={
+                onMyMessageLongPress && canModifyMessage(item.data)
+                  ? onMyMessageLongPress
+                  : undefined
+              }
             />
           );
         }
@@ -354,7 +363,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData]
+    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData, onMyMessageLongPress]
   );
 
   const emptyStateStyle = useAnimatedStyle(() => ({

@@ -10,6 +10,8 @@ import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
+import { useMessageActions } from '~/widget/chat/model/useMessageActions';
+import { AlertModal } from '@/shared/ui/AlertModal';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
 import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
@@ -17,12 +19,14 @@ import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
-import { ChatInput } from '@/widget/chat';
+import { ChatInput, MyMessage } from '@/widget/chat';
+import { MessageActionOverlay } from '@/widget/chat/ui/MessageActionOverlay';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
+import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat/lib/messageRenderer';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
@@ -48,6 +52,8 @@ export default function ChatRoomPage() {
     scrollToEnd,
     markRoomAsRead,
   } = useChatMessages({ roomId });
+
+  const messageActions = useMessageActions(roomId);
 
   const { navigationHandlers, formatLastMessageDate } = useChatAction({
     otherUserInfo,
@@ -366,6 +372,7 @@ export default function ChatRoomPage() {
         onReviewButtonPress={handleReviewButtonPress}
         showReviewButton={isTradeCompleted}
         hasReviewedTrade={Boolean(myTradeReview)}
+        onMyMessageLongPress={messageActions.openMessageMenu}
       />
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
@@ -395,6 +402,9 @@ export default function ChatRoomPage() {
             onSendMessage={messageHandlers.sendMessage}
             disabled={!updatedComponentState.canSendMessage}
             onFocus={() => scrollToEnd(true)}
+            editingMessage={messageActions.editingMessage}
+            onSubmitEdit={messageActions.submitEdit}
+            onCancelEdit={messageActions.cancelEdit}
           />
         )}
       </KeyboardStickyView>
@@ -410,6 +420,32 @@ export default function ChatRoomPage() {
         isVisible={isReservationConfirmVisible}
         onClose={() => setIsReservationConfirmVisible(false)}
         onConfirm={handleReservationConfirmProceed}
+      />
+
+      <MessageActionOverlay
+        visible={messageActions.menu !== null}
+        anchor={messageActions.menu?.anchor ?? null}
+        canEdit={messageActions.menu?.canEdit ?? false}
+        timeLabel={
+          messageActions.menu
+            ? `${formatDateDividerLabel(messageActions.menu.message.createdAt)} ${formatMessageTime(messageActions.menu.message.createdAt)}`
+            : undefined
+        }
+        onEdit={messageActions.selectEdit}
+        onDelete={messageActions.selectDelete}
+        onClose={messageActions.closeMenu}>
+        {messageActions.menu && (
+          <MyMessage message={messageActions.menu.message} showTime={false} />
+        )}
+      </MessageActionOverlay>
+
+      <AlertModal
+        isVisible={messageActions.isDeleteConfirmVisible}
+        message={'메시지를 삭제할까요?\n상대방 화면에서도 삭제됩니다.'}
+        confirmText="삭제"
+        destructive
+        onCancel={messageActions.cancelDelete}
+        onConfirm={messageActions.confirmDelete}
       />
     </SafeAreaView>
   );
