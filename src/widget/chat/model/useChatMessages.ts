@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FlatList } from 'react-native';
 import { useAnimatedRef, type AnimatedRef } from 'react-native-reanimated';
-import { useChatMessages as useChatMessagesEntity , chatMessageKeys, chatRoomKeys } from '~/entity/chat';
+import {
+  useChatMessages as useChatMessagesEntity,
+  chatMessageKeys,
+  chatRoomKeys,
+} from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
