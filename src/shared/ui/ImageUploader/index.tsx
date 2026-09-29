@@ -38,6 +38,41 @@ interface Props {
   maxImages?: number;
 }
 
+// 사진을 여러 장 올려도 결과는 토스트 한 번으로 알린다. 예전에는 장마다 성공 토스트가 떠
+// 5장을 올리면 토스트가 5개 겹쳐 떴다
+const showUploadResultToast = (successCount: number, totalCount: number) => {
+  if (totalCount === 0) return;
+
+  if (successCount === totalCount) {
+    Toast.show({
+      type: 'success',
+      text1: '이미지 업로드 성공',
+      text2:
+        totalCount === 1
+          ? '이미지가 성공적으로 업로드되었습니다.'
+          : `이미지 ${totalCount}장이 업로드되었습니다.`,
+      visibilityTime: 2000,
+    });
+    return;
+  }
+
+  const failedCount = totalCount - successCount;
+  Toast.show({
+    type: 'error',
+    text1: '이미지 업로드 실패',
+    text2:
+      totalCount === 1
+        ? '이미지 업로드 중 오류가 발생했습니다.'
+        : `${totalCount}장 중 ${failedCount}장을 업로드하지 못했습니다.`,
+    visibilityTime: 3000,
+  });
+};
+
+interface SelectedAsset {
+  uri: string;
+  assetId?: string | null;
+}
+
 interface ImageStatus {
   uri: string;
   status: 'uploading' | 'uploaded' | 'failed';
@@ -77,7 +112,7 @@ const ImageUploader = ({
     }
   }, [initialImages, imageStatuses.length]);
 
-  const uploadImageMutation = useUploadImage();
+  const uploadImageMutation = useUploadImage({ showToast: false });
   const colors = useThemeColors();
 
   const uploadState = useMemo((): ImageUploadState => {
@@ -111,7 +146,7 @@ const ImageUploader = ({
     );
   }, []);
 
-  // handleImageSelected가 실패 후 1.5초 뒤 예약하는 자동 제거 호출은 uri가 images에
+  // uploadImage가 실패 후 1.5초 뒤 예약하는 자동 제거 호출은 uri가 images에
   // 추가되기 "전" 시점의 클로저를 캡처하기 때문에, images를 직접 의존성으로 참조하면
   // 항상 images.indexOf(uri) === -1이 되어 제거가 조용히 무시된다. ref로 최신 images를
   // 읽어 이 문제를 피한다.
@@ -150,20 +185,13 @@ const ImageUploader = ({
     [images]
   );
 
-  const handleImageSelected = useCallback(
-    async (uri: string, assetId?: string | null) => {
-      if (assetId) {
-        assetIdsByUriRef.current.set(uri, assetId);
-      }
-
-      onImagesChange?.([...images, uri]);
-
-      const newStatus: ImageStatus = { uri, status: 'uploading' };
-      setImageStatuses((prev) => [...prev, newStatus]);
-
+  // 업로드 성공 여부를 돌려줘, 한 번에 고른 사진들의 결과를 모아 토스트를 한 번만 띄운다
+  const uploadImage = useCallback(
+    async (uri: string): Promise<boolean> => {
       try {
         const uploadedImage = await uploadImageMutation.mutateAsync(uri);
         updateImageStatus(uri, { status: 'uploaded', imageData: uploadedImage });
+        return true;
       } catch (error) {
         logger.error('Image upload failed', error);
         updateImageStatus(uri, {
@@ -171,9 +199,35 @@ const ImageUploader = ({
           error: error instanceof Error ? error : new Error('업로드 실패'),
         });
         setTimeout(() => removeImageByUri(uri), 1500);
+        return false;
       }
     },
-    [images, onImagesChange, uploadImageMutation, updateImageStatus, removeImageByUri]
+    [uploadImageMutation, updateImageStatus, removeImageByUri]
+  );
+
+  // 여러 장을 한 장씩 onImagesChange([...images, uri])로 반영하면 모두 같은 클로저의
+  // images를 기준으로 계산되어 앞서 추가한 사진이 덮어써진다. 고른 사진 전체를 한 번에
+  // 반영한 뒤 업로드는 병렬로 진행한다.
+  const handleImagesSelected = useCallback(
+    async (assets: SelectedAsset[]) => {
+      if (assets.length === 0) return;
+
+      assets.forEach(({ uri, assetId }) => {
+        if (assetId) {
+          assetIdsByUriRef.current.set(uri, assetId);
+        }
+      });
+
+      onImagesChange?.([...images, ...assets.map(({ uri }) => uri)]);
+      setImageStatuses((prev) => [
+        ...prev,
+        ...assets.map(({ uri }): ImageStatus => ({ uri, status: 'uploading' })),
+      ]);
+
+      const results = await Promise.all(assets.map(({ uri }) => uploadImage(uri)));
+      showUploadResultToast(results.filter(Boolean).length, results.length);
+    },
+    [images, onImagesChange, uploadImage]
   );
 
   const pickFromGallery = useCallback(async () => {
@@ -183,40 +237,68 @@ const ImageUploader = ({
       return;
     }
 
+    const remainingCount = maxImages - images.length;
+    if (remainingCount <= 0) return;
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
+        selectionLimit: remainingCount,
+        orderedSelection: true,
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
+      if (result.canceled || !result.assets || result.assets.length === 0) return;
 
+      const accepted: SelectedAsset[] = [];
+      let hasOversized = false;
+      let hasDuplicate = false;
+
+      result.assets.forEach((asset) => {
         if (asset.fileSize !== undefined && asset.fileSize > MAX_FILE_SIZE) {
-          Toast.show({
-            type: 'error',
-            text1: '파일 크기 초과',
-            text2: '10MB 이하의 이미지만 업로드할 수 있습니다.',
-          });
+          hasOversized = true;
           return;
         }
-
-        if (isDuplicateSelection(asset.uri, asset.assetId)) {
-          Toast.show({
-            type: 'error',
-            text1: '중복된 사진',
-            text2: '이미 추가된 사진입니다.',
-          });
+        const isDuplicateInBatch = accepted.some((item) =>
+          asset.assetId ? item.assetId === asset.assetId : item.uri === asset.uri
+        );
+        if (isDuplicateInBatch || isDuplicateSelection(asset.uri, asset.assetId)) {
+          hasDuplicate = true;
           return;
         }
+        accepted.push({ uri: asset.uri, assetId: asset.assetId });
+      });
 
-        await handleImageSelected(asset.uri, asset.assetId);
+      // 일부 기기의 피커는 selectionLimit을 지키지 않으므로 남은 개수만큼만 첨부한다.
+      const exceedsLimit = accepted.length > remainingCount;
+      const toAttach = accepted.slice(0, remainingCount);
+
+      if (hasOversized) {
+        Toast.show({
+          type: 'error',
+          text1: '파일 크기 초과',
+          text2: '10MB를 넘는 사진은 제외했습니다.',
+        });
+      } else if (hasDuplicate) {
+        Toast.show({
+          type: 'error',
+          text1: '중복된 사진',
+          text2: '이미 추가된 사진은 제외했습니다.',
+        });
+      } else if (exceedsLimit) {
+        Toast.show({
+          type: 'error',
+          text1: '사진 개수 초과',
+          text2: `사진은 최대 ${maxImages}장까지 첨부할 수 있습니다.`,
+        });
       }
+
+      await handleImagesSelected(toAttach);
     } catch (error) {
       logger.error('이미지 선택 중 오류', error);
     }
-  }, [handleImageSelected, isDuplicateSelection]);
+  }, [images.length, maxImages, handleImagesSelected, isDuplicateSelection]);
 
   const pickFromCamera = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -243,12 +325,12 @@ const ImageUploader = ({
           return;
         }
 
-        await handleImageSelected(asset.uri, asset.assetId);
+        await handleImagesSelected([{ uri: asset.uri, assetId: asset.assetId }]);
       }
     } catch (error) {
       logger.error('카메라 촬영 중 오류', error);
     }
-  }, [handleImageSelected, isDuplicateSelection]);
+  }, [handleImagesSelected, isDuplicateSelection]);
 
   const pickImage = useCallback(() => {
     if (readonly || images.length >= maxImages) return;
