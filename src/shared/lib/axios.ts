@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { setData } from './setData';
 import { getAccessToken, getRefreshToken } from './auth';
 import { clearSession } from './clearSession';
+import { syncBiometricCredentials } from './biometricCredentials';
 import Toast from 'react-native-toast-message';
 import { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
@@ -176,6 +177,10 @@ instance.interceptors.response.use(
           setData('accessToken', newAccessToken),
           rotatedRefreshToken ? setData('refreshToken', rotatedRefreshToken) : Promise.resolve(),
         ]);
+        // 생체 인증용 사본 갱신이 실패해도 요청 재시도는 막지 않는다
+        syncBiometricCredentials(newAccessToken, rotatedRefreshToken ?? refreshToken).catch(
+          (error) => logger.warn('Failed to sync biometric credentials', error)
+        );
         return newAccessToken;
       })().catch((error: unknown) => {
         // 기다리던 요청들도 같은 에러를 받으므로, 로그아웃할 상황이면 한국어 안내로 바꿔 던진다

@@ -5,7 +5,6 @@ import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
 import axios from 'axios';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
-import * as Keychain from 'react-native-keychain';
 
 const auth = axios.create({
   baseURL: instance.defaults.baseURL,
@@ -35,52 +34,12 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   }
 };
 
-export const saveCredentialsForBiometric = async (
-  accessToken: string,
-  refreshToken: string
-): Promise<void> => {
-  try {
-    const supportedBiometry = await Keychain.getSupportedBiometryType();
-    if (!supportedBiometry) return;
-
-    await Keychain.setGenericPassword(accessToken, refreshToken, {
-      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
-      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
-      authenticationPrompt: { title: '생체 인증으로 로그인' },
-    });
-  } catch (error) {
-    logger.error('Failed to save tokens for biometric auth', error);
-  }
-};
-
-export const getCredentialsForBiometric = async (): Promise<{
-  accessToken: string;
-  refreshToken: string;
-} | null> => {
-  try {
-    const result = await Keychain.getGenericPassword({
-      authenticationPrompt: {
-        title: '생체 인증으로 로그인',
-        cancel: '취소',
-      },
-    });
-
-    if (!result) return null;
-
-    return { accessToken: result.username, refreshToken: result.password };
-  } catch (error) {
-    logger.error('Biometric auth failed', error);
-    return null;
-  }
-};
-
-export const clearCredentialsForBiometric = async (): Promise<void> => {
-  try {
-    await Keychain.resetGenericPassword();
-  } catch (error) {
-    logger.error('Failed to clear biometric credentials', error);
-  }
-};
+// 생체 인증 로그인용 키체인 처리는 토큰 재발급(shared/lib/axios)에서도 써야 해서 shared로 옮겼다
+export {
+  saveCredentialsForBiometric,
+  getCredentialsForBiometric,
+  clearCredentialsForBiometric,
+} from '~/shared/lib/biometricCredentials';
 
 export const signinWithDeviceInfo = async (credentials: {
   nickname: string;
