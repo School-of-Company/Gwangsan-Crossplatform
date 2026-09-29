@@ -4,6 +4,7 @@ import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
 import { signinWithDeviceInfo } from '../signin';
 
+jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'http://test-api.com' }));
 jest.mock('@/shared/lib/axios', () => ({
   instance: {
     defaults: { baseURL: 'http://test-api.com' },

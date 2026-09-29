@@ -1,9 +1,12 @@
 import { instance } from '~/shared/lib/axios';
+import { toAppError } from '~/shared/lib/errorHandler';
+import type { ProfileType } from '~/shared/types/profileType';
 
-export const getMyInformation = async () => {
+export const getMyInformation = async (): Promise<ProfileType> => {
   try {
-    return (await instance.get('/member')).data;
+    const { data } = await instance.get<ProfileType>('/member');
+    return data;
   } catch (error) {
-    throw error;
+    throw toAppError(error);
   }
 };

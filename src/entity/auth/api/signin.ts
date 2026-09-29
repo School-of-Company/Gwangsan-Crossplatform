@@ -1,28 +1,26 @@
-import { instance } from '@/shared/lib/axios';
 import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
 import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
-import axios from 'axios';
+import { publicInstance } from '~/shared/lib/publicInstance';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
-const auth = axios.create({
-  baseURL: instance.defaults.baseURL,
-  timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// 로그인은 기기 정보 수집과 서버 인증이 겹쳐 다른 공개 요청보다 여유 있게 기다린다
+const SIGNIN_TIMEOUT_MS = 15_000;
 
 const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   try {
-    const response = await auth.post<AuthResponse>('/auth/signin', {
-      nickname: formData.nickname,
-      password: formData.password,
-      deviceToken: formData.deviceToken,
-      deviceId: formData.deviceId,
-      osType: formData.osType,
-    });
+    const response = await publicInstance.post<AuthResponse>(
+      '/auth/signin',
+      {
+        nickname: formData.nickname,
+        password: formData.password,
+        deviceToken: formData.deviceToken,
+        deviceId: formData.deviceId,
+        osType: formData.osType,
+      },
+      { timeout: SIGNIN_TIMEOUT_MS }
+    );
 
     const { accessToken, refreshToken } = response.data;
 
