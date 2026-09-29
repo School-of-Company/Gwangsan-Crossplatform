@@ -201,40 +201,68 @@ const ImageUploader = ({
       return;
     }
 
+    const remainingCount = maxImages - images.length;
+    if (remainingCount <= 0) return;
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
+        selectionLimit: remainingCount,
+        orderedSelection: true,
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
+      if (result.canceled || !result.assets || result.assets.length === 0) return;
 
+      const accepted: SelectedAsset[] = [];
+      let hasOversized = false;
+      let hasDuplicate = false;
+
+      result.assets.forEach((asset) => {
         if (asset.fileSize !== undefined && asset.fileSize > MAX_FILE_SIZE) {
-          Toast.show({
-            type: 'error',
-            text1: '파일 크기 초과',
-            text2: '10MB 이하의 이미지만 업로드할 수 있습니다.',
-          });
+          hasOversized = true;
           return;
         }
-
-        if (isDuplicateSelection(asset.uri, asset.assetId)) {
-          Toast.show({
-            type: 'error',
-            text1: '중복된 사진',
-            text2: '이미 추가된 사진입니다.',
-          });
+        const isDuplicateInBatch = accepted.some((item) =>
+          asset.assetId ? item.assetId === asset.assetId : item.uri === asset.uri
+        );
+        if (isDuplicateInBatch || isDuplicateSelection(asset.uri, asset.assetId)) {
+          hasDuplicate = true;
           return;
         }
+        accepted.push({ uri: asset.uri, assetId: asset.assetId });
+      });
 
-        await handleImagesSelected([{ uri: asset.uri, assetId: asset.assetId }]);
+      // 일부 기기의 피커는 selectionLimit을 지키지 않으므로 남은 개수만큼만 첨부한다.
+      const exceedsLimit = accepted.length > remainingCount;
+      const toAttach = accepted.slice(0, remainingCount);
+
+      if (hasOversized) {
+        Toast.show({
+          type: 'error',
+          text1: '파일 크기 초과',
+          text2: '10MB를 넘는 사진은 제외했습니다.',
+        });
+      } else if (hasDuplicate) {
+        Toast.show({
+          type: 'error',
+          text1: '중복된 사진',
+          text2: '이미 추가된 사진은 제외했습니다.',
+        });
+      } else if (exceedsLimit) {
+        Toast.show({
+          type: 'error',
+          text1: '사진 개수 초과',
+          text2: `사진은 최대 ${maxImages}장까지 첨부할 수 있습니다.`,
+        });
       }
+
+      await handleImagesSelected(toAttach);
     } catch (error) {
       logger.error('이미지 선택 중 오류', error);
     }
-  }, [handleImagesSelected, isDuplicateSelection]);
+  }, [images.length, maxImages, handleImagesSelected, isDuplicateSelection]);
 
   const pickFromCamera = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
