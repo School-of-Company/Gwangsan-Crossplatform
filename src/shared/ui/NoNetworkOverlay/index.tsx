@@ -9,7 +9,7 @@ interface NoNetworkOverlayProps {
 export function NoNetworkOverlay({ visible }: NoNetworkOverlayProps) {
   return (
     <Modal visible={visible} animationType="fade" statusBarTranslucent>
-      <View className="flex-1 items-center justify-center gap-3 bg-white px-8">
+      <View className="flex-1 items-center justify-center gap-3 bg-background px-8">
         <Text className="text-center text-titleSmall text-gray-900">
           인터넷에 연결되어 있지 않아요.
         </Text>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import ProfilePageView from '../index';
@@ -222,6 +222,78 @@ describe('ProfilePageView', () => {
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', text2: '잠시 후 다시 시도해주세요.' })
       );
+    });
+  });
+
+  describe('로딩/실패 화면', () => {
+    it('내 프로필을 불러오는 중이면 로딩 표시를 보여준다', () => {
+      mockUseGetMyProfile.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+        refetch: refetchMyProfile,
+      });
+
+      const { getByTestId, queryByTestId } = render(<ProfilePageView />);
+
+      expect(getByTestId('profile-loading')).toBeTruthy();
+      expect(queryByTestId('information')).toBeNull();
+    });
+
+    it('내 프로필 조회에 실패하면 다시 시도 화면을 보여주고, 누르면 다시 조회한다', () => {
+      mockUseGetMyProfile.mockReturnValue({
+        data: undefined,
+        error: new Error('네트워크 오류'),
+        isLoading: false,
+        isError: true,
+        refetch: refetchMyProfile,
+      });
+
+      const { getByText, queryByTestId } = render(<ProfilePageView />);
+
+      expect(queryByTestId('information')).toBeNull();
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetchMyProfile).toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '네트워크 오류' })
+      );
+    });
+
+    it('상대 프로필을 불러오는 중이면 로딩 표시를 보여준다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+      mockUseGetProfile.mockReturnValue({ ...defaultProfileReturn(), isLoading: true });
+
+      const { getByTestId } = render(<ProfilePageView />);
+
+      expect(getByTestId('profile-loading')).toBeTruthy();
+    });
+
+    it('받아둔 프로필이 있으면 새로 조회하다 실패해도 화면을 유지한다', () => {
+      mockUseGetMyProfile.mockReturnValue({
+        ...defaultMyProfileReturn(),
+        error: new Error('실패'),
+        isError: true,
+      });
+
+      const { getByTestId, queryByText } = render(<ProfilePageView />);
+
+      expect(getByTestId('information')).toBeTruthy();
+      expect(queryByText('다시 시도')).toBeNull();
+    });
+
+    it('실패 상태로 다시 렌더링되어도 토스트를 반복해서 띄우지 않는다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+      mockUseGetProfile.mockReturnValue({
+        data: undefined,
+        error: new Error('프로필 오류'),
+        isError: true,
+        refetch: refetchProfile,
+      });
+
+      const { rerender } = render(<ProfilePageView />);
+      rerender(<ProfilePageView />);
+
+      expect(Toast.show).toHaveBeenCalledTimes(1);
     });
   });
 

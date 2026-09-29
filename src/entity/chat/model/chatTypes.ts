@@ -107,6 +107,8 @@ export interface ChatMessageResponse {
   readonly senderId: number;
   readonly checked: boolean;
   readonly isMine: boolean;
+  // 메시지를 수정한 시각(School-of-Company/Gwangsan-Server#422). 수정한 적이 없으면 비어 있다
+  readonly editedAt?: ChatTimestamp | null;
 }
 
 export interface SendMessagePayload {

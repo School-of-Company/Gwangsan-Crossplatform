@@ -180,4 +180,91 @@ describe('ChatInput', () => {
 
     expect(mockUseChatInput).toHaveBeenCalledWith({ onSendMessage, disabled: true });
   });
+
+  describe('수정 모드', () => {
+    const editingMessage = { messageId: 7, content: '원래 내용' };
+
+    it('수정할 메시지가 들어오면 입력창을 그 내용으로 채우고 수정 중 표시를 보여준다', () => {
+      const updateMessage = jest.fn();
+      mockUseChatInput.mockReturnValue(makeChatInputReturn({ updateMessage }));
+
+      const { getByText, getByTestId } = render(
+        <ChatInput onSendMessage={jest.fn()} editingMessage={editingMessage} />
+      );
+
+      expect(updateMessage).toHaveBeenCalledWith('원래 내용');
+      expect(getByText('메시지 수정 중')).toBeTruthy();
+      expect(getByTestId('chat-input-cancel-edit')).toBeTruthy();
+    });
+
+    it('수정 모드가 끝나면 입력창을 비운다', () => {
+      const updateMessage = jest.fn();
+      mockUseChatInput.mockReturnValue(makeChatInputReturn({ updateMessage }));
+      const { rerender, queryByText } = render(
+        <ChatInput onSendMessage={jest.fn()} editingMessage={editingMessage} />
+      );
+      updateMessage.mockClear();
+
+      rerender(<ChatInput onSendMessage={jest.fn()} editingMessage={null} />);
+
+      expect(updateMessage).toHaveBeenCalledWith('');
+      expect(queryByText('메시지 수정 중')).toBeNull();
+    });
+
+    it('전송을 누르면 메시지를 보내지 않고 수정 내용을 제출한다', () => {
+      const handleSendMessage = jest.fn();
+      const onSubmitEdit = jest.fn();
+      mockUseChatInput.mockReturnValue(
+        makeChatInputReturn({ textMessage: '고친 내용', handleSendMessage })
+      );
+
+      const { getByTestId } = render(
+        <ChatInput
+          onSendMessage={jest.fn()}
+          editingMessage={editingMessage}
+          onSubmitEdit={onSubmitEdit}
+        />
+      );
+      fireEvent.press(getByTestId('chat-input-send'));
+
+      expect(onSubmitEdit).toHaveBeenCalledWith('고친 내용');
+      expect(handleSendMessage).not.toHaveBeenCalled();
+    });
+
+    it('내용이 비어 있으면 수정 제출 버튼이 비활성화된다', () => {
+      mockUseChatInput.mockReturnValue(makeChatInputReturn({ textMessage: '   ' }));
+
+      const { getByTestId } = render(
+        <ChatInput onSendMessage={jest.fn()} editingMessage={editingMessage} />
+      );
+
+      expect(getByTestId('chat-input-send').props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('취소 버튼을 누르면 onCancelEdit을 호출한다', () => {
+      const onCancelEdit = jest.fn();
+      const { getByTestId } = render(
+        <ChatInput
+          onSendMessage={jest.fn()}
+          editingMessage={editingMessage}
+          onCancelEdit={onCancelEdit}
+        />
+      );
+
+      fireEvent.press(getByTestId('chat-input-cancel-edit'));
+
+      expect(onCancelEdit).toHaveBeenCalled();
+    });
+
+    it('수정 모드에서는 사진 첨부 버튼을 숨긴다', () => {
+      const handleImagePicker = jest.fn();
+      mockUseChatInput.mockReturnValue(makeChatInputReturn({ handleImagePicker }));
+
+      const { UNSAFE_queryAllByProps } = render(
+        <ChatInput onSendMessage={jest.fn()} editingMessage={editingMessage} />
+      );
+
+      expect(UNSAFE_queryAllByProps({ onPress: handleImagePicker })).toHaveLength(0);
+    });
+  });
 });

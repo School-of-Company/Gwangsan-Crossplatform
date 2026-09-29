@@ -75,16 +75,16 @@ export default function DongStep() {
 
         {showResults && filteredDongs.length > 0 && (
           <ScrollView
-            className="mt-8 max-h-60 border-t border-[#EFF0F2]"
+            className="mt-8 max-h-60 border-t border-gray-100"
             keyboardShouldPersistTaps="handled">
             {filteredDongs.map((item, index) => (
               <TouchableOpacity
                 key={item}
-                className={`border-b border-[#EFF0F2] px-4 py-8 ${
+                className={`border-b border-gray-100 px-4 py-8 ${
                   index === filteredDongs.length - 1 ? 'border-b-0' : ''
                 }`}
                 onPress={() => handleSelectDong(item)}>
-                <Text>{item}</Text>
+                <Text className="text-foreground">{item}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
