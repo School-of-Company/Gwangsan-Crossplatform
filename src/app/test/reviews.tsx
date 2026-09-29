@@ -41,7 +41,7 @@ export default function Reviews() {
   }, []);
 
   return (
-    <View className="flex-1 bg-white p-4">
+    <View className="flex-1 bg-background p-4">
       <View className="flex-1 items-center justify-center">
         <Text className="mb-8 text-2xl font-bold">후기작성 페이지</Text>
         <TouchableOpacity onPress={handleOpenModal} className="rounded-lg bg-green-500 px-6 py-3">

@@ -30,6 +30,7 @@ import { useGetSellingPosts } from '../../model/useGetSellingPosts';
 import { sellingPostsQueryKeys } from '../../model/sellingPostsQueryKeys';
 import { useGetReviews } from '~/view/reviews/model/useGetReviews';
 import type { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+import { useThemeColors } from '~/shared/lib/theme';
 
 type SellingTab = 'onSale' | 'sold';
 
@@ -106,6 +107,7 @@ const SellingPostCard = ({
   onMenuPress: (post: PostType) => void;
 }) => {
   const router = useRouter();
+  const colors = useThemeColors();
   const { id, type, mode, title, gwangsan, isCompleted, buyer, imageUrls = [], images = [] } = post;
   const isTemporary = id < 0;
 
@@ -159,7 +161,7 @@ const SellingPostCard = ({
             />
             <View className="flex-1 gap-1">
               <View className="flex-row items-center gap-1.5">
-                <Text className="shrink text-lg font-semibold" numberOfLines={1}>
+                <Text className="shrink text-lg font-semibold text-foreground" numberOfLines={1}>
                   {title}
                 </Text>
                 {isCompleted && buyer && (
@@ -178,7 +180,7 @@ const SellingPostCard = ({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className="p-1"
               testID={`selling-card-menu-${id}`}>
-              <Ionicons name="ellipsis-vertical" size={20} color="#9CA3AF" />
+              <Ionicons name="ellipsis-vertical" size={20} color={colors['gray-400']} />
             </TouchableOpacity>
           )}
         </View>
@@ -423,7 +425,7 @@ export default function SellingPageView() {
   }, [deleteTargetPostId, deletePostMutation]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header
         headerTitle={isMe ? '판매관리' : `${profileData?.nickname ?? ''}님의 판매 목록`}
         showBackButton

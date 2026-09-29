@@ -50,7 +50,7 @@ export default function ProfilePageView() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="프로필" showBackButton={!isMe} />
       <ScrollView
         className="flex-0.8 flex gap-3"
@@ -61,7 +61,7 @@ export default function ProfilePageView() {
           name={isMe ? myProfileData?.nickname : profileData?.nickname}
           isBlocked={isBlocked}
         />
-        <View className="bg-white pb-14">
+        <View className="bg-background pb-14">
           <Introduce
             introduce={isMe ? myProfileData?.description : profileData?.description}
             specialty={isMe ? myProfileData?.specialties : profileData?.specialties}

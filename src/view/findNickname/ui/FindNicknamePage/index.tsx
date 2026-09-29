@@ -49,7 +49,7 @@ export default function FindNicknamePage() {
 
   if (foundNickname) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <View className="flex-1 gap-8 px-6">
           <View className="flex-row items-center pt-4">
             <TouchableOpacity
@@ -60,14 +60,16 @@ export default function FindNicknamePage() {
             </TouchableOpacity>
           </View>
           <View>
-            <Text className="text-3xl font-bold">별칭 찾기 완료</Text>
+            <Text className="text-3xl font-bold text-foreground">별칭 찾기 완료</Text>
             <Text className="mt-4 text-lg text-gray-700">
               입력하신 전화번호로 등록된 별칭입니다.
             </Text>
           </View>
           <View className="mt-8 rounded-xl bg-gray-100 p-6">
             <Text className="text-center text-sm text-gray-500">별칭</Text>
-            <Text className="mt-2 text-center text-2xl font-bold">{foundNickname}</Text>
+            <Text className="mt-2 text-center text-2xl font-bold text-foreground">
+              {foundNickname}
+            </Text>
           </View>
           <View className="mb-4 mt-auto">
             <Button onPress={() => router.replace('/signin/nickname')}>로그인하러 가기</Button>
@@ -78,7 +80,7 @@ export default function FindNicknamePage() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 200 }}
@@ -95,7 +97,7 @@ export default function FindNicknamePage() {
           </View>
 
           <View>
-            <Text className="text-3xl font-bold">별칭 찾기</Text>
+            <Text className="text-3xl font-bold text-foreground">별칭 찾기</Text>
             <Text className="mt-4 text-lg text-gray-700">
               가입 시 등록한 전화번호를 입력해주세요
             </Text>
@@ -159,7 +161,7 @@ export default function FindNicknamePage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button onPress={handleFindNickname} disabled={!isVerificationComplete || isLoading}>
             {isLoading ? '찾는 중...' : '별칭 찾기'}
           </Button>
