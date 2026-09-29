@@ -132,6 +132,17 @@ describe('ChatRoomContent', () => {
     expect(queryByText('채팅방 헤더')).toBeNull();
   });
 
+  it('빈 채팅방에서 아무 데나 누르면 키보드를 내린다', () => {
+    const { Keyboard } = require('react-native');
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
+
+    fireEvent.press(getByTestId('chat-empty-state-dismiss'));
+
+    expect(dismissSpy).toHaveBeenCalled();
+    dismissSpy.mockRestore();
+  });
+
   it('빈 상태 안내는 키보드 높이를 반영하는 컨테이너 안에 그린다', () => {
     const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
 

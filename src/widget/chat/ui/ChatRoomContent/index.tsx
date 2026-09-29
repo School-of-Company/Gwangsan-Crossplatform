@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, FlatList, Platform, type ListRenderItem } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Platform,
+  Keyboard,
+  Pressable,
+  type ListRenderItem,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -356,12 +364,18 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   if (!hasMessages && !hasTradeEmbed) {
     return (
       <Animated.View testID="chat-empty-state" style={[{ flex: 1 }, emptyStateStyle]}>
-        <View className="flex-1 items-center justify-center px-4">
+        {/* 메시지가 있을 때는 FlatList 기본 동작으로 목록을 누르면 키보드가 내려가지만, 빈 화면 안내는
+            일반 View라 눌러도 내려가지 않았다. 목록과 같게 아무 데나 누르면 키보드를 내린다 */}
+        <Pressable
+          testID="chat-empty-state-dismiss"
+          className="flex-1 items-center justify-center px-4"
+          onPress={Keyboard.dismiss}
+          accessible={false}>
           <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
           <Text className="mt-4 text-center text-gray-500">
             아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
           </Text>
-        </View>
+        </Pressable>
       </Animated.View>
     );
   }
