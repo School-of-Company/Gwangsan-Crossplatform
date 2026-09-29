@@ -3,7 +3,9 @@ import { setupServer } from 'msw/node';
 import { QueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
-import { getAccessToken, getRefreshToken, clearAuthTokens } from '../auth';
+import { getAccessToken, getRefreshToken } from '../auth';
+import { clearSession } from '../clearSession';
+import Toast from 'react-native-toast-message';
 import { setData } from '../setData';
 import { instance, setQueryClientInstance, SessionExpiredError, TokenStorageError } from '../axios';
 
@@ -20,7 +22,13 @@ jest.mock('@sentry/react-native', () => ({
 jest.mock('../auth', () => ({
   getAccessToken: jest.fn(),
   getRefreshToken: jest.fn(),
-  clearAuthTokens: jest.fn(),
+}));
+jest.mock('../clearSession', () => ({
+  clearSession: jest.fn(),
+}));
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
 }));
 jest.mock('../setData', () => ({
   setData: jest.fn(),
@@ -29,7 +37,7 @@ jest.mock('../setData', () => ({
 const mockRouter = router as unknown as { replace: jest.Mock };
 const mockGetAccessToken = getAccessToken as jest.MockedFunction<typeof getAccessToken>;
 const mockGetRefreshToken = getRefreshToken as jest.MockedFunction<typeof getRefreshToken>;
-const mockClearAuthTokens = clearAuthTokens as jest.MockedFunction<typeof clearAuthTokens>;
+const mockClearSession = clearSession as jest.MockedFunction<typeof clearSession>;
 const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockSentry = Sentry as jest.Mocked<typeof Sentry>;
 
@@ -140,7 +148,7 @@ describe('response interceptor', () => {
   it('/auth/reissue 자체가 401이면 재시도 없이 reject된다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh-token');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     server.use(
@@ -154,7 +162,7 @@ describe('response interceptor', () => {
   it('refreshToken이 없으면 Sentry 예외 없이(breadcrumb만 남기고) 토큰을 초기화하고 로그인으로 이동한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue(null);
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const queryClient = new QueryClient();
@@ -173,8 +181,7 @@ describe('response interceptor', () => {
         message: expect.stringContaining('no refresh token'),
       })
     );
-    expect(mockClearAuthTokens).toHaveBeenCalled();
-    expect(queryClient.clear).toHaveBeenCalled();
+    expect(mockClearSession).toHaveBeenCalledWith(queryClient);
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
@@ -182,7 +189,7 @@ describe('response interceptor', () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('my-refresh-token');
     mockSetData.mockResolvedValue(undefined);
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
 
     let requestCount = 0;
     server.use(
@@ -204,7 +211,7 @@ describe('response interceptor', () => {
   it('토큰 갱신 실패 시 Sentry 기록 + 토큰 초기화 + 로그인 이동', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('stale-refresh');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const queryClient = new QueryClient();
@@ -219,8 +226,7 @@ describe('response interceptor', () => {
     await expect(instance.get('/secured')).rejects.toThrow();
 
     expect(mockSentry.captureException).toHaveBeenCalled();
-    expect(mockClearAuthTokens).toHaveBeenCalled();
-    expect(queryClient.clear).toHaveBeenCalled();
+    expect(mockClearSession).toHaveBeenCalledWith(queryClient);
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
@@ -228,7 +234,7 @@ describe('response interceptor', () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh-token');
     mockSetData.mockRejectedValue('non-error-rejection-reason');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     server.use(
@@ -255,7 +261,7 @@ describe('response interceptor', () => {
 
       await expect(instance.get('/locked-refresh')).rejects.toBeInstanceOf(TokenStorageError);
 
-      expect(mockClearAuthTokens).not.toHaveBeenCalled();
+      expect(mockClearSession).not.toHaveBeenCalled();
       expect(mockRouter.replace).not.toHaveBeenCalled();
       expect(mockSentry.captureException).not.toHaveBeenCalled();
     });
@@ -268,7 +274,7 @@ describe('response interceptor', () => {
       server.use(http.get(`${BASE}/locked-access`, () => new HttpResponse(null, { status: 401 })));
 
       await expect(instance.get('/locked-access')).rejects.toBeInstanceOf(TokenStorageError);
-      expect(mockClearAuthTokens).not.toHaveBeenCalled();
+      expect(mockClearSession).not.toHaveBeenCalled();
     });
 
     it('서버가 refresh token을 교체해 내려주면 함께 저장한다', async () => {
@@ -323,7 +329,7 @@ describe('response interceptor', () => {
     it('재발급할 수 없으면 기다리던 요청까지 한국어 세션 만료 메시지로 실패한다', async () => {
       mockGetAccessToken.mockResolvedValue('old-token');
       mockGetRefreshToken.mockResolvedValue(null);
-      mockClearAuthTokens.mockResolvedValue(undefined);
+      mockClearSession.mockResolvedValue(undefined);
       setQueryClientInstance(new QueryClient());
 
       server.use(
@@ -342,13 +348,16 @@ describe('response interceptor', () => {
           '세션이 만료되었습니다. 다시 로그인해 주세요.'
         );
       });
+      // 기다리던 요청이 여러 개여도 세션 정리와 안내는 한 번만 한다
+      expect(mockClearSession).toHaveBeenCalledTimes(1);
+      expect(Toast.show).toHaveBeenCalledTimes(1);
     });
   });
 
   it('queryClientInstance가 null이어도 토큰 초기화 후 이동한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     setQueryClientInstance(null as unknown as QueryClient);
@@ -360,14 +369,14 @@ describe('response interceptor', () => {
 
     await expect(instance.get('/secured-no-qc')).rejects.toThrow();
 
-    expect(mockClearAuthTokens).toHaveBeenCalled();
+    expect(mockClearSession).toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('router.replace 실패 시 console.warn을 호출하고 에러를 억제한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     mockRouter.replace.mockImplementation(() => {
       throw new Error('Navigation failed');
     });
@@ -387,7 +396,7 @@ describe('response interceptor', () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh-token');
     mockSetData.mockResolvedValue(undefined);
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
 
     let reissueCallCount = 0;
     const callCounts = { c1: 0, c2: 0 };
@@ -424,7 +433,7 @@ describe('response interceptor', () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh');
     mockSetData.mockResolvedValue(undefined);
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     let count = 0;
@@ -446,7 +455,7 @@ describe('response interceptor', () => {
   it('/auth/reissue가 타임아웃/네트워크 오류로 응답 없이 실패하면 세션을 유지한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('valid-refresh-token');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const queryClient = new QueryClient();
@@ -468,7 +477,7 @@ describe('response interceptor', () => {
         message: 'Token refresh skipped: network or timeout error',
       })
     );
-    expect(mockClearAuthTokens).not.toHaveBeenCalled();
+    expect(mockClearSession).not.toHaveBeenCalled();
     expect(queryClient.clear).not.toHaveBeenCalled();
     expect(mockRouter.replace).not.toHaveBeenCalledWith('/signin/nickname');
   });
@@ -477,7 +486,7 @@ describe('response interceptor', () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh-token');
     mockSetData.mockResolvedValue(undefined);
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const queryClient = new QueryClient();
@@ -493,15 +502,14 @@ describe('response interceptor', () => {
 
     await expect(instance.get('/still-unauthorized')).rejects.toThrow();
 
-    expect(mockClearAuthTokens).toHaveBeenCalled();
-    expect(queryClient.clear).toHaveBeenCalled();
+    expect(mockClearSession).toHaveBeenCalledWith(queryClient);
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
   it('동시 401 발생 시 토큰 갱신 실패하면 두 번째 요청도 reject된다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('refresh-token');
-    mockClearAuthTokens.mockResolvedValue(undefined);
+    mockClearSession.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const queryClient = new QueryClient();

@@ -2,7 +2,9 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { setData } from './setData';
-import { getAccessToken, getRefreshToken, clearAuthTokens } from './auth';
+import { getAccessToken, getRefreshToken } from './auth';
+import { clearSession } from './clearSession';
+import Toast from 'react-native-toast-message';
 import { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
@@ -231,11 +233,10 @@ instance.interceptors.response.use(
           return Promise.reject(refreshError);
         }
 
-        await clearAuthTokens();
-
-        if (queryClientInstance) {
-          queryClientInstance.clear();
-        }
+        // 일반 로그아웃과 같은 범위로 세션을 정리한다. 이 경로는 재발급을 시작한 요청 하나만 타므로
+        // 기다리던 요청이 여러 개여도 안내는 한 번만 뜬다
+        await clearSession(queryClientInstance);
+        Toast.show({ type: 'info', text1: '세션이 만료되었습니다. 다시 로그인해 주세요.' });
 
         try {
           router.replace('/signin/nickname');
