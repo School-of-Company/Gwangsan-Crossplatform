@@ -19,6 +19,7 @@ import {
   formatMessageTime,
   getMessageDateKey,
   formatDateDividerLabel,
+  canModifyMessage,
 } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
@@ -81,6 +82,7 @@ interface ChatRoomContentProps {
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
   readonly hasReviewedTrade?: boolean;
+  readonly onMyMessageLongPress?: (message: EnhancedChatMessage) => void;
 }
 
 const keyExtractor = (item: ChatListItem): string => {
@@ -102,6 +104,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onReviewButtonPress,
   showReviewButton,
   hasReviewedTrade,
+  onMyMessageLongPress,
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -275,6 +278,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
               isLast={item.data.messageId === lastMyMessageId}
               isFollowedByGrouped={isFollowedByGrouped}
               showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+              onLongPress={
+                onMyMessageLongPress && canModifyMessage(item.data)
+                  ? onMyMessageLongPress
+                  : undefined
+              }
             />
           );
         }
@@ -336,7 +344,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData]
+    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData, onMyMessageLongPress]
   );
 
   const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);

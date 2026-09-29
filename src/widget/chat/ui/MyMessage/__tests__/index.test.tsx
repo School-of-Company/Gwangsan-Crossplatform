@@ -156,4 +156,36 @@ describe('MyMessage', () => {
 
     expect(mockRetry).not.toHaveBeenCalled();
   });
+
+  describe('수정/삭제', () => {
+    it('onLongPress가 있으면 말풍선을 길게 눌렀을 때 메시지와 함께 호출한다', () => {
+      const onLongPress = jest.fn();
+      const message = makeMessage();
+      const { getByTestId } = render(<MyMessage message={message} onLongPress={onLongPress} />);
+
+      fireEvent(getByTestId('my-message-bubble-1'), 'longPress');
+
+      expect(onLongPress).toHaveBeenCalledWith(message);
+    });
+
+    it('onLongPress가 없으면 말풍선을 길게 눌러도 반응하지 않는다', () => {
+      const { getByTestId } = render(<MyMessage message={makeMessage()} />);
+
+      expect(getByTestId('my-message-bubble-1').props.accessibilityHint).toBeUndefined();
+    });
+
+    it('수정된 메시지에는 (수정됨)을 표시한다', () => {
+      const { getByText } = render(
+        <MyMessage message={makeMessage({ editedAt: '2026-07-08T07:00:00.000Z' })} />
+      );
+
+      expect(getByText('(수정됨)')).toBeTruthy();
+    });
+
+    it('수정하지 않은 메시지에는 (수정됨)을 표시하지 않는다', () => {
+      const { queryByText } = render(<MyMessage message={makeMessage()} />);
+
+      expect(queryByText('(수정됨)')).toBeNull();
+    });
+  });
 });

@@ -74,10 +74,15 @@ const OtherMessageComponent: React.FC<OtherMessageProps> = ({
               }>
               {content}
             </View>
-            {showTime && (
-              <Text className="ml-2 text-xs text-gray-500">
-                {formatMessageTime(message.createdAt)}
-              </Text>
+            {(showTime || message.editedAt) && (
+              <View className="ml-2">
+                {message.editedAt ? <Text className="text-xs text-gray-400">(수정됨)</Text> : null}
+                {showTime && (
+                  <Text className="text-xs text-gray-500">
+                    {formatMessageTime(message.createdAt)}
+                  </Text>
+                )}
+              </View>
             )}
           </View>
         </View>

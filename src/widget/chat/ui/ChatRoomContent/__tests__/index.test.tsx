@@ -35,8 +35,13 @@ jest.mock('../../MyMessage', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    MyMessage: ({ message, isLast }: any) => (
-      <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
+    MyMessage: ({ message, isLast, onLongPress }: any) => (
+      <Text
+        testID={`my-message-${message.messageId}`}
+        accessibilityHint={onLongPress ? 'long-pressable' : undefined}
+        onLongPress={onLongPress ? () => onLongPress(message) : undefined}>
+        {isLast ? 'last' : ''}
+      </Text>
     ),
   };
 });
@@ -81,6 +86,7 @@ jest.mock('~/entity/chat', () => {
     formatMessageTime: (createdAt: string) => createdAt,
     getMessageDateKey: (createdAt: string) => createdAt.slice(0, 10),
     formatDateDividerLabel: (createdAt: string) => `날짜-${createdAt.slice(0, 10)}`,
+    canModifyMessage: (message: any) => message.isMine && message.messageId !== 99,
   };
 });
 
@@ -476,5 +482,41 @@ describe('ChatRoomContent', () => {
 
     const listAfterShow = UNSAFE_getByType(FlatList);
     expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(10);
+  });
+
+  describe('내 메시지 길게 누르기', () => {
+    it('수정/삭제할 수 있는 내 메시지에만 길게 누르기 핸들러를 넘긴다', () => {
+      const onMyMessageLongPress = jest.fn();
+      const messages = [
+        createMessage({ messageId: 1, isMine: true, createdAt: '2026-05-28T01:00:00.000Z' }),
+        // canModifyMessage mock이 false를 돌려주는 메시지(예: 24시간 경과)
+        createMessage({ messageId: 99, isMine: true, createdAt: '2026-05-28T01:01:00.000Z' }),
+      ];
+
+      const { getByTestId } = render(
+        <ChatRoomContent
+          {...defaultProps}
+          messages={messages}
+          hasMessages
+          onMyMessageLongPress={onMyMessageLongPress}
+        />
+      );
+
+      expect(getByTestId('my-message-1').props.accessibilityHint).toBe('long-pressable');
+      expect(getByTestId('my-message-99').props.accessibilityHint).toBeUndefined();
+
+      fireEvent(getByTestId('my-message-1'), 'longPress');
+      expect(onMyMessageLongPress).toHaveBeenCalledWith(expect.objectContaining({ messageId: 1 }));
+    });
+
+    it('핸들러를 넘기지 않으면 길게 누르기를 연결하지 않는다', () => {
+      const messages = [createMessage({ messageId: 1, isMine: true })];
+
+      const { getByTestId } = render(
+        <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+      );
+
+      expect(getByTestId('my-message-1').props.accessibilityHint).toBeUndefined();
+    });
   });
 });
