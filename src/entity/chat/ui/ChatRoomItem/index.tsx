@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { memo, useEffect } from 'react';
 import Animated, {
   cancelAnimation,
@@ -13,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { formatDate } from '@/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
+import { CachedImage } from '~/shared/ui/CachedImage';
 import { useThemeColors } from '~/shared/lib/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -129,12 +130,11 @@ const ChatRoomItemComponent = ({
         disabled={isExiting}
         className="flex-row items-center px-4 py-3 active:bg-gray-50"
         activeOpacity={0.7}>
-        <Image
+        <CachedImage
           source={
             productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')
           }
           className="mr-3 h-14 w-14 rounded-lg"
-          resizeMode="cover"
         />
         <View className="flex-1">
           <View className="flex-row items-center gap-1.5">

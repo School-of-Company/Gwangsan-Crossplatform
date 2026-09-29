@@ -1,7 +1,8 @@
-import { View, Text, Image } from 'react-native';
+import { View, Text } from 'react-native';
 import { memo } from 'react';
 import { formatDate } from '@/shared/lib/formatDate';
 import type { ChatMessageResponse } from '../../model/chatTypes';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 interface ChatMessageProps {
   message: ChatMessageResponse;
@@ -15,11 +16,10 @@ const ChatMessageComponent = ({ message }: ChatMessageProps) => {
       return (
         <View className={`max-w-[250px] ${isMyMessage ? 'items-end' : 'items-start'}`}>
           {message.images.map((image, index) => (
-            <Image
+            <CachedImage
               key={image.imageId}
               source={{ uri: image.imageUrl }}
               className="mb-1 h-48 w-48 rounded-lg"
-              resizeMode="cover"
             />
           ))}
           {message.content && (

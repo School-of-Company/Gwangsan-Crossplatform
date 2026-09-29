@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import {
-  Image,
   ScrollView,
   Text,
   View,
@@ -13,6 +12,7 @@ import {
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import { Button, SlideIndicator } from '~/shared/ui';
 import type { PostDetailResponse } from '~/entity/post/api/getItem';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -81,11 +81,10 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
               onMomentumScrollEnd={handleImageScrollEnd}
               scrollEventThrottle={16}>
               {data.images.map((image, index) => (
-                <Image
+                <CachedImage
                   key={image.imageId ?? index}
                   source={{ uri: image.imageUrl }}
                   style={{ width: SCREEN_WIDTH, height: 280 }}
-                  resizeMode="cover"
                 />
               ))}
             </ScrollView>
@@ -101,7 +100,10 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
             )}
           </View>
         ) : (
-          <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
+          <CachedImage
+            source={require('~/shared/assets/png/logo.png')}
+            className="h-[280px] w-full"
+          />
         )}
 
         <MiniProfile

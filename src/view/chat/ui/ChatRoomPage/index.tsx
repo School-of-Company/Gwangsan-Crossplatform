@@ -61,7 +61,11 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  const { data: roomData, error: roomDataError } = useChatRoomData({ roomId });
+  // 소켓이 연결된 동안에는 새 메시지와 거래 상태가 실시간으로 들어오므로 폴링하지 않는다(#731)
+  const { data: roomData, error: roomDataError } = useChatRoomData({
+    roomId,
+    pausePolling: connectionState === 'connected',
+  });
   const { data: myInfo } = useGetMyInformation();
   const { data: blockList } = useGetBlockList();
   const isBlocked = !!blockList?.some((b) => b.memberId === otherUserInfo.id);

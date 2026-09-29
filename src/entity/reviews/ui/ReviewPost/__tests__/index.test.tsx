@@ -37,7 +37,7 @@ describe('ReviewPost', () => {
   it('images가 없으면 기본 이미지를 렌더링한다', () => {
     const review = makeReview({ images: [] });
     const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
-    const Image = require('react-native').Image;
+    const Image = require('expo-image').Image;
 
     const images = UNSAFE_getAllByType(Image);
     expect(images).toHaveLength(1);
@@ -51,7 +51,7 @@ describe('ReviewPost', () => {
       ],
     });
     const { UNSAFE_getAllByType } = render(<ReviewPost review={review} />);
-    const Image = require('react-native').Image;
+    const Image = require('expo-image').Image;
 
     const images = UNSAFE_getAllByType(Image);
     expect(images).toHaveLength(1);
@@ -130,7 +130,7 @@ describe('ReviewPost', () => {
       ],
     });
     const { UNSAFE_getAllByType, getByText } = render(<ReviewPost review={review} />);
-    const Image = require('react-native').Image;
+    const Image = require('expo-image').Image;
 
     const images = UNSAFE_getAllByType(Image);
     expect(images).toHaveLength(1);

@@ -1,9 +1,12 @@
 import { instance } from '~/shared/lib/axios';
+import { toAppError } from '~/shared/lib/errorHandler';
+import type { PostType } from '~/shared/types/postType';
 
-export const getPost = async (id: string) => {
+export const getPost = async (id: string): Promise<PostType[]> => {
   try {
-    return (await instance.get(`/post/member/${id}`)).data;
+    const { data } = await instance.get<PostType[]>(`/post/member/${id}`);
+    return data;
   } catch (error) {
-    throw error;
+    throw toAppError(error);
   }
 };

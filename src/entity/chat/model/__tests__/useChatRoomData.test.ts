@@ -1,6 +1,10 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
-import { useChatRoomData } from '../useChatRoomData';
+import {
+  useChatRoomData,
+  getChatRoomDataRefetchInterval,
+  CHAT_ROOM_DATA_POLL_INTERVAL,
+} from '../useChatRoomData';
 import { getChatRoomData } from '../../api/getChatMessages';
 
 jest.mock('../../api/getChatMessages', () => ({
@@ -78,5 +82,42 @@ describe('useChatRoomData', () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(mockGetChatRoomData).toHaveBeenCalledTimes(1);
+  });
+
+  describe('폴링 간격', () => {
+    it('기본으로 30초마다 폴링한다', () => {
+      expect(getChatRoomDataRefetchInterval(null, false)).toBe(CHAT_ROOM_DATA_POLL_INTERVAL);
+    });
+
+    it('소켓이 연결되어 pausePolling이면 폴링하지 않는다', () => {
+      expect(getChatRoomDataRefetchInterval(null, true)).toBe(false);
+    });
+
+    it('채팅방이 없어 404가 나면 폴링하지 않는다', () => {
+      const error = Object.assign(new Error('없음'), { status: 404 });
+      expect(getChatRoomDataRefetchInterval(error, false)).toBe(false);
+    });
+
+    it('404가 아닌 에러는 계속 폴링해 복구를 기다린다', () => {
+      const error = Object.assign(new Error('서버 오류'), { status: 500 });
+      expect(getChatRoomDataRefetchInterval(error, false)).toBe(CHAT_ROOM_DATA_POLL_INTERVAL);
+    });
+  });
+
+  it('pausePolling이면 시간이 지나도 다시 요청하지 않는다', async () => {
+    jest.useFakeTimers();
+    try {
+      mockGetChatRoomData.mockResolvedValue(makeRoomData());
+      const { result } = renderHookWithProviders(() =>
+        useChatRoomData({ roomId: 100, pausePolling: true })
+      );
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      jest.advanceTimersByTime(5 * 60 * 1000);
+
+      expect(mockGetChatRoomData).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

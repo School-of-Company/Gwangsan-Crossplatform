@@ -1,15 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import * as Keychain from 'react-native-keychain';
 import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
-import {
-  signinWithDeviceInfo,
-  saveCredentialsForBiometric,
-  getCredentialsForBiometric,
-  clearCredentialsForBiometric,
-} from '../signin';
+import { signinWithDeviceInfo } from '../signin';
 
+jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'http://test-api.com' }));
 jest.mock('@/shared/lib/axios', () => ({
   instance: {
     defaults: { baseURL: 'http://test-api.com' },
@@ -27,14 +22,7 @@ jest.mock('@/shared/lib/setData', () => ({
 jest.mock('@/shared/model/getDeviceInfo', () => ({
   getDeviceInfo: jest.fn(),
 }));
-jest.mock('react-native-keychain', () => ({
-  getSupportedBiometryType: jest.fn(),
-  setGenericPassword: jest.fn(),
-  getGenericPassword: jest.fn(),
-  resetGenericPassword: jest.fn(),
-  ACCESS_CONTROL: { BIOMETRY_ANY: 'BiometryAny' },
-  ACCESSIBLE: { WHEN_UNLOCKED: 'WhenUnlocked' },
-}));
+jest.mock('~/shared/lib/biometricCredentials', () => ({}));
 jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
@@ -42,7 +30,6 @@ jest.mock('@sentry/react-native', () => ({
 
 const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockGetDeviceInfo = getDeviceInfo as jest.MockedFunction<typeof getDeviceInfo>;
-const mockKeychain = Keychain as jest.Mocked<typeof Keychain>;
 
 const BASE = 'http://test-api.com';
 const server = setupServer();
@@ -126,92 +113,5 @@ describe('signinWithDeviceInfo', () => {
     await expect(signinWithDeviceInfo({ nickname: '', password: 'pass' })).rejects.toThrow(
       '닉네임을 입력해주세요'
     );
-  });
-});
-
-describe('saveCredentialsForBiometric', () => {
-  it('생체인증이 지원되면 accessToken과 refreshToken을 키체인에 저장한다', async () => {
-    mockKeychain.getSupportedBiometryType.mockResolvedValue('FaceID' as never);
-    mockKeychain.setGenericPassword.mockResolvedValue(true as never);
-
-    await saveCredentialsForBiometric('access-token', 'refresh-token');
-
-    expect(mockKeychain.setGenericPassword).toHaveBeenCalledWith(
-      'access-token',
-      'refresh-token',
-      expect.objectContaining({ accessControl: 'BiometryAny' })
-    );
-  });
-
-  it('생체인증이 지원되지 않으면 저장하지 않는다', async () => {
-    mockKeychain.getSupportedBiometryType.mockResolvedValue(null as never);
-
-    await saveCredentialsForBiometric('access-token', 'refresh-token');
-
-    expect(mockKeychain.setGenericPassword).not.toHaveBeenCalled();
-  });
-
-  it('키체인 저장 실패 시 에러를 억제하고 console.error를 호출한다', async () => {
-    mockKeychain.getSupportedBiometryType.mockResolvedValue('TouchID' as never);
-    mockKeychain.setGenericPassword.mockRejectedValue(new Error('Keychain error'));
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    await expect(
-      saveCredentialsForBiometric('access-token', 'refresh-token')
-    ).resolves.toBeUndefined();
-    expect(errorSpy).toHaveBeenCalled();
-  });
-});
-
-describe('getCredentialsForBiometric', () => {
-  it('저장된 토큰이 있으면 accessToken과 refreshToken을 반환한다', async () => {
-    mockKeychain.getGenericPassword.mockResolvedValue({
-      username: 'saved-access-token',
-      password: 'saved-refresh-token',
-      service: '',
-      storage: '',
-    } as never);
-
-    const result = await getCredentialsForBiometric();
-
-    expect(result).toEqual({
-      accessToken: 'saved-access-token',
-      refreshToken: 'saved-refresh-token',
-    });
-  });
-
-  it('저장된 토큰이 없으면 null을 반환한다', async () => {
-    mockKeychain.getGenericPassword.mockResolvedValue(false as never);
-
-    const result = await getCredentialsForBiometric();
-
-    expect(result).toBeNull();
-  });
-
-  it('생체인증 실패(에러) 시 null을 반환하고 console.error를 호출한다', async () => {
-    mockKeychain.getGenericPassword.mockRejectedValue(new Error('User cancelled'));
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    const result = await getCredentialsForBiometric();
-
-    expect(result).toBeNull();
-    expect(errorSpy).toHaveBeenCalled();
-  });
-});
-
-describe('clearCredentialsForBiometric', () => {
-  it('키체인 자격 증명을 초기화한다', async () => {
-    mockKeychain.resetGenericPassword.mockResolvedValue(true as never);
-
-    await expect(clearCredentialsForBiometric()).resolves.toBeUndefined();
-    expect(mockKeychain.resetGenericPassword).toHaveBeenCalled();
-  });
-
-  it('초기화 실패 시 에러를 억제하고 console.error를 호출한다', async () => {
-    mockKeychain.resetGenericPassword.mockRejectedValue(new Error('reset failed'));
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    await expect(clearCredentialsForBiometric()).resolves.toBeUndefined();
-    expect(errorSpy).toHaveBeenCalled();
   });
 });
