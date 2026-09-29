@@ -28,8 +28,13 @@ describe('canModifyMessage', () => {
   });
 
   it('보낸 지 24시간이 지난 메시지는 수정/삭제할 수 없다', () => {
-    const createdAt = new Date(NOW - MESSAGE_MODIFY_WINDOW_MS).toISOString();
+    const createdAt = new Date(NOW - MESSAGE_MODIFY_WINDOW_MS - 1000).toISOString();
     expect(canModifyMessage(message({ createdAt }), NOW)).toBe(false);
+  });
+
+  it('서버와 같이 정확히 24시간인 시점까지는 수정/삭제할 수 있다', () => {
+    const createdAt = new Date(NOW - MESSAGE_MODIFY_WINDOW_MS).toISOString();
+    expect(canModifyMessage(message({ createdAt }), NOW)).toBe(true);
   });
 
   it('24시간이 되기 직전 메시지는 수정/삭제할 수 있다', () => {
