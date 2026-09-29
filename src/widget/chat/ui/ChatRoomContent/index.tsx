@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, FlatList, Platform, type ListRenderItem } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Platform,
+  Keyboard,
+  Pressable,
+  type ListRenderItem,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -82,6 +90,14 @@ interface ChatRoomContentProps {
   readonly showReviewButton?: boolean;
   readonly hasReviewedTrade?: boolean;
 }
+
+// 빈 화면 안내는 콘텐츠 영역 전체 높이 기준으로 가운데 정렬되는데, KeyboardStickyView는
+// 입력창만 옮기고 콘텐츠 영역 높이는 줄이지 않는다. 입력창이 닫힘 상태보다 더 올라간 만큼
+// (키보드 높이 - 닫힘 상태 오프셋) 하단 여백을 줘서 안내가 남은 공간의 가운데로 오게 한다
+export const getEmptyStateBottomInset = (keyboardHeight: number, closedOffset: number): number => {
+  'worklet';
+  return Math.max(0, -keyboardHeight - closedOffset);
+};
 
 const keyExtractor = (item: ChatListItem): string => {
   if (item.type === 'message') return `m-${item.data.messageId}`;
@@ -339,16 +355,28 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData]
   );
 
+  const emptyStateStyle = useAnimatedStyle(() => ({
+    paddingBottom: getEmptyStateBottomInset(keyboardHeight.value, insets.bottom),
+  }));
+
   const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);
 
   if (!hasMessages && !hasTradeEmbed) {
     return (
-      <View className="flex-1 items-center justify-center px-4">
-        <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
-        <Text className="mt-4 text-center text-gray-500">
-          아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
-        </Text>
-      </View>
+      <Animated.View testID="chat-empty-state" style={[{ flex: 1 }, emptyStateStyle]}>
+        {/* 메시지가 있을 때는 FlatList 기본 동작으로 목록을 누르면 키보드가 내려가지만, 빈 화면 안내는
+            일반 View라 눌러도 내려가지 않았다. 목록과 같게 아무 데나 누르면 키보드를 내린다 */}
+        <Pressable
+          testID="chat-empty-state-dismiss"
+          className="flex-1 items-center justify-center px-4"
+          onPress={Keyboard.dismiss}
+          accessible={false}>
+          <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
+          <Text className="mt-4 text-center text-gray-500">
+            아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
+          </Text>
+        </Pressable>
+      </Animated.View>
     );
   }
 
