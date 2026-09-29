@@ -2,7 +2,7 @@ import React from 'react';
 import { DeviceEventEmitter, FlatList, Text } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { AnimatedRef } from 'react-native-reanimated';
-import { ChatRoomContent } from '../index';
+import { ChatRoomContent, getEmptyStateBottomInset } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
@@ -130,6 +130,14 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('icon-chatbubbles-outline')).toBeTruthy();
     expect(getByText(/아직 대화가 없습니다/)).toBeTruthy();
     expect(queryByText('채팅방 헤더')).toBeNull();
+  });
+
+  it('빈 상태 안내는 키보드 높이를 반영하는 컨테이너 안에 그린다', () => {
+    const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
+
+    const container = getByTestId('chat-empty-state');
+    expect(container).toBeTruthy();
+    expect(getByTestId('icon-chatbubbles-outline')).toBeTruthy();
   });
 
   it('거래 임베드를 메시지 createdAt 순서에 맞게 삽입한다', () => {
@@ -476,5 +484,23 @@ describe('ChatRoomContent', () => {
 
     const listAfterShow = UNSAFE_getByType(FlatList);
     expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(10);
+  });
+});
+
+describe('getEmptyStateBottomInset', () => {
+  it('키보드가 닫혀 있으면 여백이 없다', () => {
+    expect(getEmptyStateBottomInset(0, 34)).toBe(0);
+  });
+
+  it('키보드가 열리면 닫힘 상태 오프셋을 뺀 만큼 여백을 준다', () => {
+    expect(getEmptyStateBottomInset(-300, 34)).toBe(266);
+  });
+
+  it('하단 안전 영역이 없으면 키보드 높이만큼 여백을 준다', () => {
+    expect(getEmptyStateBottomInset(-280, 0)).toBe(280);
+  });
+
+  it('키보드가 닫히는 중 오프셋보다 낮아지면 음수 대신 0을 돌려준다', () => {
+    expect(getEmptyStateBottomInset(-20, 34)).toBe(0);
   });
 });
