@@ -1,5 +1,14 @@
-import { Animated, FlatList, View, Text, RefreshControl, TouchableOpacity } from 'react-native';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  View,
+  Text,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -92,6 +101,20 @@ export function ChatRoomList() {
     memberId: number;
   } | null>(null);
   const hasRooms = (chatRooms?.length ?? 0) > 0;
+
+  // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
+  // 30초 폴링이 연달아 실패해도 토스트가 반복되지 않도록 에러 상태로 바뀌는 순간에만 띄운다.
+  useEffect(() => {
+    if (!isError || !hasRooms) return;
+    Toast.show({
+      type: 'error',
+      text1: '채팅 목록을 새로 불러오지 못했어요',
+      text2: '아래로 당겨 다시 시도해 주세요.',
+      visibilityTime: 3000,
+    });
+    // hasRooms가 바뀔 때마다 다시 띄우지 않도록 isError 전환만 따른다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
@@ -287,6 +310,13 @@ export function ChatRoomList() {
     [handleChatRoomPress, handleChatRoomLongPress, exitingRoomId, handleChatRoomExited]
   );
 
+  // 첫 조회가 길어질 때 당겨서 새로고침 스피너만 보이면 빈 회색 화면처럼 보여, 가운데에 로딩을 표시한다
+  const renderLoadingState = () => (
+    <View testID="chat-room-list-loading" className="flex-1 items-center justify-center py-20">
+      <ActivityIndicator size="large" color="#8FC31D" />
+    </View>
+  );
+
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <Text className="text-base text-gray-500">아직 채팅방 없습니다</Text>
@@ -306,7 +336,7 @@ export function ChatRoomList() {
         renderItem={renderChatRoomItem}
         keyExtractor={(item) => item.roomId.toString()}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
-        ListEmptyComponent={isLoading ? null : renderEmptyState}
+        ListEmptyComponent={isLoading ? renderLoadingState : renderEmptyState}
         showsVerticalScrollIndicator={false}
         className="flex-1"
       />

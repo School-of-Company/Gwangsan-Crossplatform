@@ -9,7 +9,7 @@ exports[`NoNetworkOverlay 스냅샷 - visible true 1`] = `
   visible={true}
 >
   <View
-    className="flex-1 items-center justify-center gap-3 bg-white px-8"
+    className="flex-1 items-center justify-center gap-3 bg-background px-8"
   >
     <Text
       className="text-center text-titleSmall text-gray-900"

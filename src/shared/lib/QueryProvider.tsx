@@ -4,7 +4,9 @@ import {
   QueryCache,
   MutationCache,
   focusManager,
+  onlineManager,
 } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -91,6 +93,18 @@ export default function QueryProvider({ children }: QueryProviderProps) {
       focusManager.setFocused(status === 'active');
     });
     return () => sub.remove();
+  }, []);
+
+  // RN에는 브라우저 online/offline 이벤트가 없어 onlineManager가 항상 온라인으로 남고,
+  // 그러면 네트워크가 끊겼다 돌아와도 실패한 조회가 다시 실행되지 않아 빈 화면으로 남는다.
+  // NetInfo로 연결 상태를 알려, 연결이 돌아오면 refetchOnReconnect로 자동 재조회되게 한다.
+  // 연결 상태를 아직 모르는 경우(null)는 온라인으로 보아 조회가 멈춘 채 남지 않게 한다.
+  useEffect(() => {
+    onlineManager.setEventListener((setOnline) =>
+      NetInfo.addEventListener((state) => {
+        setOnline(state.isConnected !== false);
+      })
+    );
   }, []);
 
   return (
