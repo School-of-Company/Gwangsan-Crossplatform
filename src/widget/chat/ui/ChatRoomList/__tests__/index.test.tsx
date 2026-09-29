@@ -2,6 +2,7 @@ import React from 'react';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { FlatList } from 'react-native';
 import { renderWithProviders as render } from '~/test-utils';
+import Toast from 'react-native-toast-message';
 import { ChatRoomList } from '../index';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
@@ -14,6 +15,11 @@ import {
   chatMessageKeys,
   getChatRoomData,
 } from '@/entity/chat';
+
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
+}));
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -125,6 +131,46 @@ describe('ChatRoomList', () => {
     const { queryByText } = render(<ChatRoomList />);
 
     expect(queryByText('아직 채팅방 없습니다')).toBeNull();
+  });
+
+  it('캐시된 목록 없이 로딩 중이면 가운데에 로딩 표시를 보여준다', () => {
+    mockUseChatRooms.mockReturnValue(makeChatRoomsReturn({ data: [], isLoading: true }));
+
+    const { getByTestId } = render(<ChatRoomList />);
+
+    expect(getByTestId('chat-room-list-loading')).toBeTruthy();
+  });
+
+  it('캐시된 목록이 있는 상태에서 조회가 실패하면 목록을 유지하고 토스트로 알린다', () => {
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ isError: true, data: [{ roomId: 1, nickname: '방장1' }] })
+    );
+
+    const { getByTestId } = render(<ChatRoomList />);
+
+    expect(getByTestId('room-1')).toBeTruthy();
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: '채팅 목록을 새로 불러오지 못했어요' })
+    );
+  });
+
+  it('실패 상태가 이어지는 동안에는 토스트를 반복해서 띄우지 않는다', () => {
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ isError: true, data: [{ roomId: 1, nickname: '방장1' }] })
+    );
+
+    const { rerender } = render(<ChatRoomList />);
+    rerender(<ChatRoomList />);
+
+    expect(Toast.show).toHaveBeenCalledTimes(1);
+  });
+
+  it('캐시된 목록이 없으면 토스트 대신 에러 화면을 보여준다', () => {
+    mockUseChatRooms.mockReturnValue(makeChatRoomsReturn({ isError: true }));
+
+    render(<ChatRoomList />);
+
+    expect(Toast.show).not.toHaveBeenCalled();
   });
 
   it('채팅방이 없으면 빈 상태를 표시한다', () => {
