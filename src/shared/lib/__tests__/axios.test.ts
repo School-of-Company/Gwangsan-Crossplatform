@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import { getAccessToken, getRefreshToken, clearAuthTokens } from '../auth';
 import { setData } from '../setData';
-import { instance, setQueryClientInstance } from '../axios';
+import { instance, setQueryClientInstance, SessionExpiredError, TokenStorageError } from '../axios';
 
 jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { apiUrl: 'http://test-api.com' } } },
@@ -226,15 +226,17 @@ describe('response interceptor', () => {
 
   it('토큰 갱신 실패 원인이 Error가 아니면 String으로 변환해 Sentry에 기록한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
-    mockGetRefreshToken.mockRejectedValue('non-error-rejection-reason');
+    mockGetRefreshToken.mockResolvedValue('refresh-token');
+    mockSetData.mockRejectedValue('non-error-rejection-reason');
     mockClearAuthTokens.mockResolvedValue(undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     server.use(
-      http.get(`${BASE}/secured-non-error`, () => new HttpResponse(null, { status: 401 }))
+      http.get(`${BASE}/secured-non-error`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${BASE}/auth/reissue`, () => HttpResponse.json({ accessToken: 'new-token' }))
     );
 
-    await expect(instance.get('/secured-non-error')).rejects.toBe('non-error-rejection-reason');
+    await expect(instance.get('/secured-non-error')).rejects.toBeInstanceOf(SessionExpiredError);
 
     expect(mockSentry.captureException).toHaveBeenCalledWith(
       'non-error-rejection-reason',
@@ -242,6 +244,105 @@ describe('response interceptor', () => {
         extra: expect.objectContaining({ errorMessage: 'non-error-rejection-reason' }),
       })
     );
+  });
+
+  describe('세션 안정화(#737)', () => {
+    it('기기가 잠겨 refresh token을 읽지 못하면 로그아웃하지 않고 요청만 실패한다', async () => {
+      mockGetAccessToken.mockResolvedValue('old-token');
+      mockGetRefreshToken.mockRejectedValue(new Error('User interaction is not allowed.'));
+
+      server.use(http.get(`${BASE}/locked-refresh`, () => new HttpResponse(null, { status: 401 })));
+
+      await expect(instance.get('/locked-refresh')).rejects.toBeInstanceOf(TokenStorageError);
+
+      expect(mockClearAuthTokens).not.toHaveBeenCalled();
+      expect(mockRouter.replace).not.toHaveBeenCalled();
+      expect(mockSentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it('401 처리 중 access token을 읽지 못해도 로그아웃하지 않는다', async () => {
+      mockGetAccessToken
+        .mockResolvedValueOnce('old-token')
+        .mockRejectedValueOnce(new Error('User interaction is not allowed.'));
+
+      server.use(http.get(`${BASE}/locked-access`, () => new HttpResponse(null, { status: 401 })));
+
+      await expect(instance.get('/locked-access')).rejects.toBeInstanceOf(TokenStorageError);
+      expect(mockClearAuthTokens).not.toHaveBeenCalled();
+    });
+
+    it('서버가 refresh token을 교체해 내려주면 함께 저장한다', async () => {
+      mockGetAccessToken.mockResolvedValue('old-token');
+      mockGetRefreshToken.mockResolvedValue('old-refresh');
+      mockSetData.mockResolvedValue(undefined);
+
+      let requestCount = 0;
+      server.use(
+        http.get(`${BASE}/rotate`, () => {
+          requestCount++;
+          return requestCount === 1
+            ? new HttpResponse(null, { status: 401 })
+            : HttpResponse.json({ ok: true });
+        }),
+        http.post(`${BASE}/auth/reissue`, () =>
+          HttpResponse.json({ accessToken: 'new-access', refreshToken: 'new-refresh' })
+        )
+      );
+
+      await instance.get('/rotate');
+
+      expect(mockSetData).toHaveBeenCalledWith('accessToken', 'new-access');
+      expect(mockSetData).toHaveBeenCalledWith('refreshToken', 'new-refresh');
+    });
+
+    it('다른 요청이 이미 재발급한 뒤 늦게 도착한 401은 재발급 없이 새 토큰으로 재시도한다', async () => {
+      // 요청을 보낼 때는 예전 토큰, 401을 처리할 때는 이미 저장된 새 토큰
+      mockGetAccessToken.mockResolvedValueOnce('old-token').mockResolvedValue('already-new');
+
+      let reissueCount = 0;
+      let retriedWith: string | null = null;
+      server.use(
+        http.get(`${BASE}/late-401`, ({ request }) => {
+          const auth = request.headers.get('Authorization');
+          if (auth === 'Bearer old-token') return new HttpResponse(null, { status: 401 });
+          retriedWith = auth;
+          return HttpResponse.json({ ok: true });
+        }),
+        http.post(`${BASE}/auth/reissue`, () => {
+          reissueCount++;
+          return HttpResponse.json({ accessToken: 'another' });
+        })
+      );
+
+      await instance.get('/late-401');
+
+      expect(reissueCount).toBe(0);
+      expect(retriedWith).toBe('Bearer already-new');
+    });
+
+    it('재발급할 수 없으면 기다리던 요청까지 한국어 세션 만료 메시지로 실패한다', async () => {
+      mockGetAccessToken.mockResolvedValue('old-token');
+      mockGetRefreshToken.mockResolvedValue(null);
+      mockClearAuthTokens.mockResolvedValue(undefined);
+      setQueryClientInstance(new QueryClient());
+
+      server.use(
+        http.get(`${BASE}/expired-a`, () => new HttpResponse(null, { status: 401 })),
+        http.get(`${BASE}/expired-b`, () => new HttpResponse(null, { status: 401 }))
+      );
+
+      const results = await Promise.allSettled([
+        instance.get('/expired-a'),
+        instance.get('/expired-b'),
+      ]);
+
+      results.forEach((result) => {
+        expect(result.status).toBe('rejected');
+        expect((result as PromiseRejectedResult).reason.message).toBe(
+          '세션이 만료되었습니다. 다시 로그인해 주세요.'
+        );
+      });
+    });
   });
 
   it('queryClientInstance가 null이어도 토큰 초기화 후 이동한다', async () => {
