@@ -14,6 +14,7 @@ import {
 import Icon from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface BottomSheetModalWrapperProps {
   isVisible: boolean;
@@ -63,6 +64,7 @@ export function BottomSheetModalWrapper({
   const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
   const removeSheet = useBottomSheetPortalStore((s) => s.removeSheet);
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const screenHeight = Dimensions.get('window').height;
   const modalHeight = height ?? (screenHeight * 2) / 3;
 
@@ -253,7 +255,7 @@ export function BottomSheetModalWrapper({
               height: modalHeight,
               transform: [{ translateY }],
             }}
-            className="rounded-t-[20px] bg-white">
+            className="rounded-t-[20px] bg-surface">
             <Pressable
               className="flex-1 px-4 pt-4"
               style={{ paddingBottom: Math.max(insets.bottom, 16) + keyboardOverlap }}
@@ -263,13 +265,13 @@ export function BottomSheetModalWrapper({
               </View>
               {hasHeader && (
                 <View className="relative mb-4 flex-row items-center justify-center py-6">
-                  <Text className="text-body1 text-black">{title}</Text>
+                  <Text className="text-body1 text-foreground">{title}</Text>
                   {showCloseButton && (
                     <TouchableOpacity
                       onPress={onClose}
                       className="absolute right-0"
                       style={{ right: 0 }}>
-                      <Icon name="close" size={24} color="#666" />
+                      <Icon name="close" size={24} color={colors['gray-700']} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -293,6 +295,7 @@ export function BottomSheetModalWrapper({
       title,
       showCloseButton,
       children,
+      colors,
     ]
   );
 

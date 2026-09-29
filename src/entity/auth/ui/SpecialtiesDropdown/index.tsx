@@ -33,7 +33,7 @@ export default function SpecialtiesDropdown<T extends string>({
 
   return (
     <View className="w-full gap-2">
-      {label && <Text>{label}</Text>}
+      {label && <Text className="text-foreground">{label}</Text>}
 
       <View className="flex-row flex-wrap gap-2">
         {multiSelect.allItems.map((item) => {
@@ -46,7 +46,7 @@ export default function SpecialtiesDropdown<T extends string>({
               accessibilityState={{ selected: isSelected }}
               onPress={() => multiSelect.handleSelect(item)}
               className={`rounded-full border px-4 py-2.5 ${
-                isSelected ? 'border-main-500 bg-main-500' : 'border-gray-200 bg-white'
+                isSelected ? 'border-main-500 bg-main-500' : 'border-gray-200 bg-background'
               }`}>
               <Text className={`text-body5 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                 {item}
@@ -58,9 +58,9 @@ export default function SpecialtiesDropdown<T extends string>({
         {allowCustomInput && (
           <TouchableOpacity
             onPress={customInput.activateCustomInput}
-            className="flex-row items-center gap-1.5 rounded-full border border-dashed border-gray-300 bg-white px-4 py-2.5">
+            className="flex-row items-center gap-1.5 rounded-full border border-dashed border-gray-300 bg-background px-4 py-2.5">
             <Icon name="add" size={16} color="#0075C2" />
-            <Text className="text-body5 text-[#0075C2]">직접 입력</Text>
+            <Text className="text-body5 text-sub-500">직접 입력</Text>
           </TouchableOpacity>
         )}
       </View>

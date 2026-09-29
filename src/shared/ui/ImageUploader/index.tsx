@@ -15,6 +15,7 @@ import { useUploadImage } from '@/shared/model/useUploadImage';
 import { ImageType } from '@/shared/types/imageType';
 import Toast from 'react-native-toast-message';
 import { logger } from '@/shared/lib/logger';
+import { useThemeColors } from '@/shared/lib/theme';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -112,6 +113,7 @@ const ImageUploader = ({
   }, [initialImages, imageStatuses.length]);
 
   const uploadImageMutation = useUploadImage({ showToast: false });
+  const colors = useThemeColors();
 
   const uploadState = useMemo((): ImageUploadState => {
     const uploadingCount = imageStatuses.filter((status) => status.status === 'uploading').length;
@@ -376,7 +378,7 @@ const ImageUploader = ({
   return (
     <View>
       <View className="mb-2 flex-row items-center justify-between">
-        <Text className="text-lg text-black">{title}</Text>
+        <Text className="text-lg text-foreground">{title}</Text>
         <Text className="text-sm text-gray-500">{`${images.length}/${maxImages}`}</Text>
       </View>
       <View className="flex-row flex-wrap items-center gap-3">
@@ -412,7 +414,7 @@ const ImageUploader = ({
           <TouchableOpacity
             onPress={pickImage}
             className="h-12 w-12 items-center justify-center rounded-full bg-gray-50">
-            <Icon name="add" size={24} color="#111" />
+            <Icon name="add" size={24} color={colors.foreground} />
           </TouchableOpacity>
         )}
       </View>

@@ -5,7 +5,7 @@ exports[`PasswordInput 스냅샷 - 기본 (숨김 상태) 1`] = `
   className="flex w-full gap-2"
 >
   <Text
-    className="text-label"
+    className="text-label text-foreground"
   >
     비밀번호
   </Text>
@@ -13,7 +13,7 @@ exports[`PasswordInput 스냅샷 - 기본 (숨김 상태) 1`] = `
     className="relative"
   >
     <TextInput
-      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-foreground"
       enablesReturnKeyAutomatically={true}
       returnKeyType="next"
       secureTextEntry={true}
@@ -66,7 +66,7 @@ exports[`PasswordInput 스냅샷 - 토글 후 (보임 상태) 1`] = `
   className="flex w-full gap-2"
 >
   <Text
-    className="text-label"
+    className="text-label text-foreground"
   >
     비밀번호
   </Text>
@@ -74,7 +74,7 @@ exports[`PasswordInput 스냅샷 - 토글 후 (보임 상태) 1`] = `
     className="relative"
   >
     <TextInput
-      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+      className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-foreground"
       enablesReturnKeyAutomatically={true}
       returnKeyType="next"
       secureTextEntry={false}

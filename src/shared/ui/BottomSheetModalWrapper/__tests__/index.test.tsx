@@ -46,7 +46,7 @@ function mockPanResponderPassthrough() {
 }
 
 function getSheetHandlers(container: ReturnType<typeof render>) {
-  const sheet = container.UNSAFE_getByProps({ className: 'rounded-t-[20px] bg-white' });
+  const sheet = container.UNSAFE_getByProps({ className: 'rounded-t-[20px] bg-surface' });
   return sheet.props as {
     onStartShouldSetPanResponder: () => boolean;
     onStartShouldSetPanResponderCapture: () => boolean;
@@ -485,7 +485,7 @@ describe('BottomSheetModalWrapper', () => {
         <Text>내용</Text>
       </BottomSheetModalWrapper>
     );
-    const sheet = container.UNSAFE_getByProps({ className: 'rounded-t-[20px] bg-white' });
+    const sheet = container.UNSAFE_getByProps({ className: 'rounded-t-[20px] bg-surface' });
 
     expect(() => fireEvent(sheet, 'layout', { nativeEvent: { layout: {} } })).not.toThrow();
     // requestAnimationFrame으로 한 프레임 미뤄지므로 실제로 콜백이 실행될 때까지 대기한다.
