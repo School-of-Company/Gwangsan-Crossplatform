@@ -36,6 +36,8 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
     enabled,
     refetchInterval,
     staleTime: 10000,
+    // 앱이 백그라운드에서 돌아온 직후 실패했거나 오래된 목록을 바로 다시 받아온다(#724)
+    refetchOnWindowFocus: true,
     select: useCallback(
       (data: ChatRoomListItem[]) => {
         const withReadOverride = data.map((room) => {
