@@ -15,6 +15,7 @@ import * as SentryRN from '@sentry/react-native';
 import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
+import { RootErrorBoundary } from '@/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
@@ -150,8 +151,9 @@ export default function RootLayout() {
           <StatusBar style="auto" />
           <ThemeProvider value={navigationTheme}>
             <QueryProvider>
-              <ChatNotificationHandler />
-              <SentryRN.ErrorBoundary fallback={<></>}>
+              {/* 알림 핸들러도 렌더 중 에러가 나면 앱 전체가 죽지 않도록 바운더리 안에 둔다(#740) */}
+              <RootErrorBoundary>
+                <ChatNotificationHandler />
                 <Stack
                   screenOptions={{
                     headerShown: false,
@@ -168,7 +170,7 @@ export default function RootLayout() {
                   뒤로 넘어가 버린다. 이 화면에서는 제스처 자체를 꺼서 충돌을 없앤다. */}
                   <Stack.Screen name="chatting/[id]/review" options={{ gestureEnabled: false }} />
                 </Stack>
-              </SentryRN.ErrorBoundary>
+              </RootErrorBoundary>
               <BottomSheetPortalOutlet />
               <ToastStack topOffset={Platform.select({ ios: 70, default: 40 })} />
               <NoNetworkOverlay visible={!isConnected} />

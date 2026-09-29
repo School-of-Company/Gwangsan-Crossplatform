@@ -22,10 +22,12 @@ interface UseChatRoomsOptions {
   enabled?: boolean;
   refetchInterval?: number;
   onError?: (error: ChatApiError) => void;
+  // 탭바 뱃지처럼 화면 일부만 쓰는 곳은 조회가 실패해도 에러 바운더리로 던지지 않는다(#740)
+  throwOnError?: boolean;
 }
 
 export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
-  const { enabled = true, refetchInterval = 30000, onError } = options;
+  const { enabled = true, refetchInterval = 30000, onError, throwOnError } = options;
 
   const queryClient = useQueryClient();
   const readMessageIds = useReadRoomsStore((state) => state.readMessageIds);
@@ -36,6 +38,7 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
     enabled,
     refetchInterval,
     staleTime: 10000,
+    ...(throwOnError === undefined ? {} : { throwOnError }),
     // 앱이 백그라운드에서 돌아온 직후 실패했거나 오래된 목록을 바로 다시 받아온다(#724)
     refetchOnWindowFocus: true,
     select: useCallback(
