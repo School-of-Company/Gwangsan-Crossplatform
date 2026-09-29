@@ -10,6 +10,8 @@
   --color-surface: 255 255 255;
   --color-surface-muted: 243 244 245;
   --color-foreground: 0 0 0;
+  --color-disabled: 205 205 207;
+  --color-muted: 209 214 219;
   --color-gray-50: 245 246 248;
   --color-gray-100: 239 240 242;
   --color-gray-200: 219 220 222;
@@ -28,6 +30,8 @@
     --color-surface: 28 28 30;
     --color-surface-muted: 44 44 46;
     --color-foreground: 245 246 248;
+    --color-disabled: 72 73 76;
+    --color-muted: 90 91 94;
     --color-gray-50: 36 37 39;
     --color-gray-100: 46 47 49;
     --color-gray-200: 63 64 66;

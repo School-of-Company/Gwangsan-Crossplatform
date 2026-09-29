@@ -77,6 +77,8 @@ module.exports = {
           muted: 'rgb(var(--color-surface-muted) / <alpha-value>)',
         },
         foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
+        disabled: 'rgb(var(--color-disabled) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
       },
     },
   },
