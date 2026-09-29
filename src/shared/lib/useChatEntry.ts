@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { findChatRoom, createChatRoom, getChatRooms, chatRoomKeys } from '@/entity/chat';
 import type { RoomId, ProductId } from '@/shared/types/chatType';
 
@@ -70,8 +71,13 @@ export const useChatEntry = () => {
       try {
         const room = await createChatRoom(productId);
         await navigateToRoom(room.roomId);
-      } catch {
-        // createChatRoom이 실패 시 이미 에러 Toast를 띄운다
+      } catch (error) {
+        // API는 토스트를 띄우지 않으므로 여기서 안내한다(#739)
+        Toast.show({
+          type: 'error',
+          text1: '채팅방에 들어가지 못했어요',
+          text2: getErrorMessage(error),
+        });
       } finally {
         setIsLoading(false);
       }

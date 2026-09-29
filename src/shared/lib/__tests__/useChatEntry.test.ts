@@ -163,7 +163,7 @@ describe('useChatEntry', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('createChatRoom 실패 시 추가 Toast 없이(자체 에러 Toast만) 이동하지 않는다', async () => {
+    it('createChatRoom 실패 시 이동하지 않고 에러 토스트를 한 번 띄운다(#739)', async () => {
       mockCreateChatRoom.mockRejectedValue(new Error('채팅방 생성 실패'));
 
       const { result } = renderHookWithProviders(() => useChatEntry());
@@ -173,6 +173,10 @@ describe('useChatEntry', () => {
       });
 
       expect(mockPush).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledTimes(1);
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '채팅방 생성 실패' })
+      );
       expect(result.current.isLoading).toBe(false);
     });
 
