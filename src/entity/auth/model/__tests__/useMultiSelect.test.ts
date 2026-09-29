@@ -12,18 +12,16 @@ describe('useMultiSelect', () => {
     expect(result.current.displayText).toBeUndefined();
   });
 
-  it('initialSelectedItems로 초기화된다', () => {
+  it('selectedItems로 초기화된다', () => {
     const { result } = renderHook(() =>
-      useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동', '독서'] })
+      useMultiSelect({ items: ITEMS, selectedItems: ['운동', '독서'] })
     );
 
     expect(result.current.selectedItems).toEqual(['운동', '독서']);
   });
 
-  it('initialSelectedItems 중 기본 목록에 없는 항목도 allItems에 포함되어 계속 보인다', () => {
-    const { result } = renderHook(() =>
-      useMultiSelect({ items: ITEMS, initialSelectedItems: ['댄스'] })
-    );
+  it('selectedItems 중 기본 목록에 없는 항목도 allItems에 포함되어 계속 보인다', () => {
+    const { result } = renderHook(() => useMultiSelect({ items: ITEMS, selectedItems: ['댄스'] }));
 
     expect(result.current.allItems).toContain('댄스');
     expect(result.current.selectedItems).toContain('댄스');
@@ -43,7 +41,7 @@ describe('useMultiSelect', () => {
 
     it('이미 선택된 항목을 선택하면 selectedItems에서 제거된다', () => {
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동'] })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동'] })
       );
 
       act(() => {
@@ -104,7 +102,7 @@ describe('useMultiSelect', () => {
     it('onSelect 콜백에 새 항목이 포함된 배열을 전달한다', () => {
       const onSelect = jest.fn();
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동'], onSelect })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동'], onSelect })
       );
 
       act(() => {
@@ -124,7 +122,7 @@ describe('useMultiSelect', () => {
 
     it('선택된 항목을 쉼표로 연결한 문자열을 반환한다', () => {
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동', '독서'] })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동', '독서'] })
       );
 
       expect(result.current.displayText).toBe('운동, 독서');
@@ -134,7 +132,7 @@ describe('useMultiSelect', () => {
   describe('isSelected', () => {
     it('선택된 항목에 대해 true를 반환한다', () => {
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동'] })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동'] })
       );
 
       expect(result.current.isSelected('운동')).toBe(true);
