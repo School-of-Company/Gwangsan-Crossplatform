@@ -171,4 +171,24 @@ describe('CancelTradeView', () => {
     // disabled 버튼은 onPress가 무시되어 바텀시트가 열리지 않아야 한다
     expect(getByText('거래 취소')).toBeTruthy();
   });
+
+  describe('후기 조회 로딩·실패(#740)', () => {
+    it('후기를 불러오는 중이면 로딩 표시를 보여준다', () => {
+      mockUseGetReview.mockReturnValue({ data: undefined, isLoading: true, refetch: jest.fn() });
+
+      const { getByTestId } = render(<CancelTradeView />);
+
+      expect(getByTestId('cancel-trade-loading')).toBeTruthy();
+    });
+
+    it('후기 조회에 실패하면 다시 시도 화면을 보여주고, 누르면 다시 조회한다', () => {
+      const refetch = jest.fn();
+      mockUseGetReview.mockReturnValue({ data: undefined, isError: true, refetch });
+
+      const { getByText } = render(<CancelTradeView />);
+
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
 });
