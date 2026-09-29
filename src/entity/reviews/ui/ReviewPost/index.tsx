@@ -1,8 +1,9 @@
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { LightBar } from '~/shared/ui';
 import { ReviewPostType } from '~/view/reviews/model/reviewPostType';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 interface ReviewPostProps {
   review: ReviewPostType;
@@ -28,7 +29,7 @@ export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps
         className="flex-row items-center gap-4 px-5 py-5">
         {thumbnail ? (
           <View className="relative">
-            <Image
+            <CachedImage
               source={{ uri: thumbnail.imageUrl }}
               style={{ width: 80, height: 80, borderRadius: 12 }}
             />
@@ -41,7 +42,7 @@ export default function ReviewPost({ review, mode = 'receive' }: ReviewPostProps
             )}
           </View>
         ) : (
-          <Image
+          <CachedImage
             source={require('~/shared/assets/png/gwangsanLogo.png')}
             style={{ width: 80, height: 80, borderRadius: 12 }}
           />

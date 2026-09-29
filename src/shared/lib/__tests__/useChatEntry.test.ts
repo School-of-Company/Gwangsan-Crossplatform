@@ -3,6 +3,7 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useChatEntry } from '../useChatEntry';
 import { findChatRoom, createChatRoom, getChatRooms, chatRoomKeys } from '@/entity/chat';
 import Toast from 'react-native-toast-message';
+import { AxiosError, AxiosHeaders } from 'axios';
 
 jest.mock('@/entity/chat', () => ({
   findChatRoom: jest.fn(),
@@ -15,6 +16,16 @@ jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
+
+// 서버가 채팅방이 없을 때 내려주는 404. 판단은 문구가 아니라 상태 코드로 한다(#739)
+const notFoundError = (message = '해당하는 채팅방을 찾을 수 없습니다.') =>
+  new AxiosError(message, '404', undefined, undefined, {
+    status: 404,
+    statusText: 'Not Found',
+    data: { message },
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  });
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -81,7 +92,7 @@ describe('useChatEntry', () => {
   });
 
   it('findChatRoom 실패(방 없음) 시 createChatRoom을 호출한다', async () => {
-    mockFindChatRoom.mockRejectedValue(new Error('해당하는 채팅방을 찾을 수 없습니다.'));
+    mockFindChatRoom.mockRejectedValue(notFoundError());
     mockCreateChatRoom.mockResolvedValue({ roomId: 'new-room-1' });
 
     const { result } = renderHookWithProviders(() => useChatEntry());
@@ -96,7 +107,7 @@ describe('useChatEntry', () => {
   });
 
   it('findChatRoom 실패(방 없음) + createChatRoom 실패 시 error Toast를 표시한다', async () => {
-    mockFindChatRoom.mockRejectedValue(new Error('해당하는 채팅방을 찾을 수 없습니다.'));
+    mockFindChatRoom.mockRejectedValue(notFoundError());
     mockCreateChatRoom.mockRejectedValue(new Error('채팅방 생성 실패'));
 
     const { result } = renderHookWithProviders(() => useChatEntry());
@@ -110,6 +121,20 @@ describe('useChatEntry', () => {
     );
     expect(mockPush).not.toHaveBeenCalled();
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('서버 문구가 바뀌어도 404면 채팅방을 새로 만든다(#739)', async () => {
+    mockFindChatRoom.mockRejectedValue(notFoundError('Chat room not found'));
+    mockCreateChatRoom.mockResolvedValue({ roomId: 'new-room-2' });
+
+    const { result } = renderHookWithProviders(() => useChatEntry());
+
+    await act(async () => {
+      await result.current.navigateToChat(4);
+    });
+
+    expect(mockCreateChatRoom).toHaveBeenCalledWith(4);
+    expect(mockPush).toHaveBeenCalledWith('/chatting/new-room-2');
   });
 
   it('findChatRoom 기타 에러 시 error Toast를 표시한다', async () => {
@@ -163,7 +188,7 @@ describe('useChatEntry', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('createChatRoom 실패 시 추가 Toast 없이(자체 에러 Toast만) 이동하지 않는다', async () => {
+    it('createChatRoom 실패 시 이동하지 않고 에러 토스트를 한 번 띄운다(#739)', async () => {
       mockCreateChatRoom.mockRejectedValue(new Error('채팅방 생성 실패'));
 
       const { result } = renderHookWithProviders(() => useChatEntry());
@@ -173,6 +198,10 @@ describe('useChatEntry', () => {
       });
 
       expect(mockPush).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledTimes(1);
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '채팅방 생성 실패' })
+      );
       expect(result.current.isLoading).toBe(false);
     });
 

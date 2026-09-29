@@ -1,4 +1,3 @@
-import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import type {
   ChatMessageResponse,
@@ -36,14 +35,9 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
     // 캐시 타이밍 경합이 본인 메시지를 상대방 메시지로 뒤집어 보이게 하는 원인이었다(#619).
     return { product, messages };
   } catch (e) {
-    const error = e as ChatApiError;
-
-    Toast.show({
-      type: 'error',
-      text1: error?.message || '채팅방 데이터를 불러올 수 없습니다',
-    });
-
-    throw toAppError(error);
+    // 사용자 안내(토스트)는 호출한 쪽(UI 계층)에서 한다. API 안에서 띄우면 훅의 onError 토스트와
+    // 겹치거나, 백그라운드 호출(읽음 처리 등)에서도 토스트가 떠 중복된다(#739)
+    throw toAppError(e as ChatApiError);
   }
 };
 

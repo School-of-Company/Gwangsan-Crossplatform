@@ -53,6 +53,18 @@ describe('uploadImage', () => {
     );
   });
 
+  it('전역 5초 대신 업로드 전용 타임아웃(60초)으로 요청한다(#739)', async () => {
+    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: 'https://example.com/a.jpg' } });
+
+    await uploadImage('file:///local/path/photo.jpg');
+
+    expect(mockPost).toHaveBeenCalledWith(
+      '/image',
+      expect.any(Object),
+      expect.objectContaining({ timeout: 60_000 })
+    );
+  });
+
   it('URI에서 파일명을 추출해 FormData에 추가한다', async () => {
     mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
 

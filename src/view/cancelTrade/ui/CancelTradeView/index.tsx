@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Header, LightBar } from '~/shared/ui';
 import { useGetReview } from '../../model/useGetReview';
 import { useCallback, useEffect } from 'react';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { logger } from '~/shared/lib/logger';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 export default function CancelTradeView() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -55,13 +56,13 @@ export default function CancelTradeView() {
         <View className="gap-6">
           {imageUris.length > 0 ? (
             imageUris.map((uri, index) => (
-              <Image key={index} source={{ uri }} className="h-[280px] w-full" resizeMode="cover" />
+              <CachedImage key={index} source={{ uri }} className="h-[280px] w-full" />
             ))
           ) : (
-            <Image
+            <CachedImage
               source={require('~/shared/assets/png/logo.png')}
               className="h-[280px] w-full"
-              resizeMode="contain"
+              contentFit="contain"
             />
           )}
           <View>

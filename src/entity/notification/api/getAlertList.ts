@@ -1,4 +1,5 @@
 import { instance } from '~/shared/lib/axios';
+import { toAppError } from '~/shared/lib/errorHandler';
 import { AlertListResponse } from '../model/alertTypes';
 
 export const getAlertList = async (): Promise<AlertListResponse> => {
@@ -6,6 +7,6 @@ export const getAlertList = async (): Promise<AlertListResponse> => {
     const { data } = await instance.get<AlertListResponse>('/alert');
     return data;
   } catch (error) {
-    throw error;
+    throw toAppError(error);
   }
 };

@@ -1,6 +1,7 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ImageType } from '~/shared/types/imageType';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 interface NoticeItemProps {
   id: number;
@@ -26,11 +27,7 @@ const NoticeItem = ({ id, title, content, createdAt = '', images }: NoticeItemPr
       <View className="flex-row">
         {hasImages && (
           <View className="mr-3">
-            <Image
-              source={{ uri: images[0].imageUrl }}
-              className="h-16 w-16 rounded-lg"
-              resizeMode="cover"
-            />
+            <CachedImage source={{ uri: images[0].imageUrl }} className="h-16 w-16 rounded-lg" />
           </View>
         )}
 

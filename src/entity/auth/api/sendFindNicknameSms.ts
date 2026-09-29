@@ -1,26 +1,10 @@
-import { API_BASE_URL } from '~/shared/consts/api';
+import { publicInstance } from '~/shared/lib/publicInstance';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';
 
-export const sendFindNicknameSms = async (phoneNumber: string) => {
+export const sendFindNicknameSms = async (phoneNumber: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/sms/nickname`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phoneNumber }),
-    });
-
-    if (!response.ok) {
-      const responseText = await response.text();
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      try {
-        const data = JSON.parse(responseText);
-        if (data.message) errorMessage = data.message;
-      } catch {}
-      throw new Error(errorMessage);
-    }
+    await publicInstance.post('/sms/nickname', { phoneNumber });
   } catch (error) {
     logger.error('sendFindNicknameSms failed', error);
     throw toAppError(error);
