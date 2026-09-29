@@ -140,19 +140,19 @@ exports[`Dropdown 스냅샷 - 열린 상태 1`] = `
     >
       <View>
         <Text
-          className="border-b border-gray-300 bg-gray-50 px-4 text-gray-900 py-5 rounded-t-xl "
+          className="border-b border-gray-300 bg-gray-50 px-4 py-5 text-gray-900 rounded-t-xl "
           onPress={[Function]}
         >
           항목 A
         </Text>
         <Text
-          className="border-b border-gray-300 bg-gray-50 px-4 text-gray-900 py-5  "
+          className="border-b border-gray-300 bg-gray-50 px-4 py-5 text-gray-900  "
           onPress={[Function]}
         >
           항목 B
         </Text>
         <Text
-          className="border-b border-gray-300 bg-gray-50 px-4 text-gray-900 py-5  rounded-b-xl border-b-0"
+          className="border-b border-gray-300 bg-gray-50 px-4 py-5 text-gray-900  rounded-b-xl border-b-0"
           onPress={[Function]}
         >
           항목 C
