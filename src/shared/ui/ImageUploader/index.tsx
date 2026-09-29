@@ -15,6 +15,8 @@ import { useUploadImage } from '@/shared/model/useUploadImage';
 import { ImageType } from '@/shared/types/imageType';
 import Toast from 'react-native-toast-message';
 import { logger } from '@/shared/lib/logger';
+import { PhotoPickerSheet } from '@/shared/ui/PhotoPickerSheet';
+import { requestPhotoLibraryAccess, resolvePhotoFileUri } from '@/shared/model/usePhotoLibrary';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -206,8 +208,10 @@ const ImageUploader = ({
   // 여러 장을 한 장씩 onImagesChange([...images, uri])로 반영하면 모두 같은 클로저의
   // images를 기준으로 계산되어 앞서 추가한 사진이 덮어써진다. 고른 사진 전체를 한 번에
   // 반영한 뒤 업로드는 병렬로 진행한다.
+  // baseImages: 이번 반영의 기준이 되는 첨부 목록. 앱 내 사진 선택 화면에서 일부 사진을 해제한 경우
+  // 해제한 사진을 뺀 목록을 넘겨, 추가와 해제를 한 번에 반영한다
   const handleImagesSelected = useCallback(
-    async (assets: SelectedAsset[]) => {
+    async (assets: SelectedAsset[], baseImages: string[] = images) => {
       if (assets.length === 0) return;
 
       assets.forEach(({ uri, assetId }) => {
@@ -216,7 +220,7 @@ const ImageUploader = ({
         }
       });
 
-      onImagesChange?.([...images, ...assets.map(({ uri }) => uri)]);
+      onImagesChange?.([...baseImages, ...assets.map(({ uri }) => uri)]);
       setImageStatuses((prev) => [
         ...prev,
         ...assets.map(({ uri }): ImageStatus => ({ uri, status: 'uploading' })),
@@ -228,7 +232,83 @@ const ImageUploader = ({
     [images, onImagesChange, uploadImage]
   );
 
+  // iOS 앱 내 사진 선택 화면(#714). 이미 첨부한 앨범 사진은 선택된 상태로 띄우고, 카메라 사진처럼
+  // 앨범에서 오지 않은 첨부는 그대로 두되 그만큼 고를 수 있는 장수에서 뺀다
+  const [photoPicker, setPhotoPicker] = useState<{
+    visible: boolean;
+    initialIds: string[];
+    maxSelection: number;
+  }>({ visible: false, initialIds: [], maxSelection: 0 });
+
+  const openPhotoPicker = useCallback(() => {
+    const initialIds = images
+      .map((uri) => assetIdsByUriRef.current.get(uri))
+      .filter((id): id is string => !!id);
+    const lockedCount = images.length - initialIds.length;
+    setPhotoPicker({ visible: true, initialIds, maxSelection: maxImages - lockedCount });
+  }, [images, maxImages]);
+
+  const closePhotoPicker = useCallback(() => {
+    setPhotoPicker((prev) => ({ ...prev, visible: false }));
+  }, []);
+
+  const handlePhotoPickerConfirm = useCallback(
+    async (selectedIds: string[]) => {
+      const { initialIds } = photoPicker;
+      closePhotoPicker();
+
+      const removedIds = new Set(initialIds.filter((id) => !selectedIds.includes(id)));
+      const addedIds = selectedIds.filter((id) => !initialIds.includes(id));
+
+      const removedUris = images.filter((uri) => {
+        const assetId = assetIdsByUriRef.current.get(uri);
+        return !!assetId && removedIds.has(assetId);
+      });
+      const keptImages = images.filter((uri) => !removedUris.includes(uri));
+
+      removedUris.forEach((uri) => assetIdsByUriRef.current.delete(uri));
+      if (removedUris.length > 0) {
+        setImageStatuses((prev) => prev.filter((item) => !removedUris.includes(item.uri)));
+      }
+
+      const resolved = await Promise.all(
+        addedIds.map(async (id) => {
+          try {
+            return { uri: await resolvePhotoFileUri(id), assetId: id };
+          } catch (error) {
+            logger.error('Failed to resolve photo file uri', error);
+            return { uri: null, assetId: id };
+          }
+        })
+      );
+      const addedAssets: SelectedAsset[] = resolved.flatMap(({ uri, assetId }) =>
+        uri ? [{ uri, assetId }] : []
+      );
+
+      if (addedAssets.length < addedIds.length) {
+        Toast.show({
+          type: 'error',
+          text1: '사진을 불러오지 못했어요',
+          text2: '일부 사진을 첨부하지 못했습니다. 다시 시도해 주세요.',
+        });
+      }
+
+      if (addedAssets.length === 0) {
+        if (removedUris.length > 0) onImagesChange?.(keptImages);
+        return;
+      }
+      await handleImagesSelected(addedAssets, keptImages);
+    },
+    [photoPicker, closePhotoPicker, images, onImagesChange, handleImagesSelected]
+  );
+
   const pickFromGallery = useCallback(async () => {
+    if (Platform.OS === 'ios' && (await requestPhotoLibraryAccess())) {
+      openPhotoPicker();
+      return;
+    }
+
+    // Android, 또는 iOS에서 사진 권한을 허용하지 않은 경우 시스템 사진 피커를 쓴다(권한 없이도 동작)
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Toast.show({ type: 'error', text1: '권한 필요', text2: '사진 접근 권한이 필요합니다.' });
@@ -296,7 +376,7 @@ const ImageUploader = ({
     } catch (error) {
       logger.error('이미지 선택 중 오류', error);
     }
-  }, [images.length, maxImages, handleImagesSelected, isDuplicateSelection]);
+  }, [images.length, maxImages, handleImagesSelected, isDuplicateSelection, openPhotoPicker]);
 
   const pickFromCamera = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -416,6 +496,15 @@ const ImageUploader = ({
           </TouchableOpacity>
         )}
       </View>
+      {Platform.OS === 'ios' && (
+        <PhotoPickerSheet
+          visible={photoPicker.visible}
+          maxSelection={photoPicker.maxSelection}
+          initialSelectedIds={photoPicker.initialIds}
+          onCancel={closePhotoPicker}
+          onConfirm={handlePhotoPickerConfirm}
+        />
+      )}
     </View>
   );
 };

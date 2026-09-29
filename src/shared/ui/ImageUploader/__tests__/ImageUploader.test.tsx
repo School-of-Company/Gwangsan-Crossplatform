@@ -23,6 +23,29 @@ jest.mock('react-native-toast-message', () => ({
   show: jest.fn(),
 }));
 
+// 앱 내 사진 선택 화면은 별도 테스트가 있으므로, 여기서는 선택 결과를 돌려주는 버튼만 둔다
+jest.mock('@/shared/ui/PhotoPickerSheet', () => ({
+  PhotoPickerSheet: ({ visible, initialSelectedIds, maxSelection, onConfirm, onCancel }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    if (!visible) return null;
+    return (
+      <View testID="photo-picker-sheet">
+        <Text testID="photo-picker-initial">{initialSelectedIds.join(',')}</Text>
+        <Text testID="photo-picker-max">{String(maxSelection)}</Text>
+        <TouchableOpacity
+          testID="picker-confirm-add"
+          onPress={() => onConfirm([...initialSelectedIds, 'lib-new'])}
+        />
+        <TouchableOpacity
+          testID="picker-confirm-remove-first"
+          onPress={() => onConfirm(initialSelectedIds.slice(1))}
+        />
+        <TouchableOpacity testID="picker-cancel" onPress={onCancel} />
+      </View>
+    );
+  },
+}));
+
 jest.mock('@/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));
@@ -856,6 +879,119 @@ describe('ImageUploader', () => {
           expect.objectContaining({ text: '카메라로 촬영' }),
         ])
       );
+    });
+  });
+
+  describe('iOS 앱 내 사진 선택 화면', () => {
+    const MediaLibrary = jest.requireMock('expo-media-library/legacy');
+
+    beforeEach(() => {
+      MediaLibrary.requestPermissionsAsync.mockResolvedValue({
+        granted: true,
+        accessPrivileges: 'all',
+      });
+      MediaLibrary.getAssetInfoAsync.mockImplementation(async (id: string) => ({
+        id,
+        localUri: `file:///library/${id}.jpg`,
+      }));
+    });
+
+    afterEach(() => {
+      MediaLibrary.requestPermissionsAsync.mockResolvedValue({ granted: false });
+    });
+
+    // 첨부 → 다시 열기 → 선택 변경까지 거치는 테스트는 첫 실행(변환 캐시 없음)에서 기본 5초를 넘길 수 있다
+    const openSheetAndAdd = async (
+      container: ReturnType<typeof renderWithProviders>,
+      index = 0
+    ) => {
+      fireEvent.press(getButtons(container)[index]);
+      await waitFor(() => expect(container.getByTestId('photo-picker-sheet')).toBeTruthy());
+      fireEvent.press(container.getByTestId('picker-confirm-add'));
+    };
+
+    it('사진 권한이 있으면 시스템 피커 대신 앱 내 선택 화면을 연다', async () => {
+      const container = renderWithProviders(<StatefulImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(container.getByTestId('photo-picker-sheet')).toBeTruthy());
+      expect(mockLaunchGallery).not.toHaveBeenCalled();
+    });
+
+    it('고른 사진을 파일 경로로 바꿔 첨부하고 업로드한다', async () => {
+      const mutateAsync = setupUploadMock(
+        jest.fn().mockResolvedValue({ imageId: 1, imageUrl: 'https://x/a.jpg' })
+      );
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onImagesChange={onImagesChange} />
+      );
+
+      await openSheetAndAdd(container);
+
+      await waitFor(() =>
+        expect(onImagesChange).toHaveBeenCalledWith(['file:///library/lib-new.jpg'])
+      );
+      expect(mutateAsync).toHaveBeenCalledWith('file:///library/lib-new.jpg');
+    });
+
+    it('다시 열면 이미 첨부한 사진이 선택된 상태로 전달된다', async () => {
+      setupUploadMock(jest.fn().mockResolvedValue({ imageId: 1, imageUrl: 'https://x/a.jpg' }));
+      const container = renderWithProviders(<StatefulImageUploader />);
+      await openSheetAndAdd(container);
+      await waitFor(() => expect(getButtons(container)).toHaveLength(2));
+
+      fireEvent.press(getButtons(container)[1]);
+
+      await waitFor(() =>
+        expect(container.getByTestId('photo-picker-initial').props.children).toBe('lib-new')
+      );
+    }, 15_000);
+
+    it('선택 화면에서 해제한 사진은 첨부에서도 빠진다', async () => {
+      setupUploadMock(jest.fn().mockResolvedValue({ imageId: 1, imageUrl: 'https://x/a.jpg' }));
+      const onImagesChange = jest.fn();
+      const container = renderWithProviders(
+        <StatefulImageUploader onImagesChange={onImagesChange} />
+      );
+      await openSheetAndAdd(container);
+      await waitFor(() => expect(getButtons(container)).toHaveLength(2));
+
+      fireEvent.press(getButtons(container)[1]);
+      await waitFor(() => expect(container.getByTestId('photo-picker-sheet')).toBeTruthy());
+      onImagesChange.mockClear();
+      fireEvent.press(container.getByTestId('picker-confirm-remove-first'));
+
+      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith([]));
+    }, 15_000);
+
+    it('앨범에서 오지 않은 첨부(카메라 사진 등)만큼 고를 수 있는 장수를 줄인다', async () => {
+      const container = renderWithProviders(
+        <StatefulImageUploader
+          initialImages={[
+            { imageId: 1, imageUrl: 'https://x/server-1.jpg' },
+            { imageId: 2, imageUrl: 'https://x/server-2.jpg' },
+          ]}
+        />
+      );
+      const buttons = getButtons(container);
+      fireEvent.press(buttons[buttons.length - 1]);
+
+      await waitFor(() =>
+        expect(container.getByTestId('photo-picker-max').props.children).toBe('3')
+      );
+    });
+
+    it('사진 권한을 허용하지 않으면 기존 시스템 피커를 쓴다', async () => {
+      MediaLibrary.requestPermissionsAsync.mockResolvedValue({ granted: false });
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({ canceled: true, assets: [] });
+
+      const container = renderWithProviders(<StatefulImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(mockLaunchGallery).toHaveBeenCalled());
+      expect(container.queryByTestId('photo-picker-sheet')).toBeNull();
     });
   });
 });
