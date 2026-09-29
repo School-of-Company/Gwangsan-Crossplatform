@@ -23,7 +23,7 @@ export default function SpecialtiesDropdown<T extends string>({
 }: SpecialtiesDropdownProps<T>) {
   const multiSelect = useMultiSelect({
     items,
-    initialSelectedItems: externalSelectedItems,
+    selectedItems: externalSelectedItems,
     onSelect,
   });
 
