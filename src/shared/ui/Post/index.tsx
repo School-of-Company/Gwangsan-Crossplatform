@@ -60,7 +60,7 @@ export default function Post({
           source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
           className={`size-20 rounded-lg ${isTemporary ? 'opacity-70' : ''}`}
           style={{ width: 80, height: 80, borderRadius: 12 }}
-          cachePolicy="memory"
+          cachePolicy="memory-disk"
           contentFit="cover"
           recyclingKey={firstImage ?? 'placeholder'}
           transition={200}

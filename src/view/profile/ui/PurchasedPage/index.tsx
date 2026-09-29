@@ -75,7 +75,7 @@ const TradePostCard = ({
         <ExpoImage
           source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
           style={{ width: 80, height: 80, borderRadius: 12 }}
-          cachePolicy="memory"
+          cachePolicy="memory-disk"
           contentFit="cover"
           recyclingKey={firstImage ?? 'placeholder'}
           transition={200}
