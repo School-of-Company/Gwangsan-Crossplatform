@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
-import { AxiosError } from 'axios';
 import { deleteChatMessage } from '../api/deleteChatMessage';
 import { isSameMessageId, removeMessageById } from '../lib/messageCache';
 import { chatMessageKeys } from './chatQueryKeys';
@@ -11,11 +10,6 @@ import type { MessageId, RoomId } from '@/shared/types/chatType';
 interface DeleteChatMessageContext {
   readonly previousMessages?: ChatMessageResponse[];
 }
-
-// 이미 지워진 메시지(다른 기기에서 먼저 삭제 등)는 404가 오는데, 사용자가 원하는 결과는
-// 같으므로 실패로 되돌리지 않는다
-const isAlreadyDeletedError = (error: unknown) =>
-  error instanceof AxiosError && error.response?.status === 404;
 
 export const useDeleteChatMessage = (roomId: RoomId) => {
   const queryClient = useQueryClient();
@@ -33,14 +27,10 @@ export const useDeleteChatMessage = (roomId: RoomId) => {
   };
 
   return useMutation<void, Error, MessageId, DeleteChatMessageContext>({
-    mutationFn: async (messageId) => {
-      try {
-        await deleteChatMessage(messageId);
-      } catch (error) {
-        if (isAlreadyDeletedError(error)) return;
-        throw error;
-      }
-    },
+    // 서버의 404는 "아직 저장되지 않은 메시지(전송 직후)"도 뜻한다(Gwangsan-Server#424). 성공으로 보면
+    // 화면에서만 사라졌다가 서버에 저장된 뒤 다시 나타나므로, 다른 실패처럼 되돌리고 서버 안내
+    // ("잠시 후 다시 시도해 주세요")를 보여준다
+    mutationFn: (messageId) => deleteChatMessage(messageId),
     onMutate: async (messageId) => {
       await queryClient.cancelQueries({ queryKey: messageKey });
       const previousMessages = queryClient.getQueryData<ChatMessageResponse[]>(messageKey);

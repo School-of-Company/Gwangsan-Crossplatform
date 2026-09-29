@@ -48,8 +48,11 @@ const room = (messageId: number, lastMessage: string): ChatRoomListItem => ({
   product: { productId: 1, title: '상품', images: [] },
 });
 
+// 서버(Gwangsan-Server#424)는 아직 저장되지 않은 메시지(전송 직후)에 이 안내와 함께 404를 준다
+const NOT_FOUND_MESSAGE =
+  '채팅 메시지를 찾을 수 없습니다. 전송 직후라면 잠시 후 다시 시도해 주세요.';
 const notFoundError = () =>
-  new AxiosError('없음', '404', undefined, undefined, {
+  new AxiosError(NOT_FOUND_MESSAGE, '404', undefined, undefined, {
     status: 404,
     statusText: 'Not Found',
     data: {},
@@ -163,16 +166,21 @@ describe('useDeleteChatMessage', () => {
     expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: chatRoomKeys.list() });
   });
 
-  it('이미 지워진 메시지(404)는 실패로 되돌리지 않는다', async () => {
+  it('전송 직후라 아직 저장되지 않아 404가 나면 되돌리고 서버 안내를 보여준다', async () => {
     mockDelete.mockRejectedValue(notFoundError());
     const { result, queryClient } = renderHookWithProviders(() => useDeleteChatMessage(ROOM_ID));
     queryClient.setQueryData(chatMessageKeys.room(ROOM_ID), [message(1), message(2)]);
 
     act(() => result.current.mutate(1));
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(queryClient.getQueryData(chatMessageKeys.room(ROOM_ID))).toEqual([message(2)]);
-    expect(Toast.show).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(queryClient.getQueryData(chatMessageKeys.room(ROOM_ID))).toEqual([
+      message(1),
+      message(2),
+    ]);
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text2: NOT_FOUND_MESSAGE })
+    );
   });
 
   it('실패하면 지운 메시지를 되돌리고 토스트로 알린다', async () => {
