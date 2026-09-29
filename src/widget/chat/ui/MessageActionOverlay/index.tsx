@@ -2,7 +2,6 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import {
   Animated,
   Dimensions,
-  Easing,
   Modal,
   Platform,
   Pressable,
@@ -95,7 +94,6 @@ export function MessageActionOverlay({
   const sheetTranslate = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [sheetHeight, 0],
-    easing: Easing.out(Easing.cubic),
   });
 
   return (
