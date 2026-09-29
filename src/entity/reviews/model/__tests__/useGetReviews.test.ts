@@ -130,14 +130,12 @@ describe('useGetReviews', () => {
       expect(result.current.error).toBeTruthy();
     });
 
-    it('queryKey가 [reviews, toss, null]이다', async () => {
+    it('queryKey가 채팅방 화면과 같은 [reviews, toss]이다(#741)', async () => {
       mockGetTossReview.mockResolvedValue([]);
 
       const { queryClient } = renderHookWithProviders(() => useGetReviews('toss', '5'));
 
-      await waitFor(() =>
-        expect(queryClient.getQueryState(['reviews', 'toss', null])).toBeDefined()
-      );
+      await waitFor(() => expect(queryClient.getQueryState(['reviews', 'toss'])).toBeDefined());
     });
 
     it('options.enabled가 false이면 조회하지 않는다(비활성 탭 조회 제한)', () => {

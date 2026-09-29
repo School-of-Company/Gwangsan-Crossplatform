@@ -18,6 +18,7 @@ import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
+import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
 
@@ -144,7 +145,7 @@ export function ChatRoomList() {
       // 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이 바로 보이게 한다.
       queryClient
         .fetchQuery({
-          queryKey: ['chatRoomData', roomId],
+          queryKey: chatRoomDataKeys.room(roomId),
           queryFn: () => getChatRoomData(roomId),
           staleTime: 30 * 1000,
         })

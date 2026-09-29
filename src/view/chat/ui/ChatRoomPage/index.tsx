@@ -25,6 +25,8 @@ import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getRevi
 import type { ChatApiError } from '~/entity/chat';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
+import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
+import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,7 +78,7 @@ export default function ChatRoomPage() {
 
   // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
   const { data: myReceivedReviews } = useQuery({
-    queryKey: ['reviews', 'receive', 'current'],
+    queryKey: reviewKeys.received('current'),
     queryFn: () => getMyReceivedReview(),
     enabled: isTradeCompleted && !!myInfo,
   });
@@ -84,7 +86,7 @@ export default function ChatRoomPage() {
 
   // 리뷰 버튼을 "작성하러 가기" ↔ "확인하기"로 나누기 위해, 내가 쓴 후기 목록에서 productId가 일치하는 항목을 찾는다
   const { data: myWrittenReviews } = useQuery({
-    queryKey: ['reviews', 'toss'],
+    queryKey: reviewKeys.toss(),
     queryFn: getTossReview,
     enabled: isTradeCompleted && !!myInfo,
   });
@@ -232,7 +234,7 @@ export default function ChatRoomPage() {
     try {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
-      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
+      queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(roomId) });
       Toast.show({
         type: 'success',
         text1: '게시물 작성자에게 거래를 요청했어요!',

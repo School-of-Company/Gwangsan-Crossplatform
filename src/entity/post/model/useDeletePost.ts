@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 import { deletePost } from '../api/deletePost';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
+import { postKeys } from '~/shared/model/postQueryKeys';
 
 interface UseDeletePostParams {
   onSuccess?: () => void;
@@ -18,7 +19,7 @@ export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
     mutationFn: deletePost,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['posts'],
+        queryKey: postKeys.all,
       });
 
       Toast.show({

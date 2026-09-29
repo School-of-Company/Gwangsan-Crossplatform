@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../api/getReviews';
 import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { ReviewPostType } from './reviewPostType';
+import { reviewKeys } from './reviewQueryKeys';
 
 export type ReviewsMode = 'receive' | 'toss';
 
@@ -20,7 +21,10 @@ export const useGetReviews = (
   const isMyReceived = mode === 'receive' && !!myInfo && String(myInfo.memberId) === memberId;
 
   return useQuery<ReviewPostType[]>({
-    queryKey: ['reviews', mode, mode === 'receive' ? (isMyReceived ? 'current' : memberId) : null],
+    queryKey:
+      mode === 'toss'
+        ? reviewKeys.toss()
+        : reviewKeys.received(isMyReceived ? 'current' : memberId),
     queryFn: () => {
       if (mode !== 'receive') return getTossReview();
       if (isMyReceived) return getMyReceivedReview();

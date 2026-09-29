@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { blockUser, unblockUser } from '../api/blockUser';
+import { postKeys } from '~/shared/model/postQueryKeys';
 
 export const useBlockUser = (targetMemberId: number | undefined) => {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export const useBlockUser = (targetMemberId: number | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blockList'] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
       Toast.show({ type: 'success', text1: '차단되었습니다.' });
     },
     onError: (error) => {
@@ -28,7 +29,7 @@ export const useBlockUser = (targetMemberId: number | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blockList'] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
       Toast.show({ type: 'success', text1: '차단이 해제되었습니다.' });
     },
     onError: (error) => {

@@ -8,6 +8,7 @@ import { useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
+import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
 
 interface UsePostPageLogicParams {
   readonly id: string;
@@ -61,7 +62,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
             content: contents,
             light: light,
           });
-          queryClient.invalidateQueries({ queryKey: ['reviews'] });
+          queryClient.invalidateQueries({ queryKey: reviewKeys.all });
           Toast.show({
             type: 'success',
             text1: '리뷰가 성공적으로 작성되었습니다.',
