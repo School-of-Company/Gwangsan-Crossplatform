@@ -363,13 +363,17 @@ export default function SellingPageView() {
     },
   });
 
-  if (isError) {
+  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 토스트가 반복되므로, 실패로 바뀌는 순간에만 띄운다(#740)
+  useEffect(() => {
+    if (!isError) return;
     Toast.show({
       type: 'error',
       text1: '글을 불러오는데 실패했습니다.',
       text2: error?.message || '잠시 후 다시 시도해주세요.',
     });
-  }
+    // 같은 실패가 이어지는 동안 에러 객체가 바뀌어도 다시 띄우지 않는다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
 
   const handleTabChange = (tab: SellingTab) => {
     setActiveTab(tab);

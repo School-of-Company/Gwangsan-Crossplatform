@@ -638,4 +638,17 @@ describe('SellingPageView', () => {
       expect.objectContaining({ type: 'error', text1: '글을 불러오는데 실패했습니다.' })
     );
   });
+
+  it('실패 상태로 다시 렌더링되어도 에러 토스트를 반복해서 띄우지 않는다(#740)', () => {
+    setSellingPosts([], { posts: [], error: new Error('게시물 오류'), isError: true });
+
+    const { rerender } = renderWithProviders(<SellingPageView />);
+    rerender(<SellingPageView />);
+
+    expect(
+      (Toast.show as jest.Mock).mock.calls.filter(
+        ([options]) => options?.text1 === '글을 불러오는데 실패했습니다.'
+      )
+    ).toHaveLength(1);
+  });
 });
