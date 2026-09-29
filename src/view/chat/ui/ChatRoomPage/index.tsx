@@ -26,6 +26,7 @@ import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
 import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
+import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat/lib/messageRenderer';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 
@@ -425,6 +426,11 @@ export default function ChatRoomPage() {
         visible={messageActions.menu !== null}
         anchor={messageActions.menu?.anchor ?? null}
         canEdit={messageActions.menu?.canEdit ?? false}
+        timeLabel={
+          messageActions.menu
+            ? `${formatDateDividerLabel(messageActions.menu.message.createdAt)} ${formatMessageTime(messageActions.menu.message.createdAt)}`
+            : undefined
+        }
         onEdit={messageActions.selectEdit}
         onDelete={messageActions.selectDelete}
         onClose={messageActions.closeMenu}>
