@@ -30,6 +30,43 @@ describe('useMultiSelect', () => {
     expect(result.current.isSelected('댄스')).toBe(true);
   });
 
+  it('initialSelectedItems가 마운트 이후 뒤늦게 도착해도 칩과 선택 상태에 반영된다 (#722)', () => {
+    // 내 정보 수정 화면처럼 프로필 데이터가 비동기로 도착해, 처음엔 빈 배열로
+    // 마운트되었다가 나중에 실제 값으로 갱신되는 상황을 재현한다.
+    const { result, rerender } = renderHook(
+      ({ initialSelectedItems }: { initialSelectedItems: string[] }) =>
+        useMultiSelect({ items: ITEMS, initialSelectedItems }),
+      { initialProps: { initialSelectedItems: [] } }
+    );
+
+    expect(result.current.allItems).toEqual(ITEMS);
+
+    rerender({ initialSelectedItems: ['댄스'] });
+
+    expect(result.current.allItems).toContain('댄스');
+    expect(result.current.isSelected('댄스')).toBe(true);
+  });
+
+  it('직접 입력 칩을 선택 해제할 수 있고, 저장 후 다시 열었을 때 서버에 없으면 재등장하지 않는다 (#722)', () => {
+    const { result, unmount } = renderHook(() =>
+      useMultiSelect({ items: ITEMS, initialSelectedItems: ['댄스'] })
+    );
+
+    act(() => {
+      result.current.handleSelect('댄스');
+    });
+
+    expect(result.current.isSelected('댄스')).toBe(false);
+    // 같은 세션에서는 다시 선택할 수 있도록 칩 자체는 유지된다
+    expect(result.current.allItems).toContain('댄스');
+
+    unmount();
+
+    // 저장 후 화면을 다시 열었다고 가정 — 서버가 더 이상 '댄스'를 내려주지 않는다
+    const reopened = renderHook(() => useMultiSelect({ items: ITEMS, initialSelectedItems: [] }));
+    expect(reopened.result.current.allItems).not.toContain('댄스');
+  });
+
   describe('handleSelect', () => {
     it('선택하지 않은 항목을 선택하면 selectedItems에 추가된다', () => {
       const { result } = renderHook(() => useMultiSelect({ items: ITEMS }));

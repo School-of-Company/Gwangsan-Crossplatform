@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Animated, BackHandler, Easing, Keyboard, Pressable, TextInput } from 'react-native';
+import { Animated, BackHandler, Easing, Pressable, TextInput } from 'react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 import { Button, Input } from '~/shared/ui';
@@ -47,25 +48,33 @@ function CardBody({
   return (
     <Pressable className="flex-1" onPress={onClose}>
       <Animated.View style={{ opacity }} className="flex-1 justify-end bg-black/40 px-4">
-        <Pressable className="w-full" style={{ marginBottom }} onPress={(e) => e.stopPropagation()}>
-          <Animated.View
-            onLayout={onLayout}
-            style={{ transform: [{ translateY }] }}
-            className="w-full gap-6 rounded-2xl bg-white p-6">
-            <Input
-              ref={inputRef}
-              label=""
-              placeholder={placeholder}
-              value={value}
-              onChangeText={setValue}
-              onSubmitEditing={handleSubmit}
-              returnKeyType="done"
-            />
-            <Button onPress={handleSubmit} disabled={value.trim() === ''}>
-              추가하기
-            </Button>
-          </Animated.View>
-        </Pressable>
+        {/* KeyboardStickyView가 네이티브 키보드 애니메이션과 같은 프레임으로 매 순간
+            따라 움직여, 열림/노출이 끝나야 반응하던 이전 keyboardDidShow 방식과 달리
+            키보드가 올라오는 도중에도 카드가 함께 올라온다. */}
+        <KeyboardStickyView offset={{ closed: 0, opened: -KEYBOARD_GAP }}>
+          <Pressable
+            className="w-full"
+            style={{ marginBottom }}
+            onPress={(e) => e.stopPropagation()}>
+            <Animated.View
+              onLayout={onLayout}
+              style={{ transform: [{ translateY }] }}
+              className="w-full gap-6 rounded-2xl bg-white p-6">
+              <Input
+                ref={inputRef}
+                label=""
+                placeholder={placeholder}
+                value={value}
+                onChangeText={setValue}
+                onSubmitEditing={handleSubmit}
+                returnKeyType="done"
+              />
+              <Button onPress={handleSubmit} disabled={value.trim() === ''}>
+                추가하기
+              </Button>
+            </Animated.View>
+          </Pressable>
+        </KeyboardStickyView>
       </Animated.View>
     </Pressable>
   );
@@ -77,6 +86,8 @@ const CARD_TRANSITION_DURATION = 300;
 // 카드가 화면 아래로 완전히 숨겨지도록 하는 오프셋 — 실제 카드 높이보다 충분히 크다
 const CARD_HIDDEN_OFFSET = 240;
 // 키보드가 올라왔을 때 카드 바닥이 키보드 상단에 완전히 붙어버리지 않도록 살짝 띄운다.
+// KeyboardStickyView의 opened 오프셋으로 전달되어, 카드가 키보드와 매 프레임 같은
+// 속도로 올라오면서도 이 간격만큼은 항상 유지된다.
 const KEYBOARD_GAP = 12;
 
 export function CustomInputCard({
@@ -96,43 +107,6 @@ export function CustomInputCard({
   const opacity = useRef(new Animated.Value(0)).current;
   // 카드가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
   const hasAnimatedOpenRef = useRef(false);
-  // 한글 입력 중에는 안드로이드 Gboard의 예측 변환/후보 문구 바가 나타났다 사라졌다
-  // 하면서 키보드 높이가 조금씩 바뀔 때마다 keyboardDidShow가 다시 발생한다(실제
-  // 숨김/노출이 아니다). 그때마다 카드를 다시 움직이면 입력 중인 TextInput의 위치가
-  // 바뀌면서 한글 자소가 분리되어 보이는 문제가 생긴다. 키보드가 이미 떠 있는 동안에는
-  // 이후에 오는 keyboardDidShow를 전부 무시해, 실제 노출(hidden → shown) 전환에만
-  // 한 번 반응하도록 한다.
-  const isKeyboardShownRef = useRef(false);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
-      if (isKeyboardShownRef.current) return;
-      isKeyboardShownRef.current = true;
-
-      Animated.timing(translateY, {
-        toValue: -(e.endCoordinates.height + KEYBOARD_GAP),
-        duration: 250,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    });
-
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      isKeyboardShownRef.current = false;
-
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 250,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    });
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, [translateY]);
 
   useEffect(() => {
     if (isVisible) {
