@@ -84,7 +84,7 @@ describe('CancelTradeView', () => {
     });
 
     const { UNSAFE_getAllByType } = render(<CancelTradeView />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
   });
@@ -97,7 +97,7 @@ describe('CancelTradeView', () => {
     });
 
     const { UNSAFE_getAllByType } = render(<CancelTradeView />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
   });
@@ -106,7 +106,7 @@ describe('CancelTradeView', () => {
     mockUseGetReview.mockReturnValue({ data: makeReviewData({ imageUrls: [] }) });
 
     const { UNSAFE_getAllByType } = render(<CancelTradeView />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     expect(UNSAFE_getAllByType(Image)).toHaveLength(1);
   });
