@@ -22,6 +22,7 @@ import {
   canModifyMessage,
 } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+import type { MessageAnchor } from '../../model/useMessageActions';
 
 interface TradeEmbedConfig {
   readonly shouldShow: boolean;
@@ -82,7 +83,7 @@ interface ChatRoomContentProps {
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
   readonly hasReviewedTrade?: boolean;
-  readonly onMyMessageLongPress?: (message: EnhancedChatMessage) => void;
+  readonly onMyMessageLongPress?: (message: EnhancedChatMessage, anchor: MessageAnchor) => void;
 }
 
 const keyExtractor = (item: ChatListItem): string => {

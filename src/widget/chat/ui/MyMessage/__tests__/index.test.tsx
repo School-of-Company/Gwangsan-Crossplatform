@@ -22,6 +22,9 @@ jest.mock('@/entity/chat', () => ({
   renderMessageContent: jest.fn(),
 }));
 
+// 테스트 렌더러에는 레이아웃이 없어 말풍선 위치 측정을 흉내 낸다
+jest.mock('../../../model/measureAnchor', () => ({ measureAnchor: jest.fn() }));
+
 jest.mock('~/shared/store/useChatQueueStore', () => ({
   useChatQueueStore: jest.fn(),
   MESSAGE_STATUS: {
@@ -33,6 +36,7 @@ jest.mock('~/shared/store/useChatQueueStore', () => ({
 }));
 
 const mockRenderMessageContent = renderMessageContent as jest.Mock;
+const { measureAnchor: mockMeasureAnchor } = jest.requireMock('../../../model/measureAnchor');
 const mockUseChatQueueStore = useChatQueueStore as unknown as jest.Mock;
 
 const makeMessage = (overrides: Partial<EnhancedChatMessage> = {}): EnhancedChatMessage =>
@@ -158,14 +162,18 @@ describe('MyMessage', () => {
   });
 
   describe('수정/삭제', () => {
-    it('onLongPress가 있으면 말풍선을 길게 눌렀을 때 메시지와 함께 호출한다', () => {
+    it('길게 누르면 메뉴에서 같은 자리에 띄울 수 있도록 말풍선의 화면상 위치와 함께 호출한다', () => {
       const onLongPress = jest.fn();
       const message = makeMessage();
+      mockMeasureAnchor.mockImplementation(
+        (_node: unknown, onMeasured: (anchor: unknown) => void) =>
+          onMeasured({ x: 120, y: 400, width: 200, height: 48 })
+      );
       const { getByTestId } = render(<MyMessage message={message} onLongPress={onLongPress} />);
 
       fireEvent(getByTestId('my-message-bubble-1'), 'longPress');
 
-      expect(onLongPress).toHaveBeenCalledWith(message);
+      expect(onLongPress).toHaveBeenCalledWith(message, { x: 120, y: 400, width: 200, height: 48 });
     });
 
     it('onLongPress가 없으면 말풍선을 길게 눌러도 반응하지 않는다', () => {

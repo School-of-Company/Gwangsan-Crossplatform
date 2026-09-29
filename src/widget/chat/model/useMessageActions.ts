@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import {
   canEditMessage,
   canModifyMessage,
@@ -9,17 +8,31 @@ import {
 } from '~/entity/chat';
 import type { MessageId, RoomId } from '~/shared/types/chatType';
 
+// 꾹 누른 말풍선의 화면상 위치. 메뉴에서 이 자리에 말풍선을 그대로 띄워 강조한다
+export interface MessageAnchor {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface MessageMenu {
+  readonly message: EnhancedChatMessage;
+  readonly anchor: MessageAnchor;
+  // 이미지 메시지는 삭제만 할 수 있다
+  readonly canEdit: boolean;
+}
+
 export interface EditingMessage {
   readonly messageId: MessageId;
   readonly content: string;
 }
 
-const MENU_EDIT = '수정';
-const MENU_DELETE = '삭제';
-const MENU_CANCEL = '취소';
-
-// 내 메시지를 길게 눌렀을 때의 수정/삭제 메뉴, 입력창 수정 모드, 삭제 확인 상태를 관리한다
+// 내 메시지를 길게 눌렀을 때의 수정/삭제 메뉴, 입력창 수정 모드, 삭제 확인 상태를 관리한다.
+// 메뉴는 OS 기본 ActionSheet 대신 화면 전체를 블러 처리하고 누른 말풍선만 강조하는 자체 화면
+// (MessageActionOverlay)으로 띄운다
 export const useMessageActions = (roomId: RoomId) => {
+  const [menu, setMenu] = useState<MessageMenu | null>(null);
   const [editingMessage, setEditingMessage] = useState<EditingMessage | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<MessageId | null>(null);
 
@@ -34,46 +47,27 @@ export const useMessageActions = (roomId: RoomId) => {
     setDeleteTargetId(message.messageId);
   }, []);
 
-  const openMessageMenu = useCallback(
-    (message: EnhancedChatMessage) => {
-      // 메뉴가 뜬 뒤 24시간이 지나는 경우까지 다시 한 번 확인한다
-      if (!canModifyMessage(message)) return;
+  const openMessageMenu = useCallback((message: EnhancedChatMessage, anchor: MessageAnchor) => {
+    // 메뉴가 뜬 뒤 24시간이 지나는 경우까지 다시 한 번 확인한다
+    if (!canModifyMessage(message)) return;
+    setMenu({ message, anchor, canEdit: canEditMessage(message) });
+  }, []);
 
-      const isEditable = canEditMessage(message);
-      const actions = isEditable ? [MENU_EDIT, MENU_DELETE] : [MENU_DELETE];
+  const closeMenu = useCallback(() => {
+    setMenu(null);
+  }, []);
 
-      const handleAction = (action: string) => {
-        if (action === MENU_EDIT) startEdit(message);
-        if (action === MENU_DELETE) requestDelete(message);
-      };
+  const selectEdit = useCallback(() => {
+    if (!menu?.canEdit) return;
+    startEdit(menu.message);
+    setMenu(null);
+  }, [menu, startEdit]);
 
-      if (Platform.OS === 'ios') {
-        const options = [MENU_CANCEL, ...actions];
-        ActionSheetIOS.showActionSheetWithOptions(
-          {
-            options,
-            cancelButtonIndex: 0,
-            destructiveButtonIndex: options.indexOf(MENU_DELETE),
-          },
-          (buttonIndex) => {
-            const action = options[buttonIndex];
-            if (action) handleAction(action);
-          }
-        );
-        return;
-      }
-
-      Alert.alert('메시지', undefined, [
-        { text: MENU_CANCEL, style: 'cancel' },
-        ...actions.map((action) => ({
-          text: action,
-          style: action === MENU_DELETE ? ('destructive' as const) : ('default' as const),
-          onPress: () => handleAction(action),
-        })),
-      ]);
-    },
-    [startEdit, requestDelete]
-  );
+  const selectDelete = useCallback(() => {
+    if (!menu) return;
+    requestDelete(menu.message);
+    setMenu(null);
+  }, [menu, requestDelete]);
 
   const cancelEdit = useCallback(() => {
     setEditingMessage(null);
@@ -106,6 +100,10 @@ export const useMessageActions = (roomId: RoomId) => {
   }, [deleteTargetId, deleteMutation, editingMessage]);
 
   return {
+    menu,
+    closeMenu,
+    selectEdit,
+    selectDelete,
     editingMessage,
     isDeleteConfirmVisible: deleteTargetId !== null,
     openMessageMenu,

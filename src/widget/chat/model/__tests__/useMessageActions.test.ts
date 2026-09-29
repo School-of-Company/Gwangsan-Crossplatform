@@ -1,6 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { ActionSheetIOS, Alert, Platform } from 'react-native';
-import { useMessageActions } from '../useMessageActions';
+import { useMessageActions, type MessageAnchor } from '../useMessageActions';
 import {
   canEditMessage,
   canModifyMessage,
@@ -21,6 +20,8 @@ const mockCanEdit = canEditMessage as jest.Mock;
 const mockUpdateMutate = jest.fn();
 const mockDeleteMutate = jest.fn();
 
+const anchor: MessageAnchor = { x: 120, y: 400, width: 200, height: 48 };
+
 const message = (overrides: Partial<EnhancedChatMessage> = {}): EnhancedChatMessage => ({
   messageId: 7,
   roomId: 1,
@@ -34,102 +35,80 @@ const message = (overrides: Partial<EnhancedChatMessage> = {}): EnhancedChatMess
   ...overrides,
 });
 
-const originalOS = Platform.OS;
-
-// ActionSheet에서 특정 버튼을 누른 것처럼 콜백을 호출한다
-const pressActionSheet = (label: string) =>
-  jest
-    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-    .mockImplementation((opts: any, cb: any) => cb(opts.options.indexOf(label)));
-
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.restoreAllMocks();
   mockCanModify.mockReturnValue(true);
   mockCanEdit.mockReturnValue(true);
   (useUpdateChatMessage as jest.Mock).mockReturnValue({ mutate: mockUpdateMutate });
   (useDeleteChatMessage as jest.Mock).mockReturnValue({ mutate: mockDeleteMutate });
-  Object.defineProperty(Platform, 'OS', { value: 'ios', configurable: true });
 });
 
-afterAll(() => {
-  Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
-});
+const openMenu = (result: { current: ReturnType<typeof useMessageActions> }, msg = message()) =>
+  act(() => result.current.openMessageMenu(msg, anchor));
 
 describe('useMessageActions', () => {
   describe('메뉴', () => {
-    it('텍스트 메시지는 수정/삭제/취소 메뉴를 띄운다(iOS)', () => {
-      const spy = jest
-        .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-        .mockImplementation(() => {});
+    it('꾹 누르면 누른 말풍선 위치와 함께 메뉴를 연다', () => {
       const { result } = renderHook(() => useMessageActions(1));
 
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
 
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          options: ['취소', '수정', '삭제'],
-          cancelButtonIndex: 0,
-          destructiveButtonIndex: 2,
-        }),
-        expect.any(Function)
-      );
+      expect(result.current.menu).toEqual({ message: message(), anchor, canEdit: true });
     });
 
-    it('이미지 메시지는 삭제만 보여준다', () => {
+    it('이미지 메시지는 수정 없이 삭제만 할 수 있는 메뉴를 연다', () => {
       mockCanEdit.mockReturnValue(false);
-      const spy = jest
-        .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-        .mockImplementation(() => {});
       const { result } = renderHook(() => useMessageActions(1));
 
-      act(() => result.current.openMessageMenu(message({ messageType: 'IMAGE' })));
+      openMenu(result, message({ messageType: 'IMAGE' }));
 
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ options: ['취소', '삭제'] }),
-        expect.any(Function)
-      );
+      expect(result.current.menu?.canEdit).toBe(false);
     });
 
-    it('수정/삭제할 수 없는 메시지는 메뉴를 띄우지 않는다', () => {
+    it('수정/삭제할 수 없는 메시지는 메뉴를 열지 않는다', () => {
       mockCanModify.mockReturnValue(false);
-      const spy = jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions');
       const { result } = renderHook(() => useMessageActions(1));
 
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
 
-      expect(spy).not.toHaveBeenCalled();
+      expect(result.current.menu).toBeNull();
     });
 
-    it('안드로이드에서는 Alert으로 메뉴를 띄운다', () => {
-      Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    it('닫으면 메뉴가 사라진다', () => {
       const { result } = renderHook(() => useMessageActions(1));
+      openMenu(result);
 
-      act(() => result.current.openMessageMenu(message()));
+      act(() => result.current.closeMenu());
 
-      expect(alertSpy).toHaveBeenCalledWith('메시지', undefined, [
-        expect.objectContaining({ text: '취소', style: 'cancel' }),
-        expect.objectContaining({ text: '수정' }),
-        expect.objectContaining({ text: '삭제', style: 'destructive' }),
-      ]);
+      expect(result.current.menu).toBeNull();
     });
   });
 
   describe('수정', () => {
-    it('수정을 고르면 기존 내용으로 수정 모드가 된다', () => {
-      pressActionSheet('수정');
+    it('수정을 고르면 메뉴를 닫고 기존 내용으로 수정 모드가 된다', () => {
       const { result } = renderHook(() => useMessageActions(1));
+      openMenu(result);
 
-      act(() => result.current.openMessageMenu(message()));
+      act(() => result.current.selectEdit());
 
+      expect(result.current.menu).toBeNull();
       expect(result.current.editingMessage).toEqual({ messageId: 7, content: '원래 내용' });
     });
 
-    it('바뀐 내용으로 제출하면 수정 요청을 보내고 수정 모드를 끝낸다', () => {
-      pressActionSheet('수정');
+    it('수정할 수 없는 메시지에서는 수정을 골라도 수정 모드가 되지 않는다', () => {
+      mockCanEdit.mockReturnValue(false);
       const { result } = renderHook(() => useMessageActions(1));
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result, message({ messageType: 'IMAGE' }));
+
+      act(() => result.current.selectEdit());
+
+      expect(result.current.editingMessage).toBeNull();
+    });
+
+    it('바뀐 내용으로 제출하면 수정 요청을 보내고 수정 모드를 끝낸다', () => {
+      const { result } = renderHook(() => useMessageActions(1));
+      openMenu(result);
+      act(() => result.current.selectEdit());
 
       act(() => result.current.submitEdit('  새 내용  '));
 
@@ -138,23 +117,23 @@ describe('useMessageActions', () => {
     });
 
     it('내용이 그대로거나 비어 있으면 요청 없이 수정 모드만 끝낸다', () => {
-      pressActionSheet('수정');
       const { result } = renderHook(() => useMessageActions(1));
-      act(() => result.current.openMessageMenu(message()));
-
+      openMenu(result);
+      act(() => result.current.selectEdit());
       act(() => result.current.submitEdit('원래 내용'));
       expect(mockUpdateMutate).not.toHaveBeenCalled();
       expect(result.current.editingMessage).toBeNull();
 
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
+      act(() => result.current.selectEdit());
       act(() => result.current.submitEdit('   '));
       expect(mockUpdateMutate).not.toHaveBeenCalled();
     });
 
     it('취소하면 수정 모드를 끝낸다', () => {
-      pressActionSheet('수정');
       const { result } = renderHook(() => useMessageActions(1));
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
+      act(() => result.current.selectEdit());
 
       act(() => result.current.cancelEdit());
 
@@ -163,11 +142,12 @@ describe('useMessageActions', () => {
   });
 
   describe('삭제', () => {
-    it('삭제를 고르면 확인 모달을 띄우고, 확인하면 삭제 요청을 보낸다', () => {
-      pressActionSheet('삭제');
+    it('삭제를 고르면 메뉴를 닫고 확인 모달을 띄우며, 확인하면 삭제 요청을 보낸다', () => {
       const { result } = renderHook(() => useMessageActions(1));
+      openMenu(result);
 
-      act(() => result.current.openMessageMenu(message()));
+      act(() => result.current.selectDelete());
+      expect(result.current.menu).toBeNull();
       expect(result.current.isDeleteConfirmVisible).toBe(true);
       expect(mockDeleteMutate).not.toHaveBeenCalled();
 
@@ -178,9 +158,9 @@ describe('useMessageActions', () => {
     });
 
     it('확인 모달에서 취소하면 삭제하지 않는다', () => {
-      pressActionSheet('삭제');
       const { result } = renderHook(() => useMessageActions(1));
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
+      act(() => result.current.selectDelete());
 
       act(() => result.current.cancelDelete());
 
@@ -189,12 +169,12 @@ describe('useMessageActions', () => {
     });
 
     it('수정 중인 메시지를 삭제하면 수정 모드도 끝낸다', () => {
-      const spy = pressActionSheet('수정');
       const { result } = renderHook(() => useMessageActions(1));
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
+      act(() => result.current.selectEdit());
 
-      spy.mockImplementation((opts: any, cb: any) => cb(opts.options.indexOf('삭제')));
-      act(() => result.current.openMessageMenu(message()));
+      openMenu(result);
+      act(() => result.current.selectDelete());
       act(() => result.current.confirmDelete());
 
       expect(result.current.editingMessage).toBeNull();
