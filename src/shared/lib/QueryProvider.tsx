@@ -13,6 +13,16 @@ import { setQueryClientInstance } from './axios';
 import { isNetworkOrTimeoutError } from './errorHandler';
 import * as Sentry from '@sentry/react-native';
 
+const MAX_QUERY_RETRY = 1;
+
+// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다. 예전에는
+// 전부 한 번 더 요청해 에러 처리가 늦어지고 토스트가 두 번 뜨기도 했다(#739)
+export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
+  if (failureCount >= MAX_QUERY_RETRY) return false;
+  const status = error instanceof AxiosError ? error.response?.status : undefined;
+  return status === undefined || status >= 500;
+};
+
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
@@ -56,7 +66,7 @@ const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: shouldRetryQuery,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
       // 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도

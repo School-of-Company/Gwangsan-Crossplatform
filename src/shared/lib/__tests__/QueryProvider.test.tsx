@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-query';
 import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
-import QueryProvider from '../QueryProvider';
+import QueryProvider, { shouldRetryQuery } from '../QueryProvider';
 import { setQueryClientInstance } from '../axios';
 import * as Sentry from '@sentry/react-native';
 
@@ -250,5 +250,20 @@ describe('QueryProvider', () => {
     expect(mockAddBreadcrumb).toHaveBeenCalledWith(
       expect.objectContaining({ category: 'react-query' })
     );
+  });
+
+  describe('shouldRetryQuery(#739)', () => {
+    it.each([400, 401, 403, 404, 409])('%i 응답은 재시도하지 않는다', (status) => {
+      expect(shouldRetryQuery(0, makeAxiosError(status))).toBe(false);
+    });
+
+    it.each([500, 502, 503])('%i 응답은 한 번 재시도한다', (status) => {
+      expect(shouldRetryQuery(0, makeAxiosError(status))).toBe(true);
+      expect(shouldRetryQuery(1, makeAxiosError(status))).toBe(false);
+    });
+
+    it('응답이 없는 네트워크 오류는 한 번 재시도한다', () => {
+      expect(shouldRetryQuery(0, new Error('Network Error'))).toBe(true);
+    });
   });
 });
