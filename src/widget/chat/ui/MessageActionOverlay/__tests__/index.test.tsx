@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
-import { MessageActionOverlay, getFocusedBubbleTop, getSheetHeight } from '../index';
+import { MessageActionOverlay, getMenuHeight, getMenuLayout } from '../index';
 
 jest.mock('expo-blur', () => {
   const { View } = require('react-native');
@@ -68,6 +68,26 @@ describe('MessageActionOverlay', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('메뉴 맨 위에 보낸 시각을 보여준다', () => {
+    const { getByTestId } = renderOverlay({ timeLabel: '어제 오후 10:18' });
+
+    expect(getByTestId('message-action-time')).toHaveTextContent('어제 오후 10:18');
+  });
+
+  it('시각이 없으면 머리글을 그리지 않는다', () => {
+    const { queryByTestId } = renderOverlay();
+
+    expect(queryByTestId('message-action-time')).toBeNull();
+  });
+
+  it('메뉴를 말풍선 오른쪽 끝에 맞춰 바로 아래에 띄운다', () => {
+    const { getByTestId } = renderOverlay();
+    const style = getByTestId('message-action-menu').props.style;
+
+    expect(style.top).toBeGreaterThan(anchor.y + anchor.height);
+    expect(style.transformOrigin).toBe('top right');
+  });
+
   it('닫혀 있으면 아무것도 그리지 않는다', () => {
     const { queryByText } = renderOverlay({ visible: false });
 
@@ -75,30 +95,45 @@ describe('MessageActionOverlay', () => {
   });
 });
 
-describe('getFocusedBubbleTop', () => {
+describe('getMenuLayout', () => {
   const screenHeight = 800;
-  const sheetHeight = getSheetHeight(2, 34);
+  const menuHeight = getMenuHeight(3, true);
+  const base = { screenHeight, menuHeight, topInset: 55, bottomInset: 34 };
 
-  it('메뉴에 가려지지 않으면 원래 자리에 그대로 둔다', () => {
-    expect(
-      getFocusedBubbleTop({ x: 0, y: 200, width: 100, height: 48 }, screenHeight, sheetHeight, 55)
-    ).toBe(200);
+  it('아래 공간이 넉넉하면 말풍선은 제자리에 두고 메뉴를 바로 아래에 붙인다', () => {
+    const { bubbleTop, menuTop } = getMenuLayout({
+      ...base,
+      anchor: { x: 0, y: 200, width: 100, height: 48 },
+    });
+
+    expect(bubbleTop).toBe(200);
+    expect(menuTop).toBe(200 + 48 + 10);
   });
 
-  it('메뉴에 가려지면 메뉴 바로 위로 올린다', () => {
-    const top = getFocusedBubbleTop(
-      { x: 0, y: 700, width: 100, height: 48 },
-      screenHeight,
-      sheetHeight,
-      55
-    );
+  it('아래 공간이 모자라면 말풍선과 메뉴를 함께 올려 화면 안에 넣는다', () => {
+    const { bubbleTop, menuTop } = getMenuLayout({
+      ...base,
+      anchor: { x: 0, y: 650, width: 100, height: 48 },
+    });
 
-    expect(top + 48).toBeLessThanOrEqual(screenHeight - sheetHeight);
+    expect(bubbleTop).toBeLessThan(650);
+    expect(menuTop).toBe(bubbleTop + 48 + 10);
+    expect(menuTop + menuHeight).toBeLessThanOrEqual(screenHeight - 34);
   });
 
-  it('말풍선이 매우 길어도 화면 위쪽 안전 영역 밖으로 나가지 않는다', () => {
-    expect(
-      getFocusedBubbleTop({ x: 0, y: 100, width: 100, height: 900 }, screenHeight, sheetHeight, 55)
-    ).toBe(55);
+  it('말풍선이 매우 길면 위쪽 안전 영역에 맞추고 메뉴는 화면 아래쪽에 겹쳐 띄운다', () => {
+    const { bubbleTop, menuTop } = getMenuLayout({
+      ...base,
+      anchor: { x: 0, y: 100, width: 100, height: 900 },
+    });
+
+    expect(bubbleTop).toBe(55);
+    expect(menuTop + menuHeight).toBeLessThanOrEqual(screenHeight - 34);
+  });
+});
+
+describe('getMenuHeight', () => {
+  it('머리글이 있으면 그만큼 높아진다', () => {
+    expect(getMenuHeight(3, true)).toBeGreaterThan(getMenuHeight(3, false));
   });
 });
