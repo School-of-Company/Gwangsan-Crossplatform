@@ -10,6 +10,7 @@ import {
   clearCredentialsForBiometric,
 } from '../signin';
 
+jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'http://test-api.com' }));
 jest.mock('@/shared/lib/axios', () => ({
   instance: {
     defaults: { baseURL: 'http://test-api.com' },
