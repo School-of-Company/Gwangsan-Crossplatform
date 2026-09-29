@@ -263,6 +263,83 @@ describe('ImageUploader', () => {
     });
   });
 
+  describe('업로드 결과 토스트', () => {
+    it('장마다 토스트를 띄우지 않도록 업로드 훅의 토스트를 끈다', () => {
+      renderWithProviders(<ImageUploader />);
+
+      expect(mockUseUploadImage).toHaveBeenCalledWith({ showToast: false });
+    });
+
+    it('사진 5장이 모두 업로드되면 성공 토스트를 한 번만 띄운다', async () => {
+      const Toast = require('react-native-toast-message');
+      const mutateAsync = setupUploadMock(
+        jest
+          .fn()
+          .mockImplementation(async (uri: string) => ({ imageId: uri.length, imageUrl: uri }))
+      );
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [1, 2, 3, 4, 5].map((n) => ({ uri: `file://${n}.jpg`, assetId: `a${n}` })),
+      });
+
+      const container = renderWithProviders(<StatefulImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(5));
+      await waitFor(() => expect(Toast.show).toHaveBeenCalledTimes(1));
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'success',
+          text1: '이미지 업로드 성공',
+          text2: '이미지 5장이 업로드되었습니다.',
+        })
+      );
+    });
+
+    it('일부만 실패하면 실패 개수를 담은 토스트를 한 번만 띄운다', async () => {
+      const Toast = require('react-native-toast-message');
+      setupUploadMock(
+        jest.fn().mockImplementation(async (uri: string) => {
+          if (uri === 'file://2.jpg') throw new Error('upload error');
+          return { imageId: 1, imageUrl: uri };
+        })
+      );
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({
+        canceled: false,
+        assets: [1, 2, 3].map((n) => ({ uri: `file://${n}.jpg`, assetId: `a${n}` })),
+      });
+
+      const container = renderWithProviders(<StatefulImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(Toast.show).toHaveBeenCalledTimes(1));
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '이미지 업로드 실패',
+          text2: '3장 중 1장을 업로드하지 못했습니다.',
+        })
+      );
+    });
+
+    it('한 장만 올리면 기존 문구 그대로 한 번 띄운다', async () => {
+      const Toast = require('react-native-toast-message');
+      setupUploadMock(jest.fn().mockResolvedValue({ imageId: 1, imageUrl: 'https://x/a.jpg' }));
+      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
+      mockLaunchGallery.mockResolvedValue({ canceled: false, assets: [{ uri: 'file://one.jpg' }] });
+
+      const container = renderWithProviders(<StatefulImageUploader />);
+      fireEvent.press(getButtons(container)[0]);
+
+      await waitFor(() => expect(Toast.show).toHaveBeenCalledTimes(1));
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text2: '이미지가 성공적으로 업로드되었습니다.' })
+      );
+    });
+  });
+
   describe('갤러리 다중 선택', () => {
     it('남은 개수만큼 다중 선택이 가능하도록 피커를 연다', async () => {
       mockRequestGalleryPermission.mockResolvedValue({ granted: true });

@@ -37,6 +37,36 @@ interface Props {
   maxImages?: number;
 }
 
+// 사진을 여러 장 올려도 결과는 토스트 한 번으로 알린다. 예전에는 장마다 성공 토스트가 떠
+// 5장을 올리면 토스트가 5개 겹쳐 떴다
+const showUploadResultToast = (successCount: number, totalCount: number) => {
+  if (totalCount === 0) return;
+
+  if (successCount === totalCount) {
+    Toast.show({
+      type: 'success',
+      text1: '이미지 업로드 성공',
+      text2:
+        totalCount === 1
+          ? '이미지가 성공적으로 업로드되었습니다.'
+          : `이미지 ${totalCount}장이 업로드되었습니다.`,
+      visibilityTime: 2000,
+    });
+    return;
+  }
+
+  const failedCount = totalCount - successCount;
+  Toast.show({
+    type: 'error',
+    text1: '이미지 업로드 실패',
+    text2:
+      totalCount === 1
+        ? '이미지 업로드 중 오류가 발생했습니다.'
+        : `${totalCount}장 중 ${failedCount}장을 업로드하지 못했습니다.`,
+    visibilityTime: 3000,
+  });
+};
+
 interface SelectedAsset {
   uri: string;
   assetId?: string | null;
@@ -81,7 +111,7 @@ const ImageUploader = ({
     }
   }, [initialImages, imageStatuses.length]);
 
-  const uploadImageMutation = useUploadImage();
+  const uploadImageMutation = useUploadImage({ showToast: false });
 
   const uploadState = useMemo((): ImageUploadState => {
     const uploadingCount = imageStatuses.filter((status) => status.status === 'uploading').length;
@@ -153,11 +183,13 @@ const ImageUploader = ({
     [images]
   );
 
+  // 업로드 성공 여부를 돌려줘, 한 번에 고른 사진들의 결과를 모아 토스트를 한 번만 띄운다
   const uploadImage = useCallback(
-    async (uri: string) => {
+    async (uri: string): Promise<boolean> => {
       try {
         const uploadedImage = await uploadImageMutation.mutateAsync(uri);
         updateImageStatus(uri, { status: 'uploaded', imageData: uploadedImage });
+        return true;
       } catch (error) {
         logger.error('Image upload failed', error);
         updateImageStatus(uri, {
@@ -165,6 +197,7 @@ const ImageUploader = ({
           error: error instanceof Error ? error : new Error('업로드 실패'),
         });
         setTimeout(() => removeImageByUri(uri), 1500);
+        return false;
       }
     },
     [uploadImageMutation, updateImageStatus, removeImageByUri]
@@ -189,7 +222,8 @@ const ImageUploader = ({
         ...assets.map(({ uri }): ImageStatus => ({ uri, status: 'uploading' })),
       ]);
 
-      await Promise.all(assets.map(({ uri }) => uploadImage(uri)));
+      const results = await Promise.all(assets.map(({ uri }) => uploadImage(uri)));
+      showUploadResultToast(results.filter(Boolean).length, results.length);
     },
     [images, onImagesChange, uploadImage]
   );
