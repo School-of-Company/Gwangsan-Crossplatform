@@ -37,6 +37,11 @@ interface Props {
   maxImages?: number;
 }
 
+interface SelectedAsset {
+  uri: string;
+  assetId?: string | null;
+}
+
 interface ImageStatus {
   uri: string;
   status: 'uploading' | 'uploaded' | 'failed';
@@ -109,7 +114,7 @@ const ImageUploader = ({
     );
   }, []);
 
-  // handleImageSelected가 실패 후 1.5초 뒤 예약하는 자동 제거 호출은 uri가 images에
+  // uploadImage가 실패 후 1.5초 뒤 예약하는 자동 제거 호출은 uri가 images에
   // 추가되기 "전" 시점의 클로저를 캡처하기 때문에, images를 직접 의존성으로 참조하면
   // 항상 images.indexOf(uri) === -1이 되어 제거가 조용히 무시된다. ref로 최신 images를
   // 읽어 이 문제를 피한다.
@@ -148,17 +153,8 @@ const ImageUploader = ({
     [images]
   );
 
-  const handleImageSelected = useCallback(
-    async (uri: string, assetId?: string | null) => {
-      if (assetId) {
-        assetIdsByUriRef.current.set(uri, assetId);
-      }
-
-      onImagesChange?.([...images, uri]);
-
-      const newStatus: ImageStatus = { uri, status: 'uploading' };
-      setImageStatuses((prev) => [...prev, newStatus]);
-
+  const uploadImage = useCallback(
+    async (uri: string) => {
       try {
         const uploadedImage = await uploadImageMutation.mutateAsync(uri);
         updateImageStatus(uri, { status: 'uploaded', imageData: uploadedImage });
@@ -171,7 +167,31 @@ const ImageUploader = ({
         setTimeout(() => removeImageByUri(uri), 1500);
       }
     },
-    [images, onImagesChange, uploadImageMutation, updateImageStatus, removeImageByUri]
+    [uploadImageMutation, updateImageStatus, removeImageByUri]
+  );
+
+  // 여러 장을 한 장씩 onImagesChange([...images, uri])로 반영하면 모두 같은 클로저의
+  // images를 기준으로 계산되어 앞서 추가한 사진이 덮어써진다. 고른 사진 전체를 한 번에
+  // 반영한 뒤 업로드는 병렬로 진행한다.
+  const handleImagesSelected = useCallback(
+    async (assets: SelectedAsset[]) => {
+      if (assets.length === 0) return;
+
+      assets.forEach(({ uri, assetId }) => {
+        if (assetId) {
+          assetIdsByUriRef.current.set(uri, assetId);
+        }
+      });
+
+      onImagesChange?.([...images, ...assets.map(({ uri }) => uri)]);
+      setImageStatuses((prev) => [
+        ...prev,
+        ...assets.map(({ uri }): ImageStatus => ({ uri, status: 'uploading' })),
+      ]);
+
+      await Promise.all(assets.map(({ uri }) => uploadImage(uri)));
+    },
+    [images, onImagesChange, uploadImage]
   );
 
   const pickFromGallery = useCallback(async () => {
@@ -209,12 +229,12 @@ const ImageUploader = ({
           return;
         }
 
-        await handleImageSelected(asset.uri, asset.assetId);
+        await handleImagesSelected([{ uri: asset.uri, assetId: asset.assetId }]);
       }
     } catch (error) {
       logger.error('이미지 선택 중 오류', error);
     }
-  }, [handleImageSelected, isDuplicateSelection]);
+  }, [handleImagesSelected, isDuplicateSelection]);
 
   const pickFromCamera = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -241,12 +261,12 @@ const ImageUploader = ({
           return;
         }
 
-        await handleImageSelected(asset.uri, asset.assetId);
+        await handleImagesSelected([{ uri: asset.uri, assetId: asset.assetId }]);
       }
     } catch (error) {
       logger.error('카메라 촬영 중 오류', error);
     }
-  }, [handleImageSelected, isDuplicateSelection]);
+  }, [handleImagesSelected, isDuplicateSelection]);
 
   const pickImage = useCallback(() => {
     if (readonly || images.length >= maxImages) return;
