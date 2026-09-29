@@ -144,4 +144,59 @@ describe('useMultiSelect', () => {
       expect(result.current.isSelected('운동')).toBe(false);
     });
   });
+
+  describe('외부 selectedItems 동기화', () => {
+    it('마운트 뒤 selectedItems가 채워지면 선택 상태와 allItems에 반영한다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: [] as string[] } }
+      );
+
+      rerender({ selected: ['운동', '댄스'] });
+
+      expect(result.current.selectedItems).toEqual(['운동', '댄스']);
+      expect(result.current.isSelected('댄스')).toBe(true);
+      expect(result.current.allItems).toContain('댄스');
+    });
+
+    it('onSelect로 부모에 전달한 값이 다시 prop으로 돌아와도 선택 상태가 그대로다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: ['운동'] } }
+      );
+
+      act(() => result.current.handleSelect('독서'));
+      rerender({ selected: ['운동', '독서'] });
+
+      expect(result.current.selectedItems).toEqual(['운동', '독서']);
+    });
+
+    it('같은 내용의 새 배열이 전달되면 사용자가 바꾼 선택을 덮어쓰지 않는다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: ['운동'] } }
+      );
+
+      act(() => result.current.handleSelect('독서'));
+      rerender({ selected: ['운동'] });
+
+      expect(result.current.selectedItems).toEqual(['운동', '독서']);
+    });
+
+    it('선택값에서 빠진 직접 입력 항목도 칩 목록에는 남아 있다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: ['댄스'] } }
+      );
+
+      rerender({ selected: [] });
+
+      expect(result.current.selectedItems).toEqual([]);
+      expect(result.current.allItems).toContain('댄스');
+    });
+  });
 });
