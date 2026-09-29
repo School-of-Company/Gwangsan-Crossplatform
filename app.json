@@ -63,16 +63,6 @@
           "microphonePermission": false
         }
       ],
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "거래 게시글 업로드 및 채팅에 사용할 이미지 업로드를 위해 저장공간에 접근합니다.",
-          "savePhotosPermission": false,
-          "isAccessMediaLocationEnabled": false,
-          "granularPermissions": [],
-          "preventAutomaticLimitedAccessAlert": true
-        }
-      ],
       "expo-maps",
       [
         "@sentry/react-native/expo",
@@ -116,14 +106,7 @@
       },
       "package": "gwangsan.io.kr",
       "googleServicesFile": "$GOOGLE_SERVICES_JSON",
-      "versionCode": 60,
-      "blockedPermissions": [
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_MEDIA_AUDIO",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.ACCESS_MEDIA_LOCATION"
-      ]
+      "versionCode": 60
     },
     "extra": {
       "apiUrl": "https://api.gwangsan.io.kr/api",

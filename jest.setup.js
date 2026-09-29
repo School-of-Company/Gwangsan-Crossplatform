@@ -43,17 +43,3 @@ try {
     value: undefined,
   });
 }
-
-/* global jest */
-// expo-media-library는 네이티브 모듈이라 테스트 환경에서 불러오면 실패한다. 기본값은 권한 없음으로 두어,
-// 사진을 고르는 곳은 기존 시스템 피커 경로로 동작한다. 앱 내 사진 선택 화면 테스트는 필요한 값을 덮어쓴다.
-jest.mock('expo-media-library/legacy', () => ({
-  MediaType: { photo: 'photo' },
-  SortBy: { creationTime: 'creationTime' },
-  getPermissionsAsync: jest.fn(async () => ({ granted: false, accessPrivileges: 'none' })),
-  requestPermissionsAsync: jest.fn(async () => ({ granted: false, accessPrivileges: 'none' })),
-  getAssetsAsync: jest.fn(async () => ({ assets: [], endCursor: undefined, hasNextPage: false })),
-  getAssetInfoAsync: jest.fn(async (id) => ({ id, localUri: `file:///library/${id}.jpg` })),
-  presentPermissionsPickerAsync: jest.fn(async () => {}),
-  addListener: jest.fn(() => ({ remove: jest.fn() })),
-}));
