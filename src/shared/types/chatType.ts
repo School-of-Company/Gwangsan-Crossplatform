@@ -28,6 +28,9 @@ export const CHAT_SOCKET_SERVER_EVENTS = [
   'receiveMessage',
   'updateRoomList',
   'transactionStateChanged',
+  // 메시지 수정/삭제 실시간 반영(Gwangsan-Chatting-Server#37)
+  'messageUpdated',
+  'messageDeleted',
   'error',
 ] as const;
 
