@@ -5,8 +5,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { BottomSheetModalWrapper } from '~/shared/ui';
 import { MODE_OPTIONS, TYPE_OPTIONS } from '~/widget/write/model/options';
-import { ProductType, TYPE } from '~/widget/write/model/type';
-import { ModeType, MODE } from '~/widget/write/model/mode';
+import { ProductType, TYPE } from '~/shared/types/type';
+import { ModeType, MODE } from '~/shared/types/mode';
 
 interface WriteEntryModalProps {
   isVisible: boolean;
