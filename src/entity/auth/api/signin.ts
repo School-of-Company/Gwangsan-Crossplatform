@@ -1,7 +1,7 @@
 import { instance } from '@/shared/lib/axios';
 import { setData } from '@/shared/lib/setData';
 import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
-import { SigninFormData, AuthResponse } from '~/entity/auth/model/authState';
+import { SigninFormData, AuthResponse } from '~/shared/types/authState';
 import axios from 'axios';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';

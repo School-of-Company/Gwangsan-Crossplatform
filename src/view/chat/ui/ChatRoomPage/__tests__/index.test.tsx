@@ -7,7 +7,7 @@ import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
-import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
+import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
@@ -59,7 +59,7 @@ jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
 
-jest.mock('~/entity/post/hooks/useTradeRequest', () => ({
+jest.mock('~/widget/post/model/useTradeRequest', () => ({
   useTradeRequest: jest.fn(),
 }));
 

@@ -4,16 +4,16 @@ import * as Notifications from 'expo-notifications';
 import { AppState, AppStateStatus } from 'react-native';
 import { renderHookWithProviders as renderHook } from '~/test-utils';
 import { useGlobalChatNotifications } from '../useGlobalChatNotifications';
-import { chatSocket } from '../socket';
-import { getData } from '../getData';
-import { getChatRooms } from '@/entity/chat';
+import { chatSocket } from '~/shared/lib/socket';
+import { getData } from '~/shared/lib/getData';
+import { getChatRooms } from '../../api/getChatRooms';
 
 jest.mock('expo-router', () => ({ usePathname: jest.fn() }));
 jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync: jest.fn(),
   setBadgeCountAsync: jest.fn(),
 }));
-jest.mock('../socket', () => ({
+jest.mock('~/shared/lib/socket', () => ({
   chatSocket: {
     isConnected: false,
     connect: jest.fn(),
@@ -21,9 +21,9 @@ jest.mock('../socket', () => ({
     off: jest.fn(),
   },
 }));
-jest.mock('../getData', () => ({ getData: jest.fn() }));
-jest.mock('@/entity/chat', () => ({
-  getChatRooms: jest.fn(),
+jest.mock('~/shared/lib/getData', () => ({ getData: jest.fn() }));
+jest.mock('../../api/getChatRooms', () => ({ getChatRooms: jest.fn() }));
+jest.mock('../useChatRooms', () => ({
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
 }));
 

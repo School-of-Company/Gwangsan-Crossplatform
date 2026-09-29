@@ -5,8 +5,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createReview } from '~/entity/post/api/createReview';
 import { useGetItem } from '~/entity/post/model/useGetItem';
 import { useDeletePost } from '~/entity/post';
-import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { useChatEntry } from '~/shared/lib/useChatEntry';
+import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
+import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
 
 interface UsePostPageLogicParams {

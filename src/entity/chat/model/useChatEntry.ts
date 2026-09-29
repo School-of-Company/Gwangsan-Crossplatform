@@ -2,7 +2,10 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
-import { findChatRoom, createChatRoom, getChatRooms, chatRoomKeys } from '@/entity/chat';
+import { findChatRoom } from '../api/findChatRoom';
+import { createChatRoom } from '../api/createChatRoom';
+import { getChatRooms } from '../api/getChatRooms';
+import { chatRoomKeys } from './useChatRooms';
 import type { RoomId, ProductId } from '@/shared/types/chatType';
 
 export const useChatEntry = () => {

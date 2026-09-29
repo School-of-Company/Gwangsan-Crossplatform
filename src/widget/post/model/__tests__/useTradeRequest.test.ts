@@ -3,20 +3,20 @@ import { renderHookWithProviders } from '~/test-utils';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTradeRequest } from '../useTradeRequest';
-import { requestTrade } from '../../api/requestTrade';
-import { withdrawTrade } from '../../api/withdrawTrade';
-import { useChatEntry } from '~/shared/lib/useChatEntry';
+import { requestTrade } from '~/entity/post/api/requestTrade';
+import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
+import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { logger } from '~/shared/lib/logger';
 
-jest.mock('../../api/requestTrade', () => ({
+jest.mock('~/entity/post/api/requestTrade', () => ({
   requestTrade: jest.fn(),
 }));
 
-jest.mock('../../api/withdrawTrade', () => ({
+jest.mock('~/entity/post/api/withdrawTrade', () => ({
   withdrawTrade: jest.fn(),
 }));
 
-jest.mock('~/shared/lib/useChatEntry', () => ({
+jest.mock('~/entity/chat/model/useChatEntry', () => ({
   useChatEntry: jest.fn(),
 }));
 
