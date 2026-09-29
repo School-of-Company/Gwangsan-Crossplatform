@@ -1,4 +1,5 @@
 import React from 'react';
+import * as ReactNative from 'react-native';
 import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { MessageActionOverlay, getMenuHeight, getMenuLayout } from '../index';
@@ -25,12 +26,35 @@ const renderOverlay = (props: Partial<React.ComponentProps<typeof MessageActionO
 };
 
 describe('MessageActionOverlay', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('배경을 강하게 블러 처리하고 누른 말풍선을 강조해서 보여준다', () => {
     const { getByTestId, getByText } = renderOverlay();
 
     expect(getByTestId('message-action-blur').props.intensity).toBe(80);
-    expect(getByTestId('message-action-blur').props.tint).toBe('dark');
     expect(getByText('내 메시지')).toBeTruthy();
+  });
+
+  it('카드는 테마 표면색을 써서 라이트에서는 흰색, 다크에서는 검은색이 된다', () => {
+    const { getByTestId } = renderOverlay();
+
+    expect(getByTestId('message-action-card').props.className).toContain('bg-surface');
+  });
+
+  it('라이트 모드에서는 밝은 블러로 보여준다', () => {
+    jest.spyOn(ReactNative, 'useColorScheme').mockReturnValue('light');
+    const { getByTestId } = renderOverlay();
+
+    expect(getByTestId('message-action-blur').props.tint).toBe('light');
+  });
+
+  it('다크 모드에서는 어두운 블러로 보여준다', () => {
+    jest.spyOn(ReactNative, 'useColorScheme').mockReturnValue('dark');
+    const { getByTestId } = renderOverlay();
+
+    expect(getByTestId('message-action-blur').props.tint).toBe('dark');
   });
 
   it('텍스트 메시지는 수정·삭제·취소를 보여준다', () => {

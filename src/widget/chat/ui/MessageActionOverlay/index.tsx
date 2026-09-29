@@ -12,6 +12,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/Ionicons';
+import { useThemeColors } from '~/shared/lib/theme';
 import type { MessageAnchor } from '../../model/useMessageActions';
 
 // 메뉴 크기. 말풍선과 메뉴가 화면 안에 들어가는지 계산할 때 쓴다
@@ -23,11 +24,6 @@ const MENU_GAP = 10;
 const SCREEN_MARGIN = 12;
 const FOCUS_SCALE = 1.03;
 const FILL = { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 } as const;
-// 배경이 항상 어두운 블러라 메뉴도 테마와 상관없이 어두운 카드로 그린다
-const MENU_BACKGROUND = 'rgba(28, 28, 30, 0.92)';
-const MENU_BORDER = 'rgba(255, 255, 255, 0.08)';
-const DELETE_COLOR = '#F16B6F';
-const MENU_SUBTLE_TEXT = 'rgba(255, 255, 255, 0.5)';
 
 interface MessageActionOverlayProps {
   readonly visible: boolean;
@@ -109,6 +105,7 @@ export function MessageActionOverlay({
   children,
 }: MessageActionOverlayProps) {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -155,7 +152,7 @@ export function MessageActionOverlay({
       <Animated.View style={[FILL, { opacity: backdropOpacity }]}>
         <BlurView
           intensity={80}
-          tint="dark"
+          tint={colors.isDark ? 'dark' : 'light'}
           blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
           style={FILL}
         />
@@ -191,12 +188,16 @@ export function MessageActionOverlay({
           // 말풍선 쪽(오른쪽 위)에서 펼쳐지듯 커진다
           transformOrigin: 'top right',
           transform: [{ scale: menuScale }],
+          shadowColor: '#000',
+          shadowOpacity: colors.isDark ? 0 : 0.12,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
         }}>
         <View
-          className="overflow-hidden rounded-3xl border"
+          testID="message-action-card"
+          className="overflow-hidden rounded-3xl border border-gray-100 bg-surface"
           style={{
-            backgroundColor: MENU_BACKGROUND,
-            borderColor: MENU_BORDER,
             paddingVertical: MENU_PADDING,
           }}>
           {timeLabel ? (
@@ -205,7 +206,7 @@ export function MessageActionOverlay({
                 testID="message-action-time"
                 numberOfLines={1}
                 className="text-label"
-                style={{ color: MENU_SUBTLE_TEXT }}>
+                style={{ color: colors['gray-500'] }}>
                 {timeLabel}
               </Text>
             </View>
@@ -215,7 +216,7 @@ export function MessageActionOverlay({
               testID="message-action-edit"
               label="수정"
               icon="create-outline"
-              color="#FFFFFF"
+              color={colors.foreground}
               onPress={onEdit}
             />
           )}
@@ -223,14 +224,14 @@ export function MessageActionOverlay({
             testID="message-action-delete"
             label="삭제"
             icon="trash-outline"
-            color={DELETE_COLOR}
+            color={colors.error}
             onPress={onDelete}
           />
           <MenuRow
             testID="message-action-cancel"
             label="취소"
             icon="close-outline"
-            color="#FFFFFF"
+            color={colors.foreground}
             onPress={onClose}
           />
         </View>
