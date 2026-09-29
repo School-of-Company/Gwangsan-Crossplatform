@@ -63,7 +63,7 @@ export default function Complete() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-6">
+      <View className="flex-1 items-center justify-center bg-background px-6">
         <ActivityIndicator size="large" color="#0075C2" />
         <Text className="mt-4 text-lg text-gray-700">회원가입 처리 중...</Text>
       </View>
@@ -72,7 +72,7 @@ export default function Complete() {
 
   if (error && !isSuccess) {
     return (
-      <View className="flex-1 gap-8 bg-white px-6">
+      <View className="flex-1 gap-8 bg-background px-6">
         <View className="mt-44 flex-col items-center justify-center">
           <Image source={gwangsanLogo} style={{ width: 256, height: 256 }} />
           <Text className="text-center text-2xl font-bold text-red-500">
@@ -88,10 +88,10 @@ export default function Complete() {
   }
 
   return (
-    <View className="flex-1 gap-8 bg-white px-6">
+    <View className="flex-1 gap-8 bg-background px-6">
       <View className="mt-44 flex-col items-center justify-center">
         <Image source={gwangsanLogo} style={{ width: 256, height: 256 }} />
-        <Text className="text-center text-2xl font-bold text-[#0075C2]">
+        <Text className="text-center text-2xl font-bold text-sub-500">
           회원가입이 {'\n'} 완료되었습니다
         </Text>
       </View>

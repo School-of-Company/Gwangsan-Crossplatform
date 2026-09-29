@@ -4,6 +4,7 @@ import Icon from '@expo/vector-icons/Ionicons';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { useChatInput } from '../../model/useChatInput';
 import { ImagePreview } from '../ImagePreview';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface ChatInputProps {
   onSendMessage: (
@@ -16,6 +17,7 @@ interface ChatInputProps {
 }
 
 const ChatInputComponent = ({ onSendMessage, disabled, onFocus }: ChatInputProps) => {
+  const colors = useThemeColors();
   const chatInput = useChatInput({
     onSendMessage,
     disabled,
@@ -29,7 +31,7 @@ const ChatInputComponent = ({ onSendMessage, disabled, onFocus }: ChatInputProps
     chatInput.selectedImages.length < 5;
 
   return (
-    <View className="bg-white">
+    <View className="bg-background">
       <ImagePreview images={chatInput.selectedImages} onRemoveImage={chatInput.removeImage} />
 
       <View className="flex-row items-center border-t border-gray-200 px-4 py-4">
@@ -38,7 +40,7 @@ const ChatInputComponent = ({ onSendMessage, disabled, onFocus }: ChatInputProps
             value={chatInput.textMessage}
             onChangeText={chatInput.updateMessage}
             placeholder="채팅을 입력해주세요"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors['gray-400']}
             className="min-h-[48px] flex-1 px-4 py-3 text-base text-gray-900"
             multiline={false}
             onSubmitEditing={chatInput.handleSendMessage}
@@ -59,7 +61,7 @@ const ChatInputComponent = ({ onSendMessage, disabled, onFocus }: ChatInputProps
               <Icon
                 name="camera-outline"
                 size={24}
-                color={canSelectImage ? '#8F9094' : '#D1D5DB'}
+                color={canSelectImage ? colors['gray-500'] : colors.muted}
               />
             )}
           </TouchableOpacity>

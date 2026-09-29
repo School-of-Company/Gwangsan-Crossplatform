@@ -21,6 +21,7 @@ import {
   formatDateDividerLabel,
 } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface TradeEmbedConfig {
   readonly shouldShow: boolean;
@@ -104,6 +105,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   hasReviewedTrade,
 }) => {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 이만큼 위로 띄우므로,
   // 그 여백은 항상 정적으로 확보해 둔다(이전 버전의 "10 + basePadding"과 동일한 총량 유지)
@@ -344,7 +346,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   if (!hasMessages && !hasTradeEmbed) {
     return (
       <View className="flex-1 items-center justify-center px-4">
-        <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
+        <Icon name="chatbubbles-outline" size={60} color={colors.muted} />
         <Text className="mt-4 text-center text-gray-500">
           아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
         </Text>
