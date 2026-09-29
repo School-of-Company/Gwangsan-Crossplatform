@@ -4,6 +4,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 테마 색 토큰. 값은 src/shared/lib/theme/palette.ts와 같아야 한다(palette.test.ts가 확인). */
+:root {
+  --color-background: 255 255 255;
+  --color-surface: 255 255 255;
+  --color-surface-muted: 243 244 245;
+  --color-foreground: 0 0 0;
+  --color-disabled: 205 205 207;
+  --color-muted: 209 214 219;
+  --color-gray-50: 245 246 248;
+  --color-gray-100: 239 240 242;
+  --color-gray-200: 219 220 222;
+  --color-gray-300: 180 181 183;
+  --color-gray-400: 165 166 169;
+  --color-gray-500: 143 144 148;
+  --color-gray-600: 130 131 135;
+  --color-gray-700: 102 102 105;
+  --color-gray-800: 79 79 81;
+  --color-gray-900: 60 60 62;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: 18 18 20;
+    --color-surface: 28 28 30;
+    --color-surface-muted: 44 44 46;
+    --color-foreground: 245 246 248;
+    --color-disabled: 72 73 76;
+    --color-muted: 90 91 94;
+    --color-gray-50: 36 37 39;
+    --color-gray-100: 46 47 49;
+    --color-gray-200: 63 64 66;
+    --color-gray-300: 90 91 94;
+    --color-gray-400: 117 118 122;
+    --color-gray-500: 143 144 148;
+    --color-gray-600: 165 166 169;
+    --color-gray-700: 194 195 198;
+    --color-gray-800: 219 220 222;
+    --color-gray-900: 242 243 245;
+  }
+}
+
 body {
   font-family: 'Pretendard', sans-serif;
 }

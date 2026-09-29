@@ -174,7 +174,7 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="후기" />
       <PillTabs
         tabs={TABS}

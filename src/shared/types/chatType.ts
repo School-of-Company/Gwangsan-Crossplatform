@@ -28,6 +28,9 @@ export const CHAT_SOCKET_SERVER_EVENTS = [
   'receiveMessage',
   'updateRoomList',
   'transactionStateChanged',
+  // 메시지 수정/삭제 실시간 반영(Gwangsan-Chatting-Server#37)
+  'messageUpdated',
+  'messageDeleted',
   'error',
 ] as const;
 
@@ -99,4 +102,6 @@ export interface ChatMessageResponse {
   readonly senderId: number;
   readonly checked: boolean;
   readonly isMine: boolean;
+  // 메시지를 수정한 시각(School-of-Company/Gwangsan-Server#422). 수정한 적이 없으면 비어 있다
+  readonly editedAt?: ChatTimestamp | null;
 }

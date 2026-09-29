@@ -61,7 +61,7 @@ export default function ReviewWritePage() {
   }, [productId, otherUserInfo.id, contents, light, isDisabled, queryClient, router]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="후기 작성" />
       <ScrollView
         className="flex-1"
@@ -90,7 +90,7 @@ export default function ReviewWritePage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button disabled={isDisabled} onPress={handleSubmit}>
             {isSubmitting ? '작성 중...' : '작성완료'}
           </Button>

@@ -6,7 +6,9 @@ import {
   useQueryClient,
   QueryClient,
   focusManager,
+  onlineManager,
 } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
 import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
 import QueryProvider from '../QueryProvider';
@@ -14,6 +16,10 @@ import { setQueryClientInstance } from '../axios';
 import * as Sentry from '@sentry/react-native';
 
 jest.mock('../axios', () => ({ setQueryClientInstance: jest.fn() }));
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: { addEventListener: jest.fn(() => jest.fn()) },
+}));
 jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
   addBreadcrumb: jest.fn(),
@@ -250,5 +256,42 @@ describe('QueryProvider', () => {
     expect(mockAddBreadcrumb).toHaveBeenCalledWith(
       expect.objectContaining({ category: 'react-query' })
     );
+  });
+
+  describe('onlineManager', () => {
+    const mockAddEventListener = NetInfo.addEventListener as jest.Mock;
+
+    afterEach(() => {
+      onlineManager.setOnline(true);
+    });
+
+    const renderAndGetNetInfoListener = () => {
+      render(
+        <QueryProvider>
+          <Text>online</Text>
+        </QueryProvider>
+      );
+      const calls = mockAddEventListener.mock.calls;
+      return calls[calls.length - 1][0] as (state: { isConnected: boolean | null }) => void;
+    };
+
+    it('NetInfo 연결 상태를 onlineManager에 연결한다', () => {
+      const listener = renderAndGetNetInfoListener();
+
+      listener({ isConnected: false });
+      expect(onlineManager.isOnline()).toBe(false);
+
+      listener({ isConnected: true });
+      expect(onlineManager.isOnline()).toBe(true);
+    });
+
+    it('연결 상태를 아직 모르면(null) 온라인으로 본다', () => {
+      const listener = renderAndGetNetInfoListener();
+
+      listener({ isConnected: false });
+      listener({ isConnected: null });
+
+      expect(onlineManager.isOnline()).toBe(true);
+    });
   });
 });

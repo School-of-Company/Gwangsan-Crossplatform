@@ -28,7 +28,7 @@ export default function PostView() {
   const tabs = categories.map((v) => ({ value: v as Category, label: v }));
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
       <PillTabs
         tabs={tabs}

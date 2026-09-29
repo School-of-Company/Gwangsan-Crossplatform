@@ -46,7 +46,7 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
     className="flex-1 flex-row items-center justify-center gap-2"
   >
     <Text
-      className="text-center text-body1 text-black"
+      className="text-center text-body1 text-foreground"
     >
       채팅방
     </Text>
@@ -111,7 +111,7 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
     className="flex-1 flex-row items-center justify-center gap-2"
   >
     <Text
-      className="text-center text-body1 text-black"
+      className="text-center text-body1 text-foreground"
     >
       채팅방
     </Text>
@@ -176,7 +176,7 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
     className="flex-1 flex-row items-center justify-center gap-2"
   >
     <Text
-      className="text-center text-body1 text-black"
+      className="text-center text-body1 text-foreground"
     >
       채팅방
     </Text>
@@ -241,7 +241,7 @@ exports[`Header 스냅샷 - 기본 상태 1`] = `
     className="flex-1 flex-row items-center justify-center gap-2"
   >
     <Text
-      className="text-center text-body1 text-black"
+      className="text-center text-body1 text-foreground"
     >
       광산구
     </Text>
@@ -298,7 +298,7 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
     className="flex-1 flex-row items-center justify-center gap-2"
   >
     <Text
-      className="text-center text-body1 text-black"
+      className="text-center text-body1 text-foreground"
     >
       채팅방
     </Text>

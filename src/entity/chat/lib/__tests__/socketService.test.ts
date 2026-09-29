@@ -54,8 +54,10 @@ describe('createChatSocketService', () => {
     expect(socketManager.on).toHaveBeenCalledWith('receiveMessage', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('updateRoomList', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('transactionStateChanged', expect.any(Function));
+    expect(socketManager.on).toHaveBeenCalledWith('messageUpdated', expect.any(Function));
+    expect(socketManager.on).toHaveBeenCalledWith('messageDeleted', expect.any(Function));
     expect(socketManager.on).toHaveBeenCalledWith('error', expect.any(Function));
-    expect(socketManager.on).toHaveBeenCalledTimes(7);
+    expect(socketManager.on).toHaveBeenCalledTimes(9);
   });
 
   it('destroy()는 socketManager에 등록한 forwarding 핸들러를 모두 제거한다', () => {
@@ -67,7 +69,7 @@ describe('createChatSocketService', () => {
 
     service.destroy();
 
-    expect(socketManager.off).toHaveBeenCalledTimes(7);
+    expect(socketManager.off).toHaveBeenCalledTimes(9);
 
     socketManager.__trigger('receiveMessage', { messageId: 1 });
     expect(handler).not.toHaveBeenCalled();
