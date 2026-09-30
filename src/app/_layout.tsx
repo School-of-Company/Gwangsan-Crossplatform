@@ -5,6 +5,7 @@ import { AppState, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useMemo, useRef } from 'react';
+import { z } from 'zod';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
@@ -21,7 +22,21 @@ import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/entity/chat/model/useChatEntry';
 import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
+import { VersionUpdateModal } from '@/widget/appVersion';
+import {
+  createNotificationDedupeGuard,
+  resolveNotificationAction,
+} from '@/shared/lib/notificationRouting';
 import { useThemeColors } from '@/shared/lib/theme';
+
+// 알림 페이로드는 푸시 서버/OS를 거쳐 들어오는 신뢰할 수 없는 외부 입력이므로, 라우팅에
+// 쓰기 전에 형태와 범위를 검증한다. 잘못되거나 조작된 sourceId/roomId가 그대로
+// router.push의 경로 세그먼트로 흘러들어가지 않도록 막는다.
+const notificationDataSchema = z.object({
+  alertType: z.nativeEnum(AlertType).optional(),
+  sourceId: z.coerce.number().int().positive().optional(),
+  roomId: z.coerce.number().int().positive().optional(),
+});
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -59,30 +74,32 @@ function ChatNotificationHandler() {
     registerChatBackgroundTask();
   }, []);
 
-  const handledNotificationIdsRef = useRef<Set<string>>(new Set());
+  const dedupeGuardRef = useRef(createNotificationDedupeGuard());
 
   useEffect(() => {
     const handleResponse = (response: Notifications.NotificationResponse) => {
       // 콜드스타트 경로와 리스너 경로에서 같은 알림이 두 번 처리되지 않도록 방어
       const id = response.notification.request.identifier;
-      if (id) {
-        if (handledNotificationIdsRef.current.has(id)) return;
-        handledNotificationIdsRef.current.add(id);
-      }
+      if (!dedupeGuardRef.current.shouldProcess(id)) return;
 
-      const data = response.notification.request.content.data as {
-        alertType?: AlertType;
-        sourceId?: number;
-        roomId?: number;
-      };
-      if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
-        navigateToChatRef.current(data.sourceId);
-      } else if (data?.roomId != null) {
-        navigateToRoomRef.current(data.roomId);
-      } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
-        routerRef.current.push(`/post/${data.sourceId}?review=1`);
-      } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
-        routerRef.current.push(`/cancelTrade/${data.sourceId}`);
+      const parsedData = notificationDataSchema.safeParse(
+        response.notification.request.content.data
+      );
+      if (!parsedData.success) return;
+
+      const action = resolveNotificationAction(parsedData.data);
+      switch (action.type) {
+        case 'chatEntry':
+          navigateToChatRef.current(action.productId);
+          break;
+        case 'room':
+          navigateToRoomRef.current(action.roomId);
+          break;
+        case 'push':
+          routerRef.current.push(action.href);
+          break;
+        case 'none':
+          break;
       }
     };
 
@@ -174,6 +191,7 @@ export default function RootLayout() {
               <BottomSheetPortalOutlet />
               <ToastStack topOffset={Platform.select({ ios: 70, default: 40 })} />
               <NoNetworkOverlay visible={!isConnected} />
+              <VersionUpdateModal />
             </QueryProvider>
           </ThemeProvider>
         </View>

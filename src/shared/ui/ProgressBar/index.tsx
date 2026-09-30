@@ -103,6 +103,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
       <Text className="text-label text-foreground">밝기</Text>
       <View className="relative flex justify-center" style={{ height: touchAreaHeight }}>
         <View
+          testID="progress-bar-track"
           ref={sliderRef}
           className="absolute left-0 top-0 h-[48px] w-full"
           hitSlop={touchHitSlop}
