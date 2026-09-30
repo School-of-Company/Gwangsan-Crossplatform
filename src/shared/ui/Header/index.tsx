@@ -60,12 +60,12 @@ export function Header({
           <TouchableOpacity
             onPress={onTitlePress}
             className="flex-row items-center justify-center gap-2">
-            <Text className="text-center text-body1 text-black">{headerTitle}</Text>
+            <Text className="text-center text-body1 text-foreground">{headerTitle}</Text>
             {connectionDot}
           </TouchableOpacity>
         ) : (
           <>
-            <Text className="text-center text-body1 text-black">{headerTitle}</Text>
+            <Text className="text-center text-body1 text-foreground">{headerTitle}</Text>
             {connectionDot}
           </>
         )}

@@ -101,7 +101,7 @@ export function AlertModal({
           <Pressable className="w-full max-w-[320px]" onPress={(e) => e.stopPropagation()}>
             <Animated.View
               style={{ transform: [{ scale }] }}
-              className="w-full gap-4 rounded-2xl bg-white p-6">
+              className="w-full gap-4 rounded-2xl bg-surface p-6">
               <Text className="text-xl font-bold text-gray-900">{message}</Text>
               <View className="flex-row gap-3">
                 {onCancel && (

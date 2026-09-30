@@ -4,7 +4,8 @@ import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
 import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema } from '~/entity/auth/model/authSchema';
-import { signinWithDeviceInfo, saveCredentialsForBiometric } from '~/entity/auth/api/signin';
+import { signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { offerBiometricLogin } from '../../model/offerBiometricLogin';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
@@ -36,8 +37,9 @@ export default function PasswordStep() {
         nickname: trimmedNickname,
         password: trimmedPassword,
       });
-      saveCredentialsForBiometric(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
-        logger.error('saveCredentialsForBiometric failed', e)
+      // 생체 인증 로그인은 사용자가 동의한 경우에만 켠다(#737)
+      offerBiometricLogin(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
+        logger.error('offerBiometricLogin failed', e)
       );
       // Sentry 사용자 식별은 여기서 닉네임(PII)으로 하지 않는다. 로그인 직후 /main에서
       // useGetMyInformation이 memberId만으로 Sentry.setUser({ id })를 호출한다.

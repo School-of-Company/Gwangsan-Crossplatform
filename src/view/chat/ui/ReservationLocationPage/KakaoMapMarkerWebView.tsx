@@ -100,7 +100,7 @@ export const KakaoMapMarkerWebView = memo(({ center, title }: KakaoMapMarkerWebV
         style={{ flex: 1, backgroundColor: 'transparent' }}
       />
       {isMapReady ? null : (
-        <View className="absolute inset-0 items-center justify-center bg-white">
+        <View className="absolute inset-0 items-center justify-center bg-background">
           <ActivityIndicator />
         </View>
       )}

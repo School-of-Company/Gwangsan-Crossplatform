@@ -18,18 +18,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Header, PillTabs, BottomSheetModalWrapper, Button, AlertModal } from '~/shared/ui';
 import { MODE, ModeType } from '~/shared/types/mode';
 import { PostType } from '~/shared/types/postType';
 import { ProductType, TYPE } from '~/shared/types/type';
-import { deletePost } from '~/entity/post/api/deletePost';
+import { useDeletePost } from '~/entity/post/model/useDeletePost';
 import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetSellingPosts } from '../../model/useGetSellingPosts';
 import { sellingPostsQueryKeys } from '../../model/sellingPostsQueryKeys';
-import { useGetReviews } from '~/view/reviews/model/useGetReviews';
-import type { ReviewPostType } from '~/view/reviews/model/reviewPostType';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
+import type { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
+import { useThemeColors } from '~/shared/lib/theme';
 
 type SellingTab = 'onSale' | 'sold';
 
@@ -106,6 +106,7 @@ const SellingPostCard = ({
   onMenuPress: (post: PostType) => void;
 }) => {
   const router = useRouter();
+  const colors = useThemeColors();
   const { id, type, mode, title, gwangsan, isCompleted, buyer, imageUrls = [], images = [] } = post;
   const isTemporary = id < 0;
 
@@ -152,14 +153,14 @@ const SellingPostCard = ({
             <ExpoImage
               source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
               style={{ width: 80, height: 80, borderRadius: 12 }}
-              cachePolicy="memory"
+              cachePolicy="memory-disk"
               contentFit="cover"
               recyclingKey={firstImage ?? 'placeholder'}
               transition={200}
             />
             <View className="flex-1 gap-1">
               <View className="flex-row items-center gap-1.5">
-                <Text className="shrink text-lg font-semibold" numberOfLines={1}>
+                <Text className="shrink text-lg font-semibold text-foreground" numberOfLines={1}>
                   {title}
                 </Text>
                 {isCompleted && buyer && (
@@ -178,7 +179,7 @@ const SellingPostCard = ({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className="p-1"
               testID={`selling-card-menu-${id}`}>
-              <Ionicons name="ellipsis-vertical" size={20} color="#9CA3AF" />
+              <Ionicons name="ellipsis-vertical" size={20} color={colors['gray-400']} />
             </TouchableOpacity>
           )}
         </View>
@@ -311,7 +312,6 @@ export default function SellingPageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isMe = !Boolean(id);
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<SellingTab>('onSale');
   const [actionTargetPost, setActionTargetPost] = useState<PostType | null>(null);
   // 삭제 확인 AlertModal은 액션 시트가 닫힌 뒤에도 열려있어야 하므로 대상 postId를 따로 보관한다
@@ -337,39 +337,22 @@ export default function SellingPageView() {
     reviewsMemberId != null ? String(reviewsMemberId) : undefined
   );
 
-  const deletePostMutation = useMutation({
-    mutationFn: deletePost,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sellingPostsQueryKeys.all });
-      // 구매 목록(PurchasedPage)은 아직 기존 전체 조회를 쓰므로 함께 무효화한다.
-      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
-      Toast.show({
-        type: 'success',
-        text1: '게시글 삭제 완료',
-        text2: '게시글이 성공적으로 삭제되었습니다.',
-        visibilityTime: 2000,
-      });
-    },
-    onError: (deleteError) => {
-      Toast.show({
-        type: 'error',
-        text1: '게시글 삭제 실패',
-        text2:
-          deleteError instanceof Error
-            ? deleteError.message
-            : '게시글 삭제 중 오류가 발생했습니다.',
-        visibilityTime: 3000,
-      });
-    },
+  const { deletePostInPlace, isLoading: isDeletingPost } = useDeletePost({
+    // 구매 목록(PurchasedPage)은 아직 기존 전체 조회를 쓰므로 함께 무효화한다.
+    invalidateKeys: [sellingPostsQueryKeys.all, ['myPosts']],
   });
 
-  if (isError) {
+  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 토스트가 반복되므로, 실패로 바뀌는 순간에만 띄운다(#740)
+  useEffect(() => {
+    if (!isError) return;
     Toast.show({
       type: 'error',
       text1: '글을 불러오는데 실패했습니다.',
       text2: error?.message || '잠시 후 다시 시도해주세요.',
     });
-  }
+    // 같은 실패가 이어지는 동안 에러 객체가 바뀌어도 다시 띄우지 않는다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
 
   const handleTabChange = (tab: SellingTab) => {
     setActiveTab(tab);
@@ -418,12 +401,12 @@ export default function SellingPageView() {
 
   const handleConfirmDelete = useCallback(() => {
     if (deleteTargetPostId === null) return;
-    deletePostMutation.mutate(deleteTargetPostId);
+    deletePostInPlace(deleteTargetPostId);
     setDeleteTargetPostId(null);
-  }, [deleteTargetPostId, deletePostMutation]);
+  }, [deleteTargetPostId, deletePostInPlace]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header
         headerTitle={isMe ? '판매관리' : `${profileData?.nickname ?? ''}님의 판매 목록`}
         showBackButton
@@ -485,14 +468,14 @@ export default function SellingPageView() {
           <View className="overflow-hidden rounded-2xl bg-gray-50">
             <ActionSheetRow
               label={
-                deletePostMutation.isPending
+                isDeletingPost
                   ? '삭제 중...'
                   : actionTargetPost?.isReserved
                     ? '예약 중에는 삭제할 수 없어요'
                     : '삭제하기'
               }
               labelClassName="text-error-500"
-              disabled={deletePostMutation.isPending}
+              disabled={isDeletingPost}
               onPress={handleDeletePress}
             />
           </View>
@@ -500,7 +483,7 @@ export default function SellingPageView() {
             <Button
               variant="neutral"
               onPress={handleCloseActionSheet}
-              disabled={deletePostMutation.isPending}
+              disabled={isDeletingPost}
               width="w-full">
               <Text className="text-gray-900">닫기</Text>
             </Button>
@@ -513,7 +496,7 @@ export default function SellingPageView() {
         message="이 게시글을 삭제하시겠습니까?"
         confirmText="삭제"
         destructive
-        isLoading={deletePostMutation.isPending}
+        isLoading={isDeletingPost}
         onCancel={handleCloseDeleteAlert}
         onConfirm={handleConfirmDelete}
       />

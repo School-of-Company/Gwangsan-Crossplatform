@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import {
-  Image,
   ScrollView,
   Text,
   View,
@@ -13,6 +12,7 @@ import {
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import { Button, SlideIndicator } from '~/shared/ui';
 import type { PostDetailResponse } from '~/entity/post/api/getItem';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -81,11 +81,10 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
               onMomentumScrollEnd={handleImageScrollEnd}
               scrollEventThrottle={16}>
               {data.images.map((image, index) => (
-                <Image
+                <CachedImage
                   key={image.imageId ?? index}
                   source={{ uri: image.imageUrl }}
                   style={{ width: SCREEN_WIDTH, height: 280 }}
-                  resizeMode="cover"
                 />
               ))}
             </ScrollView>
@@ -101,7 +100,10 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
             )}
           </View>
         ) : (
-          <Image source={require('~/shared/assets/png/logo.png')} className="h-[280px] w-full" />
+          <CachedImage
+            source={require('~/shared/assets/png/logo.png')}
+            className="h-[280px] w-full"
+          />
         )}
 
         <MiniProfile
@@ -113,15 +115,15 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
 
         <View className="gap-6 p-6">
           <View className="flex-row items-center gap-2">
-            <Text className="shrink text-titleSmall">{data.title}</Text>
+            <Text className="shrink text-titleSmall text-foreground">{data.title}</Text>
             {data.isReserved && (
               <Text testID="post-reserved-tag" className="text-xs text-gray-500">
                 예약중
               </Text>
             )}
           </View>
-          <Text className="text-body3">{data.gwangsan} 광산</Text>
-          <Text>{data.content}</Text>
+          <Text className="text-body3 text-foreground">{data.gwangsan} 광산</Text>
+          <Text className="text-foreground">{data.content}</Text>
         </View>
 
         <View className="px-6">
@@ -141,7 +143,7 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
         </View>
       </ScrollView>
 
-      <View className="w-full flex-row justify-center gap-4 bg-white px-6 pb-3 pt-4">
+      <View className="w-full flex-row justify-center gap-4 bg-background px-6 pb-3 pt-4">
         {review === '1' && !isMyPost ? (
           <Button variant="primary" width="w-full" onPress={onReviewButtonPress}>
             리뷰 작성

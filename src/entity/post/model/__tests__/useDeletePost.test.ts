@@ -235,4 +235,38 @@ describe('useDeletePost', () => {
       await waitFor(() => expect(result.current.isLoading).toBe(false));
     });
   });
+
+  describe('제자리 삭제와 추가 무효화(#741)', () => {
+    it('deletePostInPlace는 삭제만 하고 화면을 이동하지 않는다', async () => {
+      mockDeletePost.mockResolvedValue(undefined);
+      const { result } = renderHookWithProviders(() => useDeletePost());
+
+      act(() => {
+        result.current.deletePostInPlace(7);
+      });
+
+      await waitFor(() => expect(mockDeletePost).toHaveBeenCalledWith(7, expect.anything()));
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(mockBack).not.toHaveBeenCalled();
+      expect(mockReplace).not.toHaveBeenCalled();
+    });
+
+    it('invalidateKeys로 넘긴 쿼리도 게시글 목록과 함께 무효화한다', async () => {
+      mockDeletePost.mockResolvedValue(undefined);
+      const queryClient = createQueryClient();
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHookWithProviders(
+        () => useDeletePost({ invalidateKeys: [['sellingPosts'], ['myPosts']] }),
+        { queryClient }
+      );
+
+      act(() => {
+        result.current.deletePostInPlace(7);
+      });
+
+      await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myPosts'] }));
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['posts'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sellingPosts'] });
+    });
+  });
 });
