@@ -12,7 +12,8 @@ export function SelectionCard({ icon, label, onPress, className = '' }: Selectio
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-1 items-center justify-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-6 ${className}`}>
+      activeOpacity={0.7}
+      className={`flex-1 items-center justify-center gap-3 rounded-2xl bg-gray-50 px-4 py-7 ${className}`}>
       {icon}
       <Text className="text-body1 text-gray-900">{label}</Text>
     </TouchableOpacity>
