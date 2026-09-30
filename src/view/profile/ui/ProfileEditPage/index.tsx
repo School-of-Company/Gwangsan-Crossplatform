@@ -15,6 +15,7 @@ export default function ProfileEditPageView() {
   const [nickname, setNickname] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [description, setDescription] = useState('');
+  const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
 
   const { data: profileData, isLoading } = useGetMyProfile(true);
   const updateProfileMutation = useUpdateProfile();
@@ -92,6 +93,7 @@ export default function ProfileEditPageView() {
             selectedItems={specialties}
             onSelect={setSpecialties}
             allowCustomInput={true}
+            onCustomInputVisibleChange={setIsCustomInputOpen}
           />
 
           <TextField
@@ -104,13 +106,15 @@ export default function ProfileEditPageView() {
         </View>
       </KeyboardAwareScrollView>
 
-      <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-background px-5 pb-3 pt-5">
-          <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
-            {isSubmitting ? '수정 중...' : '수정'}
-          </Button>
-        </View>
-      </KeyboardStickyView>
+      {!isCustomInputOpen && (
+        <KeyboardStickyView offset={{ opened: insets.bottom }}>
+          <View className="bg-background px-5 pb-3 pt-5">
+            <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
+              {isSubmitting ? '수정 중...' : '수정'}
+            </Button>
+          </View>
+        </KeyboardStickyView>
+      )}
     </SafeAreaView>
   );
 }

@@ -1,4 +1,5 @@
 import Icon from '@expo/vector-icons/Ionicons';
+import { useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useMultiSelect } from '../../model/useMultiSelect';
 import { useCustomInput } from '../../model/useCustomInput';
@@ -11,6 +12,9 @@ interface SpecialtiesDropdownProps<T extends string> {
   selectedItems?: T[];
   onSelect?: (items: T[]) => void;
   allowCustomInput?: boolean;
+  // 직접 입력 카드가 열려있는 동안, 화면 하단에 고정된 제출 버튼이 키보드를 따라
+  // 올라와 카드 아래에 겹쳐 보이는 것을 막기 위해 부모가 그 버튼을 숨길 수 있게 한다.
+  onCustomInputVisibleChange?: (visible: boolean) => void;
 }
 
 export default function SpecialtiesDropdown<T extends string>({
@@ -20,6 +24,7 @@ export default function SpecialtiesDropdown<T extends string>({
   selectedItems: externalSelectedItems,
   onSelect,
   allowCustomInput = false,
+  onCustomInputVisibleChange,
 }: SpecialtiesDropdownProps<T>) {
   const multiSelect = useMultiSelect({
     items,
@@ -30,6 +35,10 @@ export default function SpecialtiesDropdown<T extends string>({
   const customInput = useCustomInput({
     onSubmit: multiSelect.addCustomItem,
   });
+
+  useEffect(() => {
+    onCustomInputVisibleChange?.(customInput.isAddingCustomItem);
+  }, [customInput.isAddingCustomItem, onCustomInputVisibleChange]);
 
   return (
     <View className="w-full gap-2">
@@ -76,7 +85,7 @@ export default function SpecialtiesDropdown<T extends string>({
           onSubmit={customInput.handleSubmitCustomItem}
           onClose={customInput.deactivateCustomInput}
           inputRef={customInput.customInputRef}
-          onOpenAnimationComplete={customInput.focusInput}
+          onOpenAnimationStart={customInput.focusInput}
         />
       )}
     </View>
