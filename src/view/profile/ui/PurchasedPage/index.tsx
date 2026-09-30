@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
+  FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -108,20 +109,25 @@ const TradePanel = memo(
     counterpartRole: CounterpartRole;
     emptyMessage: string;
   }) => (
-    <ScrollView
+    <FlatList
+      testID={`${counterpartRole === 'seller' ? 'purchased' : 'sold'}-list`}
       style={{ width: SCREEN_WIDTH }}
+      data={posts}
+      keyExtractor={(post) => String(post.id)}
+      renderItem={({ item }) => <TradePostCard post={item} counterpartRole={counterpartRole} />}
+      ItemSeparatorComponent={() => <View className="h-4" />}
+      contentContainerStyle={{
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        paddingBottom: 36,
+        flexGrow: 1,
+      }}
       showsVerticalScrollIndicator={false}
-      nestedScrollEnabled>
-      <View className="gap-4 px-6 pb-9 pt-3">
-        {posts.length > 0 ? (
-          posts.map((post) => (
-            <TradePostCard post={post} counterpartRole={counterpartRole} key={post.id} />
-          ))
-        ) : (
-          <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>
-        )}
-      </View>
-    </ScrollView>
+      nestedScrollEnabled
+      ListEmptyComponent={
+        <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>
+      }
+    />
   )
 );
 

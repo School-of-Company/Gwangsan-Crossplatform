@@ -19,9 +19,12 @@ export default function PostList({ category, type }: { category: Category; type:
   );
   const { data: blockList } = useGetBlockList();
 
+  // 차단 목록을 Set으로 만들어 두고 조회하면, 게시글마다 차단 목록 전체를 훑는 O(n*m)을 O(n+m)으로 줄일 수 있다.
+  const blockedIds = useMemo(() => new Set<number | undefined>(blockList?.map((b) => b.memberId)), [blockList]);
+
   const data = useMemo(
-    () => postsData.filter((post) => !blockList?.some((b) => b.memberId === post.member?.memberId)),
-    [postsData, blockList]
+    () => postsData.filter((post) => !blockedIds.has(post?.member?.memberId)),
+    [postsData, blockedIds]
   );
 
   const onRefresh = useCallback(async () => {
