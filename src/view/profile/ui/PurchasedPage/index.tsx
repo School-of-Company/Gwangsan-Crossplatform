@@ -124,9 +124,7 @@ const TradePanel = memo(
       }}
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled
-      ListEmptyComponent={
-        <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>
-      }
+      ListEmptyComponent={<Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>}
     />
   )
 );
