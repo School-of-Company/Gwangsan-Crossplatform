@@ -64,10 +64,41 @@ describe('KakaoMapMarkerWebView', () => {
     expect(lastWebViewProps.source.html).not.toContain('InfoWindow');
   });
 
-  it('title에 작은따옴표가 있으면 스크립트가 깨지지 않도록 이스케이프한다', () => {
+  it('title에 작은따옴표가 있어도 스크립트가 깨지지 않도록 JSON으로 안전하게 삽입한다', () => {
     render(<KakaoMapMarkerWebView center={center} title="It's here" />);
 
-    expect(lastWebViewProps.source.html).toContain("It\\'s here");
+    expect(lastWebViewProps.source.html).toContain('textContent = "It\'s here"');
+  });
+
+  it('title에 HTML/스크립트가 섞여 있어도 textContent로만 삽입되고 태그로 해석되지 않는다(XSS 방지)', () => {
+    const malicious = '<img src=x onerror=alert(1)>';
+    render(<KakaoMapMarkerWebView center={center} title={malicious} />);
+
+    const html = lastWebViewProps.source.html as string;
+    // innerHTML/content로 직접 이어붙이지 않고, textContent 대입 코드만 존재해야 한다
+    expect(html).not.toContain('<img src=x onerror=alert(1)>');
+    expect(html).toContain('infowindowContent.textContent =');
+    expect(html).toContain('\\u003cimg src=x onerror=alert(1)\\u003e');
+  });
+
+  it('title에 </script>가 섞여 있어도 스크립트 태그가 조기 종료되지 않는다', () => {
+    const malicious = '</script><script>alert(1)</script>';
+    render(<KakaoMapMarkerWebView center={center} title={malicious} />);
+
+    const html = lastWebViewProps.source.html as string;
+    expect(html).not.toContain('</script><script>alert(1)</script>');
+  });
+
+  it('about:blank와 로컬 오리진만 허용하도록 originWhitelist를 좁히고 내비게이션을 검증한다', () => {
+    render(<KakaoMapMarkerWebView center={center} />);
+
+    expect(lastWebViewProps.originWhitelist).toEqual(['http://localhost', 'about:blank']);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest).toBeInstanceOf(Function);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest({ url: 'http://localhost/' })).toBe(true);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest({ url: 'about:blank' })).toBe(true);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest({ url: 'https://evil.example.com' })).toBe(
+      false
+    );
   });
 
   it('메시지를 받기 전까지 로딩 스피너를 보여준다', () => {
