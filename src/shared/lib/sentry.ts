@@ -9,7 +9,12 @@ const isValidDsn =
   !!dsn && /^https:\/\/[^@]+@[^/]+\/\d+$/.test(dsn) && !dsn.includes('test-placeholder');
 
 const REDACTED = '[Filtered]';
-const SENSITIVE_HEADER_KEYS = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization']);
+const SENSITIVE_HEADER_KEYS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'proxy-authorization',
+]);
 
 // 이벤트/브레드크럼에 담기는 URL에서 쿼리스트링(토큰·개인정보가 실릴 수 있는 부분)을 제거한다.
 const stripQueryString = (url: string): string => url.split('?')[0];

@@ -67,16 +67,15 @@ export const KakaoMapMarkerWebView = memo(({ center, title }: KakaoMapMarkerWebV
 
   const source = useMemo(
     () =>
-      appKey
-        ? { html: buildHtml(appKey, center, title ?? ''), baseUrl: WEBVIEW_ORIGIN }
-        : null,
+      appKey ? { html: buildHtml(appKey, center, title ?? ''), baseUrl: WEBVIEW_ORIGIN } : null,
     [appKey, center, title]
   );
 
   // 지도 SDK가 로드하는 최초 로컬 문서(about:blank 경유) 외의 모든 내비게이션(예: InfoWindow
   // 안의 링크 클릭, 스크립트에 의한 임의 페이지 이동)을 차단한다.
   const handleShouldStartLoadWithRequest = useCallback(
-    (request: WebViewNavigation) => request.url === 'about:blank' || request.url.startsWith(WEBVIEW_ORIGIN),
+    (request: WebViewNavigation) =>
+      request.url === 'about:blank' || request.url.startsWith(WEBVIEW_ORIGIN),
     []
   );
 

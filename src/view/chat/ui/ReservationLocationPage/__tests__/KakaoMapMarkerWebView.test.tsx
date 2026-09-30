@@ -81,7 +81,7 @@ describe('KakaoMapMarkerWebView', () => {
     expect(html).toContain('\\u003cimg src=x onerror=alert(1)\\u003e');
   });
 
-  it("title에 </script>가 섞여 있어도 스크립트 태그가 조기 종료되지 않는다", () => {
+  it('title에 </script>가 섞여 있어도 스크립트 태그가 조기 종료되지 않는다', () => {
     const malicious = '</script><script>alert(1)</script>';
     render(<KakaoMapMarkerWebView center={center} title={malicious} />);
 

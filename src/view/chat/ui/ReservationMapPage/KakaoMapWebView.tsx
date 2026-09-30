@@ -1,10 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
-import {
-  WebView,
-  type WebViewNavigation,
-  type WebViewMessageEvent,
-} from 'react-native-webview';
+import { WebView, type WebViewNavigation, type WebViewMessageEvent } from 'react-native-webview';
 import type { Coordinates } from 'expo-maps';
 import { z } from 'zod';
 import { logger } from '~/shared/lib/logger';

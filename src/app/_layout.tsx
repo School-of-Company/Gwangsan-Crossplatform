@@ -80,7 +80,9 @@ function ChatNotificationHandler() {
         handledNotificationIdsRef.current.add(id);
       }
 
-      const parsedData = notificationDataSchema.safeParse(response.notification.request.content.data);
+      const parsedData = notificationDataSchema.safeParse(
+        response.notification.request.content.data
+      );
       if (!parsedData.success) return;
       const data = parsedData.data;
 
