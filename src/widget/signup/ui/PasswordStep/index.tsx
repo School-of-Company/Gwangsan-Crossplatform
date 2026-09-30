@@ -28,7 +28,7 @@ export default function PasswordStep() {
       setPasswordError(null);
     } catch (err) {
       if (err instanceof ZodError) {
-        setPasswordError(err.errors[0].message);
+        setPasswordError(err.issues[0].message);
         hasError = true;
       }
     }
@@ -38,7 +38,7 @@ export default function PasswordStep() {
       setConfirmError(null);
     } catch (err) {
       if (err instanceof ZodError) {
-        setConfirmError(err.errors[0].message);
+        setConfirmError(err.issues[0].message);
         hasError = true;
       }
     }

@@ -63,12 +63,6 @@ export type {
 
 export { isChatRoomListItem, isChatMessageResponse } from './model/chatTypes';
 
-export {
-  ChatRoomItem,
-  ChatMessage,
-  TradeEmbed,
-  TradeCompletedEmbed,
-  TradeReservedEmbed,
-} from './ui';
+export { ChatRoomItem, TradeEmbed, TradeCompletedEmbed, TradeReservedEmbed } from './ui';
 
 export { useChatSocket } from './model/useChatSocket';
