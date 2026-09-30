@@ -1,6 +1,6 @@
 import { View, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
@@ -20,9 +20,11 @@ export default function ProfileEditPageView() {
   const updateProfileMutation = useUpdateProfile();
   const insets = useSafeAreaInsets();
 
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (profileData) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (profileData && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+
       setNickname(profileData.nickname || '');
 
       setSpecialties(profileData.specialties || []);

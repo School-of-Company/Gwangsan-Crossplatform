@@ -1,12 +1,12 @@
 PODS:
   - EXApplication (56.0.3):
     - ExpoModulesCore
-  - EXConstants (56.0.26):
+  - EXConstants (56.0.27):
     - ExpoModulesCore
   - EXJSONUtils (56.0.0)
   - EXManifests (56.0.4):
     - ExpoModulesCore
-  - Expo (56.0.22):
+  - Expo (56.0.23):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -181,7 +181,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (56.0.24):
+  - ExpoAsset (56.0.25):
     - ExpoModulesCore
   - ExpoBackgroundFetch (56.0.27):
     - ExpoModulesCore
@@ -220,7 +220,7 @@ PODS:
     - React-Core
   - ExpoMaps (56.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (56.0.26):
+  - ExpoModulesCore (56.0.27):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -244,18 +244,18 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (56.0.13):
+  - ExpoModulesJSI (56.0.14):
     - React-Core
     - ReactCommon
-  - ExpoModulesWorklets (56.0.26):
+  - ExpoModulesWorklets (56.0.27):
     - ExpoModulesCore
     - ExpoModulesJSI
-  - ExpoModulesWorkletsAdapter (56.0.26):
+  - ExpoModulesWorkletsAdapter (56.0.27):
     - ExpoModulesCore
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
-  - ExpoNotifications (56.0.25):
+  - ExpoNotifications (56.0.26):
     - ExpoModulesCore
   - ExpoRouter (56.2.21):
     - ExpoModulesCore
@@ -265,6 +265,8 @@ PODS:
   - ExpoSplashScreen (56.0.15):
     - ExpoModulesCore
   - ExpoSymbols (56.0.7):
+    - ExpoModulesCore
+  - ExpoSystemUI (56.0.5):
     - ExpoModulesCore
   - ExpoTaskManager (56.0.27):
     - ExpoModulesCore
@@ -2666,6 +2668,7 @@ DEPENDENCIES:
   - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
+  - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
   - ExpoTaskManager (from `../node_modules/expo-task-manager/ios`)
   - "ExpoUI (from `../node_modules/@expo/ui/ios`)"
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
@@ -2846,6 +2849,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-splash-screen/ios"
   ExpoSymbols:
     :path: "../node_modules/expo-symbols/ios"
+  ExpoSystemUI:
+    :path: "../node_modules/expo-system-ui/ios"
   ExpoTaskManager:
     :path: "../node_modules/expo-task-manager/ios"
   ExpoUI:
@@ -3036,15 +3041,15 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   EXApplication: e6040c92edc5522accd62852342e6b14742d42c0
-  EXConstants: 31415c7caea69245959234916fa70fe12e1f3a52
+  EXConstants: 9d3531b15141ea2e24f4b48d51050291f83ccce7
   EXJSONUtils: dba2755f4e24009eaf87a876b2d615ea06c16e42
   EXManifests: 7e19be8df665a338493060a419847dae76ffcd43
-  Expo: f7a935c5ccf81de725666c7a704c4c913df50784
+  Expo: c2d677dfd718bdfa77c551d93ffc9924d83d3b37
   expo-dev-client: 1c668265d8b56a81f1206f22844b139f18dc53f7
   expo-dev-launcher: eeb1fe4ecd0db3b29070743f6db25ecccd7944c7
   expo-dev-menu: 38c734ffc02dcc771b2238193c38843bd555b192
   expo-dev-menu-interface: 65402d4affb8b418aa6cec29b3abb0e313c8f443
-  ExpoAsset: 3f825e3c30de2d3e8a280b97602a8a607ce864fe
+  ExpoAsset: 248b72382c8285f02fd6fb6d62ff6d2179071023
   ExpoBackgroundFetch: 2374d0909677d444c7827b66e6fc7061be37856d
   ExpoBlur: 234b3c1f42a35851428e10fa9d347701ae707c4d
   ExpoDevice: f527f8bbefa6efa12f8ef63e9038dd1d5d903697
@@ -3061,20 +3066,21 @@ SPEC CHECKSUMS:
   ExpoLocation: bf2d4ce37537e9d64a9a9fa348975b89b1ed93ba
   ExpoLogBox: cdad5c9402a186574fb5924ea91df1f08ba9a98a
   ExpoMaps: fb14afa3b589eb38784b70a3178841045ff184fc
-  ExpoModulesCore: 96cf2258261f21c3ebc5fb2418d6578e92435f13
-  ExpoModulesJSI: 45a52183c66764d10846ac2493cc8bbc05e1d340
-  ExpoModulesWorklets: eaae198ed35ef009eeb9e36fc1659622a74bb296
-  ExpoModulesWorkletsAdapter: 968cc6e1c47728190479599f71cd56debb37031a
-  ExpoNotifications: 341b29647a07fada79e8bf721e5f191531534c9b
+  ExpoModulesCore: 04164af439314ccf5decf811cb2e3728062b5c76
+  ExpoModulesJSI: 239285b4ba0f66cd4cee565ed11d32b36b502e7d
+  ExpoModulesWorklets: 706d2511ac0e91743314d8f2e47683a924ae92f3
+  ExpoModulesWorkletsAdapter: ceb77292f37be8035fdfe87c7e907a23508d03da
+  ExpoNotifications: c26fd8557c759cec54abacfd54db48a4cffa70da
   ExpoRouter: c760bde5ab55028273ba1ebc5d35505e4570c4b4
   ExpoSecureStore: f1bd083c1b7b8d4142013ffcc0082d377d9f49f4
   ExpoSplashScreen: 06ea4c812a646bf65802fe0f87f5fcd8d68a22bf
   ExpoSymbols: 37e96a38eed3fb50af4b7c86b8a80ed3054a0a01
+  ExpoSystemUI: 8f4fb641c6a6ebe2a01dda0fbd3fdd952ab5823a
   ExpoTaskManager: b763626a0aacddfff42aeb6d7156edd2f6086973
   ExpoUI: 15c5293922df464aefcfb528396c4db211795322
   EXUpdatesInterface: 25408a97d682355eb9fb37e5aa6e22caece1881f
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
-  hermes-engine: 9cb75a088d4b6c685e2c1e5be947ec57f13fd634
+  hermes-engine: a23580ddd5334eb868c60c341154f63ed26f5767
   libavif: 5f8e715bea24debec477006f21ef9e95432e254d
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
@@ -3086,7 +3092,7 @@ SPEC CHECKSUMS:
   React: e2dc35338068bbd299c66f043ae0d7f25de8499e
   React-callinvoker: 28b25d21b124c26cebaea713ba7d801b9351dc48
   React-Core: 02ed7d2ffb70437bdf2aba074a13078a7b0b9ff0
-  React-Core-prebuilt: 6615957aa103b559b9a165920af6cdd401bde5c5
+  React-Core-prebuilt: b821f1e744f1bda37d4298ed243c34a0dd56a38c
   React-CoreModules: b3a5a42dadcde3b5d47b325bd912eb2ced89e146
   React-cxxreact: fe8f88dda044e5905e99a00f41b7a874c3908716
   React-debug: 9af1e96a6069c996e3d9f1e493603e74bc9f1593
@@ -3154,7 +3160,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 25c9c516839be2c5e3d3344f95dc7da5f7e63fc2
   ReactCodegen: 7016a2114079361a2f1536b3c91a15ceb8eb7ca4
   ReactCommon: 7dfc3250793bf36cf221096ff59e1179e13eef7f
-  ReactNativeDependencies: 0dd1052d4136e9e7c054811f3d196fdd24914778
+  ReactNativeDependencies: 296f577d6931e92dda5e6157123062c89c934ae1
   RNCAsyncStorage: d90e523830fa7705f8c61632479abde871bc792f
   RNCMaskedView: 8069b4d4e23b3d28b4fcac70bf266be43ffc3d2e
   RNGestureHandler: a97cc64efbfcb7a53969a38310a189a3d5246c65
