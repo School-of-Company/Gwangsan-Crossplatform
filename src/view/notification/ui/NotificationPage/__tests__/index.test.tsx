@@ -151,11 +151,11 @@ describe('NotificationPage', () => {
     });
 
     const { UNSAFE_getByType } = render(<NotificationPage />);
-    const { ScrollView } = require('react-native');
-    const scrollView = UNSAFE_getByType(ScrollView);
+    const { FlatList } = require('react-native');
+    const list = UNSAFE_getByType(FlatList);
 
     await waitFor(() => {
-      scrollView.props.refreshControl.props.onRefresh();
+      list.props.refreshControl.props.onRefresh();
     });
 
     expect(mockRefetch).toHaveBeenCalled();
