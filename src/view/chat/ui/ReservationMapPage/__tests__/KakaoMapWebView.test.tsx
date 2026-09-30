@@ -111,6 +111,58 @@ describe('KakaoMapWebView', () => {
     expect(UNSAFE_queryByType(ActivityIndicator)).toBeTruthy();
   });
 
+  it('WebView 메시지가 JSON으로 파싱되지 않으면 무시하고 크래시하지 않는다', () => {
+    const onCameraMove = jest.fn();
+
+    const { UNSAFE_queryByType } = render(
+      <KakaoMapWebView center={center} onCameraMove={onCameraMove} />
+    );
+
+    expect(() => {
+      act(() => {
+        lastWebViewProps.onMessage({ nativeEvent: { data: 'not-json{{{' } });
+      });
+    }).not.toThrow();
+
+    expect(onCameraMove).not.toHaveBeenCalled();
+    expect(UNSAFE_queryByType(ActivityIndicator)).toBeTruthy();
+  });
+
+  it('위도/경도가 유효 범위를 벗어나거나 숫자가 아니면 onCameraMove를 호출하지 않는다', () => {
+    const onCameraMove = jest.fn();
+
+    render(<KakaoMapWebView center={center} onCameraMove={onCameraMove} />);
+
+    act(() => {
+      lastWebViewProps.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({ type: 'cameraMove', latitude: 999, longitude: 126.9 }),
+        },
+      });
+    });
+    act(() => {
+      lastWebViewProps.onMessage({
+        nativeEvent: {
+          data: JSON.stringify({ type: 'cameraMove', latitude: '35.2', longitude: 126.9 }),
+        },
+      });
+    });
+
+    expect(onCameraMove).not.toHaveBeenCalled();
+  });
+
+  it('about:blank와 로컬 오리진만 허용하도록 originWhitelist를 좁히고 내비게이션을 검증한다', () => {
+    render(<KakaoMapWebView center={center} onCameraMove={jest.fn()} />);
+
+    expect(lastWebViewProps.originWhitelist).toEqual(['http://localhost', 'about:blank']);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest).toBeInstanceOf(Function);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest({ url: 'http://localhost/' })).toBe(true);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest({ url: 'about:blank' })).toBe(true);
+    expect(lastWebViewProps.onShouldStartLoadWithRequest({ url: 'https://evil.example.com' })).toBe(
+      false
+    );
+  });
+
   it('마운트 이후 center prop이 바뀌어도 WebView의 source는 마운트 시점 좌표를 유지한다', () => {
     const { rerender } = render(<KakaoMapWebView center={center} onCameraMove={jest.fn()} />);
 
