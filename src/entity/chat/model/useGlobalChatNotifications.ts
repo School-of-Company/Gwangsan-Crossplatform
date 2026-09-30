@@ -7,6 +7,7 @@ import { chatSocket } from '~/shared/lib/socket';
 import { getData } from '~/shared/lib/getData';
 import { getChatRooms } from '../api/getChatRooms';
 import { chatRoomKeys } from './useChatRooms';
+import { isSystemMessage } from '../lib/messagePolicy';
 import type { ChatMessageResponse, RoomId } from '@/shared/types/chatType';
 
 // 나간 방은 GET /chat/rooms 목록에서 제외되므로, 그 목록에 없다는 사실 자체가 "나감" 신호다.
@@ -77,6 +78,10 @@ export const useGlobalChatNotifications = () => {
       // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
       // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다(#619).
       if (message.isMine) return;
+
+      // 예약 취소 같은 SYSTEM 메시지는 서버가 따로 푸시를 보내므로(Gwangsan-Server#426) 로컬 알림을
+      // 또 띄우면 같은 내용이 두 번 뜬다
+      if (isSystemMessage(message)) return;
 
       if (pathnameRef.current === `/chatting/${message.roomId}`) return;
 
