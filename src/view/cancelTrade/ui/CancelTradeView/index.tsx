@@ -1,14 +1,21 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Header, LightBar } from '~/shared/ui';
 import { useGetReview } from '../../model/useGetReview';
 import { useCallback, useEffect } from 'react';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { logger } from '~/shared/lib/logger';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 export default function CancelTradeView() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { data } = useGetReview(id ?? '');
+  const {
+    data,
+    isLoading: isReviewLoading,
+    isError: isReviewError,
+    refetch: refetchReview,
+  } = useGetReview(id ?? '');
   const router = useRouter();
   const handleGoToCancelTrade = useCallback(() => {
     router.push(`/cancelTrade/${id}/reason`);
@@ -22,29 +29,45 @@ export default function CancelTradeView() {
     }
   }, [data]);
 
+  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화된 채로 남거나 빈 화면만 보였다(#740)
+  if (!data && (isReviewLoading || isReviewError)) {
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <Header headerTitle="리뷰 상세" />
+        {isReviewError ? (
+          <ErrorFallback onRetry={() => refetchReview()} />
+        ) : (
+          <View testID="cancel-trade-loading" className="flex-1 items-center justify-center">
+            <ActivityIndicator color="#8FC31D" />
+          </View>
+        )}
+      </SafeAreaView>
+    );
+  }
+
   const imageUris = (data?.imageUrls ?? [])
     .map((u: any) => (typeof u === 'string' ? u : (u?.url ?? u?.uri)))
     .filter((u: unknown): u is string => typeof u === 'string' && u.length > 0);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="리뷰 상세" />
       <View className="flex-1 justify-between px-4">
         <View className="gap-6">
           {imageUris.length > 0 ? (
             imageUris.map((uri, index) => (
-              <Image key={index} source={{ uri }} className="h-[280px] w-full" resizeMode="cover" />
+              <CachedImage key={index} source={{ uri }} className="h-[280px] w-full" />
             ))
           ) : (
-            <Image
+            <CachedImage
               source={require('~/shared/assets/png/logo.png')}
               className="h-[280px] w-full"
-              resizeMode="contain"
+              contentFit="contain"
             />
           )}
           <View>
-            <Text className="text-titleSmall">{data?.title}</Text>
-            <Text>{data?.content}</Text>
+            <Text className="text-titleSmall text-foreground">{data?.title}</Text>
+            <Text className="text-foreground">{data?.content}</Text>
             <LightBar value={data?.light ?? 0} />
           </View>
         </View>

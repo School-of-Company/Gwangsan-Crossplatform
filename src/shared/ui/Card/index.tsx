@@ -8,14 +8,14 @@ export interface CardProps extends ViewProps {
 
 export const Card = React.forwardRef<View, CardProps>(
   ({ className = '', variant = 'default', padding = 'md', ...props }, ref) => {
-    let cardClasses = 'rounded-xl border bg-white';
+    let cardClasses = 'rounded-xl border bg-surface';
 
     switch (variant) {
       case 'primary':
-        cardClasses += ' border-[#8FC31D] bg-green-50';
+        cardClasses += ' border-main-500 bg-green-50 dark:bg-main-900';
         break;
       default:
-        cardClasses += ' border-[#CDCDCF]';
+        cardClasses += ' border-disabled';
         break;
     }
 

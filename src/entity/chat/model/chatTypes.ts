@@ -1,11 +1,22 @@
 import type {
-  ChatImage,
   MessageType,
   RoomId,
-  MessageId,
-  ChatTimestamp,
   OptionalContent,
-} from '../../../shared/types/chatType';
+  ChatTimestamp,
+  ProductImage,
+  ChatMessageResponse,
+  ChatRoomListItem,
+} from '~/shared/types/chatType';
+
+// 서버 응답(wire) 타입은 shared 계층(백그라운드 태스크, 알림 등)에서도 쓰므로 shared/types에 두고
+// entity의 공개 API로는 그대로 다시 내보낸다(#741)
+export type {
+  ProductImage,
+  ProductInfo,
+  ChatMember,
+  ChatRoomListItem,
+  ChatMessageResponse,
+} from '~/shared/types/chatType';
 
 export interface CreateChatRoomResponse {
   readonly roomId: RoomId;
@@ -13,19 +24,6 @@ export interface CreateChatRoomResponse {
 
 export interface FindChatRoomResponse {
   readonly roomId: RoomId;
-}
-
-export interface ProductImage {
-  readonly imageId: number;
-  readonly imageUrl: string;
-}
-
-export interface ProductInfo {
-  readonly productId: string | number;
-  readonly title: string;
-  readonly isCompleted?: boolean;
-  readonly isReserved?: boolean;
-  readonly images: readonly ProductImage[];
 }
 
 export interface TradeProduct {
@@ -79,35 +77,6 @@ export const isTradeProduct = (value: unknown): value is TradeProduct => {
     typeof obj.isReserved === 'boolean'
   );
 };
-
-export interface ChatMember {
-  memberId: string | number;
-  nickname: string;
-}
-
-export interface ChatRoomListItem {
-  readonly roomId: RoomId;
-  readonly member: ChatMember;
-  readonly messageId: MessageId;
-  readonly lastMessage: string;
-  readonly lastMessageType: MessageType;
-  readonly lastMessageTime: ChatTimestamp;
-  readonly unreadMessageCount: number;
-  readonly product: ProductInfo;
-}
-
-export interface ChatMessageResponse {
-  readonly messageId: MessageId;
-  readonly roomId: RoomId;
-  readonly content: OptionalContent;
-  readonly messageType: MessageType;
-  readonly createdAt: ChatTimestamp;
-  readonly images?: readonly ChatImage[];
-  readonly senderNickname: string;
-  readonly senderId: number;
-  readonly checked: boolean;
-  readonly isMine: boolean;
-}
 
 export interface SendMessagePayload {
   readonly roomId: RoomId;

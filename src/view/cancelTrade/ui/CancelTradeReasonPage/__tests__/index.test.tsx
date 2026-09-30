@@ -195,4 +195,24 @@ describe('CancelTradeReasonPage', () => {
       expect.objectContaining({ hasUploadingImages: false, hasFailedImages: false })
     );
   });
+
+  describe('후기 조회 로딩·실패(#740)', () => {
+    it('후기를 불러오는 중이면 로딩 표시를 보여준다', () => {
+      mockUseGetReview.mockReturnValue({ data: undefined, isLoading: true, refetch: jest.fn() });
+
+      const { getByTestId } = render(<CancelTradeReasonPage />);
+
+      expect(getByTestId('cancel-trade-loading')).toBeTruthy();
+    });
+
+    it('후기 조회에 실패하면 다시 시도 화면을 보여주고, 누르면 다시 조회한다', () => {
+      const refetch = jest.fn();
+      mockUseGetReview.mockReturnValue({ data: undefined, isError: true, refetch });
+
+      const { getByText } = render(<CancelTradeReasonPage />);
+
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
 });

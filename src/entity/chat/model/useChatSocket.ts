@@ -37,6 +37,8 @@ export const useChatSocket = ({
     handleReceiveMessage,
     handleUpdateRoomList,
     handleTransactionStateChanged,
+    handleMessageUpdated,
+    handleMessageDeleted,
     markRoomAsRead,
   } = useMessageSync({
     currentRoomId,
@@ -101,6 +103,8 @@ export const useChatSocket = ({
     onReceiveMessage: handleReceiveMessage,
     onUpdateRoomList: handleUpdateRoomList,
     onTransactionStateChanged: handleTransactionStateChanged,
+    onMessageUpdated: handleMessageUpdated,
+    onMessageDeleted: handleMessageDeleted,
     // currentRoomId가 없는 호출(예: 채팅 목록 화면)은 특정 방의 전송 실패와 무관하므로 구독하지 않는다.
     // 화면 전환 시 이전 화면이 그대로 마운트된 채 남아 있어도(Expo Router 스택), 같은 소켓 error
     // 이벤트를 여러 useChatSocket 인스턴스가 동시에 처리해 토스트가 중복으로 뜨는 것을 막는다.

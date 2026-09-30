@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -36,7 +36,7 @@ const BlockedUserRow = ({ member }: BlockedUserRowProps) => {
       <TouchableOpacity
         onPress={handleUnblockPress}
         disabled={unblock.isPending}
-        className={`rounded-lg bg-[#F3F4F5] px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
+        className={`rounded-lg bg-surface-muted px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
         <Text className="text-sm font-medium text-gray-900">
           {unblock.isPending ? '해제 중...' : '차단 해제'}
         </Text>
@@ -57,16 +57,19 @@ const BlockedUserRow = ({ member }: BlockedUserRowProps) => {
 export default function BlockedUsersPageView() {
   const { data: blockList, isLoading, isError, error } = useGetBlockList();
 
-  if (isError) {
+  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다(#740)
+  useEffect(() => {
+    if (!isError) return;
     Toast.show({
       type: 'error',
       text1: '차단 목록을 불러오는데 실패했습니다.',
       text2: error?.message || '잠시 후 다시 시도해주세요.',
     });
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="차단 목록" showBackButton />
       <FlatList
         data={blockList ?? []}

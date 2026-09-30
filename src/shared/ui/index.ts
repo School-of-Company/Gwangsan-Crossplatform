@@ -13,5 +13,7 @@ export { default as ProgressBar } from './ProgressBar';
 export { LightBar } from './LightBar';
 export { SlideIndicator } from './SlideIndicator';
 export { Card } from './Card';
+export { CachedImage } from './CachedImage';
+export type { CachedImageProps } from './CachedImage';
 export { PillTabs } from './PillTabs';
 export type { PillTabOption } from './PillTabs';

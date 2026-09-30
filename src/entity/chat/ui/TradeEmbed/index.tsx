@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import type { TradeProduct } from '~/entity/chat/model/chatTypes';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 export interface TradeEmbedProps {
   readonly product: TradeProduct;
@@ -32,11 +33,7 @@ const TradeEmbedComponent: React.FC<TradeEmbedProps> = ({
         <View className="px-4 pb-3 pt-5">
           {productImage && (
             <View className="mb-3 h-20 w-20 overflow-hidden rounded-lg">
-              <Image
-                source={{ uri: productImage.imageUrl }}
-                className="h-full w-full"
-                resizeMode="cover"
-              />
+              <CachedImage source={{ uri: productImage.imageUrl }} className="h-full w-full" />
               {product.images.length > 1 && (
                 <View className="absolute -bottom-1 -right-1 h-5 w-5 items-center justify-center rounded-full bg-black bg-opacity-60">
                   <Text className="text-xs font-bold text-white">+{product.images.length - 1}</Text>

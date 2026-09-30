@@ -22,7 +22,7 @@ const NotificationPage = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="알림" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#8FC31D" />
@@ -33,17 +33,17 @@ const NotificationPage = () => {
 
   if (error || !apiResponse) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="알림" />
         <View className="flex-1 items-center justify-center">
-          <Text>알림을 불러오는데 실패했습니다.</Text>
+          <Text className="text-foreground">알림을 불러오는데 실패했습니다.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="알림" />
       <ScrollView
         className="flex-1 px-4 py-4"
