@@ -123,6 +123,17 @@ const ImageUploader = ({
   // 우선적으로 비교한다.
   const assetIdsByUriRef = useRef<Map<string, string>>(new Map());
 
+  // 실패한 업로드를 1.5초 뒤 자동 제거하는 타이머들. 언마운트 시 정리하지 않으면
+  // jest 환경에서 프로세스가 깨끗하게 종료되지 못한다.
+  const removalTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  useEffect(() => {
+    const timeouts = removalTimeoutsRef.current;
+    return () => {
+      timeouts.forEach(clearTimeout);
+      timeouts.clear();
+    };
+  }, []);
+
   const removeImageByUri = useCallback(
     (uri: string) => {
       const currentImages = imagesRef.current;
@@ -168,7 +179,11 @@ const ImageUploader = ({
           status: 'failed',
           error: error instanceof Error ? error : new Error('업로드 실패'),
         });
-        setTimeout(() => removeImageByUri(uri), 1500);
+        const timeoutId = setTimeout(() => {
+          removalTimeoutsRef.current.delete(timeoutId);
+          removeImageByUri(uri);
+        }, 1500);
+        removalTimeoutsRef.current.add(timeoutId);
       }
     },
     [images, onImagesChange, uploadImageMutation, updateImageStatus, removeImageByUri]

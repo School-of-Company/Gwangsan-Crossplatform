@@ -337,6 +337,7 @@ describe('ImageUploader', () => {
     });
 
     it('업로드 실패 시 1.5초 뒤 실패한 이미지를 자동으로 제거한다', async () => {
+      jest.useFakeTimers();
       setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
       mockRequestGalleryPermission.mockResolvedValue({ granted: true });
       mockLaunchGallery.mockResolvedValue({
@@ -354,10 +355,19 @@ describe('ImageUploader', () => {
       await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith(['file://photo.jpg']));
       onImagesChange.mockClear();
 
-      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith([]), { timeout: 3000 });
+      // 업로드 실패(마이크로태스크)가 처리되어 'failed' 상태가 될 때까지 대기
+      await waitFor(() => expect(getButtons(container)).toHaveLength(2));
+
+      act(() => {
+        jest.advanceTimersByTime(1500);
+      });
+
+      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith([]));
+      jest.useRealTimers();
     });
 
     it('자동 제거 전에 실패한 이미지를 수동으로 이미 제거했다면 다시 제거를 시도하지 않는다', async () => {
+      jest.useFakeTimers();
       setupUploadMock(jest.fn().mockRejectedValue(new Error('upload error')));
       mockRequestGalleryPermission.mockResolvedValue({ granted: true });
       mockLaunchGallery.mockResolvedValue({
@@ -383,10 +393,11 @@ describe('ImageUploader', () => {
 
       // 자동 제거 타이머가 실행되어도(imagesRef에 이미 uri가 없으므로) 더 이상
       // onImagesChange가 호출되지 않는다.
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1700));
+      act(() => {
+        jest.advanceTimersByTime(1700);
       });
       expect(onImagesChange).not.toHaveBeenCalled();
+      jest.useRealTimers();
     });
 
     it('Error 인스턴스가 아닌 값으로 거부되면 기본 에러 메시지로 상태를 기록한다', async () => {
