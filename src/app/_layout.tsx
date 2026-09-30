@@ -22,6 +22,7 @@ import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/entity/chat/model/useChatEntry';
 import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
+import { VersionUpdateModal } from '@/widget/appVersion';
 import {
   createNotificationDedupeGuard,
   resolveNotificationAction,
@@ -190,6 +191,7 @@ export default function RootLayout() {
               <BottomSheetPortalOutlet />
               <ToastStack topOffset={Platform.select({ ios: 70, default: 40 })} />
               <NoNetworkOverlay visible={!isConnected} />
+              <VersionUpdateModal />
             </QueryProvider>
           </ThemeProvider>
         </View>
