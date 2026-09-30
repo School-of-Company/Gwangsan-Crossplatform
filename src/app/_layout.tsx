@@ -23,6 +23,10 @@ import { useChatEntry } from '@/entity/chat/model/useChatEntry';
 import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
 import { VersionUpdateModal } from '@/widget/appVersion';
+import {
+  createNotificationDedupeGuard,
+  resolveNotificationAction,
+} from '@/shared/lib/notificationRouting';
 import { useThemeColors } from '@/shared/lib/theme';
 
 // 알림 페이로드는 푸시 서버/OS를 거쳐 들어오는 신뢰할 수 없는 외부 입력이므로, 라우팅에
@@ -70,31 +74,32 @@ function ChatNotificationHandler() {
     registerChatBackgroundTask();
   }, []);
 
-  const handledNotificationIdsRef = useRef<Set<string>>(new Set());
+  const dedupeGuardRef = useRef(createNotificationDedupeGuard());
 
   useEffect(() => {
     const handleResponse = (response: Notifications.NotificationResponse) => {
       // 콜드스타트 경로와 리스너 경로에서 같은 알림이 두 번 처리되지 않도록 방어
       const id = response.notification.request.identifier;
-      if (id) {
-        if (handledNotificationIdsRef.current.has(id)) return;
-        handledNotificationIdsRef.current.add(id);
-      }
+      if (!dedupeGuardRef.current.shouldProcess(id)) return;
 
       const parsedData = notificationDataSchema.safeParse(
         response.notification.request.content.data
       );
       if (!parsedData.success) return;
-      const data = parsedData.data;
 
-      if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
-        navigateToChatRef.current(data.sourceId);
-      } else if (data?.roomId != null) {
-        navigateToRoomRef.current(data.roomId);
-      } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
-        routerRef.current.push(`/post/${data.sourceId}?review=1`);
-      } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
-        routerRef.current.push(`/cancelTrade/${data.sourceId}`);
+      const action = resolveNotificationAction(parsedData.data);
+      switch (action.type) {
+        case 'chatEntry':
+          navigateToChatRef.current(action.productId);
+          break;
+        case 'room':
+          navigateToRoomRef.current(action.roomId);
+          break;
+        case 'push':
+          routerRef.current.push(action.href);
+          break;
+        case 'none':
+          break;
       }
     };
 
