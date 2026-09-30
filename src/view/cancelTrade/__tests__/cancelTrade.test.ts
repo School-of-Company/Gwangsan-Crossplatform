@@ -11,30 +11,8 @@ const mockGetReview = getReview as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('getReview', () => {
-  it('getReview를 호출하면 응답 data를 반환한다', async () => {
-    const reviewData = {
-      reviewId: 1,
-      productId: 10,
-      title: '좋아요',
-      content: '만족',
-      light: 80,
-      imageUrls: [],
-    };
-    mockGetReview.mockResolvedValue(reviewData);
-
-    const result = await getReview('1');
-
-    expect(mockGetReview).toHaveBeenCalledWith('1');
-    expect(result).toEqual(reviewData);
-  });
-
-  it('API 실패 시 에러를 전파한다', async () => {
-    mockGetReview.mockRejectedValue(new Error('Not found'));
-
-    await expect(getReview('999')).rejects.toThrow('Not found');
-  });
-});
+// getReview API 자체(instance.get 호출 등)의 실제 동작 검증은
+// src/view/cancelTrade/api/__tests__/getReview.api.test.ts 에서 수행한다.
 
 describe('useGetReview', () => {
   it('id가 있으면 getReview를 호출하고 데이터를 반환한다', async () => {
