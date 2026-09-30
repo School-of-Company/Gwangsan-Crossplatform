@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
+import { useThemeColors } from '@/shared/lib/theme';
 
 interface CheckboxProps {
   checked: boolean;
@@ -16,6 +17,7 @@ const ICON_SIZE: Record<NonNullable<CheckboxProps['size']>, number> = {
 };
 
 export function Checkbox({ checked, onPress, label, size = 'md' }: CheckboxProps) {
+  const colors = useThemeColors();
   return (
     <TouchableOpacity
       className="flex-row items-center gap-3"
@@ -26,7 +28,7 @@ export function Checkbox({ checked, onPress, label, size = 'md' }: CheckboxProps
       <Icon
         name={checked ? 'checkmark-circle' : 'ellipse-outline'}
         size={ICON_SIZE[size]}
-        color={checked ? '#8FC31D' : '#B4B5B7'}
+        color={checked ? colors.main : colors['gray-300']}
       />
       {label ? (
         typeof label === 'string' ? (

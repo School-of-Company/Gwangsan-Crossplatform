@@ -1,16 +1,20 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 import { deletePost } from '../api/deletePost';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
+import { postKeys } from '~/shared/model/postQueryKeys';
 
 interface UseDeletePostParams {
   onSuccess?: () => void;
+  // 게시글 목록 외에 함께 무효화할 쿼리(판매·구매 내역 등). 판매내역 화면이 이 훅을 그대로 복사해
+  // 무효화 키만 바꿔 쓰던 중복을 없애기 위해 추가했다(#741)
+  invalidateKeys?: readonly QueryKey[];
 }
 
-export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
+export const useDeletePost = ({ onSuccess, invalidateKeys = [] }: UseDeletePostParams = {}) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -18,8 +22,9 @@ export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
     mutationFn: deletePost,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['posts'],
+        queryKey: postKeys.all,
       });
+      invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
 
       Toast.show({
         type: 'success',
@@ -58,8 +63,15 @@ export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
     [deletePostMutation, getRedirectPath, router]
   );
 
+  // 목록 화면처럼 삭제 후 이동하지 않고 그 자리에서 목록만 갱신하는 경우
+  const deletePostInPlace = useCallback(
+    (postId: number) => deletePostMutation.mutate(postId),
+    [deletePostMutation]
+  );
+
   return {
     deletePost: handleDeletePost,
+    deletePostInPlace,
     isLoading: deletePostMutation.isPending,
     error: deletePostMutation.error,
   };

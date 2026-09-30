@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
-import { SigninState } from '~/entity/auth/model/authState';
+import { SigninState } from '~/shared/types/authState';
 
 const INITIAL_FORM_DATA: SigninState['formData'] = {
   nickname: '',
