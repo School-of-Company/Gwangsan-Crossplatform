@@ -1,6 +1,7 @@
 import Icon from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import { useThemeColors } from '@/shared/lib/theme';
 
 interface DropdownProps<T extends string> {
   label?: string;
@@ -19,6 +20,7 @@ export function Dropdown<T extends string>({
   onSelect,
   width = 'full',
 }: DropdownProps<T>) {
+  const colors = useThemeColors();
   const [show, setShow] = useState(false);
   const [selected, setSelected] = useState<T | null>(selectedItem || null);
 
@@ -34,13 +36,13 @@ export function Dropdown<T extends string>({
     <View
       className={`${width} relative flex gap-2`}
       style={{ zIndex: show ? 50 : 0, elevation: show ? 50 : 0 }}>
-      {label && <Text className="text-label text-black">{label}</Text>}
+      {label && <Text className="text-label text-foreground">{label}</Text>}
       <TouchableOpacity
         className={`rounded-xl border ${show ? 'border-sub2-500' : 'border-gray-400'} px-4 py-5 text-body5`}
         onPress={() => setShow((prev) => !prev)}>
         <View className="flex-row items-center justify-between">
-          <Text>{selectedLabel || placeholder || '선택해주세요'}</Text>
-          <Icon name={show ? 'chevron-up' : 'chevron-down'} size={16} color="#000" />
+          <Text className="text-gray-900">{selectedLabel || placeholder || '선택해주세요'}</Text>
+          <Icon name={show ? 'chevron-up' : 'chevron-down'} size={16} color={colors.foreground} />
         </View>
       </TouchableOpacity>
       {show && (
@@ -54,7 +56,7 @@ export function Dropdown<T extends string>({
             {items.map((item, i) => (
               <Text
                 key={item.value}
-                className={`border-b border-gray-300 bg-gray-50 px-4 py-5 ${i === 0 ? 'rounded-t-xl' : ''} ${i === items.length - 1 ? 'rounded-b-xl border-b-0' : ''}`}
+                className={`border-b border-gray-300 bg-gray-50 px-4 py-5 text-gray-900 ${i === 0 ? 'rounded-t-xl' : ''} ${i === items.length - 1 ? 'rounded-b-xl border-b-0' : ''}`}
                 onPress={() => {
                   setSelected(item.value);
                   if (onSelect) {

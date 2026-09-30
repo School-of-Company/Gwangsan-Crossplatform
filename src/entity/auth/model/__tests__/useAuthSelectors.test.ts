@@ -14,7 +14,7 @@ import {
   useSigninFormField,
   useResetPasswordFormField,
 } from '../useAuthSelectors';
-import type { SignupState, SigninState, ResetPasswordState } from '../authState';
+import type { SignupState, SigninState, ResetPasswordState } from '~/shared/types/authState';
 
 jest.mock('@/shared/store/useSignupStore', () => ({
   useSignupStore: jest.fn(),

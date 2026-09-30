@@ -6,7 +6,7 @@ exports[`ProgressBar 스냅샷 - 기본값 1`] = `
   onLayout={[Function]}
 >
   <Text
-    className="text-label text-black"
+    className="text-label text-foreground"
   >
     밝기
   </Text>
@@ -43,7 +43,7 @@ exports[`ProgressBar 스냅샷 - 기본값 1`] = `
       testID="progress-bar-track"
     >
       <View
-        className="absolute left-0 w-full bg-[#F1F5F9]"
+        className="absolute left-0 w-full bg-surface-muted"
         style={
           {
             "borderRadius": 3,
@@ -73,7 +73,7 @@ exports[`ProgressBar 스냅샷 - 커스텀 min/max/value 1`] = `
   onLayout={[Function]}
 >
   <Text
-    className="text-label text-black"
+    className="text-label text-foreground"
   >
     밝기
   </Text>
@@ -110,7 +110,7 @@ exports[`ProgressBar 스냅샷 - 커스텀 min/max/value 1`] = `
       testID="progress-bar-track"
     >
       <View
-        className="absolute left-0 w-full bg-[#F1F5F9]"
+        className="absolute left-0 w-full bg-surface-muted"
         style={
           {
             "borderRadius": 3,

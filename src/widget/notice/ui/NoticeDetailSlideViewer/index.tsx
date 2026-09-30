@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import {
   View,
-  Image,
   Dimensions,
   ScrollView,
   NativeSyntheticEvent,
@@ -9,6 +8,7 @@ import {
 } from 'react-native';
 import { SlideIndicator } from '@/shared/ui';
 import { NoticeData } from '@/entity/notice/model/noticeData';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,14 +40,13 @@ const NoticeDetailSlideViewer = ({ notice }: NoticeDetailSlideViewerProps) => {
         onMomentumScrollEnd={handleScrollEnd}
         scrollEventThrottle={16}>
         {notice.images.map((image, index) => (
-          <Image
+          <CachedImage
             key={index}
             source={{ uri: image.imageUrl }}
             style={{
               width: SCREEN_WIDTH,
               height: 256,
             }}
-            resizeMode="cover"
           />
         ))}
       </ScrollView>

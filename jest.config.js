@@ -34,12 +34,14 @@ module.exports = {
   // 실제 로직이 있는 파일은 테스트를 추가하며 하나씩 화이트리스트에 되돌린다.
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/app/**', 'src/app/index.tsx'],
   coverageReporters: ['json-summary', 'text', 'lcov'],
+  // 실제 커버리지(lines 98.4 / statements 97.5 / functions 96.5 / branches 91.6) 바로 아래로 둬서,
+  // 테스트 없는 코드가 크게 늘면 PR이 실패하게 한다. 예전 기준(45/40)은 사실상 아무것도 막지 못했다(#741)
   coverageThreshold: {
     global: {
-      lines: 45,
-      statements: 45,
-      functions: 45,
-      branches: 40,
+      lines: 95,
+      statements: 95,
+      functions: 93,
+      branches: 88,
     },
   },
 };

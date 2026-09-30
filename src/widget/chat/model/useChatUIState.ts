@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { useGetItem } from '~/entity/post/model/useGetItem';
-import { MODE } from '~/widget/write/model/mode';
+import { MODE } from '~/shared/types/mode';
 import type { RoomId } from '~/shared/types/chatType';
 
 interface UseChatUIStateParams {

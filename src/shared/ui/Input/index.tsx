@@ -9,11 +9,11 @@ interface InputProps extends TextInputProps {
 export const Input = forwardRef<TextInput, InputProps>(({ label, icon, ...props }, ref) => {
   return (
     <View className="flex w-full gap-2">
-      <Text className="text-label">{label}</Text>
+      <Text className="text-label text-foreground">{label}</Text>
       <View className="relative">
         <TextInput
           ref={ref}
-          className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-black"
+          className="h-[52px] w-full rounded-xl border border-gray-400 px-4 text-body5 text-gray-900 focus:border-foreground"
           textAlignVertical="center"
           returnKeyType="next"
           enablesReturnKeyAutomatically={true}

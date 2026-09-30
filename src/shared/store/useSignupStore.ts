@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SignupState } from '~/entity/auth/model/authState';
+import { SignupState } from '~/shared/types/authState';
 
 const INITIAL_FORM_DATA: SignupState['formData'] = {
   name: '',
