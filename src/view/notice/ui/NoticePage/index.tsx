@@ -1,4 +1,4 @@
-import { ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
+import { FlatList, ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { NoticeItem } from '~/widget/notice';
 import { Header } from '~/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,19 +39,22 @@ const NoticePage = () => {
     }
 
     return (
-      <ScrollView
-        className="flex-1 px-4 py-4"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        {noticeList?.map((notice) => (
+      <FlatList
+        testID="notice-list"
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, flexGrow: 1 }}
+        data={noticeList ?? []}
+        keyExtractor={(notice) => String(notice.id)}
+        renderItem={({ item: notice }) => (
           <NoticeItem
-            key={notice.id}
             id={notice.id}
             title={notice.title}
             content={notice.content}
             images={notice.images}
           />
-        ))}
-      </ScrollView>
+        )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
     );
   };
 
