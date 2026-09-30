@@ -90,5 +90,13 @@ describe('getItem', () => {
 
       await expect(getItem('1')).rejects.toThrow('Network Error');
     });
+
+    it('postId가 양의 정수 문자열이 아니면 API를 호출하지 않고 즉시 실패한다', async () => {
+      await expect(getItem('1; DROP TABLE post;')).rejects.toThrow();
+      await expect(getItem('NaN')).rejects.toThrow();
+      await expect(getItem('-1')).rejects.toThrow();
+
+      expect(mockGet).not.toHaveBeenCalled();
+    });
   });
 });
