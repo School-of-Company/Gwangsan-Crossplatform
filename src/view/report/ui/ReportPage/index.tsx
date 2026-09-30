@@ -80,7 +80,7 @@ export default function ReportPage() {
   }, [isLoading, imageUploadState]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="신고하기" />
       <ScrollView
         className="flex-1"
@@ -115,7 +115,7 @@ export default function ReportPage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button variant="error" disabled={isFormDisabled} onPress={handleFormSubmit}>
             {submitButtonText}
           </Button>

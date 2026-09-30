@@ -9,7 +9,7 @@ export default function EditProfilePageView() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="프로필 수정" />
 
       <KeyboardAwareScrollView
@@ -24,7 +24,7 @@ export default function EditProfilePageView() {
       </KeyboardAwareScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button>수정</Button>
         </View>
       </KeyboardStickyView>

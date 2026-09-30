@@ -90,4 +90,24 @@ describe('OtherMessage', () => {
     const buttons = UNSAFE_getAllByType(TouchableOpacity);
     buttons.forEach((button) => expect(button.props.disabled).toBe(false));
   });
+
+  it('상대방이 수정한 메시지에도 (수정됨)을 표시한다', () => {
+    const { getByText } = render(
+      <OtherMessage message={makeMessage({ editedAt: '2026-07-08T07:00:00.000Z' })} />
+    );
+
+    expect(getByText('(수정됨)')).toBeTruthy();
+  });
+
+  it('시간을 숨기는 연속 메시지여도 수정 표시는 보인다', () => {
+    const { getByText, queryByText } = render(
+      <OtherMessage
+        message={makeMessage({ editedAt: '2026-07-08T07:00:00.000Z' })}
+        showTime={false}
+      />
+    );
+
+    expect(getByText('(수정됨)')).toBeTruthy();
+    expect(queryByText('오후 3:00')).toBeNull();
+  });
 });

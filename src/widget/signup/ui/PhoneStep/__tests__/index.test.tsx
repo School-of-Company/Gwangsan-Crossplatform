@@ -120,7 +120,7 @@ describe('PhoneStep — 인증 요청', () => {
 describe('PhoneStep — 인증번호 확인 및 다음 단계', () => {
   it('인증 완료 후 다음 클릭 시 값이 저장되고 nextStep이 호출된다', async () => {
     mockSendSms.mockResolvedValue(undefined);
-    mockVerifySms.mockResolvedValue({ verified: true });
+    mockVerifySms.mockResolvedValue(undefined);
 
     const { getByPlaceholderText, getByText, getByTestId } = render(<PhoneStep />);
 

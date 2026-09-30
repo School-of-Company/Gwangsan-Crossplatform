@@ -38,18 +38,12 @@ describe('markChatAsRead', () => {
   });
 
   describe('에러 케이스', () => {
-    it('API 실패 시 에러 토스트를 보여주고 에러를 throw한다', async () => {
+    it('API 실패 시 토스트 없이 에러를 throw한다(#739)', async () => {
       mockPatch.mockRejectedValue(new Error('Network error'));
 
       await expect(markChatAsRead(1, 100)).rejects.toThrow('Network error');
 
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'error',
-          text1: '읽음 처리 실패',
-          text2: 'Network error',
-        })
-      );
+      expect(Toast.show).not.toHaveBeenCalled();
     });
   });
 });

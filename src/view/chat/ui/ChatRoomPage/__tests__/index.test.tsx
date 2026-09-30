@@ -2,14 +2,15 @@ import React from 'react';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
-import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
+import { useMessageActions } from '~/widget/chat/model/useMessageActions';
+import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
+import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import Toast from 'react-native-toast-message';
@@ -21,7 +22,7 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('~/entity/main/model/useGetMyInformation', () => ({
+jest.mock('~/shared/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 
@@ -55,15 +56,37 @@ jest.mock('~/widget/chat/model/useChatUIState', () => ({
   useChatUIState: jest.fn(),
 }));
 
+jest.mock('~/widget/chat/model/useMessageActions', () => ({
+  useMessageActions: jest.fn(),
+}));
+
+jest.mock('@/shared/ui/AlertModal', () => ({
+  AlertModal: ({ isVisible, message, confirmText, onConfirm, onCancel }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    if (!isVisible) return null;
+    return (
+      <View testID="alert-modal">
+        <Text>{message}</Text>
+        <TouchableOpacity testID="alert-modal-confirm" onPress={onConfirm}>
+          <Text>{confirmText}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="alert-modal-cancel" onPress={onCancel}>
+          <Text>취소</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  },
+}));
+
 jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
 
-jest.mock('~/entity/post/hooks/useTradeRequest', () => ({
+jest.mock('~/widget/post/model/useTradeRequest', () => ({
   useTradeRequest: jest.fn(),
 }));
 
-jest.mock('~/view/reviews/api/getReviews', () => ({
+jest.mock('~/entity/reviews/api/getReviews', () => ({
   getMyReceivedReview: jest.fn(),
   getTossReview: jest.fn(),
 }));
@@ -106,10 +129,16 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
     hasReviewedTrade,
     renderHeader,
     onScrollToEnd,
+    onMyMessageLongPress,
   }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-room-content">
+        <TouchableOpacity
+          testID="content-my-message-long-press"
+          onPress={() => onMyMessageLongPress?.({ messageId: 3, isMine: true })}>
+          <Text>longPress</Text>
+        </TouchableOpacity>
         {renderHeader()}
         <Text testID="message-count">{messages.length}</Text>
         <Text testID="show-review-button">{String(showReviewButton)}</Text>
@@ -172,11 +201,54 @@ jest.mock('@/shared/ui/Header', () => ({
   },
 }));
 
+jest.mock('@/widget/chat/ui/MessageActionOverlay', () => ({
+  MessageActionOverlay: ({
+    visible,
+    anchor,
+    canEdit,
+    onEdit,
+    onDelete,
+    onClose,
+    children,
+  }: any) => {
+    const { View, Text, TouchableOpacity } = require('react-native');
+    if (!visible) return null;
+    return (
+      <View testID="message-action-overlay">
+        <Text testID="overlay-anchor">{JSON.stringify(anchor)}</Text>
+        <Text testID="overlay-can-edit">{String(canEdit)}</Text>
+        {children}
+        <TouchableOpacity testID="overlay-edit" onPress={onEdit} />
+        <TouchableOpacity testID="overlay-delete" onPress={onDelete} />
+        <TouchableOpacity testID="overlay-close" onPress={onClose} />
+      </View>
+    );
+  },
+}));
+
 jest.mock('@/widget/chat', () => ({
-  ChatInput: ({ onSendMessage, disabled, onFocus }: any) => {
+  MyMessage: ({ message }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="overlay-focused-message">{message.content}</Text>;
+  },
+  ChatInput: ({
+    onSendMessage,
+    disabled,
+    onFocus,
+    editingMessage,
+    onSubmitEdit,
+    onCancelEdit,
+  }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-input">
+        <Text testID="chat-input-editing">{editingMessage?.content ?? ''}</Text>
+        <TouchableOpacity testID="chat-input-submit-edit" onPress={() => onSubmitEdit?.('수정')}>
+          <Text>submitEdit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="chat-input-cancel-edit" onPress={onCancelEdit}>
+          <Text>cancelEdit</Text>
+        </TouchableOpacity>
         <Text testID="chat-input-disabled">{String(disabled)}</Text>
         <TouchableOpacity testID="chat-input-send" onPress={() => onSendMessage('hi', [])}>
           <Text>send</Text>
@@ -198,6 +270,20 @@ const mockUseChatMessages = useChatMessages as jest.Mock;
 const mockUseChatAction = useChatAction as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseChatUIState = useChatUIState as jest.Mock;
+const mockUseMessageActions = useMessageActions as jest.Mock;
+const mockMessageActions = {
+  menu: null as null | { message: any; anchor: any; canEdit: boolean },
+  closeMenu: jest.fn(),
+  selectEdit: jest.fn(),
+  selectDelete: jest.fn(),
+  editingMessage: null as { messageId: number; content: string } | null,
+  isDeleteConfirmVisible: false,
+  openMessageMenu: jest.fn(),
+  cancelEdit: jest.fn(),
+  submitEdit: jest.fn(),
+  cancelDelete: jest.fn(),
+  confirmDelete: jest.fn(),
+};
 const mockUseTradeRequest = useTradeRequest as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
@@ -263,6 +349,7 @@ beforeEach(() => {
   });
   mockUseTradeHandlers.mockReturnValue(makeTradeHandlersReturn());
   mockUseChatUIState.mockReturnValue(makeChatUIStateReturn());
+  mockUseMessageActions.mockReturnValue({ ...mockMessageActions });
   mockUseTradeRequest.mockReturnValue({
     handleTradeRequest: jest.fn().mockResolvedValue(undefined),
     isLoading: false,
@@ -871,5 +958,113 @@ describe('ChatRoomPage', () => {
     const { getByTestId } = render(<ChatRoomPage />);
 
     expect(getByTestId('message-count').props.children).toBe(2);
+  });
+
+  describe('채팅방 데이터 폴링(#731)', () => {
+    it('소켓이 연결되어 있으면 채팅방 데이터 폴링을 멈춘다', () => {
+      render(<ChatRoomPage />);
+
+      expect(mockUseChatRoomData).toHaveBeenCalledWith(
+        expect.objectContaining({ roomId: 10, pausePolling: true })
+      );
+    });
+
+    it('소켓이 끊겨 있으면 폴링으로 보완한다', () => {
+      mockUseChatMessages.mockReturnValue(
+        makeChatMessagesReturn({ connectionState: 'disconnected' })
+      );
+
+      render(<ChatRoomPage />);
+
+      expect(mockUseChatRoomData).toHaveBeenCalledWith(
+        expect.objectContaining({ pausePolling: false })
+      );
+    });
+  });
+
+  describe('메시지 수정/삭제', () => {
+    it('내 메시지를 길게 누르면 수정/삭제 메뉴를 연다', () => {
+      const { getByTestId } = render(<ChatRoomPage />);
+
+      fireEvent.press(getByTestId('content-my-message-long-press'));
+
+      expect(mockMessageActions.openMessageMenu).toHaveBeenCalledWith(
+        expect.objectContaining({ messageId: 3 })
+      );
+    });
+
+    it('수정 중인 메시지를 입력창에 넘기고, 제출/취소를 연결한다', () => {
+      mockUseMessageActions.mockReturnValue({
+        ...mockMessageActions,
+        editingMessage: { messageId: 3, content: '원래 내용' },
+      });
+
+      const { getByTestId } = render(<ChatRoomPage />);
+
+      expect(getByTestId('chat-input-editing').props.children).toBe('원래 내용');
+      fireEvent.press(getByTestId('chat-input-submit-edit'));
+      expect(mockMessageActions.submitEdit).toHaveBeenCalledWith('수정');
+      fireEvent.press(getByTestId('chat-input-cancel-edit'));
+      expect(mockMessageActions.cancelEdit).toHaveBeenCalled();
+    });
+
+    it('삭제 확인 모달을 띄우고, 확인하면 삭제한다', () => {
+      mockUseMessageActions.mockReturnValue({
+        ...mockMessageActions,
+        isDeleteConfirmVisible: true,
+      });
+
+      const { getByTestId, getByText } = render(<ChatRoomPage />);
+
+      expect(getByText('메시지를 삭제할까요?\n상대방 화면에서도 삭제됩니다.')).toBeTruthy();
+      fireEvent.press(getByTestId('alert-modal-confirm'));
+      expect(mockMessageActions.confirmDelete).toHaveBeenCalled();
+      fireEvent.press(getByTestId('alert-modal-cancel'));
+      expect(mockMessageActions.cancelDelete).toHaveBeenCalled();
+    });
+
+    it('삭제 확인 전에는 모달을 띄우지 않는다', () => {
+      const { queryByTestId } = render(<ChatRoomPage />);
+
+      expect(queryByTestId('alert-modal')).toBeNull();
+    });
+  });
+
+  describe('메시지 메뉴 오버레이', () => {
+    const menu = {
+      message: { messageId: 3, content: '꾹 누른 메시지', isMine: true },
+      anchor: { x: 120, y: 400, width: 200, height: 48 },
+      canEdit: true,
+    };
+
+    it('메뉴가 열리면 누른 말풍선을 강조한 오버레이를 띄운다', () => {
+      mockUseMessageActions.mockReturnValue({ ...mockMessageActions, menu });
+
+      const { getByTestId } = render(<ChatRoomPage />);
+
+      expect(getByTestId('message-action-overlay')).toBeTruthy();
+      expect(getByTestId('overlay-focused-message').props.children).toBe('꾹 누른 메시지');
+      expect(JSON.parse(getByTestId('overlay-anchor').props.children)).toEqual(menu.anchor);
+      expect(getByTestId('overlay-can-edit').props.children).toBe('true');
+    });
+
+    it('오버레이의 수정·삭제·닫기를 메뉴 동작에 연결한다', () => {
+      mockUseMessageActions.mockReturnValue({ ...mockMessageActions, menu });
+
+      const { getByTestId } = render(<ChatRoomPage />);
+      fireEvent.press(getByTestId('overlay-edit'));
+      fireEvent.press(getByTestId('overlay-delete'));
+      fireEvent.press(getByTestId('overlay-close'));
+
+      expect(mockMessageActions.selectEdit).toHaveBeenCalled();
+      expect(mockMessageActions.selectDelete).toHaveBeenCalled();
+      expect(mockMessageActions.closeMenu).toHaveBeenCalled();
+    });
+
+    it('메뉴가 닫혀 있으면 오버레이를 띄우지 않는다', () => {
+      const { queryByTestId } = render(<ChatRoomPage />);
+
+      expect(queryByTestId('message-action-overlay')).toBeNull();
+    });
   });
 });

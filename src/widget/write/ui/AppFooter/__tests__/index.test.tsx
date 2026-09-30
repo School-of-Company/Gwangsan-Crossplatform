@@ -62,4 +62,11 @@ describe('AppFooter', () => {
 
     expect(queryByText('모달 열림')).toBeNull();
   });
+
+  it('안 읽은 수 조회가 실패해도 앱 전체를 에러 화면으로 바꾸지 않도록 조회한다(#740)', () => {
+    const { useChatRooms } = jest.requireMock('~/entity/chat');
+    render(<AppFooter {...mockTabBarProps} />);
+
+    expect(useChatRooms).toHaveBeenCalledWith({ throwOnError: false });
+  });
 });

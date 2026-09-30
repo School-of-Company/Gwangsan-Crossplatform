@@ -48,7 +48,7 @@ describe('ChatMessage', () => {
     };
 
     const { UNSAFE_getAllByType } = render(<ChatMessage message={message} />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
   });
@@ -75,7 +75,7 @@ describe('ChatMessage', () => {
     };
 
     const { getByText, UNSAFE_queryAllByType } = render(<ChatMessage message={message} />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     expect(UNSAFE_queryAllByType(Image)).toHaveLength(0);
     expect(getByText('텍스트만')).toBeTruthy();

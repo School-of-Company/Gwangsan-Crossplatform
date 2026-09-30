@@ -100,7 +100,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
 
   return (
     <View className="w-full" onLayout={handleLayout}>
-      <Text className="text-label text-black">밝기</Text>
+      <Text className="text-label text-foreground">밝기</Text>
       <View className="relative flex justify-center" style={{ height: touchAreaHeight }}>
         <View
           ref={sliderRef}
@@ -108,7 +108,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
           hitSlop={touchHitSlop}
           {...panResponder.panHandlers}>
           <View
-            className="absolute left-0 w-full bg-[#F1F5F9]"
+            className="absolute left-0 w-full bg-surface-muted"
             style={{
               top: barTop,
               height: barHeight,
@@ -126,7 +126,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
         </View>
         {sliderWidth > 0 && (
           <View
-            className="absolute border-solid border-sub2-500 bg-white"
+            className="absolute border-solid border-sub2-500 bg-background"
             style={{
               left: thumbPosition,
               top: thumbTop,
@@ -151,7 +151,7 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
               left: thumbPosition + thumbSize / 2 - 16,
               top: thumbTop - 34,
             }}>
-            <Text className="text-xs font-medium text-white">{localValue}</Text>
+            <Text className="text-xs font-medium text-background">{localValue}</Text>
           </View>
         )}
       </View>

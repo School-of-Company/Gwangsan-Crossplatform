@@ -56,7 +56,7 @@ export default function ProfileEditPageView() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="내 정보 수정" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" />
@@ -66,7 +66,7 @@ export default function ProfileEditPageView() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="내 정보 수정" />
 
       <KeyboardAwareScrollView
@@ -103,7 +103,7 @@ export default function ProfileEditPageView() {
       </KeyboardAwareScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
             {isSubmitting ? '수정 중...' : '수정'}
           </Button>
