@@ -44,6 +44,7 @@
     "babel-preset-expo": "~56.0.0",
     "clsx": "^2.1.1",
     "expo": "~56.0.22",
+    "expo-application": "~56.0.3",
     "expo-asset": "~56.0.20",
     "expo-background-fetch": "~56.0.27",
     "expo-build-properties": "~56.0.27",

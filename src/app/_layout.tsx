@@ -20,6 +20,7 @@ import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
 import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
+import { VersionUpdateModal } from '@/widget/appVersion';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -152,6 +153,7 @@ export default function RootLayout() {
             <BottomSheetPortalOutlet />
             <ToastStack topOffset={Platform.select({ ios: 70, default: 40 })} />
             <NoNetworkOverlay visible={!isConnected} />
+            <VersionUpdateModal />
           </QueryProvider>
         </View>
       </KeyboardProvider>
