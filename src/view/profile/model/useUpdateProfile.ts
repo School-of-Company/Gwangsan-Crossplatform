@@ -9,7 +9,7 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: (data: UpdateProfileRequest) => updateProfile(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
       Toast.show({
         type: 'success',
         text1: '성공',
