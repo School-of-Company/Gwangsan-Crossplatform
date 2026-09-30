@@ -1,0 +1,80 @@
+name: Auto Update PR Branches
+
+on:
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: auto-update-prs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-prs:
+    name: Update open PRs targeting ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update branches of open PRs
+        uses: actions/github-script@v9
+        with:
+          # PAT_TOKEN이 있어야 최신화 push로 ci.yml이 다시 실행됨
+          # (GITHUB_TOKEN으로 push하면 GitHub이 워크플로 재귀 실행을 막음).
+          # 미설정 시에도 최신화 자체는 동작하도록 GITHUB_TOKEN으로 폴백.
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const base = context.ref.replace('refs/heads/', '');
+            const { owner, repo } = context.repo;
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              base,
+              state: 'open',
+              per_page: 100,
+            });
+
+            for (const pr of prs) {
+              if (pr.draft) continue;
+              if (pr.user.login.endsWith('[bot]')) continue;
+              // fork PR은 이 저장소 토큰으로 브랜치를 업데이트할 수 없음
+              if (pr.head.repo?.full_name !== pr.base.repo.full_name) continue;
+              // 주간 릴리즈 PR(develop → main)은 main을 develop으로 되돌려 머지하게 되므로 제외
+              if (base === 'main' && pr.head.ref === 'develop') continue;
+
+              try {
+                await github.rest.pulls.updateBranch({
+                  owner,
+                  repo,
+                  pull_number: pr.number,
+                  expected_head_sha: pr.head.sha,
+                });
+                core.info(`#${pr.number} (${pr.head.ref}) 최신화 요청 완료`);
+              } catch (error) {
+                core.warning(`#${pr.number} (${pr.head.ref}) 최신화 실패: ${error.message}`);
+
+                if (!/conflict/i.test(error.message)) continue;
+
+                // 같은 head에 대해 이미 남긴 코멘트가 있으면 중복 알림 생략
+                const marker = `<!-- auto-update-prs:${pr.head.sha} -->`;
+                const comments = await github.paginate(github.rest.issues.listComments, {
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  per_page: 100,
+                });
+                if (comments.some((c) => c.body?.includes(marker))) continue;
+
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  body:
+                    `${marker}\n` +
+                    `이 PR은 최신 \`${base}\`와 충돌이 있어 자동으로 최신화하지 못했습니다. ` +
+                    '직접 업데이트해 주세요.',
+                });
+              }
+            }
