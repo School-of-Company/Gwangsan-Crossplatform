@@ -2,10 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { withdrawal } from '../api/withdrawal';
-import { removeData } from '~/shared/lib/removeData';
-import { clearAuthTokens } from '~/shared/lib/auth';
-import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
-import { cleanupNotificationSession } from '~/shared/lib/sessionCleanup';
+import { clearSession } from '~/shared/lib/clearSession';
 import Toast from 'react-native-toast-message';
 import { logger } from '~/shared/lib/logger';
 
@@ -16,13 +13,7 @@ export const useWithdrawal = () => {
   const withdrawalMutation = useMutation({
     mutationFn: withdrawal,
     onSuccess: async () => {
-      await Promise.allSettled([
-        clearAuthTokens(),
-        removeData('memberId'),
-        cleanupNotificationSession(),
-      ]);
-      clearCurrentUserId();
-      queryClient.clear();
+      await clearSession(queryClient);
       router.replace('/onboarding');
     },
     onError: (error) => {

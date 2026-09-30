@@ -8,7 +8,7 @@ interface IntroduceProps {
 export default function Introduce({ specialty, introduce }: IntroduceProps) {
   return (
     <View className="px-6">
-      <Text className="mb-6 text-titleSmall">소개</Text>
+      <Text className="mb-6 text-titleSmall text-foreground">소개</Text>
       <View testID="introduce-specialty-list" className="mb-3 flex-row flex-wrap gap-3">
         {specialty &&
           specialty.length > 0 &&

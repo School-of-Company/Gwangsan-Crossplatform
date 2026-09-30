@@ -7,6 +7,7 @@ import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
 import type { RoomId } from '~/shared/types/chatType';
 import { logger } from '~/shared/lib/logger';
+import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
 interface UseTradeHandlersParams {
   readonly roomId: RoomId;
@@ -50,7 +51,7 @@ export const useTradeHandlers = ({
   const patchProduct = useCallback(
     (patch: Record<string, unknown>) => {
       queryClient.setQueryData<{ product: Record<string, unknown> | null }>(
-        ['chatRoomData', roomId],
+        chatRoomDataKeys.room(roomId),
         (old) => (old?.product ? { ...old, product: { ...old.product, ...patch } } : old)
       );
     },

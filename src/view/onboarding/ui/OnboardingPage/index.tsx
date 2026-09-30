@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const OnboardingPage = () => {
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1">
         <View className="flex-7">
           <OnboardingSlideViewer />

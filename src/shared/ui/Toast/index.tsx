@@ -25,7 +25,7 @@ function GwangsanToast({ type, text1, text2, onPress }: ToastConfigParams<unknow
       <Icon name={name} size={20} color={color} />
       <View className="shrink">
         {text1 ? (
-          <Text numberOfLines={2} className="text-body4 font-semibold text-white">
+          <Text numberOfLines={2} className="text-body4 font-semibold text-background">
             {text1}
           </Text>
         ) : null}

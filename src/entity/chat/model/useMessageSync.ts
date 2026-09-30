@@ -5,9 +5,16 @@ import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
-import { chatMessageKeys } from './chatQueryKeys';
+import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
 import type { TransactionStateChangedPayload } from '../lib/socketService';
+import {
+  applyMessageUpdate,
+  isSameMessageId,
+  removeMessageById,
+  type MessageDeletedPayload,
+  type MessageUpdatedPayload,
+} from '../lib/messageCache';
 
 interface UseMessageSyncProps {
   currentRoomId?: RoomId;
@@ -27,7 +34,7 @@ export const useMessageSync = ({
       queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
     }
     if (currentRoomId !== undefined) {
-      queryClient.invalidateQueries({ queryKey: ['chatRoomData', currentRoomId] });
+      queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(currentRoomId) });
     }
   }, [queryClient, chatRoomQueryKey, currentRoomId]);
 
@@ -196,7 +203,7 @@ export const useMessageSync = ({
       // 이 방을 지금 보고 있지 않아도(채팅 목록 화면이거나 다른 방을 보는 중이어도) 반영되어야 하므로
       // currentRoomId 일치 여부로 걸러내지 않는다.
       let patchedExistingProduct = false;
-      queryClient.setQueryData<ChatRoomWithProduct>(['chatRoomData', data.roomId], (old) => {
+      queryClient.setQueryData<ChatRoomWithProduct>(chatRoomDataKeys.room(data.roomId), (old) => {
         if (!old?.product) return old;
         patchedExistingProduct = true;
         return {
@@ -219,7 +226,7 @@ export const useMessageSync = ({
       // 이 방에 처음 생기는 거래 요청이면 payload만으로는 title/images 등을 채울 수 없어 위에서 patch가
       // 스킵된다 — 상대방이 방을 이미 열어둔 상태라면 30초 폴링을 기다리지 않고 바로 다시 받아온다.
       if (!patchedExistingProduct) {
-        queryClient.invalidateQueries({ queryKey: ['chatRoomData', data.roomId] });
+        queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(data.roomId) });
       }
 
       if (!chatRoomQueryKey) return;
@@ -253,6 +260,49 @@ export const useMessageSync = ({
 
       // 새로 생성된 거래 요청처럼 캐시에 없는 필드(title/images 등)는 목록을 다시 받아와 채운다.
       queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
+    },
+    [queryClient, chatRoomQueryKey]
+  );
+
+  // 상대방(또는 내 다른 기기)이 메시지를 수정하면 이 방을 보고 있지 않아도 캐시를 맞춰 둔다
+  const handleMessageUpdated = useCallback(
+    (data: MessageUpdatedPayload) => {
+      if (data?.roomId == null || data.messageId == null) return;
+
+      queryClient.setQueryData<ChatMessageResponse[]>(chatMessageKeys.room(data.roomId), (old) =>
+        applyMessageUpdate(old, data)
+      );
+
+      if (!chatRoomQueryKey) return;
+      queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (old) =>
+        old?.map((room) =>
+          room.roomId === data.roomId && isSameMessageId(room.messageId, data.messageId)
+            ? { ...room, lastMessage: data.content }
+            : room
+        )
+      );
+    },
+    [queryClient, chatRoomQueryKey]
+  );
+
+  // 삭제된 메시지는 흔적 없이 양쪽 화면에서 사라져야 한다
+  const handleMessageDeleted = useCallback(
+    (data: MessageDeletedPayload) => {
+      if (data?.roomId == null || data.messageId == null) return;
+
+      queryClient.setQueryData<ChatMessageResponse[]>(chatMessageKeys.room(data.roomId), (old) =>
+        removeMessageById(old, data.messageId)
+      );
+
+      if (!chatRoomQueryKey) return;
+      const rooms = queryClient.getQueryData<ChatRoomListItem[]>(chatRoomQueryKey);
+      const isLastMessage = rooms?.some(
+        (room) => room.roomId === data.roomId && isSameMessageId(room.messageId, data.messageId)
+      );
+      // 마지막 메시지가 지워지면 그 이전 메시지는 캐시만으로 알 수 없어 목록을 다시 받아온다
+      if (isLastMessage) {
+        queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
+      }
     },
     [queryClient, chatRoomQueryKey]
   );
@@ -301,6 +351,8 @@ export const useMessageSync = ({
     handleReceiveMessage,
     handleUpdateRoomList,
     handleTransactionStateChanged,
+    handleMessageUpdated,
+    handleMessageDeleted,
     markRoomAsRead,
   };
 };
