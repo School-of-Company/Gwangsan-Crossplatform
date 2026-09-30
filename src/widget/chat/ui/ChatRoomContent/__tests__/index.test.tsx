@@ -2,7 +2,7 @@ import React from 'react';
 import { DeviceEventEmitter, FlatList, Text } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { AnimatedRef } from 'react-native-reanimated';
-import { ChatRoomContent } from '../index';
+import { ChatRoomContent, getEmptyStateBottomInset } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
@@ -35,8 +35,13 @@ jest.mock('../../MyMessage', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    MyMessage: ({ message, isLast }: any) => (
-      <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
+    MyMessage: ({ message, isLast, onLongPress }: any) => (
+      <Text
+        testID={`my-message-${message.messageId}`}
+        accessibilityHint={onLongPress ? 'long-pressable' : undefined}
+        onLongPress={onLongPress ? () => onLongPress(message) : undefined}>
+        {isLast ? 'last' : ''}
+      </Text>
     ),
   };
 });
@@ -81,6 +86,7 @@ jest.mock('~/entity/chat', () => {
     formatMessageTime: (createdAt: string) => createdAt,
     getMessageDateKey: (createdAt: string) => createdAt.slice(0, 10),
     formatDateDividerLabel: (createdAt: string) => `날짜-${createdAt.slice(0, 10)}`,
+    canModifyMessage: (message: any) => message.isMine && message.messageId !== 99,
   };
 });
 
@@ -130,6 +136,25 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('icon-chatbubbles-outline')).toBeTruthy();
     expect(getByText(/아직 대화가 없습니다/)).toBeTruthy();
     expect(queryByText('채팅방 헤더')).toBeNull();
+  });
+
+  it('빈 채팅방에서 아무 데나 누르면 키보드를 내린다', () => {
+    const { Keyboard } = require('react-native');
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
+
+    fireEvent.press(getByTestId('chat-empty-state-dismiss'));
+
+    expect(dismissSpy).toHaveBeenCalled();
+    dismissSpy.mockRestore();
+  });
+
+  it('빈 상태 안내는 키보드 높이를 반영하는 컨테이너 안에 그린다', () => {
+    const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
+
+    const container = getByTestId('chat-empty-state');
+    expect(container).toBeTruthy();
+    expect(getByTestId('icon-chatbubbles-outline')).toBeTruthy();
   });
 
   it('거래 임베드를 메시지 createdAt 순서에 맞게 삽입한다', () => {
@@ -476,5 +501,59 @@ describe('ChatRoomContent', () => {
 
     const listAfterShow = UNSAFE_getByType(FlatList);
     expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(10);
+  });
+
+  describe('내 메시지 길게 누르기', () => {
+    it('수정/삭제할 수 있는 내 메시지에만 길게 누르기 핸들러를 넘긴다', () => {
+      const onMyMessageLongPress = jest.fn();
+      const messages = [
+        createMessage({ messageId: 1, isMine: true, createdAt: '2026-05-28T01:00:00.000Z' }),
+        // canModifyMessage mock이 false를 돌려주는 메시지(예: 24시간 경과)
+        createMessage({ messageId: 99, isMine: true, createdAt: '2026-05-28T01:01:00.000Z' }),
+      ];
+
+      const { getByTestId } = render(
+        <ChatRoomContent
+          {...defaultProps}
+          messages={messages}
+          hasMessages
+          onMyMessageLongPress={onMyMessageLongPress}
+        />
+      );
+
+      expect(getByTestId('my-message-1').props.accessibilityHint).toBe('long-pressable');
+      expect(getByTestId('my-message-99').props.accessibilityHint).toBeUndefined();
+
+      fireEvent(getByTestId('my-message-1'), 'longPress');
+      expect(onMyMessageLongPress).toHaveBeenCalledWith(expect.objectContaining({ messageId: 1 }));
+    });
+
+    it('핸들러를 넘기지 않으면 길게 누르기를 연결하지 않는다', () => {
+      const messages = [createMessage({ messageId: 1, isMine: true })];
+
+      const { getByTestId } = render(
+        <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+      );
+
+      expect(getByTestId('my-message-1').props.accessibilityHint).toBeUndefined();
+    });
+  });
+});
+
+describe('getEmptyStateBottomInset', () => {
+  it('키보드가 닫혀 있으면 여백이 없다', () => {
+    expect(getEmptyStateBottomInset(0, 34)).toBe(0);
+  });
+
+  it('키보드가 열리면 닫힘 상태 오프셋을 뺀 만큼 여백을 준다', () => {
+    expect(getEmptyStateBottomInset(-300, 34)).toBe(266);
+  });
+
+  it('하단 안전 영역이 없으면 키보드 높이만큼 여백을 준다', () => {
+    expect(getEmptyStateBottomInset(-280, 0)).toBe(280);
+  });
+
+  it('키보드가 닫히는 중 오프셋보다 낮아지면 음수 대신 0을 돌려준다', () => {
+    expect(getEmptyStateBottomInset(-20, 34)).toBe(0);
   });
 });

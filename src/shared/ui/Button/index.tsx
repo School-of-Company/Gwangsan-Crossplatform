@@ -48,7 +48,7 @@ export const Button = ({
 
   return (
     <TouchableOpacity
-      className={`h-[52px] ${width} justify-center bg-white`}
+      className={`h-[52px] ${width} justify-center bg-background`}
       disabled={disabled}
       activeOpacity={1}
       onPressIn={handlePressIn}
@@ -59,18 +59,18 @@ export const Button = ({
         className={`h-full items-center justify-center rounded-xl px-8 py-3 ${
           disabled
             ? variant === 'primary'
-              ? 'bg-[#CDCDCF]'
+              ? 'bg-disabled'
               : variant === 'secondary'
-                ? 'border-2 border-[#CDCDCF] bg-white'
+                ? 'border-2 border-disabled bg-background'
                 : variant === 'neutral'
-                  ? 'bg-[#CDCDCF]'
-                  : 'bg-[#CDCDCF]'
+                  ? 'bg-disabled'
+                  : 'bg-disabled'
             : variant === 'primary'
               ? 'bg-main-500'
               : variant === 'secondary'
-                ? 'border-2 border-main-500 bg-white'
+                ? 'border-2 border-main-500 bg-background'
                 : variant === 'neutral'
-                  ? 'bg-[#F3F4F5]'
+                  ? 'bg-surface-muted'
                   : 'bg-error-500'
         } `}
         style={{

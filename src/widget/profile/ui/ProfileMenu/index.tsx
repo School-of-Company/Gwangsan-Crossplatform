@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { useSignout, useWithdrawal } from '~/entity/auth';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface ProfileMenuProps {
   isMe: boolean;
@@ -55,15 +56,18 @@ interface TradeMenuRowProps {
   onPress?: () => void;
 }
 
-const TradeMenuRow = ({ label, disabled = false, onPress }: TradeMenuRowProps) => (
-  <PressableCardRow
-    disabled={disabled}
-    onPress={onPress}
-    rowClassName="flex-row items-center justify-between px-6">
-    <Text className="text-lg font-medium text-gray-900">{label}</Text>
-    <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
-  </PressableCardRow>
-);
+const TradeMenuRow = ({ label, disabled = false, onPress }: TradeMenuRowProps) => {
+  const colors = useThemeColors();
+  return (
+    <PressableCardRow
+      disabled={disabled}
+      onPress={onPress}
+      rowClassName="flex-row items-center justify-between px-6">
+      <Text className="text-lg font-medium text-gray-900">{label}</Text>
+      <MaterialIcons name="chevron-right" size={22} color={colors['gray-400']} />
+    </PressableCardRow>
+  );
+};
 
 interface ProfileActionRowProps {
   label: string;
@@ -119,7 +123,7 @@ export default function ProfileMenu({ isMe, memberId }: ProfileMenuProps) {
 
   return (
     <View className="mx-6 mt-3 gap-4">
-      <View className="overflow-hidden rounded-xl bg-[#F3F4F5]">
+      <View className="overflow-hidden rounded-xl bg-surface-muted">
         <TradeMenuRow label="판매관리" onPress={() => router.push(`/profile/selling${idQuery}`)} />
         <TradeMenuRow
           label="거래내역"
@@ -136,14 +140,14 @@ export default function ProfileMenu({ isMe, memberId }: ProfileMenuProps) {
       </View>
 
       {appVersion && (
-        <View className="h-[56px] w-full flex-row items-center justify-between rounded-xl bg-[#F3F4F5] px-6">
+        <View className="h-[56px] w-full flex-row items-center justify-between rounded-xl bg-surface-muted px-6">
           <Text className="text-lg font-medium text-gray-900">버전</Text>
           <Text className="text-lg font-medium text-gray-900">{appVersion}</Text>
         </View>
       )}
 
       {isMe && (
-        <View className="overflow-hidden rounded-xl bg-[#F3F4F5]" style={{ marginBottom: 32 }}>
+        <View className="overflow-hidden rounded-xl bg-surface-muted" style={{ marginBottom: 32 }}>
           <ProfileActionRow
             label={isWithdrawalLoading ? '회원탈퇴 중...' : '회원탈퇴'}
             disabled={isActionDisabled}

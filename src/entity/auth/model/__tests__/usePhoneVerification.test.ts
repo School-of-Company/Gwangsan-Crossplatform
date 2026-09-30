@@ -233,7 +233,7 @@ describe('verifyCode', () => {
 
   it('인증 성공 시 isVerified가 true가 되고 true를 반환한다', async () => {
     mockSendSmsApi.mockResolvedValue(undefined);
-    mockVerifySmsApi.mockResolvedValue({ verified: true });
+    mockVerifySmsApi.mockResolvedValue(undefined);
 
     const { result } = renderHook(() =>
       usePhoneVerification({ sendSmsApi: mockSendSmsApi, verifySmsApi: mockVerifySmsApi })

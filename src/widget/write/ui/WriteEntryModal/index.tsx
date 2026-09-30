@@ -5,8 +5,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { BottomSheetModalWrapper, SelectionCard } from '~/shared/ui';
 import { MODE_OPTIONS, TYPE_OPTIONS } from '~/widget/write/model/options';
-import { ProductType, TYPE } from '~/widget/write/model/type';
-import { ModeType, MODE } from '~/widget/write/model/mode';
+import { ProductType, TYPE } from '~/shared/types/type';
+import { ModeType, MODE } from '~/shared/types/mode';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface WriteEntryModalProps {
   isVisible: boolean;
@@ -15,9 +16,9 @@ interface WriteEntryModalProps {
 
 type Stage = 'category' | 'mode';
 
-const TYPE_ICONS: Record<ProductType, React.ReactNode> = {
-  [TYPE.OBJECT]: <Ionicons name="bag-outline" size={36} color="#3C3C3E" />,
-  [TYPE.SERVICE]: <MaterialCommunityIcons name="headset" size={36} color="#3C3C3E" />,
+const TYPE_ICONS: Record<ProductType, (color: string) => React.ReactNode> = {
+  [TYPE.OBJECT]: (color) => <Ionicons name="bag-outline" size={36} color={color} />,
+  [TYPE.SERVICE]: (color) => <MaterialCommunityIcons name="headset" size={36} color={color} />,
 };
 
 const MODE_ICONS: Record<ProductType, Record<ModeType, keyof typeof Ionicons.glyphMap>> = {
@@ -32,6 +33,7 @@ const MODE_ICONS: Record<ProductType, Record<ModeType, keyof typeof Ionicons.gly
 };
 
 export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
+  const colors = useThemeColors();
   const [stage, setStage] = useState<Stage>('category');
   const [selectedType, setSelectedType] = useState<ProductType | null>(null);
 
@@ -65,7 +67,7 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
         <TouchableOpacity
           className="mb-4 flex-row items-center"
           onPress={() => setStage('category')}>
-          <Ionicons name="chevron-back" size={18} color="#666" />
+          <Ionicons name="chevron-back" size={18} color={colors['gray-700']} />
           <Text className="ml-1 text-sm text-gray-500">뒤로</Text>
         </TouchableOpacity>
       )}
@@ -74,7 +76,7 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
           ? TYPE_OPTIONS.map((option) => (
               <SelectionCard
                 key={option.value}
-                icon={TYPE_ICONS[option.value]}
+                icon={TYPE_ICONS[option.value](colors.foreground)}
                 label={option.label}
                 onPress={() => handleSelectType(option.value)}
               />
@@ -87,7 +89,7 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
                   <Ionicons
                     name={MODE_ICONS[selectedType][option.value]}
                     size={36}
-                    color="#3C3C3E"
+                    color={colors.foreground}
                   />
                 }
                 label={option.label}

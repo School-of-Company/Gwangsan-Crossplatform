@@ -47,7 +47,7 @@ describe('NoticeDetailSlideViewer', () => {
     const notice = makeNotice(3);
     const { UNSAFE_getAllByType } = render(<NoticeDetailSlideViewer notice={notice} />);
 
-    const images = UNSAFE_getAllByType(require('react-native').Image);
+    const images = UNSAFE_getAllByType(require('expo-image').Image);
     expect(images).toHaveLength(3);
   });
 
@@ -98,7 +98,7 @@ describe('NoticeDetailSlideViewer', () => {
     const notice = makeNotice(1);
     const { UNSAFE_getAllByType } = render(<NoticeDetailSlideViewer notice={notice} />);
 
-    const images = UNSAFE_getAllByType(require('react-native').Image);
+    const images = UNSAFE_getAllByType(require('expo-image').Image);
     expect(images[0].props.style.width).toBe(SCREEN_WIDTH);
   });
 
