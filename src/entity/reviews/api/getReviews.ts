@@ -1,5 +1,6 @@
 import { instance } from '~/shared/lib/axios';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { assertValidId } from '~/shared/lib/validateId';
 import { ReviewPostType } from '../model/reviewPostType';
 
 export interface ReviewsPageParams {
@@ -14,6 +15,7 @@ export const getReceiveReview = async (
   params?: ReviewsPageParams
 ): Promise<ReviewPostType[]> => {
   try {
+    assertValidId(id);
     const { data } = params
       ? await instance.get<ReviewPostType[]>(`/review/${id}`, { params })
       : await instance.get<ReviewPostType[]>(`/review/${id}`);

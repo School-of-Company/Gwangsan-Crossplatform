@@ -40,6 +40,7 @@ exports[`ProgressBar 스냅샷 - 기본값 1`] = `
       onResponderTerminationRequest={[Function]}
       onStartShouldSetResponder={[Function]}
       onStartShouldSetResponderCapture={[Function]}
+      testID="progress-bar-track"
     >
       <View
         className="absolute left-0 w-full bg-surface-muted"
@@ -106,6 +107,7 @@ exports[`ProgressBar 스냅샷 - 커스텀 min/max/value 1`] = `
       onResponderTerminationRequest={[Function]}
       onStartShouldSetResponder={[Function]}
       onStartShouldSetResponderCapture={[Function]}
+      testID="progress-bar-track"
     >
       <View
         className="absolute left-0 w-full bg-surface-muted"
