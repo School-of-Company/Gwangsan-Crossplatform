@@ -12,59 +12,20 @@ describe('useMultiSelect', () => {
     expect(result.current.displayText).toBeUndefined();
   });
 
-  it('initialSelectedItems로 초기화된다', () => {
+  it('selectedItems로 초기화된다', () => {
     const { result } = renderHook(() =>
-      useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동', '독서'] })
+      useMultiSelect({ items: ITEMS, selectedItems: ['운동', '독서'] })
     );
 
     expect(result.current.selectedItems).toEqual(['운동', '독서']);
   });
 
-  it('initialSelectedItems 중 기본 목록에 없는 항목도 allItems에 포함되어 계속 보인다', () => {
-    const { result } = renderHook(() =>
-      useMultiSelect({ items: ITEMS, initialSelectedItems: ['댄스'] })
-    );
+  it('selectedItems 중 기본 목록에 없는 항목도 allItems에 포함되어 계속 보인다', () => {
+    const { result } = renderHook(() => useMultiSelect({ items: ITEMS, selectedItems: ['댄스'] }));
 
     expect(result.current.allItems).toContain('댄스');
     expect(result.current.selectedItems).toContain('댄스');
     expect(result.current.isSelected('댄스')).toBe(true);
-  });
-
-  it('initialSelectedItems가 마운트 이후 뒤늦게 도착해도 칩과 선택 상태에 반영된다 (#722)', () => {
-    // 내 정보 수정 화면처럼 프로필 데이터가 비동기로 도착해, 처음엔 빈 배열로
-    // 마운트되었다가 나중에 실제 값으로 갱신되는 상황을 재현한다.
-    const { result, rerender } = renderHook(
-      ({ initialSelectedItems }: { initialSelectedItems: string[] }) =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems }),
-      { initialProps: { initialSelectedItems: [] } }
-    );
-
-    expect(result.current.allItems).toEqual(ITEMS);
-
-    rerender({ initialSelectedItems: ['댄스'] });
-
-    expect(result.current.allItems).toContain('댄스');
-    expect(result.current.isSelected('댄스')).toBe(true);
-  });
-
-  it('직접 입력 칩을 선택 해제할 수 있고, 저장 후 다시 열었을 때 서버에 없으면 재등장하지 않는다 (#722)', () => {
-    const { result, unmount } = renderHook(() =>
-      useMultiSelect({ items: ITEMS, initialSelectedItems: ['댄스'] })
-    );
-
-    act(() => {
-      result.current.handleSelect('댄스');
-    });
-
-    expect(result.current.isSelected('댄스')).toBe(false);
-    // 같은 세션에서는 다시 선택할 수 있도록 칩 자체는 유지된다
-    expect(result.current.allItems).toContain('댄스');
-
-    unmount();
-
-    // 저장 후 화면을 다시 열었다고 가정 — 서버가 더 이상 '댄스'를 내려주지 않는다
-    const reopened = renderHook(() => useMultiSelect({ items: ITEMS, initialSelectedItems: [] }));
-    expect(reopened.result.current.allItems).not.toContain('댄스');
   });
 
   describe('handleSelect', () => {
@@ -80,7 +41,7 @@ describe('useMultiSelect', () => {
 
     it('이미 선택된 항목을 선택하면 selectedItems에서 제거된다', () => {
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동'] })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동'] })
       );
 
       act(() => {
@@ -141,7 +102,7 @@ describe('useMultiSelect', () => {
     it('onSelect 콜백에 새 항목이 포함된 배열을 전달한다', () => {
       const onSelect = jest.fn();
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동'], onSelect })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동'], onSelect })
       );
 
       act(() => {
@@ -161,7 +122,7 @@ describe('useMultiSelect', () => {
 
     it('선택된 항목을 쉼표로 연결한 문자열을 반환한다', () => {
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동', '독서'] })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동', '독서'] })
       );
 
       expect(result.current.displayText).toBe('운동, 독서');
@@ -171,7 +132,7 @@ describe('useMultiSelect', () => {
   describe('isSelected', () => {
     it('선택된 항목에 대해 true를 반환한다', () => {
       const { result } = renderHook(() =>
-        useMultiSelect({ items: ITEMS, initialSelectedItems: ['운동'] })
+        useMultiSelect({ items: ITEMS, selectedItems: ['운동'] })
       );
 
       expect(result.current.isSelected('운동')).toBe(true);
@@ -181,6 +142,61 @@ describe('useMultiSelect', () => {
       const { result } = renderHook(() => useMultiSelect({ items: ITEMS }));
 
       expect(result.current.isSelected('운동')).toBe(false);
+    });
+  });
+
+  describe('외부 selectedItems 동기화', () => {
+    it('마운트 뒤 selectedItems가 채워지면 선택 상태와 allItems에 반영한다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: [] as string[] } }
+      );
+
+      rerender({ selected: ['운동', '댄스'] });
+
+      expect(result.current.selectedItems).toEqual(['운동', '댄스']);
+      expect(result.current.isSelected('댄스')).toBe(true);
+      expect(result.current.allItems).toContain('댄스');
+    });
+
+    it('onSelect로 부모에 전달한 값이 다시 prop으로 돌아와도 선택 상태가 그대로다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: ['운동'] } }
+      );
+
+      act(() => result.current.handleSelect('독서'));
+      rerender({ selected: ['운동', '독서'] });
+
+      expect(result.current.selectedItems).toEqual(['운동', '독서']);
+    });
+
+    it('같은 내용의 새 배열이 전달되면 사용자가 바꾼 선택을 덮어쓰지 않는다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: ['운동'] } }
+      );
+
+      act(() => result.current.handleSelect('독서'));
+      rerender({ selected: ['운동'] });
+
+      expect(result.current.selectedItems).toEqual(['운동', '독서']);
+    });
+
+    it('선택값에서 빠진 직접 입력 항목도 칩 목록에는 남아 있다', () => {
+      const { result, rerender } = renderHook(
+        ({ selected }: { selected: string[] }) =>
+          useMultiSelect({ items: ITEMS, selectedItems: selected }),
+        { initialProps: { selected: ['댄스'] } }
+      );
+
+      rerender({ selected: [] });
+
+      expect(result.current.selectedItems).toEqual([]);
+      expect(result.current.allItems).toContain('댄스');
     });
   });
 });

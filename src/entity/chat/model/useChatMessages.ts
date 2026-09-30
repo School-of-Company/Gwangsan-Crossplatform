@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { getChatMessages } from '../api/getChatMessages';
+import { getChatRoomData } from '../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse, ChatApiError } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
-import { chatMessageKeys } from './chatQueryKeys';
+import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 
 export { chatMessageKeys };
 
@@ -31,7 +31,18 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
 
   const query = useQuery({
     queryKey: chatMessageKeys.room(roomId),
-    queryFn: () => getChatMessages(roomId),
+    // 메시지와 거래 상품(useChatRoomData)은 같은 GET /chat/{roomId} 응답에서 나온다. 직접 요청하지 않고
+    // chatRoomData 쿼리를 거쳐, 같은 응답을 받는 요청(채팅 목록의 진입 전 프리페치, useChatRoomData의
+    // 마운트 조회)이 이미 진행 중이면 그 요청에 합류한다(#731). staleTime: 0이라 이미 끝난 캐시만
+    // 있을 때는 새로 받아오므로, 아래 refetchOnMount: 'always'의 의도(#626)는 그대로 유지된다.
+    queryFn: async () => {
+      const data = await queryClient.fetchQuery({
+        queryKey: chatRoomDataKeys.room(roomId),
+        queryFn: () => getChatRoomData(roomId),
+        staleTime: 0,
+      });
+      return [...data.messages];
+    },
     enabled: enabled && !!roomId,
     refetchInterval,
     staleTime: 5000,

@@ -6,6 +6,9 @@ import { logger } from '../lib/logger';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+// 전역 타임아웃(5초)은 최대 10MB 업로드에는 짧아 셀룰러 환경에서 업로드가 자주 실패했다(#739)
+export const UPLOAD_TIMEOUT_MS = 60_000;
+
 export const uploadImage = async (uri: string): Promise<ImageType> => {
   try {
     const file = new FileSystem.File(uri);
@@ -33,6 +36,7 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: UPLOAD_TIMEOUT_MS,
     };
 
     const response = await instance.post<ImageType>('/image', formData, config);

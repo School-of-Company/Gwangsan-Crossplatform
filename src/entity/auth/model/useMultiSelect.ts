@@ -1,41 +1,46 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 interface UseMultiSelectProps<T extends string> {
   items: T[];
-  initialSelectedItems?: T[];
+  selectedItems?: T[];
   onSelect?: (items: T[]) => void;
 }
 
+const EMPTY_ITEMS: readonly string[] = [];
+
+const isSameItems = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((item, index) => item === b[index]);
+
+const withExtraItems = (base: readonly string[], extra: readonly string[]) => [
+  ...base,
+  ...extra.filter((item) => !base.includes(item)),
+];
+
 export function useMultiSelect<T extends string>({
   items,
-  initialSelectedItems = [],
+  selectedItems: externalSelectedItems = EMPTY_ITEMS as T[],
   onSelect,
 }: UseMultiSelectProps<T>) {
-  const [selectedItems, setSelectedItems] = useState<string[]>(initialSelectedItems);
-  // 직접 입력으로 추가했거나, 서버에서 받아온 선택값 중 기본 목록에 없는 항목.
+  const [selectedItems, setSelectedItems] = useState<string[]>(externalSelectedItems);
+  // 이전에 직접 입력으로 추가했던 항목처럼, 선택값 중 기본 목록에 없는 항목도
   // 칩으로 계속 보이고 다시 선택 해제할 수 있어야 한다.
-  const [customItems, setCustomItems] = useState<string[]>(() =>
-    initialSelectedItems.filter((item) => !items.includes(item))
+  const [allItems, setAllItems] = useState<string[]>(() =>
+    withExtraItems(items, externalSelectedItems)
   );
 
-  // 내 정보 수정 화면처럼 선택값이 마운트 이후 비동기로 도착하는 경우가 있다. 마운트
-  // 시점의 값만 쓰면 기존 특기가 선택 표시되지 않고(#721), 직접 입력했던 특기는 칩으로
-  // 나타나지도 않아 저장할 때 조용히 사라진다(#722). 외부 선택값이 바뀔 때마다 반영한다.
-  // 값이 그대로면 이전 상태를 그대로 돌려줘서, items/initialSelectedItems가 매 렌더
-  // 새 배열로 들어와도 리렌더가 반복되지 않는다.
-  const externalSelected = JSON.stringify(initialSelectedItems);
-  useEffect(() => {
-    const next: string[] = JSON.parse(externalSelected);
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedItems((prev) => (JSON.stringify(prev) === externalSelected ? prev : next));
-    setCustomItems((prev) => {
-      const added = next.filter((item) => !items.includes(item as T) && !prev.includes(item));
-      return added.length > 0 ? [...prev, ...added] : prev;
-    });
-  }, [externalSelected, items]);
-
-  const allItems = useMemo(() => [...items, ...customItems], [items, customItems]);
+  // 내 정보 수정처럼 프로필을 불러온 뒤에야 선택값이 채워지는 경우, 첫 마운트 때의 빈 값으로
+  // 굳어 버리면 기존 특기가 선택되지 않은 채로 보이고, 칩을 누르면 빈 목록 기준으로 덮어써져
+  // 기존 특기가 사라진다. 외부 선택값이 바뀌면 렌더 중에 내부 상태를 맞춘다.
+  // onSelect → 부모 state → 다시 prop으로 돌아오는 값은 내부 상태와 같으므로 건너뛴다.
+  const [lastExternalItems, setLastExternalItems] =
+    useState<readonly string[]>(externalSelectedItems);
+  if (!isSameItems(externalSelectedItems, lastExternalItems)) {
+    setLastExternalItems(externalSelectedItems);
+    if (!isSameItems(externalSelectedItems, selectedItems)) {
+      setSelectedItems(externalSelectedItems);
+      setAllItems((prev) => withExtraItems(prev, externalSelectedItems));
+    }
+  }
 
   const handleSelect = useCallback(
     (item: string) => {
@@ -57,17 +62,13 @@ export function useMultiSelect<T extends string>({
 
   const addCustomItem = useCallback(
     (newItem: string) => {
-      if (selectedItems.includes(newItem)) return;
-
-      setCustomItems((prev) =>
-        prev.includes(newItem) || items.includes(newItem as T) ? prev : [...prev, newItem]
-      );
-      setSelectedItems([...selectedItems, newItem]);
+      setAllItems((prev) => [...prev, newItem]);
+      setSelectedItems((prev) => [...prev, newItem]);
       if (onSelect) {
         onSelect([...selectedItems, newItem] as T[]);
       }
     },
-    [selectedItems, onSelect, items]
+    [selectedItems, onSelect]
   );
 
   const displayText = useMemo(() => {

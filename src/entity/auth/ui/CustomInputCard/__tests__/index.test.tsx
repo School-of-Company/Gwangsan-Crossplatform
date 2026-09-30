@@ -164,9 +164,13 @@ describe('CustomInputCard', () => {
       />
     );
 
-    fireEvent(UNSAFE_getByProps({ className: 'w-full gap-6 rounded-2xl bg-white p-6' }), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 200 } },
-    });
+    fireEvent(
+      UNSAFE_getByProps({ className: 'w-full gap-6 rounded-2xl bg-surface p-6' }),
+      'layout',
+      {
+        nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 200 } },
+      }
+    );
 
     await waitFor(() => expect(onOpenAnimationComplete).toHaveBeenCalledTimes(1));
   });

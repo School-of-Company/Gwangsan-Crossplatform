@@ -1,5 +1,5 @@
 import { instance } from '@/shared/lib/axios';
-import { SignupFormData } from '~/entity/auth/model/authState';
+import { SignupFormData } from '~/shared/types/authState';
 import { clearAuthTokens } from '@/shared/lib/auth';
 import { toAppError } from '~/shared/lib/errorHandler';
 

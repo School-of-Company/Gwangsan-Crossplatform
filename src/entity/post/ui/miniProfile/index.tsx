@@ -25,11 +25,11 @@ export default function MiniProfile({ nickname, placeName, light, memberId }: Mi
           source={require('~/shared/assets/png/defaultProfile.png')}
         />
         <View className="gap-[5px]">
-          <Text className="text-body3">{nickname}</Text>
+          <Text className="text-body3 text-foreground">{nickname}</Text>
           <Text className="text-body5 text-gray-600">{placeName}</Text>
         </View>
       </View>
-      <Text className={`text-body1`}>{light + '단계'}</Text>
+      <Text className={`text-body1 text-foreground`}>{light + '단계'}</Text>
     </TouchableOpacity>
   );
 }

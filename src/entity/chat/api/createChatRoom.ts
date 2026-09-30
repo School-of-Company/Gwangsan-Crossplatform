@@ -1,4 +1,3 @@
-import Toast from 'react-native-toast-message';
 import { instance } from '@/shared/lib/axios';
 import type { CreateChatRoomResponse, ChatApiError } from '../model/chatTypes';
 import type { ProductId } from '@/shared/types/chatType';
@@ -9,15 +8,8 @@ export const createChatRoom = async (productId: ProductId): Promise<CreateChatRo
     const response = await instance.post(`/chat/room/${productId}`);
     return { roomId: response.data.roomId };
   } catch (e) {
-    const error = e as ChatApiError;
-
-    Toast.show({
-      type: 'error',
-      text1: '채팅방 생성 실패',
-      text2: error.message,
-      visibilityTime: 3000,
-    });
-
-    throw toAppError(error);
+    // 사용자 안내(토스트)는 호출한 쪽(UI 계층)에서 한다. API 안에서 띄우면 훅의 onError 토스트와
+    // 겹치거나, 백그라운드 호출(읽음 처리 등)에서도 토스트가 떠 중복된다(#739)
+    throw toAppError(e as ChatApiError);
   }
 };

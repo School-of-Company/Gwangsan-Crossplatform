@@ -7,7 +7,7 @@ import SellingPageView from '../index';
 import { useGetProfile } from '~/view/profile/model/useGetProfile';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
 import { useGetSellingPosts } from '~/view/profile/model/useGetSellingPosts';
-import { useGetReviews } from '~/view/reviews/model/useGetReviews';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
 import { deletePost } from '~/entity/post/api/deletePost';
 
 jest.mock('expo-router', () => ({
@@ -29,7 +29,7 @@ jest.mock('react-native-toast-message', () => ({
 jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useGetSellingPosts', () => ({ useGetSellingPosts: jest.fn() }));
-jest.mock('~/view/reviews/model/useGetReviews', () => ({ useGetReviews: jest.fn() }));
+jest.mock('~/entity/reviews/model/useGetReviews', () => ({ useGetReviews: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {
@@ -637,5 +637,18 @@ describe('SellingPageView', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text1: '글을 불러오는데 실패했습니다.' })
     );
+  });
+
+  it('실패 상태로 다시 렌더링되어도 에러 토스트를 반복해서 띄우지 않는다(#740)', () => {
+    setSellingPosts([], { posts: [], error: new Error('게시물 오류'), isError: true });
+
+    const { rerender } = renderWithProviders(<SellingPageView />);
+    rerender(<SellingPageView />);
+
+    expect(
+      (Toast.show as jest.Mock).mock.calls.filter(
+        ([options]) => options?.text1 === '글을 불러오는데 실패했습니다.'
+      )
+    ).toHaveLength(1);
   });
 });

@@ -34,6 +34,12 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # PR에서는 아래 unit-coverage job이 테스트를 돌리므로, main/develop에 직접 push된 경우에만
+      # 여기서 실행한다. 예전에는 push 때 단위 테스트가 전혀 돌지 않았다(#741)
+      - name: Unit tests
+        if: github.event_name != 'pull_request'
+        run: npm test -- --ci
+
   unit-coverage:
     name: Unit Test Coverage
     if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
