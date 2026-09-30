@@ -20,6 +20,10 @@ import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/shared/lib/useChatEntry';
 import { useGlobalChatNotifications } from '@/shared/lib/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
+import {
+  createNotificationDedupeGuard,
+  resolveNotificationAction,
+} from '@/shared/lib/notificationRouting';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -57,30 +61,32 @@ function ChatNotificationHandler() {
     registerChatBackgroundTask();
   }, []);
 
-  const handledNotificationIdsRef = useRef<Set<string>>(new Set());
+  const dedupeGuardRef = useRef(createNotificationDedupeGuard());
 
   useEffect(() => {
     const handleResponse = (response: Notifications.NotificationResponse) => {
       // 콜드스타트 경로와 리스너 경로에서 같은 알림이 두 번 처리되지 않도록 방어
       const id = response.notification.request.identifier;
-      if (id) {
-        if (handledNotificationIdsRef.current.has(id)) return;
-        handledNotificationIdsRef.current.add(id);
-      }
+      if (!dedupeGuardRef.current.shouldProcess(id)) return;
 
       const data = response.notification.request.content.data as {
         alertType?: AlertType;
         sourceId?: number;
         roomId?: number;
       };
-      if (data?.alertType === AlertType.CHTTING_REQUEST && data?.sourceId != null) {
-        navigateToChatRef.current(data.sourceId);
-      } else if (data?.roomId != null) {
-        navigateToRoomRef.current(data.roomId);
-      } else if (data?.alertType === AlertType.TRADE_COMPLETE && data?.sourceId != null) {
-        routerRef.current.push(`/post/${data.sourceId}?review=1`);
-      } else if (data?.alertType === AlertType.REVIEW && data?.sourceId != null) {
-        routerRef.current.push(`/cancelTrade/${data.sourceId}`);
+      const action = resolveNotificationAction(data);
+      switch (action.type) {
+        case 'chatEntry':
+          navigateToChatRef.current(action.productId);
+          break;
+        case 'room':
+          navigateToRoomRef.current(action.roomId);
+          break;
+        case 'push':
+          routerRef.current.push(action.href);
+          break;
+        case 'none':
+          break;
       }
     };
 

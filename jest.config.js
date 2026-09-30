@@ -30,7 +30,9 @@ module.exports = {
     '^@/widget/(.*)$': '<rootDir>/src/widget/$1',
   },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/app/**'],
+  // src/app/**는 대부분 Expo Router 라우트 파일(로직 없는 화면 매핑)이라 전부 제외했으나,
+  // 실제 로직이 있는 파일은 테스트를 추가하며 하나씩 화이트리스트에 되돌린다.
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/app/**', 'src/app/index.tsx'],
   coverageReporters: ['json-summary', 'text', 'lcov'],
   coverageThreshold: {
     global: {
