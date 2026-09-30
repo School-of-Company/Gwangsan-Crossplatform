@@ -15,6 +15,7 @@
     "plugins": [
       "expo-router",
       "expo-image",
+      "expo-asset",
       [
         "expo-build-properties",
         {
