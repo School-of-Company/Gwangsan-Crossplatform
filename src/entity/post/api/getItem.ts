@@ -2,6 +2,7 @@ import { instance } from '~/shared/lib/axios';
 import { PostType } from '~/shared/types/postType';
 import { ImageType } from '~/shared/types/imageType';
 import { toAppError } from '~/shared/lib/errorHandler';
+import { assertValidId } from '~/shared/lib/validateId';
 export interface PostDetailResponse extends Omit<PostType, 'imageUrls'> {
   member: {
     memberId: number;
@@ -14,6 +15,7 @@ export interface PostDetailResponse extends Omit<PostType, 'imageUrls'> {
 
 export const getItem = async (postId: string): Promise<PostDetailResponse> => {
   try {
+    assertValidId(postId);
     const { data } = await instance.get<PostDetailResponse>(`/post/${postId}`);
     return data;
   } catch (error) {
