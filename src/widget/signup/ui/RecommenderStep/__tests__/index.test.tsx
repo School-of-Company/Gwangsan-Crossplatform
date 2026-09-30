@@ -201,6 +201,25 @@ describe('RecommenderStep — 회원가입 실패', () => {
     // 입력값이 그대로 유지된다
     expect(getByPlaceholderText('추천인 별칭을 입력해주세요').props.value).toBe('없는사람');
   });
+
+  it('백엔드가 강제 탈퇴 메시지를 반환해도 존재하지 않는 회원 메시지로 표시한다', async () => {
+    mockSignup.mockRejectedValue(new Error('강제 탈퇴 처리된 회원입니다.'));
+
+    const { getByPlaceholderText, getByTestId } = renderWithProviders(<RecommenderStep />);
+
+    fireEvent.changeText(getByPlaceholderText('추천인 별칭을 입력해주세요'), '없는사람');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '회원가입 실패',
+          text2: '존재하지 않는 회원입니다.',
+        })
+      );
+    });
+  });
 });
 
 describe('RecommenderStep — 예외 처리', () => {

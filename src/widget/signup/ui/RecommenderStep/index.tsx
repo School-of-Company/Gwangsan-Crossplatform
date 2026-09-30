@@ -24,10 +24,13 @@ export default function RecommenderStep() {
       router.push('/signup/complete');
     },
     onError: (err) => {
+      const message = err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.';
       Toast.show({
         type: 'error',
         text1: '회원가입 실패',
-        text2: err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.',
+        // 백엔드가 존재하지 않는 추천인 별칭도 "강제 탈퇴 처리된 회원입니다"로 응답해
+        // 추천인 입력 단계에서만 문구를 보정한다.
+        text2: message.includes('강제 탈퇴') ? '존재하지 않는 회원입니다.' : message,
       });
     },
   });
