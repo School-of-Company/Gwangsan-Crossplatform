@@ -145,8 +145,24 @@ describe('PasswordStep — 로그인 성공', () => {
       expect(mockResetStore).toHaveBeenCalled();
       expect(mockRouterReplace).toHaveBeenCalledWith('/main');
     });
+  });
 
-    expect(Sentry.setUser).toHaveBeenCalledWith({ username: '홍길동' });
+  it('로그인 성공 시 닉네임(PII)으로 Sentry 사용자를 식별하지 않는다', async () => {
+    mockSigninWithDeviceInfo.mockResolvedValue({
+      accessToken: 'acc-token',
+      refreshToken: 'ref-token',
+    });
+
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith('/main');
+    });
+
+    expect(Sentry.setUser).not.toHaveBeenCalled();
   });
 
   it('dismiss 가능한 화면 스택이 있으면 dismissAll을 호출한다', async () => {

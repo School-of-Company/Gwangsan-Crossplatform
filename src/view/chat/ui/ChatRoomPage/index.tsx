@@ -25,10 +25,12 @@ import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReview
 import type { ChatApiError } from '~/entity/chat';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
+import { isValidId } from '~/shared/lib/validateId';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const roomId = Number(id) as RoomId;
+  const isValidRoomId = isValidId(id);
+  const roomId = (isValidRoomId ? Number(id) : NaN) as RoomId;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -312,6 +314,14 @@ export default function ChatRoomPage() {
         </Text>
       </TouchableOpacity>
     );
+
+  if (!isValidRoomId) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="text-error-500">잘못된 채팅방입니다.</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (isLoading) {
     return (
