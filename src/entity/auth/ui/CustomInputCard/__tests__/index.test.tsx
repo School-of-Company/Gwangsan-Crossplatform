@@ -1,6 +1,6 @@
 import React from 'react';
-import { Animated, Keyboard } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { CustomInputCard } from '../index';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
@@ -226,67 +226,15 @@ describe('CustomInputCard', () => {
     expect(setSheetSpy).not.toHaveBeenCalled();
   });
 
-  describe('키보드 표시/숨김', () => {
-    // 한글 입력 중 안드로이드 Gboard의 예측 변환 바가 나타났다 사라졌다 하면서
-    // keyboardDidShow가 큰 높이 변화와 함께 다시 발생해도(실제 숨김/노출이 아님),
-    // 카드를 다시 애니메이션시키면 입력 중인 TextInput 위치가 바뀌어 한글 자소가
-    // 분리되어 보이는 문제로 이어진다. 이미 키보드가 떠 있는 동안 오는 추가
-    // keyboardDidShow는 높이 변화가 아무리 커도 전부 무시해야 한다.
-    function mockKeyboardListeners() {
-      const listeners: Record<string, (e?: unknown) => void> = {};
-      jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
-        listeners[event as string] = cb as (e?: unknown) => void;
-        return { remove: jest.fn() } as unknown as ReturnType<typeof Keyboard.addListener>;
-      });
-      return listeners;
-    }
+  // 키보드 추적은 이제 react-native-keyboard-controller의 KeyboardStickyView가 맡는다
+  // (네이티브 키보드 애니메이션과 같은 프레임으로 동작 — 라이브러리 자체 책임이라 여기서
+  // keyboardDidShow/Hide 타이밍을 다시 검증하지 않는다). offset이 올바르게 전달되는지만 확인한다.
+  it('카드를 KeyboardStickyView로 감싸 키보드 위 KEYBOARD_GAP만큼 오프셋을 준다', () => {
+    const { UNSAFE_getByType } = renderCard(
+      <CustomInputCard isVisible onSubmit={jest.fn()} onClose={jest.fn()} />
+    );
 
-    it('키보드가 처음 표시되면 카드를 위로 이동시킨다', () => {
-      const listeners = mockKeyboardListeners();
-      const timingSpy = jest.spyOn(Animated, 'timing');
-
-      renderCard(<CustomInputCard isVisible onSubmit={jest.fn()} onClose={jest.fn()} />);
-      timingSpy.mockClear();
-
-      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
-
-      expect(timingSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ toValue: -312 })
-      );
-    });
-
-    it('키보드가 이미 떠 있는 동안 오는 keyboardDidShow는 높이 변화가 커도 무시한다', () => {
-      const listeners = mockKeyboardListeners();
-      const timingSpy = jest.spyOn(Animated, 'timing');
-
-      renderCard(<CustomInputCard isVisible onSubmit={jest.fn()} onClose={jest.fn()} />);
-
-      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
-      timingSpy.mockClear();
-
-      // 예측 변환 바 토글로 키보드 자체가 크게 바뀐 것처럼 보이는 경우
-      listeners.keyboardDidShow({ endCoordinates: { height: 420 } });
-
-      expect(timingSpy).not.toHaveBeenCalled();
-    });
-
-    it('키보드가 숨겨졌다 다시 표시되면 새 높이로 다시 애니메이션한다', () => {
-      const listeners = mockKeyboardListeners();
-      const timingSpy = jest.spyOn(Animated, 'timing');
-
-      renderCard(<CustomInputCard isVisible onSubmit={jest.fn()} onClose={jest.fn()} />);
-
-      listeners.keyboardDidShow({ endCoordinates: { height: 300 } });
-      listeners.keyboardDidHide();
-      timingSpy.mockClear();
-
-      listeners.keyboardDidShow({ endCoordinates: { height: 420 } });
-
-      expect(timingSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ toValue: -432 })
-      );
-    });
+    const stickyView = UNSAFE_getByType(KeyboardStickyView);
+    expect(stickyView.props.offset).toEqual({ closed: 0, opened: -12 });
   });
 });
