@@ -17,3 +17,4 @@ export { CachedImage } from './CachedImage';
 export type { CachedImageProps } from './CachedImage';
 export { PillTabs } from './PillTabs';
 export type { PillTabOption } from './PillTabs';
+export { SelectionCard } from './SelectionCard';
