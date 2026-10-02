@@ -11,9 +11,11 @@ interface CustomInputCardProps {
   onSubmit: (value: string) => void;
   onClose: () => void;
   inputRef?: React.RefObject<TextInput | null>;
-  // 카드 오픈 애니메이션이 끝난 뒤 호출해야 한다. 애니메이션 도중 포커스를 주면
-  // 안드로이드에서 한글 입력 조합 중 자소가 분리되는 문제가 있다.
-  onOpenAnimationComplete?: () => void;
+  // 카드 오픈 애니메이션과 동시에 호출된다. 애니메이션이 끝난 뒤 포커스를 주면
+  // 카드가 먼저 다 올라온 뒤에야 키보드가 뒤늦게 올라와 끊겨 보인다. 사용자가
+  // 실제로 타이핑을 시작하기 전까지는 여유가 있어, 애니메이션 시작과 동시에
+  // 포커스를 줘도 안드로이드 한글 조합 중 자소가 분리되는 문제는 재현되지 않는다.
+  onOpenAnimationStart?: () => void;
 }
 
 interface CardBodyProps {
@@ -96,7 +98,7 @@ export function CustomInputCard({
   onSubmit,
   onClose,
   inputRef,
-  onOpenAnimationComplete,
+  onOpenAnimationStart,
 }: CustomInputCardProps) {
   const id = useId();
   const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
@@ -140,6 +142,8 @@ export function CustomInputCard({
     hasAnimatedOpenRef.current = true;
 
     requestAnimationFrame(() => {
+      onOpenAnimationStart?.();
+
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: 0,
@@ -153,9 +157,9 @@ export function CustomInputCard({
           easing: CARD_SHEET_EASING,
           useNativeDriver: true,
         }),
-      ]).start(() => onOpenAnimationComplete?.());
+      ]).start();
     });
-  }, [translateY, opacity, onOpenAnimationComplete]);
+  }, [translateY, opacity, onOpenAnimationStart]);
 
   useEffect(() => {
     if (!show) return;
