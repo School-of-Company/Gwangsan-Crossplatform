@@ -32,7 +32,7 @@ describe('useUpdateProfile', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockUpdateProfile).toHaveBeenCalledWith(payload);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['profile'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'success', text1: '성공', text2: '프로필이 수정되었습니다.' })
     );

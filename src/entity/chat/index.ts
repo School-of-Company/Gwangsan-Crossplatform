@@ -4,6 +4,8 @@ export { getChatRooms } from './api/getChatRooms';
 export { getChatMessages, getChatRoomData } from './api/getChatMessages';
 export { markChatAsRead } from './api/markChatAsRead';
 export { deleteChatRoom } from './api/deleteChatRoom';
+export { updateChatMessage } from './api/updateChatMessage';
+export { deleteChatMessage } from './api/deleteChatMessage';
 
 export {
   createChatSocketService,
@@ -30,6 +32,10 @@ export {
 } from './model/useChatMessages';
 export { useCreateChatRoom } from './model/useCreateChatRoom';
 export { useDeleteChatRoom } from './model/useDeleteChatRoom';
+export { useUpdateChatMessage } from './model/useUpdateChatMessage';
+export { useDeleteChatMessage } from './model/useDeleteChatMessage';
+export { canModifyMessage, canEditMessage, MESSAGE_MODIFY_WINDOW_MS } from './lib/messagePolicy';
+export type { MessageUpdatedPayload, MessageDeletedPayload } from './lib/messageCache';
 export { useFindChatRoom } from './model/useFindChatRoom';
 export { useChatRoomData } from './model/useChatRoomData';
 export {
@@ -57,12 +63,6 @@ export type {
 
 export { isChatRoomListItem, isChatMessageResponse } from './model/chatTypes';
 
-export {
-  ChatRoomItem,
-  ChatMessage,
-  TradeEmbed,
-  TradeCompletedEmbed,
-  TradeReservedEmbed,
-} from './ui';
+export { ChatRoomItem, TradeEmbed, TradeCompletedEmbed, TradeReservedEmbed } from './ui';
 
 export { useChatSocket } from './model/useChatSocket';

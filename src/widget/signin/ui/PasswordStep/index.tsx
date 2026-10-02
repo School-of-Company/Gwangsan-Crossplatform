@@ -4,13 +4,13 @@ import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
 import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema } from '~/entity/auth/model/authSchema';
-import { signinWithDeviceInfo, saveCredentialsForBiometric } from '~/entity/auth/api/signin';
+import { signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { offerBiometricLogin } from '../../model/offerBiometricLogin';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { chatSocket } from '~/shared/lib/socket';
-import * as Sentry from '@sentry/react-native';
 import { logger } from '~/shared/lib/logger';
 
 export default function PasswordStep() {
@@ -37,10 +37,12 @@ export default function PasswordStep() {
         nickname: trimmedNickname,
         password: trimmedPassword,
       });
-      saveCredentialsForBiometric(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
-        logger.error('saveCredentialsForBiometric failed', e)
+      // 생체 인증 로그인은 사용자가 동의한 경우에만 켠다(#737)
+      offerBiometricLogin(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
+        logger.error('offerBiometricLogin failed', e)
       );
-      Sentry.setUser({ username: trimmedNickname });
+      // Sentry 사용자 식별은 여기서 닉네임(PII)으로 하지 않는다. 로그인 직후 /main에서
+      // useGetMyInformation이 memberId만으로 Sentry.setUser({ id })를 호출한다.
 
       // 로그인 직후 전역 채팅 소켓을 연결해 홈 등 채팅 화면 밖에서도 실시간 알림을 받도록 함
       chatSocket.connect().catch((e) => logger.error('chat socket connect after login failed', e));
@@ -52,7 +54,7 @@ export default function PasswordStep() {
       logger.error('PasswordStep login failed', err);
 
       if (err instanceof ZodError) {
-        setError(err.errors[0].message);
+        setError(err.issues[0].message);
       } else {
         setError(getErrorMessage(err));
       }

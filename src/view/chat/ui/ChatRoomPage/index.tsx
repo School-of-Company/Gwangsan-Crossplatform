@@ -10,6 +10,8 @@ import { useChatMessages } from '~/widget/chat/model/useChatMessages';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
+import { useMessageActions } from '~/widget/chat/model/useMessageActions';
+import { AlertModal } from '@/shared/ui/AlertModal';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { ChatRoomHeader } from '@/widget/chat/ui/ChatRoomHeader';
 import { ChatRoomProductInfo } from '@/widget/chat/ui/ChatRoomProductInfo';
@@ -17,18 +19,24 @@ import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
-import { ChatInput } from '@/widget/chat';
+import { ChatInput, MyMessage } from '@/widget/chat';
+import { MessageActionOverlay } from '@/widget/chat/ui/MessageActionOverlay';
 import type { RoomId } from '@/shared/types/chatType';
-import { useTradeRequest } from '~/entity/post/hooks/useTradeRequest';
-import { useGetMyInformation } from '~/entity/main/model/useGetMyInformation';
-import { getMyReceivedReview, getTossReview } from '~/view/reviews/api/getReviews';
+import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
+import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
+import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
+import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat/lib/messageRenderer';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
+import { isValidId } from '~/shared/lib/validateId';
+import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
+import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const roomId = Number(id) as RoomId;
+  const isValidRoomId = isValidId(id);
+  const roomId = (isValidRoomId ? Number(id) : NaN) as RoomId;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -49,11 +57,17 @@ export default function ChatRoomPage() {
     markRoomAsRead,
   } = useChatMessages({ roomId });
 
+  const messageActions = useMessageActions(roomId);
+
   const { navigationHandlers, formatLastMessageDate } = useChatAction({
     otherUserInfo,
   });
 
-  const { data: roomData, error: roomDataError } = useChatRoomData({ roomId });
+  // 소켓이 연결된 동안에는 새 메시지와 거래 상태가 실시간으로 들어오므로 폴링하지 않는다(#731)
+  const { data: roomData, error: roomDataError } = useChatRoomData({
+    roomId,
+    pausePolling: connectionState === 'connected',
+  });
   const { data: myInfo } = useGetMyInformation();
   const { data: blockList } = useGetBlockList();
   const isBlocked = !!blockList?.some((b) => b.memberId === otherUserInfo.id);
@@ -76,7 +90,7 @@ export default function ChatRoomPage() {
 
   // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
   const { data: myReceivedReviews } = useQuery({
-    queryKey: ['reviews', 'receive', 'current'],
+    queryKey: reviewKeys.received('current'),
     queryFn: () => getMyReceivedReview(),
     enabled: isTradeCompleted && !!myInfo,
   });
@@ -84,7 +98,7 @@ export default function ChatRoomPage() {
 
   // 리뷰 버튼을 "작성하러 가기" ↔ "확인하기"로 나누기 위해, 내가 쓴 후기 목록에서 productId가 일치하는 항목을 찾는다
   const { data: myWrittenReviews } = useQuery({
-    queryKey: ['reviews', 'toss'],
+    queryKey: reviewKeys.toss(),
     queryFn: getTossReview,
     enabled: isTradeCompleted && !!myInfo,
   });
@@ -232,7 +246,7 @@ export default function ChatRoomPage() {
     try {
       await executeTradeRequest();
       setIsTradeRequestModalVisible(false);
-      queryClient.invalidateQueries({ queryKey: ['chatRoomData', roomId] });
+      queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(roomId) });
       Toast.show({
         type: 'success',
         text1: '게시물 작성자에게 거래를 요청했어요!',
@@ -282,7 +296,7 @@ export default function ChatRoomPage() {
         <TouchableOpacity
           testID="trade-seller-button"
           onPress={isReserved ? handleCancelReservation : handleOpenReservationConfirm}
-          className={`shrink-0 rounded-lg px-5 py-2.5 ${isReserved ? 'bg-white' : 'bg-main-500'}`}>
+          className={`shrink-0 rounded-lg px-5 py-2.5 ${isReserved ? 'bg-background' : 'bg-main-500'}`}>
           <Text className={`text-label font-medium ${isReserved ? 'text-gray-700' : 'text-white'}`}>
             {isReserved ? '예약 취소' : '예약하기'}
           </Text>
@@ -302,7 +316,7 @@ export default function ChatRoomPage() {
         onPress={handleTradeRequestButtonPressed}
         disabled={hasTradeRequest && !canWithdrawTradeRequest}
         className={`shrink-0 rounded-lg px-5 py-2.5 ${
-          hasTradeRequest && !canWithdrawTradeRequest ? 'bg-[#CDCDCF]' : 'bg-main-500'
+          hasTradeRequest && !canWithdrawTradeRequest ? 'bg-disabled' : 'bg-main-500'
         }`}>
         <Text
           className={`text-label font-medium ${
@@ -313,9 +327,17 @@ export default function ChatRoomPage() {
       </TouchableOpacity>
     );
 
-  if (isLoading) {
+  if (!isValidRoomId) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="text-error-500">잘못된 채팅방입니다.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#8FC31D" />
       </SafeAreaView>
     );
@@ -323,18 +345,18 @@ export default function ChatRoomPage() {
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <Text className="text-error-500">Failed to load chat room</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle={updatedComponentState.headerTitle} connectionState={connectionState} />
 
       {(productInfoConfig.shouldShow || isTradeCompleted) && (
-        <View className="bg-[#F3F4F5]">
+        <View className="bg-surface-muted">
           {productInfoConfig.shouldShow ? (
             <ChatRoomProductInfo
               title={productInfoConfig.title}
@@ -366,17 +388,18 @@ export default function ChatRoomPage() {
         onReviewButtonPress={handleReviewButtonPress}
         showReviewButton={isTradeCompleted}
         hasReviewedTrade={Boolean(myTradeReview)}
+        onMyMessageLongPress={messageActions.openMessageMenu}
       />
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
         {isBlocked ? (
-          <View className="flex-row items-center justify-between border-t border-gray-200 bg-white px-4 py-4">
+          <View className="flex-row items-center justify-between border-t border-gray-200 bg-background px-4 py-4">
             <Text className="text-label text-gray-500">차단한 사용자입니다.</Text>
             <TouchableOpacity
               testID="chat-unblock-button"
               onPress={() => unblock.mutate()}
               disabled={unblock.isPending}
-              className={`rounded-lg bg-[#F3F4F5] px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
+              className={`rounded-lg bg-surface-muted px-4 py-2 ${unblock.isPending ? 'opacity-50' : ''}`}>
               <Text className="text-label font-medium text-gray-900">
                 {unblock.isPending ? '해제 중...' : '차단 풀기'}
               </Text>
@@ -385,7 +408,7 @@ export default function ChatRoomPage() {
         ) : isBlockedByOtherUser ? (
           <View
             testID="chat-blocked-by-other-banner"
-            className="border-t border-gray-200 bg-white px-4 py-4">
+            className="border-t border-gray-200 bg-background px-4 py-4">
             <Text className="text-label text-gray-500">
               상대방이 차단하여 메시지를 보낼 수 없습니다.
             </Text>
@@ -395,6 +418,9 @@ export default function ChatRoomPage() {
             onSendMessage={messageHandlers.sendMessage}
             disabled={!updatedComponentState.canSendMessage}
             onFocus={() => scrollToEnd(true)}
+            editingMessage={messageActions.editingMessage}
+            onSubmitEdit={messageActions.submitEdit}
+            onCancelEdit={messageActions.cancelEdit}
           />
         )}
       </KeyboardStickyView>
@@ -410,6 +436,32 @@ export default function ChatRoomPage() {
         isVisible={isReservationConfirmVisible}
         onClose={() => setIsReservationConfirmVisible(false)}
         onConfirm={handleReservationConfirmProceed}
+      />
+
+      <MessageActionOverlay
+        visible={messageActions.menu !== null}
+        anchor={messageActions.menu?.anchor ?? null}
+        canEdit={messageActions.menu?.canEdit ?? false}
+        timeLabel={
+          messageActions.menu
+            ? `${formatDateDividerLabel(messageActions.menu.message.createdAt)} ${formatMessageTime(messageActions.menu.message.createdAt)}`
+            : undefined
+        }
+        onEdit={messageActions.selectEdit}
+        onDelete={messageActions.selectDelete}
+        onClose={messageActions.closeMenu}>
+        {messageActions.menu && (
+          <MyMessage message={messageActions.menu.message} showTime={false} />
+        )}
+      </MessageActionOverlay>
+
+      <AlertModal
+        isVisible={messageActions.isDeleteConfirmVisible}
+        message={'메시지를 삭제할까요?\n상대방 화면에서도 삭제됩니다.'}
+        confirmText="삭제"
+        destructive
+        onCancel={messageActions.cancelDelete}
+        onConfirm={messageActions.confirmDelete}
       />
     </SafeAreaView>
   );

@@ -15,7 +15,7 @@ export const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
   onProfilePress,
 }) => {
   return (
-    <View className="bg-white">
+    <View className="bg-background">
       <View className="flex-row items-center justify-between px-4 py-8">
         <View className="w-8" />
         <View className="items-center">

@@ -1516,4 +1516,101 @@ describe('useMessageSync', () => {
       expect(rooms?.[0].unreadMessageCount).toBe(0);
     });
   });
+
+  describe('handleMessageUpdated', () => {
+    it('수정된 메시지의 내용과 수정 시각을 메시지 캐시에 반영한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage({ messageId: 1, content: '원래' })]);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: 1,
+          content: '수정됨',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)?.[0]).toEqual(
+        expect.objectContaining({ content: '수정됨', editedAt: '2024-01-01T11:00:00Z' })
+      );
+    });
+
+    it('수정된 메시지가 채팅방 목록의 마지막 메시지면 미리보기도 바꾼다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 1 })]);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: '1',
+          content: '수정됨',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY)?.[0].lastMessage).toBe(
+        '수정됨'
+      );
+    });
+
+    it('마지막 메시지가 아니면 채팅방 목록 미리보기를 바꾸지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 5 })]);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: 1,
+          content: '수정됨',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY)?.[0].lastMessage).toBe(
+        '이전 메시지'
+      );
+    });
+  });
+
+  describe('handleMessageDeleted', () => {
+    it('삭제된 메시지를 메시지 캐시에서 흔적 없이 뺀다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, [
+        makeMessage({ messageId: 1 }),
+        makeMessage({ messageId: 2 }),
+      ]);
+
+      act(() => {
+        result.current.handleMessageDeleted({ roomId: ROOM_ID, messageId: 1 });
+      });
+
+      expect(
+        queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)?.map((m) => m.messageId)
+      ).toEqual([2]);
+    });
+
+    it('채팅방 목록의 마지막 메시지가 지워지면 목록을 다시 받아온다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 2 })]);
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleMessageDeleted({ roomId: ROOM_ID, messageId: 2 });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+    });
+
+    it('잘못된 payload는 무시한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage({ messageId: 1 })]);
+
+      act(() => {
+        result.current.handleMessageDeleted(undefined as never);
+      });
+
+      expect(queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)).toHaveLength(1);
+    });
+  });
 });

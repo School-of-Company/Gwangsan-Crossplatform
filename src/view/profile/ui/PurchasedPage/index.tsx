@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
+  FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -75,13 +76,13 @@ const TradePostCard = ({
         <ExpoImage
           source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
           style={{ width: 80, height: 80, borderRadius: 12 }}
-          cachePolicy="memory"
+          cachePolicy="memory-disk"
           contentFit="cover"
           recyclingKey={firstImage ?? 'placeholder'}
           transition={200}
         />
         <View className="flex-1 gap-1">
-          <Text className="text-lg font-semibold" numberOfLines={1}>
+          <Text className="text-lg font-semibold text-foreground" numberOfLines={1}>
             {title}
           </Text>
           <Text className="text-sm text-gray-500">{gwangsan} 광산</Text>
@@ -108,20 +109,23 @@ const TradePanel = memo(
     counterpartRole: CounterpartRole;
     emptyMessage: string;
   }) => (
-    <ScrollView
+    <FlatList
+      testID={`${counterpartRole === 'seller' ? 'purchased' : 'sold'}-list`}
       style={{ width: SCREEN_WIDTH }}
+      data={posts}
+      keyExtractor={(post) => String(post.id)}
+      renderItem={({ item }) => <TradePostCard post={item} counterpartRole={counterpartRole} />}
+      ItemSeparatorComponent={() => <View className="h-4" />}
+      contentContainerStyle={{
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        paddingBottom: 36,
+        flexGrow: 1,
+      }}
       showsVerticalScrollIndicator={false}
-      nestedScrollEnabled>
-      <View className="gap-4 px-6 pb-9 pt-3">
-        {posts.length > 0 ? (
-          posts.map((post) => (
-            <TradePostCard post={post} counterpartRole={counterpartRole} key={post.id} />
-          ))
-        ) : (
-          <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>
-        )}
-      </View>
-    </ScrollView>
+      nestedScrollEnabled
+      ListEmptyComponent={<Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>}
+    />
   )
 );
 
@@ -158,13 +162,16 @@ export default function PurchasedPageView() {
     [postsData]
   );
 
-  if (isError) {
+  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다(#740)
+  useEffect(() => {
+    if (!isError) return;
     Toast.show({
       type: 'error',
       text1: '글을 불러오는데 실패했습니다.',
       text2: error?.message || '잠시 후 다시 시도해주세요.',
     });
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
 
   const handleTabChange = (tab: TradeTab) => {
     setActiveTab(tab);
@@ -178,7 +185,7 @@ export default function PurchasedPageView() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header
         headerTitle={isMe ? '거래내역' : `${profileData?.nickname ?? ''}님의 거래 내역`}
         showBackButton

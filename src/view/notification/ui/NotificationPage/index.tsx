@@ -1,4 +1,4 @@
-import { ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
+import { FlatList, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { useGetAlertList } from '~/entity/notification';
 import NotificationItem from '~/widget/notification/ui/NotificationItem';
 import { Header } from '~/shared/ui';
@@ -22,7 +22,7 @@ const NotificationPage = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="알림" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#8FC31D" />
@@ -33,35 +33,39 @@ const NotificationPage = () => {
 
   if (error || !apiResponse) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="알림" />
         <View className="flex-1 items-center justify-center">
-          <Text>알림을 불러오는데 실패했습니다.</Text>
+          <Text className="text-foreground">알림을 불러오는데 실패했습니다.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="알림" />
-      <ScrollView
-        className="flex-1 px-4 py-4"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        {alerts.map((alert, index) => (
+      <FlatList
+        testID="notification-list"
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, flexGrow: 1 }}
+        data={alerts}
+        // 서버가 id를 내려주지 않는 알림만 index로 대체한다.
+        keyExtractor={(item, index) => String(item.id ?? index)}
+        renderItem={({ item, index }) => (
           <NotificationItem
-            key={alert.id ?? index}
-            id={alert.id ?? index}
-            title={alert.title}
-            content={alert.content}
-            alertType={alert.alertType}
-            createdAt={alert.createdAt}
-            sourceId={alert.sourceId}
-            images={alert.images}
-            raw={alert}
+            id={item.id ?? index}
+            title={item.title}
+            content={item.content}
+            alertType={item.alertType}
+            createdAt={item.createdAt}
+            sourceId={item.sourceId}
+            images={item.images}
+            raw={item}
           />
-        ))}
-      </ScrollView>
+        )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
     </SafeAreaView>
   );
 };

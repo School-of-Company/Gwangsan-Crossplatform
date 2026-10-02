@@ -38,7 +38,7 @@ const NotificationItem = ({
     : {};
 
   return (
-    <Card className="mb-3 bg-white p-4" {...cardProps}>
+    <Card className="mb-3 bg-background p-4" {...cardProps}>
       <View className="flex-row">
         <View className="mr-3">
           <Image source={displayImage} className="h-16 w-16 rounded-lg" resizeMode="cover" />

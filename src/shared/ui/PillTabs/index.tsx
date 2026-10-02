@@ -15,7 +15,7 @@ interface PillTabsProps<T extends string> {
   testIDPrefix?: string;
 }
 
-const ACTIVE_TEXT_CLASSNAME = 'text-body4 font-semibold text-white';
+const ACTIVE_TEXT_CLASSNAME = 'text-body4 font-semibold text-background';
 const INACTIVE_TEXT_CLASSNAME = 'text-body4 text-gray-500';
 
 export function PillTabs<T extends string>({

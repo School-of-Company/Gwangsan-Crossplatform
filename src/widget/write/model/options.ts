@@ -1,5 +1,5 @@
-import { MODE, ModeType } from './mode';
-import { ProductType, TYPE } from './type';
+import { MODE, ModeType } from '~/shared/types/mode';
+import { ProductType, TYPE } from '~/shared/types/type';
 
 export const TYPE_OPTIONS: { value: ProductType; label: string }[] = [
   { value: TYPE.OBJECT, label: '물건' },

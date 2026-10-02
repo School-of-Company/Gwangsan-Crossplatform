@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 import { PostType } from '@/shared/types/postType';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
+import { postKeys } from '~/shared/model/postQueryKeys';
 
 type MutationContext = {
   previousPosts?: PostType[];
@@ -18,7 +19,7 @@ export const useCreateItem = () => {
 
     onMutate: async (newItem: ItemFormRequestBody) => {
       await queryClient.cancelQueries({
-        queryKey: ['posts', newItem.mode, newItem.type],
+        queryKey: postKeys.list(newItem.mode, newItem.type),
       });
 
       const previousPosts = queryClient.getQueryData<PostType[]>([
@@ -30,24 +31,21 @@ export const useCreateItem = () => {
       if (previousPosts) {
         const tempId = -Date.now();
 
-        queryClient.setQueryData<PostType[]>(
-          ['posts', newItem.mode, newItem.type],
-          [
-            {
-              id: tempId,
-              type: newItem.type as ProductType,
-              mode: newItem.mode as ModeType,
-              title: newItem.title,
-              content: newItem.content,
-              gwangsan: newItem.gwangsan,
-              imageUrls: [],
-              isCompletable: false,
-              isCompleted: false,
-              isReserved: false,
-            },
-            ...previousPosts,
-          ]
-        );
+        queryClient.setQueryData<PostType[]>(postKeys.list(newItem.mode, newItem.type), [
+          {
+            id: tempId,
+            type: newItem.type as ProductType,
+            mode: newItem.mode as ModeType,
+            title: newItem.title,
+            content: newItem.content,
+            gwangsan: newItem.gwangsan,
+            imageUrls: [],
+            isCompletable: false,
+            isCompleted: false,
+            isReserved: false,
+          },
+          ...previousPosts,
+        ]);
       }
 
       return { previousPosts } as MutationContext;
@@ -55,7 +53,10 @@ export const useCreateItem = () => {
 
     onError: (err, variables, context?: MutationContext) => {
       if (variables && context?.previousPosts) {
-        queryClient.setQueryData(['posts', variables.mode, variables.type], context.previousPosts);
+        queryClient.setQueryData(
+          postKeys.list(variables.mode, variables.type),
+          context.previousPosts
+        );
       }
 
       Toast.show({
@@ -69,7 +70,7 @@ export const useCreateItem = () => {
       if (!variables) return;
 
       queryClient.invalidateQueries({
-        queryKey: ['posts', variables.mode, variables.type],
+        queryKey: postKeys.list(variables.mode, variables.type),
       });
 
       Toast.show({
@@ -83,7 +84,7 @@ export const useCreateItem = () => {
       if (!variables) return;
 
       queryClient.invalidateQueries({
-        queryKey: ['posts', variables.mode, variables.type],
+        queryKey: postKeys.list(variables.mode, variables.type),
       });
     },
   });

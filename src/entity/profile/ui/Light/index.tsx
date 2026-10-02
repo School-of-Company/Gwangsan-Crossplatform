@@ -8,7 +8,7 @@ interface LightProps {
 export default function Light({ lightLevel = 1 }: LightProps) {
   return (
     <View className="px-6 py-10">
-      <Text className="mb-6 text-titleSmall">밝기</Text>
+      <Text className="mb-6 text-titleSmall text-foreground">밝기</Text>
 
       <View className="relative flex h-5 w-full justify-center rounded-xl bg-gray-200">
         <View className="absolute left-1 right-1 h-3 overflow-hidden rounded-xl">
@@ -19,7 +19,7 @@ export default function Light({ lightLevel = 1 }: LightProps) {
         </View>
       </View>
 
-      <Text className="ml-auto">{Math.ceil(lightLevel / 10)}단계</Text>
+      <Text className="ml-auto text-foreground">{Math.ceil(lightLevel / 10)}단계</Text>
     </View>
   );
 }

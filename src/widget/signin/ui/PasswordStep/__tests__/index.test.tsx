@@ -2,7 +2,8 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
-import { signinWithDeviceInfo, saveCredentialsForBiometric } from '~/entity/auth/api/signin';
+import { signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { offerBiometricLogin } from '../../../model/offerBiometricLogin';
 import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import PasswordStep from '../index';
 
@@ -12,9 +13,11 @@ jest.mock('expo-router', () => ({
 
 jest.mock('~/entity/auth/api/signin', () => ({
   signinWithDeviceInfo: jest.fn(),
-  saveCredentialsForBiometric: jest.fn(),
 }));
 
+jest.mock('../../../model/offerBiometricLogin', () => ({
+  offerBiometricLogin: jest.fn(),
+}));
 jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));
@@ -72,7 +75,7 @@ jest.mock('~/entity/auth/ui/SigninForm', () => {
 });
 
 const mockSigninWithDeviceInfo = signinWithDeviceInfo as jest.Mock;
-const mockSaveCredentials = saveCredentialsForBiometric as jest.Mock;
+const mockOfferBiometricLogin = offerBiometricLogin as jest.Mock;
 const mockUseSigninFormField = useSigninFormField as jest.Mock;
 const mockUseSigninResetStore = useSigninResetStore as jest.Mock;
 const mockRouterReplace = router.replace as jest.Mock;
@@ -90,7 +93,7 @@ beforeEach(() => {
     return { value: '', updateField: mockUpdateField };
   });
   mockUseSigninResetStore.mockReturnValue(mockResetStore);
-  mockSaveCredentials.mockResolvedValue(undefined);
+  mockOfferBiometricLogin.mockResolvedValue(undefined);
   mockCanDismiss.mockReturnValue(false);
 });
 
@@ -145,8 +148,24 @@ describe('PasswordStep — 로그인 성공', () => {
       expect(mockResetStore).toHaveBeenCalled();
       expect(mockRouterReplace).toHaveBeenCalledWith('/main');
     });
+  });
 
-    expect(Sentry.setUser).toHaveBeenCalledWith({ username: '홍길동' });
+  it('로그인 성공 시 닉네임(PII)으로 Sentry 사용자를 식별하지 않는다', async () => {
+    mockSigninWithDeviceInfo.mockResolvedValue({
+      accessToken: 'acc-token',
+      refreshToken: 'ref-token',
+    });
+
+    const { getByTestId } = render(<PasswordStep />);
+
+    fireEvent.changeText(getByTestId('PasswordStep-password-input'), 'password1!');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith('/main');
+    });
+
+    expect(Sentry.setUser).not.toHaveBeenCalled();
   });
 
   it('dismiss 가능한 화면 스택이 있으면 dismissAll을 호출한다', async () => {
@@ -209,13 +228,13 @@ describe('PasswordStep — 로그인 실패', () => {
     expect(mockSigninWithDeviceInfo).not.toHaveBeenCalled();
   });
 
-  it('saveCredentialsForBiometric이 실패해도 로그인은 계속 진행되고 에러를 로깅한다', async () => {
+  it('생체 인증 로그인 제안이 실패해도 로그인은 계속 진행되고 에러를 로깅한다', async () => {
     const { logger } = jest.requireMock('~/shared/lib/logger');
     mockSigninWithDeviceInfo.mockResolvedValue({
       accessToken: 'acc-token',
       refreshToken: 'ref-token',
     });
-    mockSaveCredentials.mockRejectedValue(new Error('키체인 저장 실패'));
+    mockOfferBiometricLogin.mockRejectedValue(new Error('키체인 저장 실패'));
 
     const { getByTestId } = render(<PasswordStep />);
 
@@ -224,10 +243,7 @@ describe('PasswordStep — 로그인 실패', () => {
 
     await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/main'));
     await waitFor(() =>
-      expect(logger.error).toHaveBeenCalledWith(
-        'saveCredentialsForBiometric failed',
-        expect.any(Error)
-      )
+      expect(logger.error).toHaveBeenCalledWith('offerBiometricLogin failed', expect.any(Error))
     );
   });
 });

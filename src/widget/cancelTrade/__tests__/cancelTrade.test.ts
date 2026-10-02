@@ -19,23 +19,8 @@ const mockCancelTrade = cancelTrade as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('cancelTrade API', () => {
-  it('cancelTrade를 호출하면 응답을 반환한다', async () => {
-    const mockRes = { cancelled: false };
-    mockCancelTrade.mockResolvedValue(mockRes);
-
-    const result = await cancelTrade('취소 사유', [1, 2], 99);
-
-    expect(mockCancelTrade).toHaveBeenCalledWith('취소 사유', [1, 2], 99);
-    expect(result).toEqual(mockRes);
-  });
-
-  it('API 실패 시 에러를 전파한다', async () => {
-    mockCancelTrade.mockRejectedValue(new Error('Server error'));
-
-    await expect(cancelTrade('사유', [], 1)).rejects.toThrow('Server error');
-  });
-});
+// cancelTrade API 자체(instance.post 호출 등)의 실제 동작 검증은
+// src/widget/cancelTrade/api/__tests__/cancelTrade.api.test.ts 에서 수행한다.
 
 describe('useCancelTrade', () => {
   it('초기 상태: reason은 빈 문자열, imageIds는 빈 배열이다', () => {

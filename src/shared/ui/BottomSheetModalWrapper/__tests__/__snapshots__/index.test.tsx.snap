@@ -58,7 +58,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
       onStartShouldSetResponder={[Function]}
     >
       <View
-        className="rounded-t-[20px] bg-white"
+        className="rounded-t-[20px] bg-surface"
         collapsable={false}
         onLayout={[Function]}
         onMoveShouldSetResponder={[Function]}
@@ -200,7 +200,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
       onStartShouldSetResponder={[Function]}
     >
       <View
-        className="rounded-t-[20px] bg-white"
+        className="rounded-t-[20px] bg-surface"
         collapsable={false}
         onLayout={[Function]}
         onMoveShouldSetResponder={[Function]}
@@ -274,7 +274,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
             className="relative mb-4 flex-row items-center justify-center py-6"
           >
             <Text
-              className="text-body1 text-black"
+              className="text-body1 text-foreground"
             >
               제목
             </Text>

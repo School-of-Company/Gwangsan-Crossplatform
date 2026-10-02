@@ -1,6 +1,6 @@
 import { View, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
@@ -15,14 +15,17 @@ export default function ProfileEditPageView() {
   const [nickname, setNickname] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [description, setDescription] = useState('');
+  const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
 
   const { data: profileData, isLoading } = useGetMyProfile(true);
   const updateProfileMutation = useUpdateProfile();
   const insets = useSafeAreaInsets();
 
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (profileData) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (profileData && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+
       setNickname(profileData.nickname || '');
 
       setSpecialties(profileData.specialties || []);
@@ -41,11 +44,11 @@ export default function ProfileEditPageView() {
 
       updateProfileMutation.mutate(validatedData);
     } catch (error: any) {
-      if (error.errors && error.errors.length > 0) {
+      if (error.issues && error.issues.length > 0) {
         Toast.show({
           type: 'error',
           text1: '입력 오류',
-          text2: error.errors[0].message,
+          text2: error.issues[0].message,
         });
       }
     }
@@ -56,7 +59,7 @@ export default function ProfileEditPageView() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="내 정보 수정" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" />
@@ -66,7 +69,7 @@ export default function ProfileEditPageView() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="내 정보 수정" />
 
       <KeyboardAwareScrollView
@@ -90,6 +93,7 @@ export default function ProfileEditPageView() {
             selectedItems={specialties}
             onSelect={setSpecialties}
             allowCustomInput={true}
+            onCustomInputVisibleChange={setIsCustomInputOpen}
           />
 
           <TextField
@@ -102,13 +106,15 @@ export default function ProfileEditPageView() {
         </View>
       </KeyboardAwareScrollView>
 
-      <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pb-3 pt-5">
-          <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
-            {isSubmitting ? '수정 중...' : '수정'}
-          </Button>
-        </View>
-      </KeyboardStickyView>
+      {!isCustomInputOpen && (
+        <KeyboardStickyView offset={{ opened: insets.bottom }}>
+          <View className="bg-background px-5 pb-3 pt-5">
+            <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
+              {isSubmitting ? '수정 중...' : '수정'}
+            </Button>
+          </View>
+        </KeyboardStickyView>
+      )}
     </SafeAreaView>
   );
 }

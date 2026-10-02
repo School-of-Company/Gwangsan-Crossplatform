@@ -1,7 +1,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
-import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { WebView, type WebViewNavigation, type WebViewMessageEvent } from 'react-native-webview';
 import type { Coordinates } from 'expo-maps';
+import { z } from 'zod';
+import { logger } from '~/shared/lib/logger';
 
 interface KakaoMapWebViewProps {
   readonly center: Required<Coordinates>;
@@ -9,6 +11,19 @@ interface KakaoMapWebViewProps {
 }
 
 const MAP_LOAD_TIMEOUT_MS = 10000;
+
+// WebView가 로드하는 로컬 문서(baseUrl)의 오리진. 이 오리진과 about:blank만 허용해
+// 임의의 외부 페이지로 내비게이션되는 것을 막는다.
+const WEBVIEW_ORIGIN = 'http://localhost';
+
+// WebView 내부 스크립트가 postMessage로 보내는 메시지는 신뢰할 수 없는 입력이다.
+// type 태그와 위도/경도 범위를 검증해, 형식이 어긋나거나 조작된 페이로드가
+// 그대로 좌표로 쓰이지 않게 한다.
+const cameraMoveMessageSchema = z.object({
+  type: z.literal('cameraMove'),
+  latitude: z.number().finite().min(-90).max(90),
+  longitude: z.number().finite().min(-180).max(180),
+});
 
 const buildHtml = (appKey: string, center: Required<Coordinates>) => `
 <!DOCTYPE html>
@@ -56,7 +71,7 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
   const source = useMemo(() => {
     mountedCenterRef.current = center;
     return appKey
-      ? { html: buildHtml(appKey, mountedCenterRef.current), baseUrl: 'http://localhost' }
+      ? { html: buildHtml(appKey, mountedCenterRef.current), baseUrl: WEBVIEW_ORIGIN }
       : null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appKey, retryKey]);
@@ -71,12 +86,33 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
     return () => clearTimeout(timeoutId);
   }, [retryKey, isMapReady]);
 
-  const handleMessage = (event: WebViewMessageEvent) => {
-    const data = JSON.parse(event.nativeEvent.data);
-    if (data.type !== 'cameraMove') return;
-    setIsMapReady(true);
-    onCameraMove({ coordinates: { latitude: data.latitude, longitude: data.longitude } });
-  };
+  const handleMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(event.nativeEvent.data);
+      } catch (error) {
+        logger.warn('KakaoMapWebView: failed to parse WebView message', error);
+        return;
+      }
+
+      const result = cameraMoveMessageSchema.safeParse(parsed);
+      if (!result.success) return;
+
+      const { latitude, longitude } = result.data;
+      setIsMapReady(true);
+      onCameraMove({ coordinates: { latitude, longitude } });
+    },
+    [onCameraMove]
+  );
+
+  // 지도 SDK가 로드하는 최초 로컬 문서(about:blank 경유) 외의 모든 내비게이션(예: 스크립트에
+  // 의한 임의 페이지 이동)을 차단한다.
+  const handleShouldStartLoadWithRequest = useCallback(
+    (request: WebViewNavigation) =>
+      request.url === 'about:blank' || request.url.startsWith(WEBVIEW_ORIGIN),
+    []
+  );
 
   const handleLoadError = useCallback(() => setHasLoadError(true), []);
 
@@ -100,7 +136,8 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
     <View className="flex-1">
       <WebView
         key={retryKey}
-        originWhitelist={['*']}
+        originWhitelist={[WEBVIEW_ORIGIN, 'about:blank']}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         source={source as { html: string; baseUrl: string }}
         onMessage={handleMessage}
         onError={handleLoadError}
@@ -108,7 +145,7 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
         style={{ flex: 1, backgroundColor: 'transparent' }}
       />
       {hasLoadError ? (
-        <View className="absolute inset-0 items-center justify-center bg-white px-8">
+        <View className="absolute inset-0 items-center justify-center bg-background px-8">
           <Text className="text-center text-body5 text-gray-500">
             지도를 불러오지 못했습니다. 네트워크 상태를 확인해주세요.
           </Text>
@@ -119,7 +156,7 @@ export const KakaoMapWebView = memo(({ center, onCameraMove }: KakaoMapWebViewPr
           </TouchableOpacity>
         </View>
       ) : isMapReady ? null : (
-        <View className="absolute inset-0 items-center justify-center bg-white">
+        <View className="absolute inset-0 items-center justify-center bg-background">
           <ActivityIndicator />
         </View>
       )}
