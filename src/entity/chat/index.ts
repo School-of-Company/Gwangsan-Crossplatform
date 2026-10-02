@@ -34,7 +34,12 @@ export { useCreateChatRoom } from './model/useCreateChatRoom';
 export { useDeleteChatRoom } from './model/useDeleteChatRoom';
 export { useUpdateChatMessage } from './model/useUpdateChatMessage';
 export { useDeleteChatMessage } from './model/useDeleteChatMessage';
-export { canModifyMessage, canEditMessage, MESSAGE_MODIFY_WINDOW_MS } from './lib/messagePolicy';
+export {
+  canModifyMessage,
+  canEditMessage,
+  isSystemMessage,
+  MESSAGE_MODIFY_WINDOW_MS,
+} from './lib/messagePolicy';
 export type { MessageUpdatedPayload, MessageDeletedPayload } from './lib/messageCache';
 export { useFindChatRoom } from './model/useFindChatRoom';
 export { useChatRoomData } from './model/useChatRoomData';

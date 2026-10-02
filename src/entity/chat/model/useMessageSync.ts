@@ -7,6 +7,7 @@ import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from 
 import type { RoomId } from '@/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
+import { isSystemMessage } from '../lib/messagePolicy';
 import type { TransactionStateChangedPayload } from '../lib/socketService';
 import {
   applyMessageUpdate,
@@ -129,9 +130,10 @@ export const useMessageSync = ({
               if (isStale) return room;
 
               const isActiveRoom = room.roomId === currentRoomId;
+              // SYSTEM 메시지는 상대가 보낸 대화가 아니므로 안 읽은 수를 늘리지 않는다
               const nextUnreadCount = isActiveRoom
                 ? 0
-                : message.isMine
+                : message.isMine || isSystemMessage(message)
                   ? room.unreadMessageCount
                   : room.unreadMessageCount + 1;
 
