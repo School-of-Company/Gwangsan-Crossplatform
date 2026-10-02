@@ -153,14 +153,14 @@ describe('CustomInputCard', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('레이아웃이 잡히고 열림 애니메이션이 끝나면 onOpenAnimationComplete를 호출한다', async () => {
-    const onOpenAnimationComplete = jest.fn();
+  it('레이아웃이 잡히면 열림 애니메이션 시작과 동시에 onOpenAnimationStart를 호출한다', async () => {
+    const onOpenAnimationStart = jest.fn();
     const { UNSAFE_getByProps } = renderCard(
       <CustomInputCard
         isVisible
         onSubmit={jest.fn()}
         onClose={jest.fn()}
-        onOpenAnimationComplete={onOpenAnimationComplete}
+        onOpenAnimationStart={onOpenAnimationStart}
       />
     );
 
@@ -172,7 +172,7 @@ describe('CustomInputCard', () => {
       }
     );
 
-    await waitFor(() => expect(onOpenAnimationComplete).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onOpenAnimationStart).toHaveBeenCalledTimes(1));
   });
 
   it('isVisible이 true에서 false로 바뀌면 닫힘 애니메이션 후 렌더링을 멈춘다', async () => {
