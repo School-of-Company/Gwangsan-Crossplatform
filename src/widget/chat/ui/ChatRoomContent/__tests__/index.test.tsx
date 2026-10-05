@@ -52,7 +52,12 @@ jest.mock('../../OtherMessage', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    OtherMessage: ({ message }: any) => <Text testID={`other-message-${message.messageId}`} />,
+    OtherMessage: ({ message, showProfile }: any) => (
+      <Text
+        testID={`other-message-${message.messageId}`}
+        accessibilityHint={showProfile ? 'with-profile' : 'grouped'}
+      />
+    ),
   };
 });
 
@@ -87,6 +92,7 @@ jest.mock('~/entity/chat', () => {
     getMessageDateKey: (createdAt: string) => createdAt.slice(0, 10),
     formatDateDividerLabel: (createdAt: string) => `날짜-${createdAt.slice(0, 10)}`,
     canModifyMessage: (message: any) => message.isMine && message.messageId !== 99,
+    isSystemMessage: (message: any) => message.messageType === 'SYSTEM',
   };
 });
 
@@ -537,6 +543,184 @@ describe('ChatRoomContent', () => {
 
       expect(getByTestId('my-message-1').props.accessibilityHint).toBeUndefined();
     });
+  });
+});
+
+describe('ChatRoomContent SYSTEM 메시지', () => {
+  it('SYSTEM 메시지는 말풍선 대신 가운데 글씨로 그린다', () => {
+    const messages = [
+      createMessage({ messageId: 1, createdAt: '2026-05-28T01:00:00.000Z' }),
+      createMessage({
+        messageId: 2,
+        messageType: MESSAGE_TYPE.SYSTEM,
+        content: '상대방님이 예약을 취소했어요',
+        createdAt: '2026-05-28T02:00:00.000Z',
+      }),
+    ];
+
+    const { UNSAFE_getByType, getAllByTestId, queryByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.data.map((item: any) => item.type)).toEqual([
+      'dateDivider',
+      'message',
+      'system',
+    ]);
+    expect(list.props.keyExtractor(list.props.data[2])).toBe('s-2');
+    expect(queryByTestId('other-message-2')).toBeNull();
+    expect(getAllByTestId('date-divider').map((node) => node.props.children)).toEqual([
+      '날짜-2026-05-28',
+      '상대방님이 예약을 취소했어요',
+    ]);
+  });
+
+  it('SYSTEM 메시지를 사이에 두면 같은 발신자 메시지라도 묶지 않고 프로필을 다시 보여준다', () => {
+    const messages = [
+      createMessage({ messageId: 1, senderId: 10, createdAt: '2026-05-28T01:00:00.000Z' }),
+      createMessage({
+        messageId: 2,
+        senderId: 10,
+        messageType: MESSAGE_TYPE.SYSTEM,
+        content: '상대방님이 예약을 취소했어요',
+        createdAt: '2026-05-28T01:01:00.000Z',
+      }),
+      createMessage({ messageId: 3, senderId: 10, createdAt: '2026-05-28T01:02:00.000Z' }),
+    ];
+
+    const { getByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+    );
+
+    expect(getByTestId('other-message-3').props.accessibilityHint).toBe('with-profile');
+  });
+
+  it('내가 취소해서 isMine인 SYSTEM 메시지도 말풍선·마지막 메시지·길게 누르기 대상이 아니다', () => {
+    const messages = [
+      createMessage({ messageId: 1, isMine: true, createdAt: '2026-05-28T01:00:00.000Z' }),
+      createMessage({
+        messageId: 2,
+        isMine: true,
+        messageType: MESSAGE_TYPE.SYSTEM,
+        content: '나님이 예약을 취소했어요',
+        createdAt: '2026-05-28T01:05:00.000Z',
+      }),
+    ];
+
+    const { getByTestId, queryByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={messages}
+        hasMessages
+        onMyMessageLongPress={jest.fn()}
+      />
+    );
+
+    expect(queryByTestId('my-message-2')).toBeNull();
+    expect(getByTestId('my-message-1').props.children).toBe('last');
+  });
+});
+
+describe('ChatRoomContent 예약·완료 카드 위치', () => {
+  const messages = [
+    createMessage({ messageId: 1, createdAt: '2026-05-28T01:00:00.000Z' }),
+    createMessage({ messageId: 2, createdAt: '2026-05-28T03:00:00.000Z' }),
+    createMessage({ messageId: 3, createdAt: '2026-05-28T05:00:00.000Z' }),
+  ];
+
+  const renderWithProduct = (product: TradeProduct) =>
+    render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={messages}
+        hasMessages
+        tradeEmbedConfig={{
+          shouldShow: true,
+          product,
+          showButtons: true,
+          otherPartyNickname: '요청자',
+        }}
+        showReviewButton
+      />
+    );
+
+  const itemOrder = (data: any[]) =>
+    data
+      .filter((item) => item.type !== 'dateDivider')
+      .map((item) => (item.type === 'message' ? `m${item.data.messageId}` : item.type));
+
+  it('reservedAt이 있으면 예약 카드를 그 시각으로 메시지 사이에 끼워 넣는다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isReserved: true,
+      reservedAt: '2026-05-28T04:00:00.000Z',
+    });
+
+    const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
+
+    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'm2', 'tradeReserved', 'm3']);
+  });
+
+  it('completedAt이 있으면 완료 카드를 그 시각으로 메시지 사이에 끼워 넣는다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isCompleted: true,
+      completedAt: '2026-05-28T02:00:00.000Z',
+    });
+
+    const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
+
+    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'tradeCompleted', 'm2', 'm3']);
+  });
+
+  it('reservedAt이 없거나 읽을 수 없으면(구버전 서버) 예약 카드를 맨 끝에 붙인다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isReserved: true,
+      reservedAt: 'not-a-date',
+    });
+
+    const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
+
+    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'm2', 'm3', 'tradeReserved']);
+  });
+
+  it('카드를 끼워 넣은 날짜에 맞춰 날짜 구분선을 다시 계산한다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isCompleted: true,
+      completedAt: '2026-05-29T01:00:00.000Z',
+    });
+
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={[
+          createMessage({ messageId: 1, createdAt: '2026-05-28T01:00:00.000Z' }),
+          createMessage({ messageId: 2, createdAt: '2026-05-30T01:00:00.000Z' }),
+        ]}
+        hasMessages
+        tradeEmbedConfig={{
+          shouldShow: true,
+          product,
+          showButtons: true,
+          otherPartyNickname: '요청자',
+        }}
+        showReviewButton
+      />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.data.map((item: any) => item.type)).toEqual([
+      'dateDivider',
+      'message',
+      'trade',
+      'dateDivider',
+      'tradeCompleted',
+      'dateDivider',
+      'message',
+    ]);
   });
 });
 

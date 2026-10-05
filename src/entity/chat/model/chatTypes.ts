@@ -45,6 +45,10 @@ export interface TradeProduct {
   readonly reservationAddress?: string | null;
   readonly reservationLatitude?: number | null;
   readonly reservationLongitude?: number | null;
+  // 예약한 시각·거래 완료 시각(School-of-Company/Gwangsan-Server#426). 이 값이 있으면 예약·완료
+  // 카드를 그 시각으로 메시지 사이에 끼워 넣고, 없으면(구버전 서버) 목록 맨 끝에 붙인다
+  readonly reservedAt?: string | null;
+  readonly completedAt?: string | null;
 }
 
 export interface ChatRoomWithProduct {

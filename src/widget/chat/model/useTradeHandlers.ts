@@ -200,6 +200,7 @@ export const useTradeHandlers = ({
 
       patchProduct({
         isReserved: false,
+        reservedAt: null,
         reservationScheduledAt: null,
         reservationPlaceName: null,
         reservationAddress: null,

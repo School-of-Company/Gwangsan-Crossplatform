@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { RoomId, MessageType } from '~/shared/types/chatType';
+import type { RoomId, SendableMessageType } from '~/shared/types/chatType';
 
 export const MESSAGE_STATUS = {
   PENDING: 'pending',
@@ -19,7 +19,7 @@ export interface PendingMessage {
   tempId: string;
   roomId: RoomId;
   content: string | null;
-  messageType: MessageType;
+  messageType: SendableMessageType;
   imageIds: number[];
   /** 서버 echo를 기다리지 않고 바로 미리보기를 그리기 위한 로컬 이미지(localUri 등) */
   images?: PendingMessageImage[];

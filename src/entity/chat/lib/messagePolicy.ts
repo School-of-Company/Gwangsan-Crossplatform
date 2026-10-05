@@ -2,6 +2,9 @@ import { MESSAGE_TYPE } from '@/shared/types/chatType';
 import { MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { EnhancedChatMessage } from '../model/useChatMessages';
 
+export const isSystemMessage = (message: { readonly messageType: string }): boolean =>
+  message.messageType === MESSAGE_TYPE.SYSTEM;
+
 // 보낸 지 24시간이 지난 메시지는 수정/삭제할 수 없다. 서버는 정확히 24시간인 시점까지 허용한다
 // (Gwangsan-Server#424)
 export const MESSAGE_MODIFY_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -13,6 +16,7 @@ export const canModifyMessage = (
   now: number = Date.now()
 ): boolean => {
   if (!message.isMine) return false;
+  if (isSystemMessage(message)) return false;
   if (message.tempId) return false;
   if (message.status && message.status !== MESSAGE_STATUS.SENT) return false;
 

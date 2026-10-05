@@ -28,6 +28,7 @@ import {
   getMessageDateKey,
   formatDateDividerLabel,
   canModifyMessage,
+  isSystemMessage,
 } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 import type { MessageAnchor } from '../../model/useMessageActions';
@@ -76,6 +77,14 @@ type ChatListItem =
       readonly data: ResolvedTradeCompletedEmbed;
     }
   | {
+      readonly type: 'system';
+      readonly timestamp: string;
+      readonly data: {
+        readonly messageId: EnhancedChatMessage['messageId'];
+        readonly label: string;
+      };
+    }
+  | {
       readonly type: 'dateDivider';
       readonly timestamp: string;
       readonly data: { readonly label: string };
@@ -103,11 +112,29 @@ export const getEmptyStateBottomInset = (keyboardHeight: number, closedOffset: n
   return Math.max(0, -keyboardHeight - closedOffset);
 };
 
+// WS 메시지는 UTC(Z 접미사), REST 메시지는 로컬 오프셋 없는 문자열이라 raw string 비교로는
+// 정렬 순서가 뒤집힐 수 있다 — items 정렬(useChatMessages.ts)과 동일하게 epoch 기준으로 비교해,
+// 자기보다 늦은 첫 항목 앞에 끼워 넣는다. 시각을 읽을 수 없으면 맨 끝에 붙인다
+const insertByTimestamp = (items: ChatListItem[], item: ChatListItem): void => {
+  const targetMs = new Date(item.timestamp).getTime();
+  const insertAt = Number.isNaN(targetMs)
+    ? -1
+    : items.findIndex((candidate) => {
+        const candidateMs = new Date(candidate.timestamp).getTime();
+        return !Number.isNaN(candidateMs) && candidateMs > targetMs;
+      });
+  items.splice(insertAt < 0 ? items.length : insertAt, 0, item);
+};
+
+const hasValidTimestamp = (value: string | null | undefined): value is string =>
+  Boolean(value) && !Number.isNaN(new Date(value as string).getTime());
+
 const keyExtractor = (item: ChatListItem): string => {
   if (item.type === 'message') return `m-${item.data.messageId}`;
   if (item.type === 'trade') return `t-${item.data.product.id}`;
   if (item.type === 'tradeReserved') return `tr-${item.data.productId}`;
   if (item.type === 'tradeCompleted') return `tc-${item.data.productId}`;
+  if (item.type === 'system') return `s-${item.data.messageId}`;
   return `d-${item.timestamp}`;
 };
 
@@ -186,16 +213,28 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   }, []);
 
   const lastMyMessageId = useMemo(() => {
-    const lastMyMessage = [...messages].reverse().find((message) => message.isMine);
+    const lastMyMessage = [...messages]
+      .reverse()
+      .find((message) => message.isMine && !isSystemMessage(message));
     return lastMyMessage?.messageId ?? null;
   }, [messages]);
 
   const combinedData = useMemo<ChatListItem[]>(() => {
-    const items: ChatListItem[] = messages.map((message) => ({
-      type: 'message',
-      timestamp: message.createdAt,
-      data: message,
-    }));
+    // SYSTEM 메시지(예: 예약 취소 안내)는 말풍선이 아니라 가운데 글씨 항목으로 따로 만들어,
+    // 프로필·연속 발신자 묶음·수정/삭제 판단이 모두 'message' 항목만 보도록 한다
+    const items: ChatListItem[] = messages.map((message) =>
+      isSystemMessage(message)
+        ? {
+            type: 'system',
+            timestamp: message.createdAt,
+            data: { messageId: message.messageId, label: message.content ?? '' },
+          }
+        : {
+            type: 'message',
+            timestamp: message.createdAt,
+            data: message,
+          }
+    );
 
     const product = tradeEmbedConfig?.product;
     if (tradeEmbedConfig?.shouldShow && product?.createdAt) {
@@ -209,30 +248,32 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         data: { ...tradeEmbedConfig, showButtons: product.isSeller } as ResolvedTradeEmbed,
       };
 
-      // WS 메시지는 UTC(Z 접미사), REST 메시지는 로컬 오프셋 없는 문자열이라 raw string 비교로는
-      // 정렬 순서가 뒤집힐 수 있다 — items 정렬(useChatMessages.ts)과 동일하게 epoch 기준으로 비교한다
-      const tradeMs = new Date(tradeTimestamp).getTime();
-      const insertAt = Number.isNaN(tradeMs)
-        ? -1
-        : items.findIndex((item) => {
-            const itemMs = new Date(item.timestamp).getTime();
-            return !Number.isNaN(itemMs) && itemMs > tradeMs;
-          });
-      items.splice(insertAt < 0 ? items.length : insertAt, 0, tradeItem);
+      insertByTimestamp(items, tradeItem);
 
-      // 서버가 예약/완료 시점을 별도로 내려주지 않아 실제 타임스탬프로 끼워 넣을 수 없다 —
-      // 두 시점 모두 항상 지금까지의 대화 중 가장 최근이므로 목록 맨 끝에 추가하고,
-      // 기존 거래요청 카드는 그대로 둔다
+      // 서버가 예약/완료 시각(reservedAt/completedAt, Gwangsan-Server#426)을 주면 거래 요청 카드처럼
+      // 그 시각으로 메시지 사이에 끼워 넣는다. 구버전 서버라 시각이 없으면 두 시점 모두 지금까지의
+      // 대화 중 가장 최근이라고 보고 목록 맨 끝에 붙인다
       const appendTrailingTimestamp = () => {
         const lastItem = items[items.length - 1];
         const lastMs = lastItem ? new Date(lastItem.timestamp).getTime() : NaN;
         return Number.isNaN(lastMs) ? tradeTimestamp : new Date(lastMs + 1).toISOString();
       };
 
+      const placeTradeCard = (
+        serverTimestamp: string | null | undefined,
+        build: (timestamp: string) => ChatListItem
+      ) => {
+        if (hasValidTimestamp(serverTimestamp)) {
+          insertByTimestamp(items, build(serverTimestamp));
+        } else {
+          items.push(build(appendTrailingTimestamp()));
+        }
+      };
+
       if (!product.isCompleted && product.isReserved) {
-        items.push({
+        placeTradeCard(product.reservedAt, (timestamp) => ({
           type: 'tradeReserved',
-          timestamp: appendTrailingTimestamp(),
+          timestamp,
           data: {
             productId: product.id,
             alignment: product.isSeller ? 'left' : 'right',
@@ -241,19 +282,19 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
             reserverNickname: tradeEmbedConfig.reserverNickname,
             onOpenMap: tradeEmbedConfig.onOpenMap,
           },
-        });
+        }));
       }
 
       if (showReviewButton && product.isCompleted) {
-        items.push({
+        placeTradeCard(product.completedAt, (timestamp) => ({
           type: 'tradeCompleted',
-          timestamp: appendTrailingTimestamp(),
+          timestamp,
           data: {
             productId: product.id,
             alignment: product.isSeller ? 'left' : 'right',
             hasReviewed: Boolean(hasReviewedTrade),
           },
-        });
+        }));
       }
     }
 
@@ -326,7 +367,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         );
       }
 
-      if (item.type === 'dateDivider') {
+      if (item.type === 'dateDivider' || item.type === 'system') {
         return <ChatDateDivider label={item.data.label} />;
       }
 

@@ -286,6 +286,33 @@ describe('useMessageSync', () => {
       });
     });
 
+    it('비활성 방에 SYSTEM 메시지가 오면 미리보기는 바꾸되 unreadMessageCount는 늘리지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 2,
+            roomId: OTHER_ROOM_ID,
+            messageType: 'SYSTEM',
+            content: '상대방님이 예약을 취소했어요',
+            isMine: false,
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].lastMessage).toBe('상대방님이 예약을 취소했어요');
+        expect(rooms?.[0].lastMessageType).toBe('SYSTEM');
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
     it('비활성 방의 내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
       const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
