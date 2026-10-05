@@ -1,4 +1,9 @@
-import { canEditMessage, canModifyMessage, MESSAGE_MODIFY_WINDOW_MS } from '../messagePolicy';
+import {
+  canEditMessage,
+  canModifyMessage,
+  isSystemMessage,
+  MESSAGE_MODIFY_WINDOW_MS,
+} from '../messagePolicy';
 import { MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { EnhancedChatMessage } from '../../model/useChatMessages';
 
@@ -21,6 +26,10 @@ const message = (overrides: Partial<EnhancedChatMessage> = {}): EnhancedChatMess
 describe('canModifyMessage', () => {
   it('내가 보낸 24시간 이내의 전송 완료 메시지는 수정/삭제할 수 있다', () => {
     expect(canModifyMessage(message(), NOW)).toBe(true);
+  });
+
+  it('SYSTEM 메시지는 내 것으로 와도 수정/삭제할 수 없다', () => {
+    expect(canModifyMessage(message({ messageType: 'SYSTEM' }), NOW)).toBe(false);
   });
 
   it('상대방 메시지는 수정/삭제할 수 없다', () => {
@@ -70,5 +79,13 @@ describe('canEditMessage', () => {
 
   it('수정/삭제할 수 없는 메시지는 수정도 할 수 없다', () => {
     expect(canEditMessage(message({ isMine: false }), NOW)).toBe(false);
+  });
+});
+
+describe('isSystemMessage', () => {
+  it('SYSTEM 타입만 시스템 메시지로 본다', () => {
+    expect(isSystemMessage({ messageType: 'SYSTEM' })).toBe(true);
+    expect(isSystemMessage({ messageType: 'TEXT' })).toBe(false);
+    expect(isSystemMessage({ messageType: 'IMAGE' })).toBe(false);
   });
 });

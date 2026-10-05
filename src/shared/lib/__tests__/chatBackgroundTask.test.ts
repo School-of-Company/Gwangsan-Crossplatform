@@ -191,6 +191,25 @@ describe('CHAT_BACKGROUND_TASK handler', () => {
     );
   });
 
+  it('마지막 메시지가 SYSTEM이면 서버 푸시와 겹치므로 알림을 만들지 않는다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({ '1': 0 }));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 1,
+        member: { nickname: 'A' },
+        lastMessageType: 'SYSTEM',
+        lastMessage: 'A님이 예약을 취소했어요',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
+  });
+
   it('falls back to a default title when the room has no member nickname', async () => {
     mockGetItemAsync.mockResolvedValue('token');
     mockAsyncGetItem.mockResolvedValue(JSON.stringify({}));
