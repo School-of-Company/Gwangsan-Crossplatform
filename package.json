@@ -36,7 +36,7 @@
     "@react-native-community/netinfo": "11.4.1",
     "@sentry/react-native": "~7.11.0",
     "@tanstack/react-query": "^5.104.0",
-    "@tanstack/react-query-devtools": "^5.102.8",
+    "@tanstack/react-query-devtools": "^5.104.1",
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
     "expo": "~56.0.23",
