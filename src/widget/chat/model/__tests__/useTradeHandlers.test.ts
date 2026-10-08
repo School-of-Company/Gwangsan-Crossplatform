@@ -169,6 +169,36 @@ describe('useTradeHandlers', () => {
       );
     });
 
+    it('성공 시 광산 잔액이 바로 반영되도록 내 프로필 쿼리를 invalidate한다(#785)', async () => {
+      mockRequestTrade.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
+    it('실패 시 내 프로필 쿼리를 invalidate하지 않는다', async () => {
+      mockRequestTrade.mockRejectedValue(new Error('실패'));
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
     it('성공 시 chatRoomData 캐시를 isCompleted=true, isCompletable=false로 즉시 업데이트한다', async () => {
       mockRequestTrade.mockResolvedValue({});
 
