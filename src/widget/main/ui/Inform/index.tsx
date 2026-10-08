@@ -26,13 +26,13 @@ export default function Inform({ dong, place, head }: InformProps) {
           icon={<Ionicons name="bag-outline" size={40} color={colors.foreground} />}
           label="물건"
           onPress={() => handlePress('OBJECT')}
-          className="aspect-square"
+          className="min-h-40"
         />
         <SelectionCard
           icon={<MaterialCommunityIcons name="headset" size={40} color={colors.foreground} />}
           label="서비스"
           onPress={() => handlePress('SERVICE')}
-          className="aspect-square"
+          className="min-h-40"
         />
       </View>
     </View>

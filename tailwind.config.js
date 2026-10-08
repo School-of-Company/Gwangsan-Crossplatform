@@ -9,17 +9,19 @@ module.exports = {
         cafe24: ['Cafe24SsurroundOTF'],
       },
       fontSize: {
-        titleLarge: ['30px', { lineHeight: '120%', fontWeight: '600' }],
-        titleMedium: ['26px', { lineHeight: '120%', fontWeight: '600' }],
-        titleMedium2: ['24px', { lineHeight: '120%', fontWeight: '600' }],
-        titleSmall: ['20px', { lineHeight: '130%', fontWeight: '600' }],
-        body1: ['18px', { lineHeight: '140%', fontWeight: '600' }],
-        body2: ['18px', { lineHeight: '140%', fontWeight: '400' }],
-        body3: ['16px', { lineHeight: '140%', fontWeight: '600' }],
-        body4: ['16px', { lineHeight: '140%', fontWeight: '400' }],
-        body5: ['14px', { lineHeight: '140%', fontWeight: '400' }],
-        label: ['14px', { lineHeight: '140%', fontWeight: '500' }],
-        caption: ['12px', { lineHeight: '140%', fontWeight: '400' }],
+        // lineHeight는 기준 글자 크기 기준으로 여유를 둔다. 기기/접근성 글자 크기를 키우면
+        // 한글 글자(특히 받침)가 줄 높이보다 커져 위/아래가 잘리는 문제가 있었다 (#779).
+        titleLarge: ['30px', { lineHeight: '135%', fontWeight: '600' }],
+        titleMedium: ['26px', { lineHeight: '135%', fontWeight: '600' }],
+        titleMedium2: ['24px', { lineHeight: '135%', fontWeight: '600' }],
+        titleSmall: ['20px', { lineHeight: '145%', fontWeight: '600' }],
+        body1: ['18px', { lineHeight: '155%', fontWeight: '600' }],
+        body2: ['18px', { lineHeight: '155%', fontWeight: '400' }],
+        body3: ['16px', { lineHeight: '155%', fontWeight: '600' }],
+        body4: ['16px', { lineHeight: '155%', fontWeight: '400' }],
+        body5: ['14px', { lineHeight: '155%', fontWeight: '400' }],
+        label: ['14px', { lineHeight: '155%', fontWeight: '500' }],
+        caption: ['12px', { lineHeight: '155%', fontWeight: '400' }],
       },
       colors: {
         sub: {
