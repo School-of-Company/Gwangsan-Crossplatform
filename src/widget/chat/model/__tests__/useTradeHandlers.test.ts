@@ -192,6 +192,22 @@ describe('useTradeHandlers', () => {
       expect(cached?.product.isCompletable).toBe(false);
     });
 
+    it('성공 시 서버가 지급할 수 있는 광산 잔액을 다시 받아오도록 myProfile 캐시를 무효화한다(#778)', async () => {
+      mockRequestTrade.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
     it('실패 시 캐시를 변경하지 않는다', async () => {
       mockRequestTrade.mockRejectedValue(new Error('수락 실패'));
 
