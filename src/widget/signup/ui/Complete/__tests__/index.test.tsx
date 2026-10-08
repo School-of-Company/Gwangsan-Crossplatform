@@ -122,3 +122,52 @@ describe('Complete — 가입 실패', () => {
     expect(useSignupStore.getState().formData.name).toBe('홍길동');
   });
 });
+
+describe('Complete — SMS 인증 만료(#784)', () => {
+  const smsAuthExpiredError = () => {
+    const { AxiosError, AxiosHeaders } = jest.requireActual('axios');
+    // signup API는 toAppError로 서버 메시지를 담은 AxiosError를 던진다
+    return new AxiosError('SMS 인증 정보를 찾을 수 없습니다.', '404', undefined, undefined, {
+      status: 404,
+      statusText: '',
+      data: { message: 'SMS 인증 정보를 찾을 수 없습니다.' },
+      headers: {},
+      config: { headers: new AxiosHeaders() },
+    });
+  };
+
+  it('재인증 안내와 "전화번호 다시 인증하기" 버튼을 보여준다', async () => {
+    mockSignup.mockRejectedValue(smsAuthExpiredError());
+
+    const { getByText, queryByText } = render(<Complete />);
+
+    await waitFor(() => expect(getByText('전화번호 다시 인증하기')).toBeTruthy());
+    expect(getByText(/전화번호 인증 시간이 지났습니다/)).toBeTruthy();
+    expect(queryByText('다시 시도')).toBeNull();
+  });
+
+  it('"전화번호 다시 인증하기" 클릭 시 입력 정보를 유지한 채 재인증 모드로 전화번호 단계로 이동한다', async () => {
+    mockSignup.mockRejectedValue(smsAuthExpiredError());
+
+    const { getByText } = render(<Complete />);
+
+    await waitFor(() => expect(getByText('전화번호 다시 인증하기')).toBeTruthy());
+    fireEvent.press(getByText('전화번호 다시 인증하기'));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith({
+      pathname: '/signup/phoneNumber',
+      params: { reverify: 'true' },
+    });
+    expect(useSignupStore.getState().formData.name).toBe('홍길동');
+  });
+
+  it('SMS와 무관한 404(추천인 없음 등)는 기존처럼 "다시 시도"를 보여준다', async () => {
+    const err = smsAuthExpiredError();
+    err.message = '추천인이 존재하지 않습니다.';
+    mockSignup.mockRejectedValue(err);
+
+    const { getByText } = render(<Complete />);
+
+    await waitFor(() => expect(getByText('다시 시도')).toBeTruthy());
+  });
+});
