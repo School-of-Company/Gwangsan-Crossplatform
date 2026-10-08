@@ -4,6 +4,7 @@ import Toast from 'react-native-toast-message';
 import ProfileEditPageView from '../index';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
 import { useUpdateProfile } from '~/view/profile/model/useUpdateProfile';
+import { useUpdateBranch } from '~/view/profile/model/useUpdateBranch';
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
@@ -17,6 +18,7 @@ jest.mock('react-native-toast-message', () => ({
 
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
+jest.mock('~/view/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle }: any) => {
@@ -72,20 +74,24 @@ jest.mock('~/entity/auth/ui/SpecialtiesDropdown', () => ({
 
 const mockUseGetMyProfile = useGetMyProfile as jest.Mock;
 const mockUseUpdateProfile = useUpdateProfile as jest.Mock;
+const mockUseUpdateBranch = useUpdateBranch as jest.Mock;
 
 const mockMutate = jest.fn();
+const mockMutateBranch = jest.fn();
 
 const defaultProfileData = {
   memberId: 1,
   nickname: '기존닉네임',
   specialties: ['빨래하기'],
   description: '기존 소개',
+  placeName: '도산',
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseGetMyProfile.mockReturnValue({ data: defaultProfileData, isLoading: false });
   mockUseUpdateProfile.mockReturnValue({ mutate: mockMutate, isPending: false });
+  mockUseUpdateBranch.mockReturnValue({ mutate: mockMutateBranch, isPending: false });
 });
 
 describe('ProfileEditPageView', () => {
@@ -205,5 +211,21 @@ describe('ProfileEditPageView', () => {
     fireEvent.press(getByTestId('submit-button'));
 
     expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ specialties: ['요리'] }));
+  });
+
+  it('현재 지점명을 지점 드롭다운 초기값으로 표시한다', () => {
+    const { getByText } = render(<ProfileEditPageView />);
+
+    expect(getByText('도산')).toBeTruthy();
+  });
+
+  it('지점을 선택하면 즉시 updateBranch mutation을 호출한다(제출 버튼과 무관)', () => {
+    const { getByText } = render(<ProfileEditPageView />);
+
+    fireEvent.press(getByText('도산'));
+    fireEvent.press(getByText('평동'));
+
+    expect(mockMutateBranch).toHaveBeenCalledWith({ placeId: 11 });
+    expect(mockMutate).not.toHaveBeenCalled();
   });
 });
