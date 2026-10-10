@@ -10,6 +10,7 @@ import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useUpdateProfile } from '../../model/useUpdateProfile';
 import { profileEditSchema } from '~/entity/auth/model/authSchema';
 import Toast from 'react-native-toast-message';
+import { z } from 'zod';
 
 export default function ProfileEditPageView() {
   const [nickname, setNickname] = useState('');
@@ -35,9 +36,18 @@ export default function ProfileEditPageView() {
   }, [profileData]);
 
   const handleSubmit = () => {
+    // 별칭을 바꾸지 않았으면 서버에 저장된 원본을 그대로 보낸다. 서버는 본인 별칭을 문자열 비교로
+    // 걸러내지만 중복 검사는 공백·대소문자를 무시하는 DB 비교라, 앞뒤 공백이 붙어 저장된 별칭을
+    // trim해서 보내면 자기 자신과 충돌해 409가 났다(#780). 기존 별칭은 정규식 검사도 건너뛴다.
+    const originalNickname = profileData?.nickname ?? '';
+    const isNicknameUnchanged = !!originalNickname && nickname.trim() === originalNickname.trim();
+    const schema = isNicknameUnchanged
+      ? profileEditSchema.extend({ nickname: z.string() })
+      : profileEditSchema;
+
     try {
-      const validatedData = profileEditSchema.parse({
-        nickname: nickname.trim(),
+      const validatedData = schema.parse({
+        nickname: isNicknameUnchanged ? originalNickname : nickname.trim(),
         specialties,
         description: description.trim(),
       });
