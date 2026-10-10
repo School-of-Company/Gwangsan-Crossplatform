@@ -1,15 +1,7 @@
 export const PLACE_ITEMS = [
-  { id: 1, name: '수완마을' },
+  // ponytail: 신창/고실 지점만 노출 (#777). 다른 지점 추가 필요 시 여기 항목을 늘릴 것.
   { id: 2, name: '고실마을' },
-  { id: 3, name: '신가' },
   { id: 4, name: '신창' },
-  { id: 5, name: '도산' },
-  { id: 6, name: '우산' },
-  { id: 7, name: '월곡1' },
-  { id: 8, name: '첨단2' },
-  { id: 9, name: '월곡2' },
-  { id: 10, name: '하남' },
-  { id: 11, name: '평동' },
   { id: 12, name: '광산구도시재생공동체센터' },
   { id: 13, name: '광산구자원봉사센터' },
   { id: 14, name: '광산구지역사회보장협의체' },
