@@ -43,4 +43,21 @@ describe('updateProfile', () => {
 
     await expect(updateProfile(payload)).rejects.toThrow('이미 사용 중인 별칭입니다.');
   });
+
+  it('409(별칭 중복)는 원인을 알 수 있는 메시지로 바꿔 던진다(#780)', async () => {
+    const { AxiosError, AxiosHeaders } = jest.requireActual('axios');
+    mockPatch.mockRejectedValue(
+      new AxiosError('Request failed with status code 409', '409', undefined, undefined, {
+        status: 409,
+        statusText: '',
+        data: '',
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      })
+    );
+
+    await expect(updateProfile(payload)).rejects.toThrow(
+      '이미 사용 중인 별칭입니다. 다른 별칭을 입력해주세요.'
+    );
+  });
 });
