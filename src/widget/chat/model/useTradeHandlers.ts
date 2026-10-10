@@ -88,6 +88,8 @@ export const useTradeHandlers = ({
       });
 
       patchProduct({ isCompleted: true, isCompletable: false });
+      // 거래 완료 시 서버가 환영/첫거래 광산을 지급할 수 있으므로 잔액을 다시 받아온다(#778)
+      queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
 
       Toast.show({
         type: 'success',
@@ -100,7 +102,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData, otherUserInfo.id, patchProduct]);
+  }, [roomData, otherUserInfo.id, patchProduct, queryClient]);
 
   // 대기중인 내 요청을 다시 누르면 "취소" 개념을 노출하지 않고, 하루가 지났을 때만
   // 내부적으로 기존 요청을 철회한 뒤 새 요청을 보낼 수 있도록 통과시킨다(호출부가 true를
