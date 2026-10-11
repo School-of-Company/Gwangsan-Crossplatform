@@ -71,6 +71,14 @@ jobs:
         with:
           xcode-version: '26'
 
+      # 시뮬레이터 부팅(~2분)을 pod install·빌드와 병렬로 진행하고, 테스트 직전에 부팅 완료만 기다린다
+      - name: Boot iOS Simulator (async)
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' | tail -1)
+          SIM_ID=$(xcrun simctl create "CI-iPhone-16" "iPhone 16" "$RUNTIME")
+          xcrun simctl boot "$SIM_ID"
+          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+
       - name: Cache applesimutils
         id: cache-applesimutils
         uses: actions/cache@v6
@@ -89,9 +97,40 @@ jobs:
         if: steps.cache-applesimutils.outputs.cache-hit == 'true'
         run: brew link applesimutils 2>/dev/null || true
 
+      # RN ccache 래퍼가 CCACHE_CONFIGPATH를 자체 conf로 덮어쓰므로 캐시 경로는 CCACHE_DIR 환경변수로 지정한다
+      - name: Setup ccache
+        run: |
+          brew install ccache
+          echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ~/.ccache
+          key: ccache-ios-${{ hashFiles('ios/Podfile.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-ios-${{ hashFiles('ios/Podfile.lock') }}-
+            ccache-ios-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v6
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+            ~/.cocoapods/repos/trunk
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}-${{ hashFiles('patches/**') }}
+          restore-keys: |
+            pods-${{ hashFiles('ios/Podfile.lock') }}-
+            pods-
+
       - name: Install CocoaPods dependencies
         working-directory: ios
-        run: pod install --repo-update
+        run: |
+          # CI에서만 ccache 활성화 (Sync 단계는 Podfile.lock만 커밋하므로 이 변경은 repo에 반영되지 않음)
+          jq '. + {"apple.ccacheEnabled": "true"}' Podfile.properties.json > /tmp/props.json && mv /tmp/props.json Podfile.properties.json
+          pod install || pod install --repo-update
 
       - name: Sync Podfile.lock to repo
         if: github.event_name != 'issue_comment'
@@ -144,14 +183,6 @@ jobs:
         if: steps.cache-detox-framework.outputs.cache-hit != 'true'
         run: ./node_modules/.bin/detox clean-framework-cache && ./node_modules/.bin/detox build-framework-cache
 
-
-      - name: Boot iOS Simulator
-        run: |
-          RUNTIME=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' | tail -1)
-          SIM_ID=$(xcrun simctl create "CI-iPhone-16" "iPhone 16" "$RUNTIME")
-          xcrun simctl boot "$SIM_ID"
-          xcrun simctl bootstatus "$SIM_ID" -b
-          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
 
       - name: Resolve coverage flag
         id: coverage-flag
@@ -206,6 +237,13 @@ jobs:
       - name: Show build log on failure
         if: failure()
         run: cat /tmp/detox-build.log 2>/dev/null || echo "No build log found"
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s || true
+
+      - name: Wait for iOS Simulator boot
+        run: xcrun simctl bootstatus "$SIM_ID" -b
 
       - name: Run Detox E2E tests
         run: |
