@@ -2766,7 +2766,7 @@ DEPENDENCIES:
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
+  trunk:
     - libavif
     - libdav1d
     - libwebp
@@ -3180,6 +3180,6 @@ SPEC CHECKSUMS:
   UMAppLoader: b7d22886a244871c20b5a8f2fcea13c18534e677
   Yoga: e240fec777ff1f21ef42ccebbb44b6d262125855
 
-PODFILE CHECKSUM: f34978855457b818531a5f03ea0d8989a15fb8a4
+PODFILE CHECKSUM: f9d7d2cf17a11d3cdef3a7f109cf2845814e5e84
 
 COCOAPODS: 1.17.0
