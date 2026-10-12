@@ -17,6 +17,10 @@ jobs:
     name: iOS E2E Test (Detox)
     runs-on: macos-15
     timeout-minutes: 120
+    env:
+      # brew install마다 도는 brew update(~2분) 생략
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
     concurrency:
       group: ios-e2e-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
