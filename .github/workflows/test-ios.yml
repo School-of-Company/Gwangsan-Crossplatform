@@ -83,7 +83,7 @@ jobs:
         id: cache-applesimutils
         uses: actions/cache@v6
         with:
-          path: /usr/local/Cellar/applesimutils
+          path: /opt/homebrew/Cellar/applesimutils
           key: applesimutils-${{ runner.os }}-${{ runner.arch }}
 
       - name: Install applesimutils
@@ -97,13 +97,19 @@ jobs:
         if: steps.cache-applesimutils.outputs.cache-hit == 'true'
         run: brew link applesimutils 2>/dev/null || true
 
-      # Xcode는 컴파일러 프로세스에 환경변수를 넘기지 않으므로, RN ccache 래퍼가 읽는 conf 파일에 직접 캐시 경로를 지정한다
+      # Xcode는 CompileC에 환경변수를 넘기지 않아 RN ccache 래퍼의 $CCACHE_BINARY가 비어 plain clang으로 빠진다.
+      # CI에서는 래퍼를 ccache 경로·conf를 하드코딩한 버전으로 덮어쓴다.
       - name: Setup ccache
         run: |
           brew install ccache
-          CONF=node_modules/react-native/scripts/xcode/ccache.conf
+          XCODE_DIR=$PWD/node_modules/react-native/scripts/xcode
+          CONF=$XCODE_DIR/ccache.conf
           grep -q '^cache_dir' "$CONF" || printf 'cache_dir = %s\nmax_size = 1G\n' "$HOME/.ccache" >> "$CONF"
-          echo "CCACHE_CONFIGPATH=$PWD/$CONF" >> $GITHUB_ENV
+          for CC in clang clang++; do
+            printf '#!/bin/sh\nexport CCACHE_CONFIGPATH="%s"\nexec "%s" %s "$@"\n' "$CONF" "$(command -v ccache)" "$CC" > "$XCODE_DIR/ccache-$CC.sh"
+            chmod +x "$XCODE_DIR/ccache-$CC.sh"
+          done
+          echo "CCACHE_CONFIGPATH=$CONF" >> $GITHUB_ENV
 
       - name: Cache ccache
         uses: actions/cache@v6
