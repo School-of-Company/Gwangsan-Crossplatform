@@ -17,6 +17,10 @@ jobs:
     name: iOS E2E Test (Detox)
     runs-on: macos-15
     timeout-minutes: 120
+    env:
+      # brew install마다 도는 brew update(~2분) 생략
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
     concurrency:
       group: ios-e2e-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -71,11 +75,19 @@ jobs:
         with:
           xcode-version: '26'
 
+      # 시뮬레이터 부팅(~2분)을 pod install·빌드와 병렬로 진행하고, 테스트 직전에 부팅 완료만 기다린다
+      - name: Boot iOS Simulator (async)
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' | tail -1)
+          SIM_ID=$(xcrun simctl create "CI-iPhone-16" "iPhone 16" "$RUNTIME")
+          xcrun simctl boot "$SIM_ID"
+          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
+
       - name: Cache applesimutils
         id: cache-applesimutils
         uses: actions/cache@v6
         with:
-          path: /usr/local/Cellar/applesimutils
+          path: /opt/homebrew/Cellar/applesimutils
           key: applesimutils-${{ runner.os }}-${{ runner.arch }}
 
       - name: Install applesimutils
@@ -89,9 +101,47 @@ jobs:
         if: steps.cache-applesimutils.outputs.cache-hit == 'true'
         run: brew link applesimutils 2>/dev/null || true
 
+      # Xcode는 CompileC에 환경변수를 넘기지 않아 RN ccache 래퍼의 $CCACHE_BINARY가 비어 plain clang으로 빠진다.
+      # CI에서는 래퍼를 ccache 경로·conf를 하드코딩한 버전으로 덮어쓴다.
+      - name: Setup ccache
+        run: |
+          brew install ccache
+          XCODE_DIR=$PWD/node_modules/react-native/scripts/xcode
+          CONF=$XCODE_DIR/ccache.conf
+          grep -q '^cache_dir' "$CONF" || printf 'cache_dir = %s\nmax_size = 1G\n' "$HOME/.ccache" >> "$CONF"
+          for CC in clang clang++; do
+            printf '#!/bin/sh\nexport CCACHE_CONFIGPATH="%s"\nexec "%s" %s "$@"\n' "$CONF" "$(command -v ccache)" "$CC" > "$XCODE_DIR/ccache-$CC.sh"
+            chmod +x "$XCODE_DIR/ccache-$CC.sh"
+          done
+          echo "CCACHE_CONFIGPATH=$CONF" >> $GITHUB_ENV
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ~/.ccache
+          key: ccache-ios-${{ hashFiles('ios/Podfile.lock') }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-ios-${{ hashFiles('ios/Podfile.lock') }}-
+            ccache-ios-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v6
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+            ~/.cocoapods/repos/trunk
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}-${{ hashFiles('patches/**') }}
+          restore-keys: |
+            pods-${{ hashFiles('ios/Podfile.lock') }}-
+            pods-
+
       - name: Install CocoaPods dependencies
         working-directory: ios
-        run: pod install --repo-update
+        run: |
+          # CI에서만 ccache 활성화 (Sync 단계는 Podfile.lock만 커밋하므로 이 변경은 repo에 반영되지 않음)
+          jq '. + {"apple.ccacheEnabled": "true"}' Podfile.properties.json > /tmp/props.json && mv /tmp/props.json Podfile.properties.json
+          pod install || pod install --repo-update
 
       - name: Sync Podfile.lock to repo
         if: github.event_name != 'issue_comment'
@@ -144,14 +194,6 @@ jobs:
         if: steps.cache-detox-framework.outputs.cache-hit != 'true'
         run: ./node_modules/.bin/detox clean-framework-cache && ./node_modules/.bin/detox build-framework-cache
 
-
-      - name: Boot iOS Simulator
-        run: |
-          RUNTIME=$(xcrun simctl list runtimes | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9]+-[0-9]+' | tail -1)
-          SIM_ID=$(xcrun simctl create "CI-iPhone-16" "iPhone 16" "$RUNTIME")
-          xcrun simctl boot "$SIM_ID"
-          xcrun simctl bootstatus "$SIM_ID" -b
-          echo "SIM_ID=$SIM_ID" >> $GITHUB_ENV
 
       - name: Resolve coverage flag
         id: coverage-flag
@@ -206,6 +248,13 @@ jobs:
       - name: Show build log on failure
         if: failure()
         run: cat /tmp/detox-build.log 2>/dev/null || echo "No build log found"
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s || true
+
+      - name: Wait for iOS Simulator boot
+        run: xcrun simctl bootstatus "$SIM_ID" -b
 
       - name: Run Detox E2E tests
         run: |
