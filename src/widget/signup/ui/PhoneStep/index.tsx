@@ -4,10 +4,13 @@ import { ErrorMessage } from '@/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { Platform, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSignupPhoneVerification } from '~/entity/auth/model/useSignupPhoneVerification';
 
 export default function PhoneStep() {
+  // 가입 요청 시 인증이 만료돼 다시 인증하러 온 경우(#784)
+  const { reverify } = useLocalSearchParams<{ reverify?: string }>();
+  const isReverify = reverify === 'true';
   const { value: initialPhoneNumber, updateField: updatePhoneNumber } =
     useSignupFormField('phoneNumber');
   const { value: initialVerificationCode, updateField: updateVerificationCode } =
@@ -37,13 +40,19 @@ export default function PhoneStep() {
   const handleNext = () => {
     updatePhoneNumber(phoneNumber);
     updateVerificationCode(verificationCode);
+    if (isReverify) {
+      router.replace('/signup/complete');
+      return;
+    }
     router.push('/signup/dongName');
   };
 
   return (
     <SignupForm
       title="회원가입"
-      description="전화번호를 입력해주세요"
+      description={
+        isReverify ? '인증 시간이 지나 전화번호를 다시 인증해주세요' : '전화번호를 입력해주세요'
+      }
       onNext={handleNext}
       isNextDisabled={!isVerificationComplete}>
       <View>
