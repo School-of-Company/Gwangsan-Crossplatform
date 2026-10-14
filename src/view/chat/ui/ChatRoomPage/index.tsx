@@ -126,6 +126,7 @@ export default function ChatRoomPage() {
     hasTradeRequest,
     shouldShowButtons,
     canWithdrawTradeRequest,
+    isCompletingTrade,
   } = useTradeHandlers({
     roomId,
     roomData: roomData || null,
@@ -305,7 +306,10 @@ export default function ChatRoomPage() {
           <TouchableOpacity
             testID="trade-complete-button"
             onPress={handleTradeAccept}
-            className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+            disabled={isCompletingTrade}
+            className={`shrink-0 rounded-lg px-5 py-2.5 ${
+              isCompletingTrade ? 'bg-disabled' : 'bg-main-500'
+            }`}>
             <Text className="text-label font-medium text-white">거래완료</Text>
           </TouchableOpacity>
         )}
