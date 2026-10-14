@@ -7,12 +7,21 @@ import { useSignupStore } from '@/shared/store/useSignupStore';
 import { signup } from '~/entity/auth/api/signup';
 import Toast from 'react-native-toast-message';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { AxiosError } from 'axios';
+
+const SMS_AUTH_EXPIRED_MESSAGE = '전화번호 인증 시간이 지났습니다.\n전화번호를 다시 인증해주세요.';
+
+// 서버는 인증 완료 상태를 10분만 보관한다. 인증 뒤 남은 단계를 채우다 시간이 지나면
+// 가입 요청이 "SMS 인증 정보를 찾을 수 없습니다"(404)로 실패한다(#784)
+const isSmsAuthExpiredError = (err: unknown) =>
+  err instanceof AxiosError && err.response?.status === 404 && /SMS/.test(err.message);
 
 export default function Complete() {
   const { formData, resetStore } = useSignupStore();
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSmsAuthExpired, setIsSmsAuthExpired] = useState(false);
   const hasSubmittedRef = useRef(false);
 
   const handleSignup = useCallback(async () => {
@@ -33,7 +42,9 @@ export default function Complete() {
       });
     } catch (err) {
       setIsSuccess(false);
-      const errorMessage = getErrorMessage(err);
+      const smsAuthExpired = isSmsAuthExpiredError(err);
+      setIsSmsAuthExpired(smsAuthExpired);
+      const errorMessage = smsAuthExpired ? SMS_AUTH_EXPIRED_MESSAGE : getErrorMessage(err);
       setError(errorMessage);
       Toast.show({
         type: 'error',
@@ -61,6 +72,13 @@ export default function Complete() {
     router.replace('/signup/recommender');
   };
 
+  // 입력했던 정보는 그대로 두고 전화번호만 다시 인증한 뒤 곧바로 가입을 재요청한다
+  const handleReverify = () => {
+    hasSubmittedRef.current = false;
+    setError(null);
+    router.replace({ pathname: '/signup/phoneNumber', params: { reverify: 'true' } });
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background px-6">
@@ -82,7 +100,11 @@ export default function Complete() {
           <Text className="mt-4 text-center text-gray-700">{error}</Text>
         </View>
         <View className="mb-8 mt-auto gap-4">
-          <Button onPress={handleRetry}>다시 시도</Button>
+          {isSmsAuthExpired ? (
+            <Button onPress={handleReverify}>전화번호 다시 인증하기</Button>
+          ) : (
+            <Button onPress={handleRetry}>다시 시도</Button>
+          )}
         </View>
       </View>
     );
