@@ -1,8 +1,8 @@
 import { DONG } from '../dong';
 
 describe('DONG', () => {
-  it('20개의 동 이름을 포함한다', () => {
-    expect(DONG).toHaveLength(20);
+  it('21개의 동 이름을 포함한다', () => {
+    expect(DONG).toHaveLength(21);
   });
 
   it('모든 항목이 비어있지 않은 문자열이다', () => {
@@ -20,5 +20,6 @@ describe('DONG', () => {
   it('특정 동 이름을 포함한다', () => {
     expect(DONG).toContain('수완동');
     expect(DONG).toContain('첨단1동');
+    expect(DONG).toContain('신창동');
   });
 });

@@ -349,17 +349,17 @@ export function ChatRoomList() {
         hasHeader={false}
         height={360}>
         <View className="mt-4 gap-3">
-          <View className="overflow-hidden rounded-2xl bg-gray-50">
+          <View className="overflow-hidden rounded-2xl bg-gray-200">
             <ActionSheetRow
               label="차단하기"
               disabled={block.isPending}
               onPress={handleBlockPress}
             />
           </View>
-          <View className="overflow-hidden rounded-2xl bg-gray-50">
+          <View className="overflow-hidden rounded-2xl bg-gray-200">
             <ActionSheetRow label="신고하기" onPress={handleReportPress} />
           </View>
-          <View className="overflow-hidden rounded-2xl bg-gray-50">
+          <View className="overflow-hidden rounded-2xl bg-gray-200">
             <ActionSheetRow
               label={deleteChatRoomMutation.isPending ? '나가는 중...' : '채팅방 나가기'}
               labelClassName="text-error-500"

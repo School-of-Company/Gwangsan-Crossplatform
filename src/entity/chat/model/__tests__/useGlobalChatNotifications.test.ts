@@ -147,6 +147,19 @@ describe('useGlobalChatNotifications', () => {
     });
   });
 
+  it('SYSTEM 메시지는 서버 푸시와 겹치므로 로컬 알림을 만들지 않는다', async () => {
+    renderHook(() => useGlobalChatNotifications());
+    const handler = mockChatSocket.on.mock.calls[0][1];
+
+    await handler({
+      ...baseMessage,
+      messageType: 'SYSTEM',
+      content: '홍길동님이 예약을 취소했어요',
+    });
+
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+  });
+
   it('shows an image placeholder body for IMAGE messages', async () => {
     renderHook(() => useGlobalChatNotifications());
     const handler = mockChatSocket.on.mock.calls[0][1];

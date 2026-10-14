@@ -1,10 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { requestTrade } from '~/entity/post/api/requestTrade';
 import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
+import { getChatRoomData } from '~/entity/chat/api/getChatMessages';
 import type { RoomId } from '~/shared/types/chatType';
 import { logger } from '~/shared/lib/logger';
 import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
@@ -37,6 +38,7 @@ interface UseTradeHandlersReturn {
   readonly hasTradeRequest: boolean;
   readonly shouldShowButtons: boolean;
   readonly canWithdrawTradeRequest: boolean;
+  readonly isCompletingTrade: boolean;
 }
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -67,7 +69,30 @@ export const useTradeHandlers = ({
   // 확정하지 않았다는 뜻이다(isCompletable=true면 반대로 상대가 보낸 요청을 내가 수락할 차례).
   const canWithdrawTradeRequest = hasTradeRequest && roomData?.product?.isCompletable === false;
 
+  // 연타하면 첫 요청이 완료된 뒤 두 번째 요청이 "이미 완료된 거래"로 실패해 에러 토스트가 뜬다.
+  // state는 렌더 전까지 반영되지 않아 같은 프레임의 연속 탭을 못 막으므로 ref로 잠근다.
+  const isCompletingTradeRef = useRef(false);
+  const [isCompletingTrade, setIsCompletingTrade] = useState(false);
+
+  // POST /post/trade는 상황에 따라 거래를 완료하기도, 상대 확인을 기다리는 요청만 만들기도 한다.
+  // 응답에는 그 구분이 없어 채팅방 데이터를 다시 받아 실제 완료 여부를 확인한다. 조회에 실패하면
+  // 완료됐다고 단정하지 않는다 — 실제 상태는 소켓 이벤트나 폴링으로 곧 반영된다.
+  const fetchIsTradeCompleted = useCallback(async () => {
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: chatRoomDataKeys.room(roomId),
+        queryFn: () => getChatRoomData(roomId),
+        staleTime: 0,
+      });
+      return Boolean(data.product?.isCompleted);
+    } catch {
+      return false;
+    }
+  }, [queryClient, roomId]);
+
   const handleTradeAccept = useCallback(async () => {
+    if (isCompletingTradeRef.current) return;
+
     if (!roomData?.product?.id || !otherUserInfo.id) {
       logger.error('handleTradeAccept invalid params', {
         productId: roomData?.product?.id,
@@ -75,11 +100,17 @@ export const useTradeHandlers = ({
       });
       Toast.show({
         type: 'error',
-        text1: '거래 수락 실패',
+        text1: '거래 완료 실패',
         text2: '상대방 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
       });
       return;
     }
+
+    // 상대가 보낸 대기 요청을 확정하는 경우에만 서버가 반드시 거래를 완료한다
+    const isConfirmingOtherRequest = hasTradeRequest && roomData.product.isCompletable;
+
+    isCompletingTradeRef.current = true;
+    setIsCompletingTrade(true);
 
     try {
       await requestTrade({
@@ -87,20 +118,40 @@ export const useTradeHandlers = ({
         otherMemberId: otherUserInfo.id,
       });
 
-      patchProduct({ isCompleted: true, isCompletable: false });
+      const isCompleted = isConfirmingOtherRequest || (await fetchIsTradeCompleted());
 
-      Toast.show({
-        type: 'success',
-        text1: '거래가 수락되었습니다!',
-      });
+      if (isCompleted) {
+        patchProduct({ isCompleted: true, isCompletable: false });
+
+        Toast.show({
+          type: 'success',
+          text1: '거래가 완료되었습니다!',
+        });
+      } else {
+        Toast.show({
+          type: 'info',
+          text1: '거래완료 요청을 보냈어요',
+          text2: `${otherUserInfo.nickname}님이 확인하면 거래가 완료돼요.`,
+        });
+      }
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: '거래 수락 실패',
+        text1: '거래 완료 실패',
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
+    } finally {
+      isCompletingTradeRef.current = false;
+      setIsCompletingTrade(false);
     }
-  }, [roomData, otherUserInfo.id, patchProduct]);
+  }, [
+    roomData,
+    otherUserInfo.id,
+    otherUserInfo.nickname,
+    hasTradeRequest,
+    fetchIsTradeCompleted,
+    patchProduct,
+  ]);
 
   // 대기중인 내 요청을 다시 누르면 "취소" 개념을 노출하지 않고, 하루가 지났을 때만
   // 내부적으로 기존 요청을 철회한 뒤 새 요청을 보낼 수 있도록 통과시킨다(호출부가 true를
@@ -200,6 +251,7 @@ export const useTradeHandlers = ({
 
       patchProduct({
         isReserved: false,
+        reservedAt: null,
         reservationScheduledAt: null,
         reservationPlaceName: null,
         reservationAddress: null,
@@ -228,5 +280,6 @@ export const useTradeHandlers = ({
     hasTradeRequest,
     shouldShowButtons,
     canWithdrawTradeRequest,
+    isCompletingTrade,
   };
 };

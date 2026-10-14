@@ -5,9 +5,15 @@ export type ChatImage = ImageType;
 export const MESSAGE_TYPE = {
   TEXT: 'TEXT',
   IMAGE: 'IMAGE',
+  // 서버가 채팅방에 남기는 안내 문구(예: 예약 취소, School-of-Company/Gwangsan-Server#426).
+  // 말풍선이 아니라 가운데 글씨로만 그리고, 수정·삭제·로컬 알림 대상에서 뺀다
+  SYSTEM: 'SYSTEM',
 } as const;
 
 export type MessageType = (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
+
+// 클라이언트가 직접 보낼 수 있는 타입. SYSTEM은 서버만 만든다
+export type SendableMessageType = Exclude<MessageType, typeof MESSAGE_TYPE.SYSTEM>;
 
 export type RoomId = string | number;
 export type MessageId = string | number;

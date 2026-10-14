@@ -9,7 +9,7 @@ import { signup } from '~/entity/auth/api/signup';
 import RecommenderStep from '../index';
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn() },
 }));
 
 jest.mock('react-native-toast-message', () => ({
@@ -55,6 +55,7 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
 const mockRouterPush = jest.mocked(router.push);
+const mockRouterReplace = jest.mocked(router.replace);
 const mockSignup = jest.mocked(signup);
 const mockToastShow = jest.mocked(Toast.show);
 
@@ -255,5 +256,69 @@ describe('RecommenderStep — 예외 처리', () => {
       expect(getByText('유효하지 않은 별칭입니다')).toBeTruthy();
     });
     expect(mockSignup).not.toHaveBeenCalled();
+  });
+});
+
+describe('RecommenderStep — SMS 인증 만료(#784)', () => {
+  const smsAuthExpiredError = () => {
+    const { AxiosError, AxiosHeaders } = jest.requireActual('axios');
+    // signup API는 toAppError로 서버 메시지를 담은 AxiosError를 던진다
+    return new AxiosError('SMS 인증 정보를 찾을 수 없습니다.', '404', undefined, undefined, {
+      status: 404,
+      statusText: '',
+      data: { message: 'SMS 인증 정보를 찾을 수 없습니다.' },
+      headers: {},
+      config: { headers: new AxiosHeaders() },
+    });
+  };
+
+  it('재인증 안내와 "전화번호 다시 인증하기" 버튼을 보여준다', async () => {
+    mockSignup.mockRejectedValue(smsAuthExpiredError());
+
+    const { getByPlaceholderText, getByTestId, getByText } = renderWithProviders(
+      <RecommenderStep />
+    );
+
+    fireEvent.changeText(getByPlaceholderText('추천인 별칭을 입력해주세요'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getByText('전화번호 다시 인증하기')).toBeTruthy());
+    expect(getByText(/전화번호 인증 시간이 지났습니다/)).toBeTruthy();
+  });
+
+  it('"전화번호 다시 인증하기" 클릭 시 재인증 모드로 전화번호 단계로 이동한다', async () => {
+    mockSignup.mockRejectedValue(smsAuthExpiredError());
+
+    const { getByPlaceholderText, getByTestId, getByText } = renderWithProviders(
+      <RecommenderStep />
+    );
+
+    fireEvent.changeText(getByPlaceholderText('추천인 별칭을 입력해주세요'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => expect(getByText('전화번호 다시 인증하기')).toBeTruthy());
+    fireEvent.press(getByText('전화번호 다시 인증하기'));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith({
+      pathname: '/signup/phoneNumber',
+      params: { reverify: 'true' },
+    });
+  });
+
+  it('SMS와 무관한 404(추천인 없음 등)는 기존처럼 토스트로 표시한다', async () => {
+    const err = smsAuthExpiredError();
+    err.message = '추천인이 존재하지 않습니다.';
+    mockSignup.mockRejectedValue(err);
+
+    const { getByPlaceholderText, getByTestId } = renderWithProviders(<RecommenderStep />);
+
+    fireEvent.changeText(getByPlaceholderText('추천인 별칭을 입력해주세요'), '홍길동');
+    fireEvent.press(getByTestId('next-button'));
+
+    await waitFor(() => {
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '추천인이 존재하지 않습니다.' })
+      );
+    });
   });
 });

@@ -206,4 +206,36 @@ describe('ProfileEditPageView', () => {
 
     expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ specialties: ['요리'] }));
   });
+
+  it('별칭을 바꾸지 않으면 서버에 저장된 원본 별칭을 그대로 보낸다(#780)', () => {
+    mockUseGetMyProfile.mockReturnValue({
+      data: { ...defaultProfileData, nickname: '기존닉네임 ' },
+      isLoading: false,
+    });
+
+    const { getByTestId } = render(<ProfileEditPageView />);
+
+    fireEvent.changeText(getByTestId('textfield-자기소개'), '새 소개');
+    fireEvent.press(getByTestId('submit-button'));
+
+    expect(mockMutate).toHaveBeenCalledWith({
+      nickname: '기존닉네임 ',
+      specialties: ['빨래하기'],
+      description: '새 소개',
+    });
+  });
+
+  it('기존 별칭이 현재 정규식에 맞지 않아도 바꾸지 않았으면 수정할 수 있다(#780)', () => {
+    mockUseGetMyProfile.mockReturnValue({
+      data: { ...defaultProfileData, nickname: 'old_nick.' },
+      isLoading: false,
+    });
+
+    const { getByTestId } = render(<ProfileEditPageView />);
+
+    fireEvent.press(getByTestId('submit-button'));
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ nickname: 'old_nick.' }));
+  });
 });

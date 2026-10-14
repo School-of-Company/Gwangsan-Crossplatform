@@ -92,7 +92,7 @@ export const usePhoneVerification = ({
     } catch (err) {
       safeSetState(() => {
         if (err instanceof ZodError) {
-          setPhoneError(err.errors[0].message);
+          setPhoneError(err.issues[0].message);
         } else {
           const errorMessage = isNetworkOrTimeoutError(err)
             ? NETWORK_ERROR_MESSAGE
@@ -146,7 +146,7 @@ export const usePhoneVerification = ({
     } catch (err) {
       safeSetState(() => {
         if (err instanceof ZodError) {
-          setVerificationError(err.errors[0].message);
+          setVerificationError(err.issues[0].message);
         } else {
           const errorMessage = isNetworkOrTimeoutError(err)
             ? NETWORK_ERROR_MESSAGE

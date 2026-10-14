@@ -29,12 +29,14 @@ import type { ChatApiError } from '~/entity/chat';
 import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat/lib/messageRenderer';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
+import { isValidId } from '~/shared/lib/validateId';
 import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
 
 export default function ChatRoomPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const roomId = Number(id) as RoomId;
+  const isValidRoomId = isValidId(id);
+  const roomId = (isValidRoomId ? Number(id) : NaN) as RoomId;
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -124,6 +126,7 @@ export default function ChatRoomPage() {
     hasTradeRequest,
     shouldShowButtons,
     canWithdrawTradeRequest,
+    isCompletingTrade,
   } = useTradeHandlers({
     roomId,
     roomData: roomData || null,
@@ -303,7 +306,10 @@ export default function ChatRoomPage() {
           <TouchableOpacity
             testID="trade-complete-button"
             onPress={handleTradeAccept}
-            className="shrink-0 rounded-lg bg-main-500 px-5 py-2.5">
+            disabled={isCompletingTrade}
+            className={`shrink-0 rounded-lg px-5 py-2.5 ${
+              isCompletingTrade ? 'bg-disabled' : 'bg-main-500'
+            }`}>
             <Text className="text-label font-medium text-white">거래완료</Text>
           </TouchableOpacity>
         )}
@@ -324,6 +330,14 @@ export default function ChatRoomPage() {
         </Text>
       </TouchableOpacity>
     );
+
+  if (!isValidRoomId) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="text-error-500">잘못된 채팅방입니다.</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (isLoading) {
     return (

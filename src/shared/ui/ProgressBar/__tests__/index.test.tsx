@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, PanResponder } from 'react-native';
+import { PanResponder } from 'react-native';
 import { act } from 'react-test-renderer';
 import { render, fireEvent } from '@testing-library/react-native';
 import ProgressBar from '../index';
@@ -65,8 +65,8 @@ describe('ProgressBar', () => {
   });
 
   it('레이아웃 측정 후에도 에러 없이 렌더링된다', () => {
-    const { UNSAFE_getAllByType } = render(<ProgressBar value={50} onChange={jest.fn()} />);
-    const root = UNSAFE_getAllByType(View)[0];
+    const { getByTestId } = render(<ProgressBar value={50} onChange={jest.fn()} />);
+    const root = getByTestId('progress-bar-track');
     expect(() => layout(root)).not.toThrow();
   });
 
@@ -97,8 +97,8 @@ describe('ProgressBar', () => {
     it('onPanResponderGrant 시 캐시된 위치를 바탕으로 onChange를 호출한다', () => {
       withCapturedPanResponderConfig();
       const onChange = jest.fn();
-      const { UNSAFE_getAllByType } = render(<ProgressBar value={50} onChange={onChange} />);
-      layout(UNSAFE_getAllByType(View)[0]);
+      const { getByTestId } = render(<ProgressBar value={50} onChange={onChange} />);
+      layout(getByTestId('progress-bar-track'));
 
       expect(capturedConfig).toBeTruthy();
       act(() => {
@@ -112,8 +112,8 @@ describe('ProgressBar', () => {
     it('onPanResponderMove 시 캐시된 위치를 바탕으로 onChange를 호출한다', () => {
       withCapturedPanResponderConfig();
       const onChange = jest.fn();
-      const { UNSAFE_getAllByType } = render(<ProgressBar value={50} onChange={onChange} />);
-      layout(UNSAFE_getAllByType(View)[0]);
+      const { getByTestId } = render(<ProgressBar value={50} onChange={onChange} />);
+      layout(getByTestId('progress-bar-track'));
 
       expect(capturedConfig).toBeTruthy();
       act(() => {
@@ -126,8 +126,8 @@ describe('ProgressBar', () => {
 
     it('드래그 중에는 measureInWindow를 다시 호출하지 않는다', () => {
       withCapturedPanResponderConfig();
-      const { UNSAFE_getAllByType } = render(<ProgressBar value={50} onChange={jest.fn()} />);
-      layout(UNSAFE_getAllByType(View)[0]);
+      const { getByTestId } = render(<ProgressBar value={50} onChange={jest.fn()} />);
+      layout(getByTestId('progress-bar-track'));
 
       const measureCallsAfterLayout = mockMeasureInWindowFn.mock.calls.length;
       expect(measureCallsAfterLayout).toBeGreaterThan(0);
@@ -155,11 +155,11 @@ describe('ProgressBar', () => {
 
     it('드래그 중에는 엄지 위에 현재 값을 보여주는 말풍선을 표시하고, 손을 떼면 사라진다', () => {
       withCapturedPanResponderConfig();
-      const { getByTestId, queryByTestId, UNSAFE_getAllByType } = render(
+      const { getByTestId, queryByTestId } = render(
         <ProgressBar value={50} onChange={jest.fn()} />
       );
 
-      layout(UNSAFE_getAllByType(View)[0]);
+      layout(getByTestId('progress-bar-track'));
 
       expect(queryByTestId('progress-bar-value-tooltip')).toBeNull();
 
@@ -178,11 +178,11 @@ describe('ProgressBar', () => {
 
     it('드래그가 다른 제스처에 가로채여 종료(Terminate)되어도 말풍선이 사라진다', () => {
       withCapturedPanResponderConfig();
-      const { queryByTestId, UNSAFE_getAllByType } = render(
+      const { queryByTestId, getByTestId } = render(
         <ProgressBar value={50} onChange={jest.fn()} />
       );
 
-      layout(UNSAFE_getAllByType(View)[0]);
+      layout(getByTestId('progress-bar-track'));
 
       act(() => {
         capturedConfig.onPanResponderGrant({ nativeEvent: { pageX: 150 } });
@@ -199,10 +199,8 @@ describe('ProgressBar', () => {
     it('언마운트되어 ref가 정리된 후에는 onPanResponderGrant/Move가 onChange를 호출하지 않는다', () => {
       withCapturedPanResponderConfig();
       const onChange = jest.fn();
-      const { unmount, UNSAFE_getAllByType } = render(
-        <ProgressBar value={50} onChange={onChange} />
-      );
-      layout(UNSAFE_getAllByType(View)[0]);
+      const { unmount, getByTestId } = render(<ProgressBar value={50} onChange={onChange} />);
+      layout(getByTestId('progress-bar-track'));
       onChange.mockClear();
 
       act(() => {

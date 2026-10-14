@@ -4,7 +4,7 @@ import {
   MESSAGE_STATUS,
   type PendingMessageImage,
 } from '~/shared/store/useChatQueueStore';
-import type { RoomId, MessageType } from '~/shared/types/chatType';
+import type { RoomId, SendableMessageType } from '~/shared/types/chatType';
 import Toast from 'react-native-toast-message';
 import { logger } from '~/shared/lib/logger';
 
@@ -32,7 +32,7 @@ interface ResilientSenderProps {
   socketSendMessage: (
     roomId: RoomId,
     content: string,
-    type: MessageType,
+    type: SendableMessageType,
     imageIds: number[]
   ) => void;
 }
@@ -69,7 +69,7 @@ export const useResilientMessageSender = ({
     async (
       tempId: string,
       content: string | null,
-      messageType: MessageType,
+      messageType: SendableMessageType,
       imageIds: number[]
     ) => {
       try {
@@ -106,7 +106,7 @@ export const useResilientMessageSender = ({
   const sendMessage = useCallback(
     (
       content: string | null,
-      messageType: MessageType,
+      messageType: SendableMessageType,
       imageIds: number[] = [],
       images?: PendingMessageImage[]
     ) => {

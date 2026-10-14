@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { publicInstance } from '@/shared/lib/publicInstance';
 import { logger } from '@/shared/lib/logger';
-import type { ChatRoomListItem } from '@/shared/types/chatType';
+import { MESSAGE_TYPE, type ChatRoomListItem } from '@/shared/types/chatType';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
 const LAST_UNREAD_KEY = 'chatLastUnreadState';
@@ -55,9 +55,10 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }
 
+    // 마지막 메시지가 SYSTEM(예약 취소 안내 등)이면 서버가 이미 푸시를 보냈으므로 로컬 알림을 띄우지 않는다
     const newUnreadRooms = unreadRooms.filter((room) => {
       const prevCount = lastState[String(room.roomId)] ?? 0;
-      return room.unreadMessageCount > prevCount;
+      return room.unreadMessageCount > prevCount && room.lastMessageType !== MESSAGE_TYPE.SYSTEM;
     });
 
     await Promise.all(

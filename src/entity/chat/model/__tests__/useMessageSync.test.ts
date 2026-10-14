@@ -286,6 +286,33 @@ describe('useMessageSync', () => {
       });
     });
 
+    it('비활성 방에 SYSTEM 메시지가 오면 미리보기는 바꾸되 unreadMessageCount는 늘리지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 2,
+            roomId: OTHER_ROOM_ID,
+            messageType: 'SYSTEM',
+            content: '상대방님이 예약을 취소했어요',
+            isMine: false,
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].lastMessage).toBe('상대방님이 예약을 취소했어요');
+        expect(rooms?.[0].lastMessageType).toBe('SYSTEM');
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
     it('비활성 방의 내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
       const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
@@ -1026,6 +1053,46 @@ describe('useMessageSync', () => {
           productId: 1,
           isCompleted: false,
           createdAt: '2024-06-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
+    it('예약 상태가 바뀌면 예약 일시·장소를 채우기 위해 chatRoomData를 invalidate한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isReserved: false, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isReserved: true,
+          createdAt: null,
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
+    it('예약 상태가 그대로면 chatRoomData를 invalidate하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isReserved: true, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isReserved: true,
+          createdAt: null,
         });
       });
 
