@@ -163,7 +163,7 @@ describe('PhoneStep — 인증 만료 후 재인증(#784)', () => {
     expect(getByText('인증 시간이 지나 전화번호를 다시 인증해주세요')).toBeTruthy();
   });
 
-  it('재인증 완료 후 다음 클릭 시 남은 단계를 건너뛰고 가입 완료 단계로 돌아간다', async () => {
+  it('재인증 완료 후 다음 클릭 시 남은 단계를 건너뛰고 추천인 입력 단계로 돌아간다', async () => {
     mockSendSms.mockResolvedValue(undefined);
     mockVerifySms.mockResolvedValue(undefined);
 
@@ -179,7 +179,7 @@ describe('PhoneStep — 인증 만료 후 재인증(#784)', () => {
 
     fireEvent.press(getByTestId('next-button'));
 
-    expect(mockRouterReplace).toHaveBeenCalledWith('/signup/complete');
+    expect(mockRouterReplace).toHaveBeenCalledWith('/signup/recommender');
     expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });
