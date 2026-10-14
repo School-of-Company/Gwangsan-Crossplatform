@@ -319,6 +319,7 @@ const makeTradeHandlersReturn = (overrides = {}) => ({
   hasTradeRequest: false,
   shouldShowButtons: false,
   canWithdrawTradeRequest: false,
+  isCompletingTrade: false,
   ...overrides,
 });
 
@@ -621,6 +622,25 @@ describe('ChatRoomPage', () => {
     fireEvent.press(completeButton);
 
     expect(mockHandleTradeAccept).toHaveBeenCalled();
+  });
+
+  it('거래완료 요청이 진행 중이면 거래완료 버튼이 비활성화된다', () => {
+    const mockHandleTradeAccept = jest.fn();
+    mockUseTradeHandlers.mockReturnValue(
+      makeTradeHandlersReturn({ handleTradeAccept: mockHandleTradeAccept, isCompletingTrade: true })
+    );
+    mockUseChatRoomData.mockReturnValue({
+      data: { product: { id: 1, isCompleted: false, isSeller: true, isReserved: true } },
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+
+    const completeButton = getByTestId('trade-complete-button');
+    expect(completeButton).toBeDisabled();
+
+    fireEvent.press(completeButton);
+
+    expect(mockHandleTradeAccept).not.toHaveBeenCalled();
   });
 
   it('예약 전에는 거래완료 버튼이 노출되지 않는다', () => {
