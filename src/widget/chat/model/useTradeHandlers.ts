@@ -122,7 +122,8 @@ export const useTradeHandlers = ({
 
       if (isCompleted) {
         patchProduct({ isCompleted: true, isCompletable: false });
-        // 거래 완료 시 서버가 환영/첫거래 광산을 지급할 수 있으므로 잔액을 다시 받아온다(#778)
+        // 거래가 확정되면 서버에서 광산이 차감/적립된다. 내 프로필은 5분간 캐시되므로 바로 다시
+        // 받아오지 않으면 잔액이 이전 값(예: 0)으로 남아 있었다(#785)
         queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
 
         Toast.show({
