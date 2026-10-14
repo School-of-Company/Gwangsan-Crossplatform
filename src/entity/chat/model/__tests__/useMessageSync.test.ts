@@ -1059,6 +1059,46 @@ describe('useMessageSync', () => {
       expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
     });
 
+    it('예약 상태가 바뀌면 예약 일시·장소를 채우기 위해 chatRoomData를 invalidate한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isReserved: false, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isReserved: true,
+          createdAt: null,
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
+    it('예약 상태가 그대로면 chatRoomData를 invalidate하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isReserved: true, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isReserved: true,
+          createdAt: null,
+        });
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
     it('기존 createdAt이 없으면 payload의 createdAt을 설정한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
