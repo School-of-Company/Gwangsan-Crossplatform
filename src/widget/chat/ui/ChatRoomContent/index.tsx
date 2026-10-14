@@ -238,10 +238,9 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
 
     const product = tradeEmbedConfig?.product;
     if (tradeEmbedConfig?.shouldShow && product?.createdAt) {
-      const tradeTimestamp = product.createdAt;
       const tradeItem: ChatListItem = {
         type: 'trade',
-        timestamp: tradeTimestamp,
+        timestamp: product.createdAt,
         // 요청/수신 방향(왼쪽·오른쪽, 문구)은 언제든 false로 뒤집힐 수 있는 isCompletable이 아니라
         // 완료 후에도 값이 그대로인 isSeller로 고정해야, 거래가 완료돼도 기존 카드가 반대편으로
         // 뒤집히지 않는다
@@ -249,14 +248,19 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       };
 
       insertByTimestamp(items, tradeItem);
+    }
 
+    // 게시글 작성자는 거래 요청 없이도 바로 예약할 수 있으므로(#787), 예약·완료 카드는 거래 요청
+    // 카드 유무와 상관없이 product 상태만 보고 그린다
+    if (product) {
       // 서버가 예약/완료 시각(reservedAt/completedAt, Gwangsan-Server#426)을 주면 거래 요청 카드처럼
       // 그 시각으로 메시지 사이에 끼워 넣는다. 구버전 서버라 시각이 없으면 두 시점 모두 지금까지의
       // 대화 중 가장 최근이라고 보고 목록 맨 끝에 붙인다
       const appendTrailingTimestamp = () => {
         const lastItem = items[items.length - 1];
         const lastMs = lastItem ? new Date(lastItem.timestamp).getTime() : NaN;
-        return Number.isNaN(lastMs) ? tradeTimestamp : new Date(lastMs + 1).toISOString();
+        if (!Number.isNaN(lastMs)) return new Date(lastMs + 1).toISOString();
+        return hasValidTimestamp(product.createdAt) ? product.createdAt : new Date().toISOString();
       };
 
       const placeTradeCard = (
@@ -279,8 +283,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
             alignment: product.isSeller ? 'left' : 'right',
             scheduledAt: product.reservationScheduledAt,
             placeName: product.reservationPlaceName,
-            reserverNickname: tradeEmbedConfig.reserverNickname,
-            onOpenMap: tradeEmbedConfig.onOpenMap,
+            reserverNickname: tradeEmbedConfig?.reserverNickname,
+            onOpenMap: tradeEmbedConfig?.onOpenMap,
           },
         }));
       }
@@ -411,7 +415,10 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     paddingBottom: getEmptyStateBottomInset(keyboardHeight.value, insets.bottom),
   }));
 
-  const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);
+  const hasTradeEmbed = combinedData.some(
+    (item) =>
+      item.type === 'trade' || item.type === 'tradeReserved' || item.type === 'tradeCompleted'
+  );
 
   if (!hasMessages && !hasTradeEmbed) {
     return (
