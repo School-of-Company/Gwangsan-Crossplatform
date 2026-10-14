@@ -372,6 +372,72 @@ describe('ChatRoomContent', () => {
     );
   });
 
+  it('거래 요청 없이 바로 예약해도(createdAt 없음) 예약 카드를 표시한다', () => {
+    const messages = [
+      createMessage({
+        messageId: 1,
+        createdAt: '2026-05-28T01:00:00.000Z',
+        content: '제가 살께요',
+      }),
+      createMessage({ messageId: 2, createdAt: '2026-05-28T03:00:00.000Z', isMine: true }),
+    ];
+    const product = createProduct({
+      createdAt: null,
+      isReserved: true,
+      reservedAt: '2026-05-28T04:00:00.000Z',
+      reservationScheduledAt: '2026-08-28T14:00:00',
+      reservationPlaceName: '상무역 2번 출구',
+    });
+
+    const { UNSAFE_getByType, getByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={messages}
+        hasMessages
+        tradeEmbedConfig={{
+          shouldShow: false,
+          product,
+          showButtons: false,
+          otherPartyNickname: '상대방',
+          reserverNickname: '판매자',
+        }}
+      />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+
+    expect(list.props.data.map((item: any) => item.type)).toEqual([
+      'dateDivider',
+      'message',
+      'message',
+      'tradeReserved',
+    ]);
+    expect(getByTestId('trade-reserved-embed').props.children).toBe(
+      '2026-08-28T14:00:00-상무역 2번 출구-판매자'
+    );
+  });
+
+  it('메시지가 없어도 예약 카드가 있으면 빈 상태 대신 목록을 렌더링한다', () => {
+    const product = createProduct({ createdAt: null, isReserved: true, reservedAt: null });
+
+    const { queryByTestId, UNSAFE_getByType } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        tradeEmbedConfig={{
+          shouldShow: false,
+          product,
+          showButtons: false,
+          otherPartyNickname: '상대방',
+        }}
+      />
+    );
+
+    expect(queryByTestId('chat-empty-state')).toBeNull();
+    expect(
+      UNSAFE_getByType(FlatList).props.data.some((item: any) => item.type === 'tradeReserved')
+    ).toBe(true);
+  });
+
   it('거래가 완료되면 예약 카드 대신 완료 카드를 대화 맨 끝에 추가한다', () => {
     const product = createProduct({
       id: 66,
