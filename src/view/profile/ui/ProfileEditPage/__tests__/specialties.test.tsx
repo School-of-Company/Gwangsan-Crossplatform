@@ -3,6 +3,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import ProfileEditPageView from '../index';
 import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
 import { useUpdateProfile } from '~/view/profile/model/useUpdateProfile';
+import { useUpdateBranch } from '~/view/profile/model/useUpdateBranch';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 
 // index.test.tsx와 달리 SpecialtiesDropdown을 mock하지 않고 실제 컴포넌트로 렌더링해,
@@ -25,6 +26,7 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
 
 jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
 jest.mock('~/view/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
+jest.mock('~/view/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
 
 jest.mock('~/shared/ui', () => {
   const React = require('react');
@@ -52,6 +54,7 @@ jest.mock('~/shared/ui/TextField', () => ({
 
 const mockUseGetMyProfile = useGetMyProfile as jest.Mock;
 const mockUseUpdateProfile = useUpdateProfile as jest.Mock;
+const mockUseUpdateBranch = useUpdateBranch as jest.Mock;
 const mockMutate = jest.fn();
 
 const profileData = {
@@ -69,6 +72,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   useBottomSheetPortalStore.getState().reset();
   mockUseUpdateProfile.mockReturnValue({ mutate: mockMutate, isPending: false });
+  mockUseUpdateBranch.mockReturnValue({ mutate: jest.fn(), isPending: false });
 });
 
 describe('ProfileEditPageView 특기 선택 상태', () => {
