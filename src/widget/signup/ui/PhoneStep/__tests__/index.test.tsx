@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { sendSms } from '~/entity/auth/api/sendSms';
 import { verifySms } from '~/entity/auth/api/verifySms';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
@@ -13,7 +13,8 @@ jest.mock('react-native-toast-message', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn() },
+  useLocalSearchParams: jest.fn(() => ({})),
 }));
 
 jest.mock('~/entity/auth/api/sendSms', () => ({ sendSms: jest.fn() }));
@@ -53,6 +54,8 @@ jest.mock('~/entity/auth/ui/SignupForm', () => {
 
 const mockUseSignupFormField = jest.mocked(useSignupFormField);
 const mockRouterPush = jest.mocked(router.push);
+const mockRouterReplace = jest.mocked(router.replace);
+const mockUseLocalSearchParams = jest.mocked(useLocalSearchParams);
 const mockSendSms = jest.mocked(sendSms);
 const mockVerifySms = jest.mocked(verifySms);
 
@@ -142,5 +145,41 @@ describe('PhoneStep — 인증번호 확인 및 다음 단계', () => {
     expect(mockUpdatePhoneNumber).toHaveBeenCalledWith('01012345678');
     expect(mockUpdateVerificationCode).toHaveBeenCalledWith('123456');
     expect(mockRouterPush).toHaveBeenCalledWith('/signup/dongName');
+  });
+});
+
+describe('PhoneStep — 인증 만료 후 재인증(#784)', () => {
+  beforeEach(() => {
+    mockUseLocalSearchParams.mockReturnValue({ reverify: 'true' });
+  });
+
+  afterEach(() => {
+    mockUseLocalSearchParams.mockReturnValue({});
+  });
+
+  it('재인증 안내 문구를 보여준다', () => {
+    const { getByText } = render(<PhoneStep />);
+
+    expect(getByText('인증 시간이 지나 전화번호를 다시 인증해주세요')).toBeTruthy();
+  });
+
+  it('재인증 완료 후 다음 클릭 시 남은 단계를 건너뛰고 가입 완료 단계로 돌아간다', async () => {
+    mockSendSms.mockResolvedValue(undefined);
+    mockVerifySms.mockResolvedValue(undefined);
+
+    const { getByPlaceholderText, getByText, getByTestId } = render(<PhoneStep />);
+
+    fireEvent.changeText(getByPlaceholderText('전화번호를 입력해주세요'), '01012345678');
+    fireEvent.press(getByText('인증'));
+    await waitFor(() => expect(getByPlaceholderText('인증번호를 입력해주세요')).toBeTruthy());
+
+    fireEvent.changeText(getByPlaceholderText('인증번호를 입력해주세요'), '123456');
+    fireEvent.press(getByText('인증'));
+    await waitFor(() => expect(getByText('인증완료')).toBeTruthy());
+
+    fireEvent.press(getByTestId('next-button'));
+
+    expect(mockRouterReplace).toHaveBeenCalledWith('/signup/complete');
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 });

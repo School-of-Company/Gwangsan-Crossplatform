@@ -84,7 +84,7 @@ const defaultProfileData = {
   nickname: '기존닉네임',
   specialties: ['빨래하기'],
   description: '기존 소개',
-  placeName: '도산',
+  placeName: '신창',
 };
 
 beforeEach(() => {
@@ -216,16 +216,48 @@ describe('ProfileEditPageView', () => {
   it('현재 지점명을 지점 드롭다운 초기값으로 표시한다', () => {
     const { getByText } = render(<ProfileEditPageView />);
 
-    expect(getByText('도산')).toBeTruthy();
+    expect(getByText('신창')).toBeTruthy();
   });
 
   it('지점을 선택하면 즉시 updateBranch mutation을 호출한다(제출 버튼과 무관)', () => {
     const { getByText } = render(<ProfileEditPageView />);
 
-    fireEvent.press(getByText('도산'));
-    fireEvent.press(getByText('평동'));
+    fireEvent.press(getByText('신창'));
+    fireEvent.press(getByText('고실마을'));
 
-    expect(mockMutateBranch).toHaveBeenCalledWith({ placeId: 11 });
+    expect(mockMutateBranch).toHaveBeenCalledWith({ placeId: 2 });
     expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it('별칭을 바꾸지 않으면 서버에 저장된 원본 별칭을 그대로 보낸다(#780)', () => {
+    mockUseGetMyProfile.mockReturnValue({
+      data: { ...defaultProfileData, nickname: '기존닉네임 ' },
+      isLoading: false,
+    });
+
+    const { getByTestId } = render(<ProfileEditPageView />);
+
+    fireEvent.changeText(getByTestId('textfield-자기소개'), '새 소개');
+    fireEvent.press(getByTestId('submit-button'));
+
+    expect(mockMutate).toHaveBeenCalledWith({
+      nickname: '기존닉네임 ',
+      specialties: ['빨래하기'],
+      description: '새 소개',
+    });
+  });
+
+  it('기존 별칭이 현재 정규식에 맞지 않아도 바꾸지 않았으면 수정할 수 있다(#780)', () => {
+    mockUseGetMyProfile.mockReturnValue({
+      data: { ...defaultProfileData, nickname: 'old_nick.' },
+      isLoading: false,
+    });
+
+    const { getByTestId } = render(<ProfileEditPageView />);
+
+    fireEvent.press(getByTestId('submit-button'));
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ nickname: 'old_nick.' }));
   });
 });
