@@ -122,6 +122,9 @@ export const useTradeHandlers = ({
 
       if (isCompleted) {
         patchProduct({ isCompleted: true, isCompletable: false });
+        // 거래가 확정되면 서버에서 광산이 차감/적립된다. 내 프로필은 5분간 캐시되므로 바로 다시
+        // 받아오지 않으면 잔액이 이전 값(예: 0)으로 남아 있었다(#785)
+        queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
 
         Toast.show({
           type: 'success',
@@ -151,6 +154,7 @@ export const useTradeHandlers = ({
     hasTradeRequest,
     fetchIsTradeCompleted,
     patchProduct,
+    queryClient,
   ]);
 
   // 대기중인 내 요청을 다시 누르면 "취소" 개념을 노출하지 않고, 하루가 지났을 때만
