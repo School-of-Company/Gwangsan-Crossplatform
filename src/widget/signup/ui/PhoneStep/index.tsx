@@ -41,7 +41,9 @@ export default function PhoneStep() {
     updatePhoneNumber(phoneNumber);
     updateVerificationCode(verificationCode);
     if (isReverify) {
-      router.replace('/signup/complete');
+      // signup 호출은 RecommenderStep에서 하므로, 재인증 완료 후 그 단계로 돌아가야
+      // 가입이 재시도된다(#784)
+      router.replace('/signup/recommender');
       return;
     }
     router.push('/signup/dongName');
