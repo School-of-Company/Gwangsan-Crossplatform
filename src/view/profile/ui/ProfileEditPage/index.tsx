@@ -4,22 +4,32 @@ import { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
+import { Dropdown } from '@/shared/ui/Dropdown';
 import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
 import { SPECIALTIES } from '~/shared/consts/specialties';
+import { PLACE_ITEMS } from '@/shared/consts/place';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useUpdateProfile } from '../../model/useUpdateProfile';
+import { useUpdateBranch } from '../../model/useUpdateBranch';
 import { profileEditSchema } from '~/entity/auth/model/authSchema';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
+
+const PLACE_DROPDOWN_ITEMS = PLACE_ITEMS.map((item) => ({
+  value: String(item.id),
+  label: item.name,
+}));
 
 export default function ProfileEditPageView() {
   const [nickname, setNickname] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [description, setDescription] = useState('');
+  const [placeId, setPlaceId] = useState<string | undefined>(undefined);
   const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
 
   const { data: profileData, isLoading } = useGetMyProfile(true);
   const updateProfileMutation = useUpdateProfile();
+  const updateBranchMutation = useUpdateBranch();
   const insets = useSafeAreaInsets();
 
   const hasInitializedRef = useRef(false);
@@ -32,8 +42,16 @@ export default function ProfileEditPageView() {
       setSpecialties(profileData.specialties || []);
 
       setDescription(profileData.description || '');
+
+      const currentPlace = PLACE_ITEMS.find((item) => item.name === profileData.placeName);
+      setPlaceId(currentPlace ? String(currentPlace.id) : undefined);
     }
   }, [profileData]);
+
+  const handleBranchSelect = (selectedPlaceIdStr: string) => {
+    setPlaceId(selectedPlaceIdStr);
+    updateBranchMutation.mutate({ placeId: parseInt(selectedPlaceIdStr, 10) });
+  };
 
   const handleSubmit = () => {
     // 별칭을 바꾸지 않았으면 서버에 저장된 원본을 그대로 보낸다. 서버는 본인 별칭을 문자열 비교로
@@ -104,6 +122,14 @@ export default function ProfileEditPageView() {
             onSelect={setSpecialties}
             allowCustomInput={true}
             onCustomInputVisibleChange={setIsCustomInputOpen}
+          />
+
+          <Dropdown
+            label="지점"
+            items={PLACE_DROPDOWN_ITEMS}
+            selectedItem={placeId}
+            onSelect={handleBranchSelect}
+            placeholder="지점을 선택해주세요"
           />
 
           <TextField
