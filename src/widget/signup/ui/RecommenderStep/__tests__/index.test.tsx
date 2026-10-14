@@ -77,6 +77,8 @@ const sampleFormData = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // clearAllMocks는 mockImplementation을 지우지 않아 '예외 처리' 케이스의 throw가 다음 테스트로 새어 나간다
+  mockUpdateField.mockReset();
   mockUseSignupFormField.mockReturnValue({ value: '', updateField: mockUpdateField });
   useSignupStore.setState({ formData: { ...sampleFormData } });
 });
