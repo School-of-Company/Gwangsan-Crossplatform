@@ -1,8 +1,8 @@
 import { HEAD, PLACES, PLACE_ITEMS } from '../place';
 
 describe('PLACE_ITEMS', () => {
-  it('15개의 장소 항목을 포함한다', () => {
-    expect(PLACE_ITEMS).toHaveLength(15);
+  it('6개의 장소 항목을 포함한다', () => {
+    expect(PLACE_ITEMS).toHaveLength(6);
   });
 
   it('각 항목이 id(number)와 name(string)을 가진다', () => {
@@ -18,9 +18,11 @@ describe('PLACE_ITEMS', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('id는 1부터 시작하는 연속된 값이다', () => {
-    const ids = PLACE_ITEMS.map((item) => item.id);
-    expect(ids).toEqual(Array.from({ length: PLACE_ITEMS.length }, (_, i) => i + 1));
+  it('신창, 고실마을 지점만 포함하고 그 외 지점은 포함하지 않는다', () => {
+    expect(PLACES).toContain('신창');
+    expect(PLACES).toContain('고실마을');
+    expect(PLACES).not.toContain('신가');
+    expect(PLACES).not.toContain('수완마을');
   });
 });
 

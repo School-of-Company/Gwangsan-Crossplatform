@@ -5,12 +5,14 @@ import { requestTrade } from '~/entity/post/api/requestTrade';
 import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
 import { makeReservation } from '~/entity/post/api/makeReservation';
 import { cancelReservation } from '~/entity/post/api/cancelReservation';
+import { getChatRoomData } from '~/entity/chat/api/getChatMessages';
 import Toast from 'react-native-toast-message';
 
 jest.mock('~/entity/post/api/requestTrade', () => ({ requestTrade: jest.fn() }));
 jest.mock('~/entity/post/api/withdrawTrade', () => ({ withdrawTrade: jest.fn() }));
 jest.mock('~/entity/post/api/makeReservation', () => ({ makeReservation: jest.fn() }));
 jest.mock('~/entity/post/api/cancelReservation', () => ({ cancelReservation: jest.fn() }));
+jest.mock('~/entity/chat/api/getChatMessages', () => ({ getChatRoomData: jest.fn() }));
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -20,6 +22,7 @@ const mockRequestTrade = requestTrade as jest.Mock;
 const mockWithdrawTrade = withdrawTrade as jest.Mock;
 const mockMakeReservation = makeReservation as jest.Mock;
 const mockCancelReservation = cancelReservation as jest.Mock;
+const mockGetChatRoomData = getChatRoomData as jest.Mock;
 
 const reservationInput = {
   scheduledAt: '2026-08-27T14:30:00',
@@ -165,8 +168,38 @@ describe('useTradeHandlers', () => {
 
       expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 42 });
       expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', text1: '거래가 수락되었습니다!' })
+        expect.objectContaining({ type: 'success', text1: '거래가 완료되었습니다!' })
       );
+    });
+
+    it('성공 시 광산 잔액이 바로 반영되도록 내 프로필 쿼리를 invalidate한다(#785)', async () => {
+      mockRequestTrade.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
+    it('실패 시 내 프로필 쿼리를 invalidate하지 않는다', async () => {
+      mockRequestTrade.mockRejectedValue(new Error('실패'));
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
     });
 
     it('성공 시 chatRoomData 캐시를 isCompleted=true, isCompletable=false로 즉시 업데이트한다', async () => {
@@ -190,6 +223,22 @@ describe('useTradeHandlers', () => {
       ]);
       expect(cached?.product.isCompleted).toBe(true);
       expect(cached?.product.isCompletable).toBe(false);
+    });
+
+    it('성공 시 서버가 지급할 수 있는 광산 잔액을 다시 받아오도록 myProfile 캐시를 무효화한다(#778)', async () => {
+      mockRequestTrade.mockResolvedValue({});
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
     });
 
     it('실패 시 캐시를 변경하지 않는다', async () => {
@@ -227,7 +276,7 @@ describe('useTradeHandlers', () => {
       });
 
       expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '거래 수락 실패', text2: '수락 실패' })
+        expect.objectContaining({ type: 'error', text1: '거래 완료 실패', text2: '수락 실패' })
       );
     });
 
@@ -246,7 +295,7 @@ describe('useTradeHandlers', () => {
 
       expect(mockRequestTrade).not.toHaveBeenCalled();
       expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '거래 수락 실패' })
+        expect.objectContaining({ type: 'error', text1: '거래 완료 실패' })
       );
     });
 
@@ -260,6 +309,176 @@ describe('useTradeHandlers', () => {
       });
 
       expect(mockRequestTrade).not.toHaveBeenCalled();
+    });
+
+    it('상대가 보낸 대기 요청을 확정하는 경우에는 채팅방을 다시 조회하지 않는다', async () => {
+      mockRequestTrade.mockResolvedValue({});
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(mockGetChatRoomData).not.toHaveBeenCalled();
+    });
+
+    it('상대 요청이 없을 때 다시 조회해 거래가 완료됐으면 완료 Toast를 표시한다', async () => {
+      mockRequestTrade.mockResolvedValue({});
+      mockGetChatRoomData.mockResolvedValue({
+        product: { id: 1, isCompleted: true, isCompletable: false },
+        messages: [],
+      });
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ createdAt: null }),
+          otherUserInfo,
+        })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(mockGetChatRoomData).toHaveBeenCalledWith(1);
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래가 완료되었습니다!' })
+      );
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isCompleted).toBe(true);
+    });
+
+    it('다시 조회했을 때 요청만 생성됐으면 완료로 표시하지 않고 요청 안내 Toast를 표시한다', async () => {
+      mockRequestTrade.mockResolvedValue({});
+      mockGetChatRoomData.mockResolvedValue({
+        product: { id: 1, isCompleted: false, isCompletable: false },
+        messages: [],
+      });
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ createdAt: null }),
+          otherUserInfo,
+        })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'info',
+          text1: '거래완료 요청을 보냈어요',
+          text2: '상대방님이 확인하면 거래가 완료돼요.',
+        })
+      );
+      expect(Toast.show).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+      const cached = queryClient.getQueryData<{ product: Record<string, unknown> }>([
+        'chatRoomData',
+        1,
+      ]);
+      expect(cached?.product.isCompleted).toBe(false);
+    });
+
+    it('요청만 생성되고 완료되지 않았으면 내 프로필 쿼리를 invalidate하지 않는다', async () => {
+      mockRequestTrade.mockResolvedValue({});
+      mockGetChatRoomData.mockResolvedValue({
+        product: { id: 1, isCompleted: false, isCompletable: false },
+        messages: [],
+      });
+
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ createdAt: null }),
+          otherUserInfo,
+        })
+      );
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
+    it('다시 조회에 실패하면 완료로 단정하지 않고 요청 안내 Toast를 표시한다', async () => {
+      mockRequestTrade.mockResolvedValue({});
+      mockGetChatRoomData.mockRejectedValue(new Error('조회 실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({
+          roomId: 1,
+          roomData: makeRoomData({ isCompletable: false }),
+          otherUserInfo,
+        })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'info', text1: '거래완료 요청을 보냈어요' })
+      );
+      expect(Toast.show).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
+
+    it('요청이 진행 중일 때 다시 눌러도 requestTrade를 한 번만 호출한다', async () => {
+      let resolveRequest: (value: unknown) => void = () => {};
+      mockRequestTrade.mockReturnValue(
+        new Promise((resolve) => {
+          resolveRequest = resolve;
+        })
+      );
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      let first: Promise<void> = Promise.resolve();
+      act(() => {
+        first = result.current.handleTradeAccept();
+        void result.current.handleTradeAccept();
+      });
+
+      expect(result.current.isCompletingTrade).toBe(true);
+
+      await act(async () => {
+        resolveRequest({});
+        await first;
+      });
+
+      expect(mockRequestTrade).toHaveBeenCalledTimes(1);
+      expect(result.current.isCompletingTrade).toBe(false);
+    });
+
+    it('실패한 뒤에는 잠금이 풀려 다시 시도할 수 있다', async () => {
+      mockRequestTrade.mockRejectedValueOnce(new Error('수락 실패')).mockResolvedValueOnce({});
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeHandlers({ roomId: 1, roomData: makeRoomData(), otherUserInfo })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+      await act(async () => {
+        await result.current.handleTradeAccept();
+      });
+
+      expect(mockRequestTrade).toHaveBeenCalledTimes(2);
+      expect(result.current.isCompletingTrade).toBe(false);
     });
   });
 

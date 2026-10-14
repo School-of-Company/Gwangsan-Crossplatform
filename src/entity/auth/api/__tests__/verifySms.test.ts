@@ -1,37 +1,58 @@
-import { mockFetch } from '~/test-utils';
+import { AxiosError, AxiosHeaders } from 'axios';
+import { publicInstance } from '~/shared/lib/publicInstance';
 import { verifySms } from '../verifySms';
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  jest.spyOn(console, 'error').mockImplementation(() => {});
-});
+jest.mock('~/shared/lib/publicInstance', () => ({
+  publicInstance: { post: jest.fn(), patch: jest.fn() },
+}));
+jest.mock('~/shared/lib/logger', () => ({
+  logger: { error: jest.fn(), warn: jest.fn() },
+}));
+
+const mockRequest = publicInstance.post as jest.Mock;
+
+const axiosError = (status: number, data: unknown) =>
+  new AxiosError('Request failed', String(status), undefined, undefined, {
+    status,
+    statusText: '',
+    data,
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  });
+
+beforeEach(() => jest.clearAllMocks());
 
 describe('verifySms', () => {
-  it('인증 성공 시 응답 데이터를 반환한다', async () => {
-    mockFetch({ verified: true });
-    expect(await verifySms('01012345678', '123456')).toEqual({ verified: true });
+  it('올바른 엔드포인트와 바디로 요청한다', async () => {
+    mockRequest.mockResolvedValue({ data: {} });
+
+    await expect(verifySms('01012345678', '123456')).resolves.toBeUndefined();
+
+    expect(mockRequest).toHaveBeenCalledWith('/sms/verify', {
+      phoneNumber: '01012345678',
+      code: '123456',
+    });
   });
 
-  it('올바른 바디로 요청을 보낸다', async () => {
-    mockFetch({});
-    await verifySms('01011112222', '654321');
-    const [, options] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(JSON.parse(options.body)).toEqual({ phoneNumber: '01011112222', code: '654321' });
+  it('서버가 보낸 에러 메시지로 에러를 던진다', async () => {
+    mockRequest.mockRejectedValue(axiosError(400, { message: '인증번호가 올바르지 않습니다.' }));
+
+    await expect(verifySms('01012345678', '123456')).rejects.toThrow(
+      '인증번호가 올바르지 않습니다.'
+    );
   });
 
-  it('HTTP 에러 시 상태 코드 기반 에러를 throw한다', async () => {
-    mockFetch(null as unknown as object, 401, 'Unauthorized');
-    await expect(verifySms('01012345678', '000000')).rejects.toThrow('HTTP 401: Unauthorized');
+  it('5xx는 서버 내부 메시지 대신 상태 코드만 알린다', async () => {
+    mockRequest.mockRejectedValue(
+      axiosError(500, '<!DOCTYPE html><html>Internal Server Error</html>')
+    );
+
+    await expect(verifySms('01012345678', '123456')).rejects.toThrow('요청이 실패했습니다. (500)');
   });
 
-  it('응답이 JSON이 아니면 빈 객체를 반환한다', async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    mockFetch('OK');
-    expect(await verifySms('01012345678', '123456')).toEqual({});
-  });
+  it('네트워크 에러도 그대로 던진다', async () => {
+    mockRequest.mockRejectedValue(new Error('timeout of 10000ms exceeded'));
 
-  it('네트워크 에러 시 에러를 throw한다', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('fetch failed'));
-    await expect(verifySms('01012345678', '123456')).rejects.toThrow();
+    await expect(verifySms('01012345678', '123456')).rejects.toThrow('timeout of 10000ms exceeded');
   });
 });

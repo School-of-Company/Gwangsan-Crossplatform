@@ -14,13 +14,13 @@ const mockDelete = instance.delete as jest.Mock;
 beforeEach(() => jest.clearAllMocks());
 
 describe('blockUser', () => {
-  it('POST /block/:id 응답 data를 반환한다', async () => {
+  it('POST /block/:id 로 차단을 요청한다', async () => {
     mockPost.mockResolvedValue({ data: { blocked: true } });
 
     const result = await blockUser(7);
 
     expect(mockPost).toHaveBeenCalledWith('/block/7');
-    expect(result).toEqual({ blocked: true });
+    expect(result).toBeUndefined();
   });
 
   it('API 실패 시 에러를 전파한다', async () => {
@@ -31,13 +31,13 @@ describe('blockUser', () => {
 });
 
 describe('unblockUser', () => {
-  it('DELETE /block/:id 응답 data를 반환한다', async () => {
+  it('DELETE /block/:id 로 차단 해제를 요청한다', async () => {
     mockDelete.mockResolvedValue({ data: { unblocked: true } });
 
     const result = await unblockUser(7);
 
     expect(mockDelete).toHaveBeenCalledWith('/block/7');
-    expect(result).toEqual({ unblocked: true });
+    expect(result).toBeUndefined();
   });
 
   it('API 실패 시 에러를 전파한다', async () => {

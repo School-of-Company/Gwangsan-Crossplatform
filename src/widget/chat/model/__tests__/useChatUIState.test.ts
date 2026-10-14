@@ -12,7 +12,7 @@ jest.mock('~/entity/post/model/useGetItem', () => ({
   useGetItem: jest.fn(),
 }));
 
-jest.mock('~/widget/write/model/mode', () => ({
+jest.mock('~/shared/types/mode', () => ({
   MODE: { GIVER: 'GIVER', RECEIVER: 'RECEIVER' },
 }));
 

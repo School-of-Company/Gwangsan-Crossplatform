@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import PostList from '../index';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
@@ -147,5 +147,50 @@ describe('PostList', () => {
 
     expect(queryByText('게시글 1')).toBeNull();
     expect(getByText('게시글 2')).toBeTruthy();
+  });
+
+  describe('로딩·실패 상태(#740)', () => {
+    it('게시물 조회에 실패하면 빈 목록 대신 다시 시도 화면을 보여준다', () => {
+      const refetch = jest.fn();
+      mockUseGetPosts.mockReturnValue({ data: undefined, isError: true, refetch });
+
+      const { getByText, queryByText } = render(<PostList category={'' as any} type="OBJECT" />);
+
+      expect(queryByText('게시물이 없습니다.')).toBeNull();
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalled();
+    });
+
+    it('차단 목록을 불러오지 못하면 걸러내지 않은 목록 대신 다시 시도 화면을 보여준다', () => {
+      const refetchBlockList = jest.fn();
+      mockUseGetPosts.mockReturnValue({ data: makePosts(2), refetch: jest.fn() });
+      mockUseGetBlockList.mockReturnValue({
+        data: undefined,
+        isError: true,
+        refetch: refetchBlockList,
+      });
+
+      const { getByText } = render(<PostList category={'' as any} type="OBJECT" />);
+
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetchBlockList).toHaveBeenCalled();
+    });
+
+    it('처음 불러오는 중에는 빈 목록 문구 대신 로딩 표시를 보여준다', () => {
+      mockUseGetPosts.mockReturnValue({ data: undefined, isLoading: true, refetch: jest.fn() });
+
+      const { getByTestId, queryByText } = render(<PostList category={'' as any} type="OBJECT" />);
+
+      expect(getByTestId('post-list-loading')).toBeTruthy();
+      expect(queryByText('게시물이 없습니다.')).toBeNull();
+    });
+
+    it('받아둔 목록이 있으면 새로 조회하다 실패해도 목록을 유지한다', () => {
+      mockUseGetPosts.mockReturnValue({ data: makePosts(1), isError: true, refetch: jest.fn() });
+
+      const { queryByText } = render(<PostList category={'' as any} type="OBJECT" />);
+
+      expect(queryByText('다시 시도')).toBeNull();
+    });
   });
 });

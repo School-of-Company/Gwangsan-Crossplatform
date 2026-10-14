@@ -14,9 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header, PillTabs } from '~/shared/ui';
 import { ReviewPost } from '~/entity/reviews/ui';
-import { useGetReviews, ReviewsMode } from '../../model/useGetReviews';
-import { useGetReceivedReviewsInfinite } from '../../model/useGetReceivedReviewsInfinite';
-import { ReviewPostType } from '../../model/reviewPostType';
+import { useGetReviews, ReviewsMode } from '../../../../entity/reviews/model/useGetReviews';
+import { useGetReceivedReviewsInfinite } from '../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
+import { ReviewPostType } from '../../../../entity/reviews/model/reviewPostType';
 
 interface ReviewsPageViewProps {
   mode: ReviewsMode;
@@ -174,7 +174,7 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="후기" />
       <PillTabs
         tabs={TABS}

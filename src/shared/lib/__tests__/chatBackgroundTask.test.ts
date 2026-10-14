@@ -39,7 +39,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-jest.mock('@/shared/lib/axios', () => ({ baseURL: 'https://api.test.com/api' }));
+jest.mock('@/shared/lib/publicInstance', () => ({ publicInstance: { get: jest.fn() } }));
 
 const mockDefineTask = TaskManager.defineTask as jest.Mock;
 const mockIsTaskRegisteredAsync = TaskManager.isTaskRegisteredAsync as jest.Mock;
@@ -58,11 +58,11 @@ const mockAsyncRemoveItem = AsyncStorage.removeItem as jest.Mock;
 const defineTaskCall = mockDefineTask.mock.calls[0];
 const taskHandler = defineTaskCall[1] as () => Promise<unknown>;
 
-const originalFetch = global.fetch;
+const { publicInstance } = jest.requireMock('@/shared/lib/publicInstance');
+const mockGet = publicInstance.get as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  global.fetch = jest.fn() as any;
   mockAsyncGetItem.mockResolvedValue(null);
   mockAsyncSetItem.mockResolvedValue(undefined);
   mockAsyncRemoveItem.mockResolvedValue(undefined);
@@ -71,15 +71,12 @@ beforeEach(() => {
   mockGetItemAsync.mockResolvedValue(null);
 });
 
-afterAll(() => {
-  global.fetch = originalFetch;
-});
-
 function mockFetchResponse(ok: boolean, rooms: unknown[] = []) {
-  (global.fetch as jest.Mock).mockResolvedValue({
-    ok,
-    json: jest.fn().mockResolvedValue(rooms),
-  });
+  if (ok) {
+    mockGet.mockResolvedValue({ data: rooms });
+  } else {
+    mockGet.mockRejectedValue(new Error('Request failed with status code 500'));
+  }
 }
 
 describe('CHAT_BACKGROUND_TASK handler', () => {
@@ -94,7 +91,7 @@ describe('CHAT_BACKGROUND_TASK handler', () => {
 
     const result = await taskHandler();
 
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
     expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
   });
 
@@ -192,6 +189,25 @@ describe('CHAT_BACKGROUND_TASK handler', () => {
     expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
       expect.objectContaining({ content: expect.objectContaining({ body: '사진을 보냈습니다.' }) })
     );
+  });
+
+  it('마지막 메시지가 SYSTEM이면 서버 푸시와 겹치므로 알림을 만들지 않는다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({ '1': 0 }));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 1,
+        member: { nickname: 'A' },
+        lastMessageType: 'SYSTEM',
+        lastMessage: 'A님이 예약을 취소했어요',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
   });
 
   it('falls back to a default title when the room has no member nickname', async () => {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { RoomId, MessageType } from '~/shared/types/chatType';
+import type { RoomId, SendableMessageType } from '~/shared/types/chatType';
 
 export const MESSAGE_STATUS = {
   PENDING: 'pending',
@@ -19,7 +19,7 @@ export interface PendingMessage {
   tempId: string;
   roomId: RoomId;
   content: string | null;
-  messageType: MessageType;
+  messageType: SendableMessageType;
   imageIds: number[];
   /** 서버 echo를 기다리지 않고 바로 미리보기를 그리기 위한 로컬 이미지(localUri 등) */
   images?: PendingMessageImage[];
@@ -38,9 +38,10 @@ interface ChatQueueState {
   retry: (tempId: string) => void;
   getByRoom: (roomId: RoomId) => PendingMessage[];
   getRetryable: (roomId: RoomId) => PendingMessage[];
+  reset: () => void;
 }
 
-const uuid = () => `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const uuid = () => `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
 export const useChatQueueStore = create<ChatQueueState>((set, get) => ({
   pendingMessages: [],
@@ -94,4 +95,7 @@ export const useChatQueueStore = create<ChatQueueState>((set, get) => ({
         (msg.status === MESSAGE_STATUS.PENDING || msg.status === MESSAGE_STATUS.FAILED)
     );
   },
+
+  // 로그아웃 시 이전 계정의 전송 대기·실패 메시지가 다음 계정에 남지 않도록 비운다(#737)
+  reset: () => set({ pendingMessages: [] }),
 }));

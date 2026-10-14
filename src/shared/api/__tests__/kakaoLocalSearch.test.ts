@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { searchPlaces, searchNearbyPlaces, getAddressName } from '../kakaoLocalSearch';
+import { AxiosError, AxiosHeaders } from 'axios';
+import { searchPlaces, searchNearbyPlaces, getAddressName, kakaoClient } from '../kakaoLocalSearch';
 
 // NOTE on the "no API key" branch (`getKakaoApiKey` throwing when the key is falsy):
 // babel.config.js runs `module:react-native-dotenv` unconditionally (not gated by
@@ -22,19 +23,35 @@ const INLINED_KAKAO_API_KEY = (
   ENV_FILE_CONTENT.match(/^EXPO_PUBLIC_KAKAO_REST_API_KEY=(.*)$/m)?.[1] ?? ''
 ).trim();
 
-const makeResponse = (ok: boolean, body: unknown, status = 200) => ({
-  ok,
-  status,
-  json: async () => body,
-});
+// 성공 응답은 { data }로 resolve하고, 실패 응답은 axios처럼 AxiosError로 reject한다
+const makeResponse = (ok: boolean, body: unknown, status = 200) =>
+  ok
+    ? Promise.resolve({ data: body })
+    : Promise.reject(
+        new AxiosError('Request failed', String(status), undefined, undefined, {
+          status,
+          statusText: '',
+          data: body,
+          headers: {},
+          config: { headers: new AxiosHeaders() },
+        })
+      );
+
+let mockGet: jest.SpyInstance;
 
 beforeEach(() => {
-  global.fetch = jest.fn();
+  mockGet = jest.spyOn(kakaoClient, 'get');
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
+
+// 예전 fetch URL 검증과 같은 의미가 되도록, 요청 경로와 쿼리 파라미터를 URL 문자열로 합친다
+const requestUrl = (callIndex = 0) => {
+  const [path, config] = mockGet.mock.calls[callIndex];
+  return `https://dapi.kakao.com${path}?${new URLSearchParams(config.params).toString()}`;
+};
 
 describe('searchPlaces', () => {
   it('전제조건: 테스트가 참조하는 카카오 API 키가 .env에 실제로 설정되어 있다', () => {
@@ -53,20 +70,21 @@ describe('searchPlaces', () => {
         y: '35.0',
       },
     ];
-    (global.fetch as jest.Mock).mockResolvedValueOnce(makeResponse(true, { documents }));
+    mockGet.mockImplementationOnce(() => makeResponse(true, { documents }));
 
     const result = await searchPlaces('상무역');
 
     expect(result).toEqual(documents);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    const url = requestUrl();
+    const [, options] = mockGet.mock.calls[0];
     expect(url).toContain('https://dapi.kakao.com/v2/local/search/keyword.json');
     expect(url).toContain('query=%EC%83%81%EB%AC%B4%EC%97%AD');
     expect(options.headers.Authorization).toBe(`KakaoAK ${INLINED_KAKAO_API_KEY}`);
   });
 
   it('응답이 ok가 아니면 상태 코드를 포함한 에러를 던진다', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(makeResponse(false, {}, 500));
+    mockGet.mockImplementationOnce(() => makeResponse(false, {}, 500));
 
     await expect(searchPlaces('상무역')).rejects.toThrow('장소 검색 요청이 실패했습니다. (500)');
   });
@@ -82,30 +100,30 @@ describe('searchNearbyPlaces', () => {
     const place3 = { id: '3', place_name: 'C', distance: '10' };
     const place4 = { id: '4', place_name: 'D', distance: '200' };
 
-    (global.fetch as jest.Mock)
+    mockGet
       // SW8: 지하철역
-      .mockResolvedValueOnce(makeResponse(true, { documents: [place1, place2] }))
+      .mockImplementationOnce(() => makeResponse(true, { documents: [place1, place2] }))
       // CS2: 편의점
-      .mockResolvedValueOnce(makeResponse(true, { documents: [place2Dup, place3] }))
+      .mockImplementationOnce(() => makeResponse(true, { documents: [place2Dup, place3] }))
       // CE7: 카페 - 실패 응답
-      .mockResolvedValueOnce(makeResponse(false, {}, 500))
+      .mockImplementationOnce(() => makeResponse(false, {}, 500))
       // BK9: 은행
-      .mockResolvedValueOnce(makeResponse(true, { documents: [place4] }));
+      .mockImplementationOnce(() => makeResponse(true, { documents: [place4] }));
 
     const result = await searchNearbyPlaces(coordinate, 500);
 
-    expect(global.fetch).toHaveBeenCalledTimes(4);
+    expect(mockGet).toHaveBeenCalledTimes(4);
     // 중복 id('2')는 처음 등장한 place2만 유지되고, 거리(distance) 오름차순으로 정렬된다.
     expect(result.map((p) => p.id)).toEqual(['3', '2', '1', '4']);
     expect(result.find((p) => p.id === '2')).toEqual(place2);
   });
 
   it('요청 파라미터에 좌표와 반경, 정렬 기준을 포함한다', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue(makeResponse(true, { documents: [] }));
+    mockGet.mockImplementation(() => makeResponse(true, { documents: [] }));
 
     await searchNearbyPlaces(coordinate, 300);
 
-    const [url] = (global.fetch as jest.Mock).mock.calls[0];
+    const url = requestUrl();
     expect(url).toContain('https://dapi.kakao.com/v2/local/search/category.json');
     expect(url).toContain('category_group_code=SW8');
     expect(url).toContain('x=126');
@@ -119,7 +137,7 @@ describe('getAddressName', () => {
   const coordinate = { latitude: 35.0, longitude: 126.0 };
 
   it('응답이 ok가 아니면 상태 코드를 포함한 에러를 던진다', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(makeResponse(false, {}, 400));
+    mockGet.mockImplementationOnce(() => makeResponse(false, {}, 400));
 
     await expect(getAddressName(coordinate)).rejects.toThrow(
       '주소 변환 요청이 실패했습니다. (400)'
@@ -127,7 +145,7 @@ describe('getAddressName', () => {
   });
 
   it('road_address가 있으면 도로명 주소를 반환한다', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(
+    mockGet.mockImplementationOnce(() =>
       makeResponse(true, {
         documents: [
           {
@@ -143,7 +161,7 @@ describe('getAddressName', () => {
   });
 
   it('road_address가 null이면 address_name으로 대체한다', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(
+    mockGet.mockImplementationOnce(() =>
       makeResponse(true, {
         documents: [
           {
@@ -159,7 +177,7 @@ describe('getAddressName', () => {
   });
 
   it('documents가 비어있으면 빈 문자열을 반환한다', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(makeResponse(true, { documents: [] }));
+    mockGet.mockImplementationOnce(() => makeResponse(true, { documents: [] }));
 
     const result = await getAddressName(coordinate);
     expect(result).toBe('');

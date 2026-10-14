@@ -1,4 +1,4 @@
-import { createUserSessionService } from '@/entity/auth/lib/userSessionService';
+import { createUserSessionService } from '~/shared/lib/userSessionService';
 
 const userSessionService = createUserSessionService();
 

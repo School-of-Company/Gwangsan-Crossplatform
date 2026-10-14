@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
+import { useThemeColors } from '~/shared/lib/theme';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -42,6 +43,7 @@ export function ReservationCalendarSheet({
   minDate,
   maxDate,
 }: ReservationCalendarSheetProps) {
+  const colors = useThemeColors();
   const initialMonth = useMemo(() => {
     const base = selectedDate ? new Date(selectedDate) : minDate;
     return new Date(base.getFullYear(), base.getMonth(), 1);
@@ -77,13 +79,21 @@ export function ReservationCalendarSheet({
       <View className="flex-1 gap-4">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={handlePrevMonth} disabled={!canGoPrev} hitSlop={8}>
-            <Icon name="chevron-back" size={20} color={canGoPrev ? '#000' : '#D1D5DB'} />
+            <Icon
+              name="chevron-back"
+              size={20}
+              color={canGoPrev ? colors.foreground : colors.muted}
+            />
           </TouchableOpacity>
-          <Text className="titleSmall text-black">
+          <Text className="titleSmall text-foreground">
             {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월
           </Text>
           <TouchableOpacity onPress={handleNextMonth} disabled={!canGoNext} hitSlop={8}>
-            <Icon name="chevron-forward" size={20} color={canGoNext ? '#000' : '#D1D5DB'} />
+            <Icon
+              name="chevron-forward"
+              size={20}
+              color={canGoNext ? colors.foreground : colors.muted}
+            />
           </TouchableOpacity>
         </View>
 
@@ -122,7 +132,7 @@ export function ReservationCalendarSheet({
                     }`}>
                     <Text
                       className={
-                        isSelected ? 'text-white' : isDisabled ? 'text-gray-300' : 'text-black'
+                        isSelected ? 'text-white' : isDisabled ? 'text-gray-300' : 'text-foreground'
                       }>
                       {day.getDate()}
                     </Text>

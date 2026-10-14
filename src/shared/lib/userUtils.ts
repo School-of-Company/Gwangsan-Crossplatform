@@ -1,4 +1,4 @@
-import type { ChatMessageResponse } from '~/entity/chat/model/chatTypes';
+import type { ChatMessageResponse } from '~/shared/types/chatType';
 import { getData } from './getData';
 
 export const extractOtherUserInfo = (messages: readonly ChatMessageResponse[]) => {

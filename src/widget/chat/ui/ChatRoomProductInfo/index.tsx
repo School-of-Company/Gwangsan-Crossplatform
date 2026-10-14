@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 interface ChatRoomProductInfoProps {
   readonly title: string;
@@ -23,10 +24,9 @@ export const ChatRoomProductInfo: React.FC<ChatRoomProductInfoProps> = ({
         activeOpacity={0.7}
         disabled={!onPress}
         onPress={onPress}>
-        <Image
+        <CachedImage
           source={imageUrl ? { uri: imageUrl } : require('~/shared/assets/png/icon.png')}
           className="h-11 w-11 rounded-lg"
-          resizeMode="cover"
         />
         <View className="flex-1">
           <Text className="text-label text-gray-900" numberOfLines={1}>

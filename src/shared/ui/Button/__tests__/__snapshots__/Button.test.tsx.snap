@@ -36,7 +36,7 @@ exports[`Button 스냅샷 - disabled + error variant 1`] = `
   }
 >
   <View
-    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#CDCDCF] "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-disabled "
     collapsable={false}
     style={
       {
@@ -93,7 +93,7 @@ exports[`Button 스냅샷 - disabled + neutral variant 1`] = `
   }
 >
   <View
-    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#CDCDCF] "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-disabled "
     collapsable={false}
     style={
       {
@@ -150,7 +150,7 @@ exports[`Button 스냅샷 - disabled + secondary variant 1`] = `
   }
 >
   <View
-    className="h-full items-center justify-center rounded-xl px-8 py-3 border-2 border-[#CDCDCF] bg-white "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 border-2 border-disabled bg-background "
     collapsable={false}
     style={
       {
@@ -207,7 +207,7 @@ exports[`Button 스냅샷 - disabled 상태 1`] = `
   }
 >
   <View
-    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#CDCDCF] "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-disabled "
     collapsable={false}
     style={
       {
@@ -321,7 +321,7 @@ exports[`Button 스냅샷 - neutral variant 1`] = `
   }
 >
   <View
-    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-[#F3F4F5] "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 bg-surface-muted "
     collapsable={false}
     style={
       {
@@ -435,7 +435,7 @@ exports[`Button 스냅샷 - secondary variant 1`] = `
   }
 >
   <View
-    className="h-full items-center justify-center rounded-xl px-8 py-3 border-2 border-main-500 bg-white "
+    className="h-full items-center justify-center rounded-xl px-8 py-3 border-2 border-main-500 bg-background "
     collapsable={false}
     style={
       {

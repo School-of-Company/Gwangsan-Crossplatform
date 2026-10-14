@@ -1,7 +1,6 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { useRouter } from 'expo-router';
 import { signout } from '../../api/signout';
-import { clearCredentialsForBiometric } from '../../api/signin';
 import { removeData } from '~/shared/lib/removeData';
 import { clearAuthTokens } from '~/shared/lib/auth';
 import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
@@ -13,9 +12,6 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('../../api/signout', () => ({
   signout: jest.fn(),
-}));
-jest.mock('../../api/signin', () => ({
-  clearCredentialsForBiometric: jest.fn(),
 }));
 jest.mock('~/shared/lib/removeData', () => ({
   removeData: jest.fn(),
@@ -32,7 +28,6 @@ jest.mock('~/shared/lib/sessionCleanup', () => ({
 
 const mockUseRouter = useRouter as jest.Mock;
 const mockSignout = signout as jest.Mock;
-const mockClearCredentialsForBiometric = clearCredentialsForBiometric as jest.Mock;
 const mockRemoveData = removeData as jest.Mock;
 const mockClearAuthTokens = clearAuthTokens as jest.Mock;
 const mockClearCurrentUserId = clearCurrentUserId as jest.Mock;
@@ -43,7 +38,6 @@ describe('useSignout', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRouter.mockReturnValue({ replace: mockReplace });
-    mockClearCredentialsForBiometric.mockResolvedValue(undefined);
     mockRemoveData.mockResolvedValue(undefined);
     mockClearAuthTokens.mockResolvedValue(undefined);
   });
@@ -67,11 +61,32 @@ describe('useSignout', () => {
 
     await waitFor(() => {
       expect(mockClearAuthTokens).toHaveBeenCalled();
-      expect(mockClearCredentialsForBiometric).toHaveBeenCalled();
       expect(mockRemoveData).toHaveBeenCalledWith('memberId');
       expect(mockClearCurrentUserId).toHaveBeenCalled();
       expect(mockReplace).toHaveBeenCalledWith('/onboarding');
     });
+  });
+
+  it('로그아웃하면 이전 계정의 채팅 전송 대기열과 읽음 상태를 비운다(#737)', async () => {
+    const { useChatQueueStore } = require('~/shared/store/useChatQueueStore');
+    const { useReadRoomsStore } = require('~/shared/store/useReadRoomsStore');
+    useChatQueueStore.getState().addMessage({
+      roomId: 1,
+      content: '보내는 중',
+      messageType: 'TEXT',
+      imageIds: [],
+    });
+    useReadRoomsStore.getState().markRead(1, 10);
+    mockSignout.mockResolvedValue({ message: 'ok' });
+
+    const { result } = renderHookWithProviders(() => useSignout());
+    act(() => {
+      result.current.signout();
+    });
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/onboarding'));
+    expect(useChatQueueStore.getState().pendingMessages).toEqual([]);
+    expect(useReadRoomsStore.getState().readMessageIds).toEqual({});
   });
 
   it('로그아웃 성공 시 queryClient를 초기화한다', async () => {
@@ -140,7 +155,6 @@ describe('useSignout', () => {
 
       await waitFor(() => {
         expect(mockClearAuthTokens).toHaveBeenCalled();
-        expect(mockClearCredentialsForBiometric).toHaveBeenCalled();
         expect(mockRemoveData).toHaveBeenCalledWith('memberId');
         expect(mockClearCurrentUserId).toHaveBeenCalled();
         expect(mockReplace).toHaveBeenCalledWith('/onboarding');

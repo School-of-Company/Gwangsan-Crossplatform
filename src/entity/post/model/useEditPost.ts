@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { editPost } from '../api/editPost';
+import { postKeys } from '~/shared/model/postQueryKeys';
 
 interface EditPostData {
   type: string;
@@ -18,7 +19,7 @@ export const useEditPost = () => {
     mutationFn: ({ id, data }: { id: string; data: EditPostData }) => editPost(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['post', variables.id] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
 
       Toast.show({
         type: 'success',

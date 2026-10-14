@@ -1,0 +1,538 @@
+import { act, waitFor } from '@testing-library/react-native';
+import { renderHookWithProviders } from '~/test-utils';
+import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTradeRequest } from '../useTradeRequest';
+import { requestTrade } from '~/entity/post/api/requestTrade';
+import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
+import { useChatEntry } from '~/entity/chat/model/useChatEntry';
+import { logger } from '~/shared/lib/logger';
+
+jest.mock('~/entity/post/api/requestTrade', () => ({
+  requestTrade: jest.fn(),
+}));
+
+jest.mock('~/entity/post/api/withdrawTrade', () => ({
+  withdrawTrade: jest.fn(),
+}));
+
+jest.mock('~/entity/chat/model/useChatEntry', () => ({
+  useChatEntry: jest.fn(),
+}));
+
+jest.mock('~/shared/lib/logger', () => ({
+  logger: { error: jest.fn(), warn: jest.fn() },
+}));
+
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+}));
+
+const mockRequestTrade = requestTrade as jest.Mock;
+const mockWithdrawTrade = withdrawTrade as jest.Mock;
+const mockUseChatEntry = useChatEntry as jest.Mock;
+const mockGetItem = AsyncStorage.getItem as jest.Mock;
+const mockSetItem = AsyncStorage.setItem as jest.Mock;
+const mockRemoveItem = AsyncStorage.removeItem as jest.Mock;
+
+describe('useTradeRequest', () => {
+  const mockNavigateToChat = jest.fn();
+  const mockNavigateToRoom = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseChatEntry.mockReturnValue({
+      navigateToChat: mockNavigateToChat,
+      navigateToRoom: mockNavigateToRoom,
+      isLoading: false,
+    });
+    mockGetItem.mockResolvedValue(null);
+    mockSetItem.mockResolvedValue(undefined);
+    mockRemoveItem.mockResolvedValue(undefined);
+  });
+
+  describe('초기 상태', () => {
+    it('isLoading이 false이다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      expect(result.current.isLoading).toBe(false);
+      expect(typeof result.current.handleTradeRequest).toBe('function');
+    });
+  });
+
+  describe('거래 신청 성공', () => {
+    it('requestTrade를 올바른 파라미터로 호출한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
+    });
+
+    it('성공 Toast를 표시한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래 신청이 전송되었습니다' })
+      );
+    });
+
+    it('roomId가 있으면 채팅방으로 바로 이동한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockNavigateToRoom).toHaveBeenCalledWith(10);
+      expect(mockNavigateToChat).not.toHaveBeenCalled();
+    });
+
+    it('roomId가 없으면 navigateToChat으로 이동한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 0 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockNavigateToChat).toHaveBeenCalledWith(1);
+      expect(mockNavigateToRoom).not.toHaveBeenCalled();
+    });
+
+    it('요청 완료 후 isLoading이 false로 돌아온다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('채팅 이동 실패', () => {
+    it('navigateToChat 실패 시 logger.error를 호출한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 0 });
+      const navError = new Error('이동 실패');
+      mockNavigateToChat.mockRejectedValue(navError);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(logger.error).toHaveBeenCalledWith('Chat navigation failed', navError);
+    });
+
+    it('navigateToChat 실패 시 info Toast를 에러 메시지와 함께 표시한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 0 });
+      mockNavigateToChat.mockRejectedValue(new Error('이동 실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'info',
+          text1: '채팅방 이동 중 오류가 발생했습니다',
+          text2: '이동 실패',
+        })
+      );
+    });
+
+    it('navigateToChat이 Error가 아닌 값으로 실패하면 기본 메시지를 표시한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 0 });
+      mockNavigateToChat.mockRejectedValue('문자열 에러');
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'info',
+          text2: '채팅하기 버튼을 눌러 이동해주세요.',
+        })
+      );
+    });
+
+    it('채팅 이동 실패해도 거래 신청 자체는 성공으로 처리되어 에러를 던지지 않는다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 0 });
+      mockNavigateToChat.mockRejectedValue(new Error('이동 실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await expect(
+        act(async () => {
+          await result.current.handleTradeRequest();
+        })
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe('거래 신청 실패', () => {
+    it('requestTrade 실패 시 에러 Toast를 표시한다', async () => {
+      mockRequestTrade.mockRejectedValue(new Error('거래 신청 실패했습니다'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        try {
+          await result.current.handleTradeRequest();
+        } catch {
+          // expected
+        }
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '거래 신청 실패',
+          text2: '거래 신청 실패했습니다',
+        })
+      );
+    });
+
+    it('requestTrade 실패 시 기본 메시지를 표시한다 (Error 인스턴스가 아닌 경우)', async () => {
+      mockRequestTrade.mockRejectedValue('알 수 없는 에러');
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        try {
+          await result.current.handleTradeRequest();
+        } catch {
+          // expected
+        }
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text2: '다시 시도해주세요.' })
+      );
+    });
+
+    it('requestTrade 실패 시 에러를 다시 throw한다', async () => {
+      mockRequestTrade.mockRejectedValue(new Error('실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await expect(result.current.handleTradeRequest()).rejects.toThrow('실패');
+      });
+    });
+
+    it('요청 실패 후 isLoading이 false로 돌아온다', async () => {
+      mockRequestTrade.mockRejectedValue(new Error('실패'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        try {
+          await result.current.handleTradeRequest();
+        } catch {
+          // expected
+        }
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+    });
+  });
+
+  describe('중복 요청 방지', () => {
+    it('요청이 진행 중일 때 다시 호출하면 requestTrade를 재호출하지 않는다', async () => {
+      let resolveRequest!: (value: { success: boolean; roomId: number }) => void;
+      mockRequestTrade.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          })
+      );
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      act(() => {
+        result.current.handleTradeRequest();
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(true));
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveRequest({ success: true, roomId: 10 });
+      });
+    });
+  });
+
+  describe('로딩 상태', () => {
+    it('요청 진행 중 isLoading이 true이다', async () => {
+      let resolveRequest!: (value: { success: boolean; roomId: number }) => void;
+      mockRequestTrade.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          })
+      );
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      act(() => {
+        result.current.handleTradeRequest();
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(true));
+
+      await act(async () => {
+        resolveRequest({ success: true, roomId: 10 });
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+    });
+  });
+
+  describe('대기중 요청 상태', () => {
+    it('요청 성공 후 hasPendingRequest가 true가 되고 저장소에 기록한다', async () => {
+      mockRequestTrade.mockResolvedValue({ success: true, roomId: 10 });
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(result.current.hasPendingRequest).toBe(true);
+      expect(mockSetItem).toHaveBeenCalledWith('tradeRequestPending:1', 'true');
+    });
+
+    it('저장소에 대기중 기록이 있으면 hasPendingRequest가 true로 시작하고 재요청 시 requestTrade를 호출하지 않는다', async () => {
+      mockGetItem.mockResolvedValue('true');
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('유효하지 않은 파라미터', () => {
+    it('productId가 없으면 requestTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: undefined, sellerId: 2 })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 신청 실패' })
+      );
+    });
+
+    it('sellerId가 없으면 requestTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: undefined })
+      );
+
+      await act(async () => {
+        await result.current.handleTradeRequest();
+      });
+
+      expect(mockRequestTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 신청 실패' })
+      );
+    });
+
+    it('sellerId가 없으면 withdrawTrade를 호출하지 않고 에러 Toast를 표시한다', async () => {
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: undefined })
+      );
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(mockWithdrawTrade).not.toHaveBeenCalled();
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', text1: '거래 신청 취소 실패' })
+      );
+    });
+  });
+
+  describe('거래 신청 취소', () => {
+    it('withdrawTrade를 올바른 파라미터로 호출한다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(mockWithdrawTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
+    });
+
+    it('취소 성공 시 hasPendingRequest가 false가 되고 저장소 기록을 지운다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(result.current.hasPendingRequest).toBe(false);
+      expect(mockRemoveItem).toHaveBeenCalledWith('tradeRequestPending:1');
+    });
+
+    it('취소 성공 Toast를 표시한다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success', text1: '거래 신청을 취소했어요' })
+      );
+    });
+
+    it('withdrawTrade 실패 시 에러 Toast를 표시하고 hasPendingRequest는 유지된다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockRejectedValue(new Error('거래 완료 요청자가 아닙니다.'));
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        try {
+          await result.current.handleWithdrawTradeRequest();
+        } catch {
+          // expected
+        }
+      });
+
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: '거래 신청 취소 실패',
+          text2: '거래 완료 요청자가 아닙니다.',
+        })
+      );
+      expect(result.current.hasPendingRequest).toBe(true);
+    });
+
+    it('취소 완료 후 isWithdrawing이 false로 돌아온다', async () => {
+      mockGetItem.mockResolvedValue('true');
+      mockWithdrawTrade.mockResolvedValue(undefined);
+
+      const { result } = renderHookWithProviders(() =>
+        useTradeRequest({ productId: 1, sellerId: 2 })
+      );
+
+      await waitFor(() => expect(result.current.hasPendingRequest).toBe(true));
+
+      await act(async () => {
+        await result.current.handleWithdrawTradeRequest();
+      });
+
+      expect(result.current.isWithdrawing).toBe(false);
+    });
+  });
+});

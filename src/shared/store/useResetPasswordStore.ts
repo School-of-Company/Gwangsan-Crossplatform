@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { ResetPasswordState } from '~/entity/auth/model/authState';
-import { getNextResetPasswordStep, getPrevResetPasswordStep } from '~/entity/auth/lib/getStep';
+import { ResetPasswordState } from '~/shared/types/authState';
+import { getNextResetPasswordStep, getPrevResetPasswordStep } from '~/shared/lib/getStep';
 
 const INITIAL_FORM_DATA: ResetPasswordState['formData'] = {
   phoneNumber: '',

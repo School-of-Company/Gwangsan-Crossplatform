@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image } from 'react-native';
+import { Image } from 'expo-image';
 import { render, fireEvent } from '@testing-library/react-native';
 import { PostPageContent } from '../index';
 

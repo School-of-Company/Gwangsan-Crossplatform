@@ -56,14 +56,14 @@ describe('NoticeItem', () => {
 
     const { UNSAFE_getAllByType } = render(<NoticeItem {...props} />);
 
-    const images = UNSAFE_getAllByType(require('react-native').Image);
+    const images = UNSAFE_getAllByType(require('expo-image').Image);
     expect(images.length).toBeGreaterThanOrEqual(1);
   });
 
   it('이미지가 없으면 Image 컴포넌트를 렌더링하지 않는다', () => {
     const { UNSAFE_queryAllByType } = render(<NoticeItem {...defaultProps} />);
 
-    const images = UNSAFE_queryAllByType(require('react-native').Image);
+    const images = UNSAFE_queryAllByType(require('expo-image').Image);
     expect(images).toHaveLength(0);
   });
 

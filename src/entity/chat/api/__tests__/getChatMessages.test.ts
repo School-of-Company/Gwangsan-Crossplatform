@@ -143,22 +143,12 @@ describe('getChatRoomData', () => {
   });
 
   describe('에러 처리', () => {
-    it('API 호출 실패 시 Toast를 보여주고 에러를 던진다', async () => {
+    it('API 호출 실패 시 토스트 없이 에러를 던진다(#739)', async () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       mockGet.mockRejectedValue(new Error('Network error'));
 
       await expect(getChatRoomData(100)).rejects.toThrow();
-      expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
-    });
-
-    it('에러에 message가 없으면 기본 문구로 Toast를 보여준다', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-      mockGet.mockRejectedValue({});
-
-      await expect(getChatRoomData(100)).rejects.toThrow();
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '채팅방 데이터를 불러올 수 없습니다' })
-      );
+      expect(Toast.show).not.toHaveBeenCalled();
     });
   });
 });

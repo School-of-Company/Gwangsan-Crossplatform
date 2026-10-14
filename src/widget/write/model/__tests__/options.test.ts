@@ -1,6 +1,6 @@
 import { TYPE_OPTIONS, MODE_OPTIONS, getTypeLabel, getModeLabel } from '../options';
-import { TYPE } from '../type';
-import { MODE } from '../mode';
+import { TYPE } from '~/shared/types/type';
+import { MODE } from '~/shared/types/mode';
 
 describe('TYPE_OPTIONS', () => {
   it('2개의 항목을 포함한다', () => {

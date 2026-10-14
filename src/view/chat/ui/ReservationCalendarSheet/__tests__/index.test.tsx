@@ -150,8 +150,8 @@ describe('ReservationCalendarSheet', () => {
     const selectedDayText = getByText('14');
     expect(selectedDayText.props.className).toContain('text-white');
 
-    // 선택되지 않은 활성화된 날짜는 검정 텍스트 스타일을 사용한다
+    // 선택되지 않은 활성화된 날짜는 기본 글자색(foreground) 스타일을 사용한다
     const otherDayText = getByText('15');
-    expect(otherDayText.props.className).toContain('text-black');
+    expect(otherDayText.props.className).toContain('text-foreground');
   });
 });

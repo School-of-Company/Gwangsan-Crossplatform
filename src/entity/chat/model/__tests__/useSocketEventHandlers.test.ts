@@ -102,4 +102,22 @@ describe('useSocketEventHandlers', () => {
     expect(socketService.off).toHaveBeenCalledWith('connect', onConnect1);
     expect(socketService.on).toHaveBeenCalledWith('connect', onConnect2);
   });
+
+  it('메시지 수정/삭제 핸들러를 등록하고 언마운트 시 해제한다', () => {
+    const socketService = createMockSocketService();
+    const onMessageUpdated = jest.fn();
+    const onMessageDeleted = jest.fn();
+
+    const { unmount } = renderHook(() =>
+      useSocketEventHandlers({ socketService, onMessageUpdated, onMessageDeleted })
+    );
+
+    expect(socketService.on).toHaveBeenCalledWith('messageUpdated', onMessageUpdated);
+    expect(socketService.on).toHaveBeenCalledWith('messageDeleted', onMessageDeleted);
+
+    unmount();
+
+    expect(socketService.off).toHaveBeenCalledWith('messageUpdated', onMessageUpdated);
+    expect(socketService.off).toHaveBeenCalledWith('messageDeleted', onMessageDeleted);
+  });
 });

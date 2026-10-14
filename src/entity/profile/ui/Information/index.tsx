@@ -76,11 +76,13 @@ export default function Information({ name, id, isMe, isBlocked = false }: Infor
             onPress={handleBlockPress}
             disabled={block.isPending || unblock.isPending}
             className="items-center py-4">
-            <Text className="text-lg">{isBlocked ? '차단 해제하기' : '차단하기'}</Text>
+            <Text className="text-lg text-foreground">
+              {isBlocked ? '차단 해제하기' : '차단하기'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleReportPress} className="items-center py-4">
-            <Text className="text-lg">신고하기</Text>
+            <Text className="text-lg text-foreground">신고하기</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleCloseMenu} className="items-center py-4">

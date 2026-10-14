@@ -2,7 +2,7 @@
 
 exports[`Footer 스냅샷 - 기본 상태 1`] = `
 <View
-  className="w-full overflow-hidden bg-white"
+  className="w-full overflow-hidden bg-background"
   collapsable={false}
   pointerEvents="auto"
   style={
@@ -12,7 +12,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
   }
 >
   <View
-    className="relative bottom-0 flex-row border-t border-gray-200 bg-white px-2 pt-1"
+    className="relative bottom-0 flex-row border-t border-gray-200 bg-background px-2 pt-1"
     collapsable={false}
     onLayout={[Function]}
     style={
@@ -136,7 +136,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
         </RNSVGSvgView>
       </View>
       <Text
-        className="mt-1 text-[#8FC31D]"
+        className="mt-1 text-main-500"
       >
         홈
       </Text>
@@ -377,7 +377,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
               }
               stroke={
                 {
-                  "payload": 4287337889,
+                  "payload": 4287598740,
                   "type": 0,
                 }
               }
@@ -625,7 +625,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
 
 exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
 <View
-  className="w-full overflow-hidden bg-white"
+  className="w-full overflow-hidden bg-background"
   collapsable={false}
   pointerEvents="auto"
   style={
@@ -635,7 +635,7 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
   }
 >
   <View
-    className="relative bottom-0 flex-row border-t border-gray-200 bg-white px-2 pt-1"
+    className="relative bottom-0 flex-row border-t border-gray-200 bg-background px-2 pt-1"
     collapsable={false}
     onLayout={[Function]}
     style={
@@ -759,7 +759,7 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
         </RNSVGSvgView>
       </View>
       <Text
-        className="mt-1 text-[#8FC31D]"
+        className="mt-1 text-main-500"
       >
         홈
       </Text>
@@ -1003,7 +1003,7 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
               }
               stroke={
                 {
-                  "payload": 4287337889,
+                  "payload": 4287598740,
                   "type": 0,
                 }
               }

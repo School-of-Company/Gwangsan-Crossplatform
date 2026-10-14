@@ -10,9 +10,9 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('expo-image', () => {
-  const MockImage = ({ testID }: any) => {
+  const MockImage = ({ testID, cachePolicy }: any) => {
     const { View } = require('react-native');
-    return <View testID={testID} />;
+    return <View testID={testID ?? 'post-thumbnail'} accessibilityHint={cachePolicy} />;
   };
   MockImage.prefetch = jest.fn();
   return { Image: MockImage };
@@ -36,6 +36,12 @@ const makePost = (overrides = {}) => ({
 beforeEach(() => jest.clearAllMocks());
 
 describe('Post', () => {
+  it('썸네일을 메모리와 디스크에 캐시해 앱을 다시 켜도 다시 내려받지 않는다(#732)', () => {
+    const { getByTestId } = render(<Post {...makePost()} />);
+
+    expect(getByTestId('post-thumbnail').props.accessibilityHint).toBe('memory-disk');
+  });
+
   it('제목과 광산 번호를 렌더링한다', () => {
     const { getByText } = render(<Post {...makePost()} />);
 

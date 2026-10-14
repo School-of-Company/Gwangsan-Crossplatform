@@ -13,8 +13,8 @@ export function useCustomInput({ onSubmit }: UseCustomInputProps = {}) {
     setIsAddingCustomItem(true);
   }, []);
 
-  // 바텀시트 오픈 애니메이션이 끝난 뒤 호출해야 한다. 애니메이션 도중 포커스를 주면
-  // 안드로이드에서 한글 입력 조합 중 자소가 분리되는 문제가 있다.
+  // 바텀시트 오픈 애니메이션 시작과 동시에 호출해, 카드 슬라이드업과 키보드
+  // 상승이 같이 일어나도록 한다.
   const focusInput = useCallback(() => {
     customInputRef.current?.focus();
   }, []);

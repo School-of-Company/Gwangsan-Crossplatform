@@ -17,8 +17,8 @@ import { getModeLabel, getTypeLabel } from '~/widget/write/model/options';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { ProductType } from '~/widget/write/model/type';
-import { ModeType } from '~/widget/write/model/mode';
+import { ProductType } from '~/shared/types/type';
+import { ModeType } from '~/shared/types/mode';
 import { useEditPost } from '~/entity/post/model/useEditPost';
 import { useGetItem } from '~/entity/post';
 
@@ -161,7 +161,7 @@ const ItemFormPage = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#8FC31D" />
       </SafeAreaView>
     );
@@ -169,14 +169,14 @@ const ItemFormPage = () => {
 
   if (id && (error || !postData)) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle="게시글" />
       <KeyboardAvoidingView
         className="flex-1"
@@ -224,7 +224,7 @@ const ItemFormPage = () => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <View className="bg-white px-5 pt-5">
+      <View className="bg-background px-5 pt-5">
         <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
           {getButtonText()}
         </Button>

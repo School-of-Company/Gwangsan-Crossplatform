@@ -2,7 +2,7 @@ import React from 'react';
 import { DeviceEventEmitter, FlatList, Text } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { AnimatedRef } from 'react-native-reanimated';
-import { ChatRoomContent } from '../index';
+import { ChatRoomContent, getEmptyStateBottomInset } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
@@ -35,8 +35,13 @@ jest.mock('../../MyMessage', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    MyMessage: ({ message, isLast }: any) => (
-      <Text testID={`my-message-${message.messageId}`}>{isLast ? 'last' : ''}</Text>
+    MyMessage: ({ message, isLast, onLongPress }: any) => (
+      <Text
+        testID={`my-message-${message.messageId}`}
+        accessibilityHint={onLongPress ? 'long-pressable' : undefined}
+        onLongPress={onLongPress ? () => onLongPress(message) : undefined}>
+        {isLast ? 'last' : ''}
+      </Text>
     ),
   };
 });
@@ -47,7 +52,12 @@ jest.mock('../../OtherMessage', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
-    OtherMessage: ({ message }: any) => <Text testID={`other-message-${message.messageId}`} />,
+    OtherMessage: ({ message, showProfile }: any) => (
+      <Text
+        testID={`other-message-${message.messageId}`}
+        accessibilityHint={showProfile ? 'with-profile' : 'grouped'}
+      />
+    ),
   };
 });
 
@@ -81,6 +91,8 @@ jest.mock('~/entity/chat', () => {
     formatMessageTime: (createdAt: string) => createdAt,
     getMessageDateKey: (createdAt: string) => createdAt.slice(0, 10),
     formatDateDividerLabel: (createdAt: string) => `날짜-${createdAt.slice(0, 10)}`,
+    canModifyMessage: (message: any) => message.isMine && message.messageId !== 99,
+    isSystemMessage: (message: any) => message.messageType === 'SYSTEM',
   };
 });
 
@@ -130,6 +142,25 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('icon-chatbubbles-outline')).toBeTruthy();
     expect(getByText(/아직 대화가 없습니다/)).toBeTruthy();
     expect(queryByText('채팅방 헤더')).toBeNull();
+  });
+
+  it('빈 채팅방에서 아무 데나 누르면 키보드를 내린다', () => {
+    const { Keyboard } = require('react-native');
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
+
+    fireEvent.press(getByTestId('chat-empty-state-dismiss'));
+
+    expect(dismissSpy).toHaveBeenCalled();
+    dismissSpy.mockRestore();
+  });
+
+  it('빈 상태 안내는 키보드 높이를 반영하는 컨테이너 안에 그린다', () => {
+    const { getByTestId } = render(<ChatRoomContent {...defaultProps} />);
+
+    const container = getByTestId('chat-empty-state');
+    expect(container).toBeTruthy();
+    expect(getByTestId('icon-chatbubbles-outline')).toBeTruthy();
   });
 
   it('거래 임베드를 메시지 createdAt 순서에 맞게 삽입한다', () => {
@@ -341,6 +372,72 @@ describe('ChatRoomContent', () => {
     );
   });
 
+  it('거래 요청 없이 바로 예약해도(createdAt 없음) 예약 카드를 표시한다', () => {
+    const messages = [
+      createMessage({
+        messageId: 1,
+        createdAt: '2026-05-28T01:00:00.000Z',
+        content: '제가 살께요',
+      }),
+      createMessage({ messageId: 2, createdAt: '2026-05-28T03:00:00.000Z', isMine: true }),
+    ];
+    const product = createProduct({
+      createdAt: null,
+      isReserved: true,
+      reservedAt: '2026-05-28T04:00:00.000Z',
+      reservationScheduledAt: '2026-08-28T14:00:00',
+      reservationPlaceName: '상무역 2번 출구',
+    });
+
+    const { UNSAFE_getByType, getByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={messages}
+        hasMessages
+        tradeEmbedConfig={{
+          shouldShow: false,
+          product,
+          showButtons: false,
+          otherPartyNickname: '상대방',
+          reserverNickname: '판매자',
+        }}
+      />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+
+    expect(list.props.data.map((item: any) => item.type)).toEqual([
+      'dateDivider',
+      'message',
+      'message',
+      'tradeReserved',
+    ]);
+    expect(getByTestId('trade-reserved-embed').props.children).toBe(
+      '2026-08-28T14:00:00-상무역 2번 출구-판매자'
+    );
+  });
+
+  it('메시지가 없어도 예약 카드가 있으면 빈 상태 대신 목록을 렌더링한다', () => {
+    const product = createProduct({ createdAt: null, isReserved: true, reservedAt: null });
+
+    const { queryByTestId, UNSAFE_getByType } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        tradeEmbedConfig={{
+          shouldShow: false,
+          product,
+          showButtons: false,
+          otherPartyNickname: '상대방',
+        }}
+      />
+    );
+
+    expect(queryByTestId('chat-empty-state')).toBeNull();
+    expect(
+      UNSAFE_getByType(FlatList).props.data.some((item: any) => item.type === 'tradeReserved')
+    ).toBe(true);
+  });
+
   it('거래가 완료되면 예약 카드 대신 완료 카드를 대화 맨 끝에 추가한다', () => {
     const product = createProduct({
       id: 66,
@@ -476,5 +573,237 @@ describe('ChatRoomContent', () => {
 
     const listAfterShow = UNSAFE_getByType(FlatList);
     expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(10);
+  });
+
+  describe('내 메시지 길게 누르기', () => {
+    it('수정/삭제할 수 있는 내 메시지에만 길게 누르기 핸들러를 넘긴다', () => {
+      const onMyMessageLongPress = jest.fn();
+      const messages = [
+        createMessage({ messageId: 1, isMine: true, createdAt: '2026-05-28T01:00:00.000Z' }),
+        // canModifyMessage mock이 false를 돌려주는 메시지(예: 24시간 경과)
+        createMessage({ messageId: 99, isMine: true, createdAt: '2026-05-28T01:01:00.000Z' }),
+      ];
+
+      const { getByTestId } = render(
+        <ChatRoomContent
+          {...defaultProps}
+          messages={messages}
+          hasMessages
+          onMyMessageLongPress={onMyMessageLongPress}
+        />
+      );
+
+      expect(getByTestId('my-message-1').props.accessibilityHint).toBe('long-pressable');
+      expect(getByTestId('my-message-99').props.accessibilityHint).toBeUndefined();
+
+      fireEvent(getByTestId('my-message-1'), 'longPress');
+      expect(onMyMessageLongPress).toHaveBeenCalledWith(expect.objectContaining({ messageId: 1 }));
+    });
+
+    it('핸들러를 넘기지 않으면 길게 누르기를 연결하지 않는다', () => {
+      const messages = [createMessage({ messageId: 1, isMine: true })];
+
+      const { getByTestId } = render(
+        <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+      );
+
+      expect(getByTestId('my-message-1').props.accessibilityHint).toBeUndefined();
+    });
+  });
+});
+
+describe('ChatRoomContent SYSTEM 메시지', () => {
+  it('SYSTEM 메시지는 말풍선 대신 가운데 글씨로 그린다', () => {
+    const messages = [
+      createMessage({ messageId: 1, createdAt: '2026-05-28T01:00:00.000Z' }),
+      createMessage({
+        messageId: 2,
+        messageType: MESSAGE_TYPE.SYSTEM,
+        content: '상대방님이 예약을 취소했어요',
+        createdAt: '2026-05-28T02:00:00.000Z',
+      }),
+    ];
+
+    const { UNSAFE_getByType, getAllByTestId, queryByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.data.map((item: any) => item.type)).toEqual([
+      'dateDivider',
+      'message',
+      'system',
+    ]);
+    expect(list.props.keyExtractor(list.props.data[2])).toBe('s-2');
+    expect(queryByTestId('other-message-2')).toBeNull();
+    expect(getAllByTestId('date-divider').map((node) => node.props.children)).toEqual([
+      '날짜-2026-05-28',
+      '상대방님이 예약을 취소했어요',
+    ]);
+  });
+
+  it('SYSTEM 메시지를 사이에 두면 같은 발신자 메시지라도 묶지 않고 프로필을 다시 보여준다', () => {
+    const messages = [
+      createMessage({ messageId: 1, senderId: 10, createdAt: '2026-05-28T01:00:00.000Z' }),
+      createMessage({
+        messageId: 2,
+        senderId: 10,
+        messageType: MESSAGE_TYPE.SYSTEM,
+        content: '상대방님이 예약을 취소했어요',
+        createdAt: '2026-05-28T01:01:00.000Z',
+      }),
+      createMessage({ messageId: 3, senderId: 10, createdAt: '2026-05-28T01:02:00.000Z' }),
+    ];
+
+    const { getByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={messages} hasMessages />
+    );
+
+    expect(getByTestId('other-message-3').props.accessibilityHint).toBe('with-profile');
+  });
+
+  it('내가 취소해서 isMine인 SYSTEM 메시지도 말풍선·마지막 메시지·길게 누르기 대상이 아니다', () => {
+    const messages = [
+      createMessage({ messageId: 1, isMine: true, createdAt: '2026-05-28T01:00:00.000Z' }),
+      createMessage({
+        messageId: 2,
+        isMine: true,
+        messageType: MESSAGE_TYPE.SYSTEM,
+        content: '나님이 예약을 취소했어요',
+        createdAt: '2026-05-28T01:05:00.000Z',
+      }),
+    ];
+
+    const { getByTestId, queryByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={messages}
+        hasMessages
+        onMyMessageLongPress={jest.fn()}
+      />
+    );
+
+    expect(queryByTestId('my-message-2')).toBeNull();
+    expect(getByTestId('my-message-1').props.children).toBe('last');
+  });
+});
+
+describe('ChatRoomContent 예약·완료 카드 위치', () => {
+  const messages = [
+    createMessage({ messageId: 1, createdAt: '2026-05-28T01:00:00.000Z' }),
+    createMessage({ messageId: 2, createdAt: '2026-05-28T03:00:00.000Z' }),
+    createMessage({ messageId: 3, createdAt: '2026-05-28T05:00:00.000Z' }),
+  ];
+
+  const renderWithProduct = (product: TradeProduct) =>
+    render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={messages}
+        hasMessages
+        tradeEmbedConfig={{
+          shouldShow: true,
+          product,
+          showButtons: true,
+          otherPartyNickname: '요청자',
+        }}
+        showReviewButton
+      />
+    );
+
+  const itemOrder = (data: any[]) =>
+    data
+      .filter((item) => item.type !== 'dateDivider')
+      .map((item) => (item.type === 'message' ? `m${item.data.messageId}` : item.type));
+
+  it('reservedAt이 있으면 예약 카드를 그 시각으로 메시지 사이에 끼워 넣는다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isReserved: true,
+      reservedAt: '2026-05-28T04:00:00.000Z',
+    });
+
+    const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
+
+    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'm2', 'tradeReserved', 'm3']);
+  });
+
+  it('completedAt이 있으면 완료 카드를 그 시각으로 메시지 사이에 끼워 넣는다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isCompleted: true,
+      completedAt: '2026-05-28T02:00:00.000Z',
+    });
+
+    const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
+
+    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'tradeCompleted', 'm2', 'm3']);
+  });
+
+  it('reservedAt이 없거나 읽을 수 없으면(구버전 서버) 예약 카드를 맨 끝에 붙인다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isReserved: true,
+      reservedAt: 'not-a-date',
+    });
+
+    const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
+
+    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'm2', 'm3', 'tradeReserved']);
+  });
+
+  it('카드를 끼워 넣은 날짜에 맞춰 날짜 구분선을 다시 계산한다', () => {
+    const product = createProduct({
+      createdAt: '2026-05-28T01:30:00.000Z',
+      isCompleted: true,
+      completedAt: '2026-05-29T01:00:00.000Z',
+    });
+
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={[
+          createMessage({ messageId: 1, createdAt: '2026-05-28T01:00:00.000Z' }),
+          createMessage({ messageId: 2, createdAt: '2026-05-30T01:00:00.000Z' }),
+        ]}
+        hasMessages
+        tradeEmbedConfig={{
+          shouldShow: true,
+          product,
+          showButtons: true,
+          otherPartyNickname: '요청자',
+        }}
+        showReviewButton
+      />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.data.map((item: any) => item.type)).toEqual([
+      'dateDivider',
+      'message',
+      'trade',
+      'dateDivider',
+      'tradeCompleted',
+      'dateDivider',
+      'message',
+    ]);
+  });
+});
+
+describe('getEmptyStateBottomInset', () => {
+  it('키보드가 닫혀 있으면 여백이 없다', () => {
+    expect(getEmptyStateBottomInset(0, 34)).toBe(0);
+  });
+
+  it('키보드가 열리면 닫힘 상태 오프셋을 뺀 만큼 여백을 준다', () => {
+    expect(getEmptyStateBottomInset(-300, 34)).toBe(266);
+  });
+
+  it('하단 안전 영역이 없으면 키보드 높이만큼 여백을 준다', () => {
+    expect(getEmptyStateBottomInset(-280, 0)).toBe(280);
+  });
+
+  it('키보드가 닫히는 중 오프셋보다 낮아지면 음수 대신 0을 돌려준다', () => {
+    expect(getEmptyStateBottomInset(-20, 34)).toBe(0);
   });
 });

@@ -10,4 +10,4 @@ export {
   createUserSessionService,
   type IUserSessionService,
   type UserSession,
-} from './lib/userSessionService';
+} from '~/shared/lib/userSessionService';

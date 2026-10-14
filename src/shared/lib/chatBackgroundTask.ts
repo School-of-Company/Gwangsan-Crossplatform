@@ -4,9 +4,9 @@ import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
-import { baseURL } from '@/shared/lib/axios';
+import { publicInstance } from '@/shared/lib/publicInstance';
 import { logger } from '@/shared/lib/logger';
-import type { ChatRoomListItem } from '@/entity/chat/model/chatTypes';
+import { MESSAGE_TYPE, type ChatRoomListItem } from '@/shared/types/chatType';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
 const LAST_UNREAD_KEY = 'chatLastUnreadState';
@@ -17,16 +17,17 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
     const accessToken = await SecureStore.getItemAsync('accessToken');
     if (!accessToken) return BackgroundFetch.BackgroundFetchResult.NoData;
 
-    const response = await fetch(`${baseURL}/chat/rooms`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) return BackgroundFetch.BackgroundFetchResult.Failed;
-
-    const rooms: ChatRoomListItem[] = await response.json();
+    // 백그라운드에서는 토큰 재발급·강제 로그아웃(화면 이동)이 일어나면 안 되므로 인터셉터가 없는
+    // 공용 인스턴스에 토큰만 직접 붙인다. raw fetch와 달리 타임아웃이 있어 멈춘 채 남지 않는다(#739)
+    let rooms: ChatRoomListItem[];
+    try {
+      const { data } = await publicInstance.get<ChatRoomListItem[]>('/chat/rooms', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      rooms = data;
+    } catch {
+      return BackgroundFetch.BackgroundFetchResult.Failed;
+    }
     const unreadRooms = rooms.filter((r) => r.unreadMessageCount > 0);
     const totalUnread = rooms.reduce((sum, r) => sum + (r.unreadMessageCount ?? 0), 0);
     await Notifications.setBadgeCountAsync(totalUnread).catch(() => {});
@@ -54,9 +55,10 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }
 
+    // 마지막 메시지가 SYSTEM(예약 취소 안내 등)이면 서버가 이미 푸시를 보냈으므로 로컬 알림을 띄우지 않는다
     const newUnreadRooms = unreadRooms.filter((room) => {
       const prevCount = lastState[String(room.roomId)] ?? 0;
-      return room.unreadMessageCount > prevCount;
+      return room.unreadMessageCount > prevCount && room.lastMessageType !== MESSAGE_TYPE.SYSTEM;
     });
 
     await Promise.all(

@@ -32,8 +32,10 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Create Google Play service account json
+        env:
+          SA_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
         run: |
-          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service_account.json
+          printf '%s' "$SA_JSON" > service_account.json
           if [ ! -s service_account.json ]; then
             echo "SERVICE_ACCOUNT_JSON secret is empty or missing"
             exit 1

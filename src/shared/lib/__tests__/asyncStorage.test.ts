@@ -66,12 +66,12 @@ describe('getData', () => {
     expect(result).toBe('secure-refresh');
   });
 
-  it('AsyncStorage가 throw하면 Toast 에러를 표시하고 에러를 전파한다', async () => {
+  it('저장소가 실패하면 토스트 없이 에러를 전파한다(#737)', async () => {
     const storageError = new Error('Storage read failed');
     mockAsyncStorage.getItem.mockRejectedValue(storageError);
 
     await expect(getData('failKey')).rejects.toThrow('Storage read failed');
-    expect(mockToast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    expect(mockToast.show).not.toHaveBeenCalled();
   });
 });
 
@@ -103,12 +103,12 @@ describe('setData', () => {
     expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
   });
 
-  it('AsyncStorage가 throw하면 Toast 에러를 표시하고 에러를 전파한다', async () => {
+  it('저장소가 실패하면 토스트 없이 에러를 전파한다(#737)', async () => {
     const storageError = new Error('Storage write failed');
     mockAsyncStorage.setItem.mockRejectedValue(storageError);
 
     await expect(setData('failKey', 'value')).rejects.toThrow('Storage write failed');
-    expect(mockToast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    expect(mockToast.show).not.toHaveBeenCalled();
   });
 });
 
@@ -140,11 +140,11 @@ describe('removeData', () => {
     expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
   });
 
-  it('AsyncStorage가 throw하면 Toast 에러를 표시하고 에러를 전파한다', async () => {
+  it('저장소가 실패하면 토스트 없이 에러를 전파한다(#737)', async () => {
     const storageError = new Error('Storage delete failed');
     mockAsyncStorage.removeItem.mockRejectedValue(storageError);
 
     await expect(removeData('failKey')).rejects.toThrow('Storage delete failed');
-    expect(mockToast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    expect(mockToast.show).not.toHaveBeenCalled();
   });
 });

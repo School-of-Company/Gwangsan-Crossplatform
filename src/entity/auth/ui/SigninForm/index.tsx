@@ -31,7 +31,7 @@ function SigninForm({
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 200 }}
@@ -46,7 +46,7 @@ function SigninForm({
           </View>
 
           <View>
-            <Text className="text-3xl font-bold">{title}</Text>
+            <Text className="text-3xl font-bold text-foreground">{title}</Text>
             <Text className="mt-4 text-lg text-gray-700">{description}</Text>
           </View>
 
@@ -74,7 +74,7 @@ function SigninForm({
       </ScrollView>
 
       <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button testID="SigninForm-next-button" onPress={onNext} disabled={isNextDisabled}>
             {nextButtonText}
           </Button>

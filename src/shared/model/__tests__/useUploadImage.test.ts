@@ -79,4 +79,20 @@ describe('useUploadImage', () => {
       })
     );
   });
+
+  it('showToast: false이면 성공·실패 토스트를 띄우지 않는다', async () => {
+    mockUploadImage.mockResolvedValueOnce({ imageId: 1, imageUrl: 'https://x/a.jpg' });
+    mockUploadImage.mockRejectedValueOnce(new Error('fail'));
+
+    const { result } = renderHookWithProviders(() => useUploadImage({ showToast: false }));
+
+    await act(async () => {
+      await result.current.mutateAsync('file://a.jpg');
+    });
+    await act(async () => {
+      await result.current.mutateAsync('file://b.jpg').catch(() => {});
+    });
+
+    expect(Toast.show).not.toHaveBeenCalled();
+  });
 });

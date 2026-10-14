@@ -2,7 +2,7 @@
 
 exports[`Card 스냅샷 - custom className 1`] = `
 <View
-  className="rounded-xl border bg-white border-[#CDCDCF] p-4 mt-4"
+  className="rounded-xl border bg-surface border-disabled p-4 mt-4"
 >
   <Text>
     내용
@@ -12,7 +12,7 @@ exports[`Card 스냅샷 - custom className 1`] = `
 
 exports[`Card 스냅샷 - default variant (기본값) 1`] = `
 <View
-  className="rounded-xl border bg-white border-[#CDCDCF] p-4"
+  className="rounded-xl border bg-surface border-disabled p-4"
 >
   <Text>
     내용
@@ -22,7 +22,7 @@ exports[`Card 스냅샷 - default variant (기본값) 1`] = `
 
 exports[`Card 스냅샷 - padding lg 1`] = `
 <View
-  className="rounded-xl border bg-white border-[#CDCDCF] p-6"
+  className="rounded-xl border bg-surface border-disabled p-6"
 >
   <Text>
     내용
@@ -32,7 +32,7 @@ exports[`Card 스냅샷 - padding lg 1`] = `
 
 exports[`Card 스냅샷 - padding none 1`] = `
 <View
-  className="rounded-xl border bg-white border-[#CDCDCF]"
+  className="rounded-xl border bg-surface border-disabled"
 >
   <Text>
     내용
@@ -42,7 +42,7 @@ exports[`Card 스냅샷 - padding none 1`] = `
 
 exports[`Card 스냅샷 - padding sm 1`] = `
 <View
-  className="rounded-xl border bg-white border-[#CDCDCF] p-3"
+  className="rounded-xl border bg-surface border-disabled p-3"
 >
   <Text>
     내용
@@ -52,7 +52,7 @@ exports[`Card 스냅샷 - padding sm 1`] = `
 
 exports[`Card 스냅샷 - primary variant 1`] = `
 <View
-  className="rounded-xl border bg-white border-[#8FC31D] bg-green-50 p-4"
+  className="rounded-xl border bg-surface border-main-500 bg-green-50 dark:bg-main-900 p-4"
 >
   <Text>
     내용

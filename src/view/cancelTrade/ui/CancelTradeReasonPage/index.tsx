@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { Button, Header } from '~/shared/ui';
@@ -8,6 +8,7 @@ import { TextField } from '~/shared/ui/TextField';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
 import { useCancelTrade } from '~/widget/cancelTrade/model/useCancelTrade';
 import { useGetReview } from '../../model/useGetReview';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
 export default function CancelTradeReasonPage() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -16,7 +17,12 @@ export default function CancelTradeReasonPage() {
   const [images, setImages] = useState<string[]>([]);
 
   // 리뷰 상세는 이전 화면에서 이미 조회돼 캐시에 있으므로 여기서는 productId만 꺼내 쓴다.
-  const { data } = useGetReview(id ?? '');
+  const {
+    data,
+    isLoading: isReviewLoading,
+    isError: isReviewError,
+    refetch: refetchReview,
+  } = useGetReview(id ?? '');
 
   const handleSuccess = useCallback(() => {
     router.back();
@@ -65,8 +71,24 @@ export default function CancelTradeReasonPage() {
     return '거래취소하기';
   }, [isLoading, imageUploadState]);
 
+  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화된 채로 남거나 빈 화면만 보였다(#740)
+  if (!data && (isReviewLoading || isReviewError)) {
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <Header headerTitle="거래취소하기" />
+        {isReviewError ? (
+          <ErrorFallback onRetry={() => refetchReview()} />
+        ) : (
+          <View testID="cancel-trade-loading" className="flex-1 items-center justify-center">
+            <ActivityIndicator color="#8FC31D" />
+          </View>
+        )}
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="거래취소하기" />
       <ScrollView
         className="flex-1"
@@ -93,7 +115,7 @@ export default function CancelTradeReasonPage() {
       </ScrollView>
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
-        <View className="bg-white px-5 pb-3 pt-5">
+        <View className="bg-background px-5 pb-3 pt-5">
           <Button variant="error" disabled={isFormDisabled} onPress={handleFormSubmit}>
             {submitButtonText}
           </Button>

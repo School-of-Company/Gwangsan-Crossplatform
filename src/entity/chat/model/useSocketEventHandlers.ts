@@ -5,6 +5,7 @@ import type {
   TransactionStateChangedPayload,
 } from '../lib/socketService';
 import type { ChatMessageResponse } from './chatTypes';
+import type { MessageDeletedPayload, MessageUpdatedPayload } from '../lib/messageCache';
 
 interface UseSocketEventHandlersProps {
   socketService: IChatSocketService;
@@ -17,6 +18,8 @@ interface UseSocketEventHandlersProps {
     lastMessageTime: string;
   }) => void;
   onTransactionStateChanged?: (data: TransactionStateChangedPayload) => void;
+  onMessageUpdated?: (data: MessageUpdatedPayload) => void;
+  onMessageDeleted?: (data: MessageDeletedPayload) => void;
   onError?: (error: SocketErrorPayload) => void;
 }
 
@@ -26,6 +29,8 @@ export const useSocketEventHandlers = ({
   onReceiveMessage,
   onUpdateRoomList,
   onTransactionStateChanged,
+  onMessageUpdated,
+  onMessageDeleted,
   onError,
 }: UseSocketEventHandlersProps) => {
   useEffect(() => {
@@ -43,6 +48,14 @@ export const useSocketEventHandlers = ({
 
     if (onTransactionStateChanged) {
       socketService.on('transactionStateChanged', onTransactionStateChanged);
+    }
+
+    if (onMessageUpdated) {
+      socketService.on('messageUpdated', onMessageUpdated);
+    }
+
+    if (onMessageDeleted) {
+      socketService.on('messageDeleted', onMessageDeleted);
     }
 
     if (onError) {
@@ -66,6 +79,14 @@ export const useSocketEventHandlers = ({
         socketService.off('transactionStateChanged', onTransactionStateChanged);
       }
 
+      if (onMessageUpdated) {
+        socketService.off('messageUpdated', onMessageUpdated);
+      }
+
+      if (onMessageDeleted) {
+        socketService.off('messageDeleted', onMessageDeleted);
+      }
+
       if (onError) {
         socketService.off('error', onError);
       }
@@ -76,6 +97,8 @@ export const useSocketEventHandlers = ({
     onReceiveMessage,
     onUpdateRoomList,
     onTransactionStateChanged,
+    onMessageUpdated,
+    onMessageDeleted,
     onError,
   ]);
 };

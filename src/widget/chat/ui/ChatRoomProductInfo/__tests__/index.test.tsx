@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { Image } from 'react-native';
+import { Image } from 'expo-image';
 import defaultImage from '~/shared/assets/png/icon.png';
 import { ChatRoomProductInfo } from '../index';
 

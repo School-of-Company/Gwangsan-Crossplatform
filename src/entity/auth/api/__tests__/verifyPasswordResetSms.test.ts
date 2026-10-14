@@ -1,79 +1,64 @@
-import { mockFetch } from '~/test-utils';
+import { AxiosError, AxiosHeaders } from 'axios';
+import { publicInstance } from '~/shared/lib/publicInstance';
 import { verifyPasswordResetSms } from '../verifyPasswordResetSms';
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  jest.spyOn(console, 'error').mockImplementation(() => {});
-});
+jest.mock('~/shared/lib/publicInstance', () => ({
+  publicInstance: { post: jest.fn(), patch: jest.fn() },
+}));
+jest.mock('~/shared/lib/logger', () => ({
+  logger: { error: jest.fn(), warn: jest.fn() },
+}));
+
+const mockRequest = publicInstance.post as jest.Mock;
+
+const axiosError = (status: number, data: unknown) =>
+  new AxiosError('Request failed', String(status), undefined, undefined, {
+    status,
+    statusText: '',
+    data,
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  });
+
+beforeEach(() => jest.clearAllMocks());
 
 describe('verifyPasswordResetSms', () => {
-  it('인증 성공 시 에러 없이 완료된다', async () => {
-    mockFetch({ verified: true });
-    await expect(
-      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '112233' })
-    ).resolves.toBeUndefined();
-  });
+  it('올바른 엔드포인트와 바디로 요청한다', async () => {
+    mockRequest.mockResolvedValue({ data: {} });
 
-  it('올바른 바디로 요청을 보낸다', async () => {
-    mockFetch({});
-    await verifyPasswordResetSms({ phoneNumber: '01099887766', code: '999888' });
-    const [, options] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(JSON.parse(options.body)).toEqual({ phoneNumber: '01099887766', code: '999888' });
-  });
-
-  it('HTTP 에러 시 상태 코드 문자열로 에러를 throw한다', async () => {
-    mockFetch(null as unknown as object, 400);
-    await expect(
-      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '000000' })
-    ).rejects.toThrow('400');
-  });
-
-  it('성공 응답이 JSON이 아니면 에러 없이 완료된다', async () => {
-    mockFetch('VERIFIED');
     await expect(
       verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
     ).resolves.toBeUndefined();
+
+    expect(mockRequest).toHaveBeenCalledWith('/sms/password/verify', {
+      phoneNumber: '01012345678',
+      code: '123456',
+    });
   });
 
-  it('네트워크 에러 시 에러를 throw한다', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('Network Error'));
+  it('서버가 보낸 에러 메시지로 에러를 던진다', async () => {
+    mockRequest.mockRejectedValue(axiosError(400, { message: '인증번호가 올바르지 않습니다.' }));
+
     await expect(
       verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
-    ).rejects.toThrow();
+    ).rejects.toThrow('인증번호가 올바르지 않습니다.');
   });
 
-  it('실패 응답이 JSON이 아니면 응답 본문 일부를 에러 메시지로 throw한다', async () => {
-    mockFetch('Bad Gateway - upstream error', 502);
+  it('5xx는 서버 내부 메시지 대신 상태 코드만 알린다', async () => {
+    mockRequest.mockRejectedValue(
+      axiosError(500, '<!DOCTYPE html><html>Internal Server Error</html>')
+    );
+
     await expect(
       verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
-    ).rejects.toThrow('Bad Gateway - upstream error');
+    ).rejects.toThrow('요청이 실패했습니다. (500)');
   });
 
-  it('성공 응답 본문이 비어있으면 에러 없이 완료된다', async () => {
-    mockFetch('', 200);
-    await expect(
-      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
-    ).resolves.toBeUndefined();
-  });
+  it('네트워크 에러도 그대로 던진다', async () => {
+    mockRequest.mockRejectedValue(new Error('timeout of 10000ms exceeded'));
 
-  it('실패 응답이 객체가 아닌 JSON(문자열)이면 HTTP 상태 메시지로 에러를 throw한다', async () => {
-    mockFetch('"단순 문자열 응답"', 400, 'Bad Request');
     await expect(
       verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
-    ).rejects.toThrow('HTTP 400: Bad Request');
-  });
-
-  it('실패 응답 본문이 JSON null이면 HTTP 상태 메시지로 에러를 throw한다', async () => {
-    mockFetch('null', 400, 'Bad Request');
-    await expect(
-      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
-    ).rejects.toThrow('HTTP 400: Bad Request');
-  });
-
-  it('실패 응답 본문에 message 필드가 있으면 서버 메시지로 에러를 throw한다', async () => {
-    mockFetch({ message: '인증번호가 일치하지 않습니다' }, 400);
-    await expect(
-      verifyPasswordResetSms({ phoneNumber: '01012345678', code: '123456' })
-    ).rejects.toThrow('인증번호가 일치하지 않습니다');
+    ).rejects.toThrow('timeout of 10000ms exceeded');
   });
 });

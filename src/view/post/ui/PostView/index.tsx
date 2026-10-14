@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Header, PillTabs } from '~/shared/ui';
-import { handleCategory } from '../../model/handleCategory';
-import { Category } from '../../model/category';
+import { handleCategory } from '../../../../entity/post/model/handleCategory';
+import { Category } from '../../../../entity/post/model/category';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModeType } from '~/shared/types/mode';
 import { ProductType } from '~/shared/types/type';
@@ -28,7 +28,7 @@ export default function PostView() {
   const tabs = categories.map((v) => ({ value: v as Category, label: v }));
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle={type === 'SERVICE' ? '서비스' : '물건'} />
       <PillTabs
         tabs={tabs}

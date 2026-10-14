@@ -5,6 +5,7 @@ import {
   type RoomId,
 } from '@/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
+import type { MessageDeletedPayload, MessageUpdatedPayload } from './messageCache';
 import { logger } from '@/shared/lib/logger';
 
 export interface TransactionStateChangedPayload {
@@ -38,6 +39,8 @@ export interface ChatSocketEvents {
     lastMessageTime: string;
   }) => void;
   transactionStateChanged: (data: TransactionStateChangedPayload) => void;
+  messageUpdated: (data: MessageUpdatedPayload) => void;
+  messageDeleted: (data: MessageDeletedPayload) => void;
   error: (error: SocketErrorPayload) => void;
 }
 

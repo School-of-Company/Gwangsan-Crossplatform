@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, FlatList, Platform, type ListRenderItem } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Platform,
+  Keyboard,
+  Pressable,
+  type ListRenderItem,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -19,8 +27,12 @@ import {
   formatMessageTime,
   getMessageDateKey,
   formatDateDividerLabel,
+  canModifyMessage,
+  isSystemMessage,
 } from '~/entity/chat';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
+import type { MessageAnchor } from '../../model/useMessageActions';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface TradeEmbedConfig {
   readonly shouldShow: boolean;
@@ -65,6 +77,14 @@ type ChatListItem =
       readonly data: ResolvedTradeCompletedEmbed;
     }
   | {
+      readonly type: 'system';
+      readonly timestamp: string;
+      readonly data: {
+        readonly messageId: EnhancedChatMessage['messageId'];
+        readonly label: string;
+      };
+    }
+  | {
       readonly type: 'dateDivider';
       readonly timestamp: string;
       readonly data: { readonly label: string };
@@ -81,13 +101,40 @@ interface ChatRoomContentProps {
   readonly onReviewButtonPress?: () => void;
   readonly showReviewButton?: boolean;
   readonly hasReviewedTrade?: boolean;
+  readonly onMyMessageLongPress?: (message: EnhancedChatMessage, anchor: MessageAnchor) => void;
 }
+
+// 빈 화면 안내는 콘텐츠 영역 전체 높이 기준으로 가운데 정렬되는데, KeyboardStickyView는
+// 입력창만 옮기고 콘텐츠 영역 높이는 줄이지 않는다. 입력창이 닫힘 상태보다 더 올라간 만큼
+// (키보드 높이 - 닫힘 상태 오프셋) 하단 여백을 줘서 안내가 남은 공간의 가운데로 오게 한다
+export const getEmptyStateBottomInset = (keyboardHeight: number, closedOffset: number): number => {
+  'worklet';
+  return Math.max(0, -keyboardHeight - closedOffset);
+};
+
+// WS 메시지는 UTC(Z 접미사), REST 메시지는 로컬 오프셋 없는 문자열이라 raw string 비교로는
+// 정렬 순서가 뒤집힐 수 있다 — items 정렬(useChatMessages.ts)과 동일하게 epoch 기준으로 비교해,
+// 자기보다 늦은 첫 항목 앞에 끼워 넣는다. 시각을 읽을 수 없으면 맨 끝에 붙인다
+const insertByTimestamp = (items: ChatListItem[], item: ChatListItem): void => {
+  const targetMs = new Date(item.timestamp).getTime();
+  const insertAt = Number.isNaN(targetMs)
+    ? -1
+    : items.findIndex((candidate) => {
+        const candidateMs = new Date(candidate.timestamp).getTime();
+        return !Number.isNaN(candidateMs) && candidateMs > targetMs;
+      });
+  items.splice(insertAt < 0 ? items.length : insertAt, 0, item);
+};
+
+const hasValidTimestamp = (value: string | null | undefined): value is string =>
+  Boolean(value) && !Number.isNaN(new Date(value as string).getTime());
 
 const keyExtractor = (item: ChatListItem): string => {
   if (item.type === 'message') return `m-${item.data.messageId}`;
   if (item.type === 'trade') return `t-${item.data.product.id}`;
   if (item.type === 'tradeReserved') return `tr-${item.data.productId}`;
   if (item.type === 'tradeCompleted') return `tc-${item.data.productId}`;
+  if (item.type === 'system') return `s-${item.data.messageId}`;
   return `d-${item.timestamp}`;
 };
 
@@ -102,8 +149,10 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   onReviewButtonPress,
   showReviewButton,
   hasReviewedTrade,
+  onMyMessageLongPress,
 }) => {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 이만큼 위로 띄우므로,
   // 그 여백은 항상 정적으로 확보해 둔다(이전 버전의 "10 + basePadding"과 동일한 총량 유지)
@@ -164,74 +213,92 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   }, []);
 
   const lastMyMessageId = useMemo(() => {
-    const lastMyMessage = [...messages].reverse().find((message) => message.isMine);
+    const lastMyMessage = [...messages]
+      .reverse()
+      .find((message) => message.isMine && !isSystemMessage(message));
     return lastMyMessage?.messageId ?? null;
   }, [messages]);
 
   const combinedData = useMemo<ChatListItem[]>(() => {
-    const items: ChatListItem[] = messages.map((message) => ({
-      type: 'message',
-      timestamp: message.createdAt,
-      data: message,
-    }));
+    // SYSTEM 메시지(예: 예약 취소 안내)는 말풍선이 아니라 가운데 글씨 항목으로 따로 만들어,
+    // 프로필·연속 발신자 묶음·수정/삭제 판단이 모두 'message' 항목만 보도록 한다
+    const items: ChatListItem[] = messages.map((message) =>
+      isSystemMessage(message)
+        ? {
+            type: 'system',
+            timestamp: message.createdAt,
+            data: { messageId: message.messageId, label: message.content ?? '' },
+          }
+        : {
+            type: 'message',
+            timestamp: message.createdAt,
+            data: message,
+          }
+    );
 
     const product = tradeEmbedConfig?.product;
     if (tradeEmbedConfig?.shouldShow && product?.createdAt) {
-      const tradeTimestamp = product.createdAt;
       const tradeItem: ChatListItem = {
         type: 'trade',
-        timestamp: tradeTimestamp,
+        timestamp: product.createdAt,
         // 요청/수신 방향(왼쪽·오른쪽, 문구)은 언제든 false로 뒤집힐 수 있는 isCompletable이 아니라
         // 완료 후에도 값이 그대로인 isSeller로 고정해야, 거래가 완료돼도 기존 카드가 반대편으로
         // 뒤집히지 않는다
         data: { ...tradeEmbedConfig, showButtons: product.isSeller } as ResolvedTradeEmbed,
       };
 
-      // WS 메시지는 UTC(Z 접미사), REST 메시지는 로컬 오프셋 없는 문자열이라 raw string 비교로는
-      // 정렬 순서가 뒤집힐 수 있다 — items 정렬(useChatMessages.ts)과 동일하게 epoch 기준으로 비교한다
-      const tradeMs = new Date(tradeTimestamp).getTime();
-      const insertAt = Number.isNaN(tradeMs)
-        ? -1
-        : items.findIndex((item) => {
-            const itemMs = new Date(item.timestamp).getTime();
-            return !Number.isNaN(itemMs) && itemMs > tradeMs;
-          });
-      items.splice(insertAt < 0 ? items.length : insertAt, 0, tradeItem);
+      insertByTimestamp(items, tradeItem);
+    }
 
-      // 서버가 예약/완료 시점을 별도로 내려주지 않아 실제 타임스탬프로 끼워 넣을 수 없다 —
-      // 두 시점 모두 항상 지금까지의 대화 중 가장 최근이므로 목록 맨 끝에 추가하고,
-      // 기존 거래요청 카드는 그대로 둔다
+    // 게시글 작성자는 거래 요청 없이도 바로 예약할 수 있으므로(#787), 예약·완료 카드는 거래 요청
+    // 카드 유무와 상관없이 product 상태만 보고 그린다
+    if (product) {
+      // 서버가 예약/완료 시각(reservedAt/completedAt, Gwangsan-Server#426)을 주면 거래 요청 카드처럼
+      // 그 시각으로 메시지 사이에 끼워 넣는다. 구버전 서버라 시각이 없으면 두 시점 모두 지금까지의
+      // 대화 중 가장 최근이라고 보고 목록 맨 끝에 붙인다
       const appendTrailingTimestamp = () => {
         const lastItem = items[items.length - 1];
         const lastMs = lastItem ? new Date(lastItem.timestamp).getTime() : NaN;
-        return Number.isNaN(lastMs) ? tradeTimestamp : new Date(lastMs + 1).toISOString();
+        if (!Number.isNaN(lastMs)) return new Date(lastMs + 1).toISOString();
+        return hasValidTimestamp(product.createdAt) ? product.createdAt : new Date().toISOString();
+      };
+
+      const placeTradeCard = (
+        serverTimestamp: string | null | undefined,
+        build: (timestamp: string) => ChatListItem
+      ) => {
+        if (hasValidTimestamp(serverTimestamp)) {
+          insertByTimestamp(items, build(serverTimestamp));
+        } else {
+          items.push(build(appendTrailingTimestamp()));
+        }
       };
 
       if (!product.isCompleted && product.isReserved) {
-        items.push({
+        placeTradeCard(product.reservedAt, (timestamp) => ({
           type: 'tradeReserved',
-          timestamp: appendTrailingTimestamp(),
+          timestamp,
           data: {
             productId: product.id,
             alignment: product.isSeller ? 'left' : 'right',
             scheduledAt: product.reservationScheduledAt,
             placeName: product.reservationPlaceName,
-            reserverNickname: tradeEmbedConfig.reserverNickname,
-            onOpenMap: tradeEmbedConfig.onOpenMap,
+            reserverNickname: tradeEmbedConfig?.reserverNickname,
+            onOpenMap: tradeEmbedConfig?.onOpenMap,
           },
-        });
+        }));
       }
 
       if (showReviewButton && product.isCompleted) {
-        items.push({
+        placeTradeCard(product.completedAt, (timestamp) => ({
           type: 'tradeCompleted',
-          timestamp: appendTrailingTimestamp(),
+          timestamp,
           data: {
             productId: product.id,
             alignment: product.isSeller ? 'left' : 'right',
             hasReviewed: Boolean(hasReviewedTrade),
           },
-        });
+        }));
       }
     }
 
@@ -275,6 +342,11 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
               isLast={item.data.messageId === lastMyMessageId}
               isFollowedByGrouped={isFollowedByGrouped}
               showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+              onLongPress={
+                onMyMessageLongPress && canModifyMessage(item.data)
+                  ? onMyMessageLongPress
+                  : undefined
+              }
             />
           );
         }
@@ -299,7 +371,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         );
       }
 
-      if (item.type === 'dateDivider') {
+      if (item.type === 'dateDivider' || item.type === 'system') {
         return <ChatDateDivider label={item.data.label} />;
       }
 
@@ -336,19 +408,34 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData]
+    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData, onMyMessageLongPress]
   );
 
-  const hasTradeEmbed = Boolean(tradeEmbedConfig?.shouldShow && tradeEmbedConfig.product);
+  const emptyStateStyle = useAnimatedStyle(() => ({
+    paddingBottom: getEmptyStateBottomInset(keyboardHeight.value, insets.bottom),
+  }));
+
+  const hasTradeEmbed = combinedData.some(
+    (item) =>
+      item.type === 'trade' || item.type === 'tradeReserved' || item.type === 'tradeCompleted'
+  );
 
   if (!hasMessages && !hasTradeEmbed) {
     return (
-      <View className="flex-1 items-center justify-center px-4">
-        <Icon name="chatbubbles-outline" size={60} color="#D1D5DB" />
-        <Text className="mt-4 text-center text-gray-500">
-          아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
-        </Text>
-      </View>
+      <Animated.View testID="chat-empty-state" style={[{ flex: 1 }, emptyStateStyle]}>
+        {/* 메시지가 있을 때는 FlatList 기본 동작으로 목록을 누르면 키보드가 내려가지만, 빈 화면 안내는
+            일반 View라 눌러도 내려가지 않았다. 목록과 같게 아무 데나 누르면 키보드를 내린다 */}
+        <Pressable
+          testID="chat-empty-state-dismiss"
+          className="flex-1 items-center justify-center px-4"
+          onPress={Keyboard.dismiss}
+          accessible={false}>
+          <Icon name="chatbubbles-outline" size={60} color={colors.muted} />
+          <Text className="mt-4 text-center text-gray-500">
+            아직 대화가 없습니다.{'\n'}첫 메시지를 보내보세요!
+          </Text>
+        </Pressable>
+      </Animated.View>
     );
   }
 

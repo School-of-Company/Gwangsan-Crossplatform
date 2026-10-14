@@ -4,7 +4,7 @@ import { getCurrentUserId, clearCurrentUserId } from '../getCurrentUserId';
 let mockService: any;
 
 // 팩토리 안에서 서비스를 생성하고 외부 변수에 할당 — clearAllMocks 이후에도 참조 유지
-jest.mock('@/entity/auth/lib/userSessionService', () => ({
+jest.mock('~/shared/lib/userSessionService', () => ({
   createUserSessionService: jest.fn(() => {
     mockService = {
       getCurrentUserId: jest.fn(),

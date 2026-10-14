@@ -7,7 +7,7 @@ interface GwangsanProps {
 export default function Gwangsan({ gwangsan }: GwangsanProps) {
   return (
     <View className="flex gap-6 px-6">
-      <Text className="text-titleSmall">광산</Text>
+      <Text className="text-titleSmall text-foreground">광산</Text>
       <View className="flex flex-row items-center gap-4 rounded-2xl bg-gray-200 px-11 py-6">
         <Image
           className="h-[60px] w-[60px] shrink-0"

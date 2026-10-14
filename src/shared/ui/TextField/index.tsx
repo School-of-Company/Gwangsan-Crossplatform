@@ -28,10 +28,10 @@ export function TextField({ label, value, onChangeText, ...props }: TextFieldPro
 
   return (
     <View className="flex w-full gap-2">
-      <Text className="text-label">{label}</Text>
+      <Text className="text-label text-foreground">{label}</Text>
       <TextInput
         key={instanceKey}
-        className="max-h-[200px] min-h-[120px] w-full rounded-xl border border-gray-400 px-4 py-5 text-body5 focus:border-black"
+        className="max-h-[200px] min-h-[120px] w-full rounded-xl border border-gray-400 px-4 py-5 text-body5 text-gray-900 focus:border-foreground"
         multiline
         textAlignVertical="top"
         textBreakStrategy="simple"

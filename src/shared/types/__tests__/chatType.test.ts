@@ -6,12 +6,12 @@ describe('MESSAGE_TYPE', () => {
     expect(MESSAGE_TYPE.IMAGE).toBe('IMAGE');
   });
 
-  it('정확히 두 개의 키를 갖는다', () => {
-    expect(Object.keys(MESSAGE_TYPE)).toEqual(['TEXT', 'IMAGE']);
+  it('TEXT·IMAGE·SYSTEM 세 개의 키를 갖는다', () => {
+    expect(Object.keys(MESSAGE_TYPE)).toEqual(['TEXT', 'IMAGE', 'SYSTEM']);
   });
 
   it('객체가 변경되지 않도록 const assertion을 사용한다', () => {
     expect(Object.isFrozen(MESSAGE_TYPE)).toBe(false);
-    expect(MESSAGE_TYPE).toEqual({ TEXT: 'TEXT', IMAGE: 'IMAGE' });
+    expect(MESSAGE_TYPE).toEqual({ TEXT: 'TEXT', IMAGE: 'IMAGE', SYSTEM: 'SYSTEM' });
   });
 });

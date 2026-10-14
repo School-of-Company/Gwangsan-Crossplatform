@@ -1,5 +1,14 @@
-import { Animated, FlatList, View, Text, RefreshControl, TouchableOpacity } from 'react-native';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  View,
+  Text,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,6 +27,7 @@ import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
+import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
 
@@ -93,6 +103,20 @@ export function ChatRoomList() {
   } | null>(null);
   const hasRooms = (chatRooms?.length ?? 0) > 0;
 
+  // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
+  // 30초 폴링이 연달아 실패해도 토스트가 반복되지 않도록 에러 상태로 바뀌는 순간에만 띄운다.
+  useEffect(() => {
+    if (!isError || !hasRooms) return;
+    Toast.show({
+      type: 'error',
+      text1: '채팅 목록을 새로 불러오지 못했어요',
+      text2: '아래로 당겨 다시 시도해 주세요.',
+      visibilityTime: 3000,
+    });
+    // hasRooms가 바뀔 때마다 다시 띄우지 않도록 isError 전환만 따른다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
+
   const { joinRoom } = useChatSocket({
     autoConnect: true,
     chatRoomQueryKey: CHAT_ROOM_QUERY_KEY,
@@ -144,7 +168,7 @@ export function ChatRoomList() {
       // 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이 바로 보이게 한다.
       queryClient
         .fetchQuery({
-          queryKey: ['chatRoomData', roomId],
+          queryKey: chatRoomDataKeys.room(roomId),
           queryFn: () => getChatRoomData(roomId),
           staleTime: 30 * 1000,
         })
@@ -287,6 +311,13 @@ export function ChatRoomList() {
     [handleChatRoomPress, handleChatRoomLongPress, exitingRoomId, handleChatRoomExited]
   );
 
+  // 첫 조회가 길어질 때 당겨서 새로고침 스피너만 보이면 빈 회색 화면처럼 보여, 가운데에 로딩을 표시한다
+  const renderLoadingState = () => (
+    <View testID="chat-room-list-loading" className="flex-1 items-center justify-center py-20">
+      <ActivityIndicator size="large" color="#8FC31D" />
+    </View>
+  );
+
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
       <Text className="text-base text-gray-500">아직 채팅방 없습니다</Text>
@@ -306,7 +337,7 @@ export function ChatRoomList() {
         renderItem={renderChatRoomItem}
         keyExtractor={(item) => item.roomId.toString()}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
-        ListEmptyComponent={isLoading ? null : renderEmptyState}
+        ListEmptyComponent={isLoading ? renderLoadingState : renderEmptyState}
         showsVerticalScrollIndicator={false}
         className="flex-1"
       />
@@ -318,17 +349,17 @@ export function ChatRoomList() {
         hasHeader={false}
         height={360}>
         <View className="mt-4 gap-3">
-          <View className="overflow-hidden rounded-2xl bg-gray-50">
+          <View className="overflow-hidden rounded-2xl bg-gray-200">
             <ActionSheetRow
               label="차단하기"
               disabled={block.isPending}
               onPress={handleBlockPress}
             />
           </View>
-          <View className="overflow-hidden rounded-2xl bg-gray-50">
+          <View className="overflow-hidden rounded-2xl bg-gray-200">
             <ActionSheetRow label="신고하기" onPress={handleReportPress} />
           </View>
-          <View className="overflow-hidden rounded-2xl bg-gray-50">
+          <View className="overflow-hidden rounded-2xl bg-gray-200">
             <ActionSheetRow
               label={deleteChatRoomMutation.isPending ? '나가는 중...' : '채팅방 나가기'}
               labelClassName="text-error-500"

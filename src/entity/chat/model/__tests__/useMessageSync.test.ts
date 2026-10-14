@@ -286,6 +286,33 @@ describe('useMessageSync', () => {
       });
     });
 
+    it('비활성 방에 SYSTEM 메시지가 오면 미리보기는 바꾸되 unreadMessageCount는 늘리지 않는다', async () => {
+      const OTHER_ROOM_ID = 200;
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        makeRoomListItem({ roomId: OTHER_ROOM_ID, messageId: 1, unreadMessageCount: 2 }),
+      ]);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({
+            messageId: 2,
+            roomId: OTHER_ROOM_ID,
+            messageType: 'SYSTEM',
+            content: '상대방님이 예약을 취소했어요',
+            isMine: false,
+          })
+        );
+      });
+
+      await waitFor(() => {
+        const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+        expect(rooms?.[0].lastMessage).toBe('상대방님이 예약을 취소했어요');
+        expect(rooms?.[0].lastMessageType).toBe('SYSTEM');
+        expect(rooms?.[0].unreadMessageCount).toBe(2);
+      });
+    });
+
     it('비활성 방의 내 메시지 수신 시 unreadMessageCount를 변경하지 않는다', async () => {
       const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
@@ -1013,6 +1040,40 @@ describe('useMessageSync', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
     });
 
+    it('거래 완료 이벤트면 광산 잔액이 바로 반영되도록 내 프로필 쿼리를 invalidate한다(#785)', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, { product: { id: 1, isCompleted: false } });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
+    it('거래 완료가 아닌 상태 변경이면 내 프로필 쿼리를 invalidate하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, { product: { id: 1, isCompleted: false } });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
     it('product를 정상적으로 patch했으면 chatRoomData를 다시 invalidate하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
@@ -1026,6 +1087,46 @@ describe('useMessageSync', () => {
           productId: 1,
           isCompleted: false,
           createdAt: '2024-06-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
+    it('예약 상태가 바뀌면 예약 일시·장소를 채우기 위해 chatRoomData를 invalidate한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isReserved: false, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isReserved: true,
+          createdAt: null,
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
+    });
+
+    it('예약 상태가 그대로면 chatRoomData를 invalidate하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, {
+        product: { id: 1, isCompleted: false, isReserved: true, createdAt: null },
+      });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          isReserved: true,
+          createdAt: null,
         });
       });
 
@@ -1514,6 +1615,103 @@ describe('useMessageSync', () => {
       expect(mockMarkChatAsRead).not.toHaveBeenCalled();
       const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
       expect(rooms?.[0].unreadMessageCount).toBe(0);
+    });
+  });
+
+  describe('handleMessageUpdated', () => {
+    it('수정된 메시지의 내용과 수정 시각을 메시지 캐시에 반영한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage({ messageId: 1, content: '원래' })]);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: 1,
+          content: '수정됨',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)?.[0]).toEqual(
+        expect.objectContaining({ content: '수정됨', editedAt: '2024-01-01T11:00:00Z' })
+      );
+    });
+
+    it('수정된 메시지가 채팅방 목록의 마지막 메시지면 미리보기도 바꾼다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 1 })]);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: '1',
+          content: '수정됨',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY)?.[0].lastMessage).toBe(
+        '수정됨'
+      );
+    });
+
+    it('마지막 메시지가 아니면 채팅방 목록 미리보기를 바꾸지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 5 })]);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: 1,
+          content: '수정됨',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY)?.[0].lastMessage).toBe(
+        '이전 메시지'
+      );
+    });
+  });
+
+  describe('handleMessageDeleted', () => {
+    it('삭제된 메시지를 메시지 캐시에서 흔적 없이 뺀다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, [
+        makeMessage({ messageId: 1 }),
+        makeMessage({ messageId: 2 }),
+      ]);
+
+      act(() => {
+        result.current.handleMessageDeleted({ roomId: ROOM_ID, messageId: 1 });
+      });
+
+      expect(
+        queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)?.map((m) => m.messageId)
+      ).toEqual([2]);
+    });
+
+    it('채팅방 목록의 마지막 메시지가 지워지면 목록을 다시 받아온다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ messageId: 2 })]);
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleMessageDeleted({ roomId: ROOM_ID, messageId: 2 });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+    });
+
+    it('잘못된 payload는 무시한다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage({ messageId: 1 })]);
+
+      act(() => {
+        result.current.handleMessageDeleted(undefined as never);
+      });
+
+      expect(queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)).toHaveLength(1);
     });
   });
 });

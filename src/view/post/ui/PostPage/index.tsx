@@ -31,7 +31,7 @@ export default function PostPageView() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#8FC31D" />
       </SafeAreaView>
     );
@@ -39,14 +39,14 @@ export default function PostPageView() {
 
   if (error || !data) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-background">
         <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background">
       <Header headerTitle={computedValues.headerTitle} />
 
       <PostPageContent

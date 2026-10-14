@@ -147,7 +147,7 @@ describe('renderMessageImages', () => {
       renderMessageImages(imageMessage, imageLoader, config)
     );
 
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
     expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
     expect(getByText('사진 설명')).toBeTruthy();
   });
@@ -161,7 +161,7 @@ describe('renderMessageImages', () => {
       renderMessageImages(imageMessage, imageLoader, config)
     );
 
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
     expect(getByText('이미지 로드 실패')).toBeTruthy();
     expect(UNSAFE_getAllByType(Image)).toHaveLength(1);
   });
@@ -192,7 +192,7 @@ describe('renderMessageImages', () => {
       renderMessageImages(imageMessage, imageLoader, config)
     );
 
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
     const images = UNSAFE_getAllByType(Image);
 
     images[0].props.onLoadStart();
@@ -218,7 +218,7 @@ describe('renderMessageContent', () => {
       renderMessageContent(message, createImageLoader(), config)
     );
 
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
     expect(UNSAFE_getAllByType(Image)).toHaveLength(1);
   });
 

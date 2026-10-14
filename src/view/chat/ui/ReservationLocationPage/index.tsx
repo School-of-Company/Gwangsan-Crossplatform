@@ -18,7 +18,7 @@ export function ReservationLocationPage() {
   const isValidCoordinate = Number.isFinite(center.latitude) && Number.isFinite(center.longitude);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
       <Header headerTitle={placeName || '약속 장소'} />
 
       <View className="flex-1">

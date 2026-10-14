@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { Checkbox } from '@/shared/ui/Checkbox';
 import { TERMS_CONTENT } from '../../const/TERMS_CONTENT';
 import { PRIVACY_CONTENT } from '../../const/PRIVACY_CONTENT';
+import { useThemeColors } from '~/shared/lib/theme';
 
 type AgreementKey = 'terms' | 'privacy';
 
@@ -23,6 +24,7 @@ const AGREEMENTS: AgreementItem[] = [
 ];
 
 function TermsStep() {
+  const colors = useThemeColors();
   const resetStore = useSignupResetStore();
   const [checked, setChecked] = useState<Record<AgreementKey, boolean>>({
     terms: false,
@@ -64,7 +66,9 @@ function TermsStep() {
       <View className="gap-6">
         <View
           className={`rounded-3xl border px-5 py-5 ${
-            allAgreed ? 'border-main-500 bg-main-100' : 'border-gray-100 bg-gray-50'
+            allAgreed
+              ? 'border-main-500 bg-main-100 dark:bg-main-900'
+              : 'border-gray-100 bg-gray-50'
           }`}>
           <Checkbox
             checked={allAgreed}
@@ -88,7 +92,7 @@ function TermsStep() {
             return (
               <View
                 key={item.key}
-                className={`flex-row items-center gap-3 rounded-2xl border bg-white px-4 py-4 ${
+                className={`flex-row items-center gap-3 rounded-2xl border bg-background px-4 py-4 ${
                   isChecked ? 'border-main-300' : 'border-gray-100'
                 }`}>
                 <View className="flex-1">
@@ -107,7 +111,7 @@ function TermsStep() {
                   className="p-1"
                   onPress={() => openSheet(item.key)}
                   hitSlop={8}>
-                  <Icon name="chevron-forward" size={20} color="#A5A6A9" />
+                  <Icon name="chevron-forward" size={20} color={colors['gray-400']} />
                 </TouchableOpacity>
               </View>
             );
@@ -121,7 +125,7 @@ function TermsStep() {
         presentationStyle="pageSheet"
         onRequestClose={closeSheet}>
         {viewingItem && (
-          <SafeAreaView className="flex-1 bg-white">
+          <SafeAreaView className="flex-1 bg-background">
             <View className="flex-row items-center justify-between border-b border-gray-100 px-5 py-4">
               <Text className="text-body1 text-gray-900">{viewingItem.title}</Text>
               <TouchableOpacity testID="sheet-close-button" onPress={closeSheet} hitSlop={8}>

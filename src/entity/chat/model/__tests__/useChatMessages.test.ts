@@ -4,9 +4,18 @@ import { useChatMessages, chatMessageKeys } from '../useChatMessages';
 import { getChatMessages } from '../../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 
-jest.mock('../../api/getChatMessages', () => ({
-  getChatMessages: jest.fn(),
-}));
+// useChatMessages는 getChatRoomData 응답의 messages를 쓴다. 기존 테스트가 getChatMessages로
+// 메시지 목록을 지정하므로, getChatRoomData가 그 값을 감싸 돌려주게 한다
+jest.mock('../../api/getChatMessages', () => {
+  const getChatMessages = jest.fn();
+  return {
+    getChatMessages,
+    getChatRoomData: jest.fn(async (roomId: number) => ({
+      product: null,
+      messages: (await getChatMessages(roomId)) ?? [],
+    })),
+  };
+});
 
 jest.mock('~/shared/store/useChatQueueStore', () => ({
   useChatQueueStore: jest.fn(),

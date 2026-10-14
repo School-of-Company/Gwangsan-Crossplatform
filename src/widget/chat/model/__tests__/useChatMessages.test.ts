@@ -8,6 +8,8 @@ import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtil
 
 jest.mock('~/entity/chat', () => ({
   useChatMessages: jest.fn(),
+  chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
+  chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
 }));
 
 jest.mock('~/entity/chat/model/useChatSocket', () => ({

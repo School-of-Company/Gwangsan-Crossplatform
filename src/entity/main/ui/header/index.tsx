@@ -2,9 +2,11 @@ import { Image, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
+import { useThemeColors } from '~/shared/lib/theme';
 
 export default function Header() {
   const r = useRouter();
+  const colors = useThemeColors();
 
   const handlePressNotification = useCallback(() => {
     r.push('/notification');
@@ -21,7 +23,7 @@ export default function Header() {
         onPress={handlePressNotification}
         name="notifications-outline"
         size={24}
-        color="#000"
+        color={colors.foreground}
       />
     </View>
   );

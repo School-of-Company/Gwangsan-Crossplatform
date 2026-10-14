@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { FlatList } from 'react-native';
 import { useAnimatedRef, type AnimatedRef } from 'react-native-reanimated';
-import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
+import {
+  useChatMessages as useChatMessagesEntity,
+  chatMessageKeys,
+  chatRoomKeys,
+} from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
 import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
@@ -34,7 +38,7 @@ interface UseChatMessagesReturn {
   readonly markRoomAsRead: (roomId: RoomId) => Promise<void>;
 }
 
-const CHAT_ROOM_QUERY_KEY = ['chatRooms', 'list'] as const;
+const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
 
 export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
   const flatListRef = useAnimatedRef<FlatList>();
@@ -42,7 +46,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
 
-  const chatMessageQueryKey = useMemo(() => ['chatMessages', roomId] as const, [roomId]);
+  const chatMessageQueryKey = useMemo(() => chatMessageKeys.room(roomId), [roomId]);
 
   const {
     sendMessage: socketSendMessage,

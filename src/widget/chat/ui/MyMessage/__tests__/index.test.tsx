@@ -22,6 +22,9 @@ jest.mock('@/entity/chat', () => ({
   renderMessageContent: jest.fn(),
 }));
 
+// 테스트 렌더러에는 레이아웃이 없어 말풍선 위치 측정을 흉내 낸다
+jest.mock('../../../model/measureAnchor', () => ({ measureAnchor: jest.fn() }));
+
 jest.mock('~/shared/store/useChatQueueStore', () => ({
   useChatQueueStore: jest.fn(),
   MESSAGE_STATUS: {
@@ -33,6 +36,7 @@ jest.mock('~/shared/store/useChatQueueStore', () => ({
 }));
 
 const mockRenderMessageContent = renderMessageContent as jest.Mock;
+const { measureAnchor: mockMeasureAnchor } = jest.requireMock('../../../model/measureAnchor');
 const mockUseChatQueueStore = useChatQueueStore as unknown as jest.Mock;
 
 const makeMessage = (overrides: Partial<EnhancedChatMessage> = {}): EnhancedChatMessage =>
@@ -155,5 +159,41 @@ describe('MyMessage', () => {
     fireEvent.press(getByText('재전송'));
 
     expect(mockRetry).not.toHaveBeenCalled();
+  });
+
+  describe('수정/삭제', () => {
+    it('길게 누르면 메뉴에서 같은 자리에 띄울 수 있도록 말풍선의 화면상 위치와 함께 호출한다', () => {
+      const onLongPress = jest.fn();
+      const message = makeMessage();
+      mockMeasureAnchor.mockImplementation(
+        (_node: unknown, onMeasured: (anchor: unknown) => void) =>
+          onMeasured({ x: 120, y: 400, width: 200, height: 48 })
+      );
+      const { getByTestId } = render(<MyMessage message={message} onLongPress={onLongPress} />);
+
+      fireEvent(getByTestId('my-message-bubble-1'), 'longPress');
+
+      expect(onLongPress).toHaveBeenCalledWith(message, { x: 120, y: 400, width: 200, height: 48 });
+    });
+
+    it('onLongPress가 없으면 말풍선을 길게 눌러도 반응하지 않는다', () => {
+      const { getByTestId } = render(<MyMessage message={makeMessage()} />);
+
+      expect(getByTestId('my-message-bubble-1').props.accessibilityHint).toBeUndefined();
+    });
+
+    it('수정된 메시지에는 (수정됨)을 표시한다', () => {
+      const { getByText } = render(
+        <MyMessage message={makeMessage({ editedAt: '2026-07-08T07:00:00.000Z' })} />
+      );
+
+      expect(getByText('(수정됨)')).toBeTruthy();
+    });
+
+    it('수정하지 않은 메시지에는 (수정됨)을 표시하지 않는다', () => {
+      const { queryByText } = render(<MyMessage message={makeMessage()} />);
+
+      expect(queryByText('(수정됨)')).toBeNull();
+    });
   });
 });

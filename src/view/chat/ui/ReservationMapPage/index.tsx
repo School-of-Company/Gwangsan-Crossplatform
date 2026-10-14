@@ -277,7 +277,7 @@ export function ReservationMapPage() {
   }, [currentAddress, placeNameDraft, router, setCoordinates, setPlaceName]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>
       <Header headerTitle="장소 선택" />
 
       <View className="px-4 pb-3">
@@ -296,7 +296,7 @@ export function ReservationMapPage() {
 
       <View className="flex-1">
         {isSearchActive ? (
-          <View className="flex-1 bg-white">
+          <View className="flex-1 bg-background">
             {suggestions.length > 0 ? (
               <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
                 {suggestions.map((place) => (

@@ -55,7 +55,7 @@ describe('ChatRoomItem', () => {
 
   it('상품 이미지가 있으면 해당 이미지를 사용한다', () => {
     const { UNSAFE_getAllByType } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     const images = UNSAFE_getAllByType(Image);
     expect(images[0].props.source).toEqual({ uri: 'https://example.com/product.png' });
@@ -64,7 +64,7 @@ describe('ChatRoomItem', () => {
   it('상품 이미지가 없으면 기본 프로필 이미지를 사용한다', () => {
     const room = { ...baseRoom, product: { ...baseRoom.product, images: [] } };
     const { UNSAFE_getAllByType } = render(<ChatRoomItem room={room} onPress={jest.fn()} />);
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     const images = UNSAFE_getAllByType(Image);
     expect(images[0].props.source).not.toEqual({ uri: undefined });

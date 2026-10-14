@@ -13,7 +13,7 @@ const TradeCompletedEmbedComponent: React.FC<TradeCompletedEmbedProps> = ({
 }) => {
   return (
     <View className="mb-4 w-full">
-      <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-3">
+      <View className="w-full flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-gray-200 bg-surface px-4 py-3">
         <Text testID="trade-completed-notice" className="flex-1 text-base font-bold text-gray-900">
           거래가 완료되었습니다
         </Text>

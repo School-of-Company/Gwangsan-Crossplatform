@@ -1,27 +1,42 @@
-import { RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
 import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { useCallback, useMemo, useState } from 'react';
 import { useGetPosts } from '~/shared/model/useGetPosts';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
-import { returnValue } from '~/view/post/model/handleCategory';
-import { Category } from '~/view/post/model/category';
+import { returnValue } from '~/entity/post/model/handleCategory';
+import { Category } from '~/entity/post/model/category';
 import { VirtualList } from 'scrolloop/native';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
 export default function PostList({ category, type }: { category: Category; type: ProductType }) {
   const [refreshing, setRefreshing] = useState(false);
   const currentMode = category ? returnValue(category) : undefined;
 
-  const { data: postsData = [], refetch } = useGetPosts(
-    currentMode as ModeType | undefined,
-    type as ProductType | undefined
+  const {
+    data: postsData = [],
+    refetch,
+    isLoading: isPostsLoading,
+    isError: isPostsError,
+    data: rawPosts,
+  } = useGetPosts(currentMode as ModeType | undefined, type as ProductType | undefined);
+  const {
+    data: blockList,
+    isLoading: isBlockListLoading,
+    isError: isBlockListError,
+    refetch: refetchBlockList,
+  } = useGetBlockList();
+
+  // 차단 목록을 Set으로 만들어 두고 조회하면, 게시글마다 차단 목록 전체를 훑는 O(n*m)을 O(n+m)으로 줄일 수 있다.
+  const blockedIds = useMemo(
+    () => new Set<number | undefined>(blockList?.map((b) => b.memberId)),
+    [blockList]
   );
-  const { data: blockList } = useGetBlockList();
 
   const data = useMemo(
-    () => postsData.filter((post) => !blockList?.some((b) => b.memberId === post.member?.memberId)),
-    [postsData, blockList]
+    () => postsData.filter((post) => !blockedIds.has(post?.member?.memberId)),
+    [postsData, blockedIds]
   );
 
   const onRefresh = useCallback(async () => {
@@ -41,6 +56,25 @@ export default function PostList({ category, type }: { category: Category; type:
     },
     [data]
   );
+
+  // 조회에 실패했는데 "게시물이 없습니다."로 보이면 사용자가 실패를 알 수 없다(#740)
+  if (isPostsError && !rawPosts) {
+    return <ErrorFallback onRetry={() => refetch()} />;
+  }
+
+  // 차단 목록을 불러오지 못하면 차단한 사용자의 글을 걸러낼 수 없다. 차단한 사람의 글이 보이는 대신
+  // 목록을 보여주지 않고 다시 시도하게 한다(#740)
+  if (isBlockListError && !blockList) {
+    return <ErrorFallback onRetry={() => refetchBlockList()} />;
+  }
+
+  if ((isPostsLoading && !rawPosts) || (isBlockListLoading && !blockList)) {
+    return (
+      <View testID="post-list-loading" className="flex-1 items-center justify-center py-20">
+        <ActivityIndicator color="#8FC31D" />
+      </View>
+    );
+  }
 
   if (data.length === 0) {
     return (

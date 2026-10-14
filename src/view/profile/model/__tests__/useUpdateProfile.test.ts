@@ -32,7 +32,7 @@ describe('useUpdateProfile', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockUpdateProfile).toHaveBeenCalledWith(payload);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['profile'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'success', text1: '성공', text2: '프로필이 수정되었습니다.' })
     );
@@ -53,5 +53,29 @@ describe('useUpdateProfile', () => {
       expect.objectContaining({ type: 'error', text1: '오류', text2: '서버 오류' })
     );
     expect(mockRouterBack).not.toHaveBeenCalled();
+  });
+
+  it('성공 시 서버 응답 없이도 보낸 값으로 내 프로필 캐시를 바로 갱신한다(#780)', async () => {
+    mockUpdateProfile.mockResolvedValue(undefined);
+    const cached = {
+      memberId: 7,
+      nickname: '옛닉',
+      specialties: ['빨래하기'],
+      description: '옛 소개',
+      light: 1,
+      gwangsan: 0,
+    };
+
+    const { result, queryClient } = renderHookWithProviders(() => useUpdateProfile());
+    queryClient.setQueryData(['myProfile', 'current'], cached);
+    queryClient.setQueryData(['profile', '7'], cached);
+
+    await act(async () => {
+      result.current.mutate(payload);
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryData(['myProfile', 'current'])).toEqual({ ...cached, ...payload });
+    expect(queryClient.getQueryData(['profile', '7'])).toEqual({ ...cached, ...payload });
   });
 });

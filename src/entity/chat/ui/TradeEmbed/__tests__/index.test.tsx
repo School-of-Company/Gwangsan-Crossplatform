@@ -39,7 +39,7 @@ describe('TradeEmbed', () => {
     const { getByText, queryByText, UNSAFE_queryByType } = render(
       <TradeEmbed product={createProduct()} otherPartyNickname="홍길동" showButtons={false} />
     );
-    const { Image } = require('react-native');
+    const { Image } = require('expo-image');
 
     expect(getByText('홍길동님에게 거래를 요청했어요')).toBeTruthy();
     expect(queryByText('거래 상품')).toBeNull();
