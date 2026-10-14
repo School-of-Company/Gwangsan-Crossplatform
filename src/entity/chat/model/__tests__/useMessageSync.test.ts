@@ -1040,6 +1040,40 @@ describe('useMessageSync', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ROOM_DATA_KEY });
     });
 
+    it('거래 완료 이벤트면 광산 잔액이 바로 반영되도록 내 프로필 쿼리를 invalidate한다(#785)', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, { product: { id: 1, isCompleted: false } });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
+    it('거래 완료가 아닌 상태 변경이면 내 프로필 쿼리를 invalidate하지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(ROOM_DATA_KEY, { product: { id: 1, isCompleted: false } });
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+    });
+
     it('product를 정상적으로 patch했으면 chatRoomData를 다시 invalidate하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(ROOM_DATA_KEY, {
