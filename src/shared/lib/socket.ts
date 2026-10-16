@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { getData } from './getData';
-import { baseURL } from './axios';
+import { API_BASE_URL } from '~/shared/consts/api';
 import * as Sentry from '@sentry/react-native';
 import {
   CHAT_SOCKET_EVENTS,
@@ -11,7 +11,9 @@ import {
 import { logger } from './logger';
 import { isNetworkOrTimeoutError } from './errorHandler';
 
-const SOCKET_URL = (baseURL ?? '').replace(/\/$/, '') + '/chat';
+// axios.ts를 import하면 axios → clearSession → sessionCleanup → socket → axios 순환이 생겨
+// 모듈 평가 시점에 baseURL이 undefined가 되고, 상대 경로 '/chat'이 Metro 개발 서버로 연결된다.
+const SOCKET_URL = API_BASE_URL.replace(/\/$/, '') + '/chat';
 
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;

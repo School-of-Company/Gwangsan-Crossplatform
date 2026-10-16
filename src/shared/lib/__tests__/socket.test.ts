@@ -5,7 +5,7 @@ import { logger } from '../logger';
 import { chatSocket } from '../socket';
 
 jest.mock('socket.io-client', () => ({ io: jest.fn() }));
-jest.mock('../axios', () => ({ baseURL: 'https://api.test.com/api' }));
+jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'https://api.test.com/api' }));
 jest.mock('../getData', () => ({ getData: jest.fn() }));
 jest.mock('../logger', () => ({ logger: { error: jest.fn(), warn: jest.fn() } }));
 jest.mock('@sentry/react-native', () => ({
