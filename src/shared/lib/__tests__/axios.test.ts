@@ -188,6 +188,20 @@ describe('response interceptor', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith('/signin/nickname');
   });
 
+  it('로그아웃으로 토큰이 모두 지워진 뒤의 401은 세션 만료 안내·이동 없이 reject만 한다', async () => {
+    mockGetAccessToken.mockResolvedValue(null);
+    mockGetRefreshToken.mockResolvedValue(null);
+
+    server.use(http.get(`${BASE}/after-signout`, () => new HttpResponse(null, { status: 401 })));
+
+    await expect(instance.get('/after-signout')).rejects.toThrow();
+
+    expect(mockSentry.captureException).not.toHaveBeenCalled();
+    expect(mockClearSession).not.toHaveBeenCalled();
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+  });
+
   it('토큰 갱신 성공 시 원래 요청을 새 토큰으로 재시도한다', async () => {
     mockGetAccessToken.mockResolvedValue('old-token');
     mockGetRefreshToken.mockResolvedValue('my-refresh-token');

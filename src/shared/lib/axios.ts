@@ -238,6 +238,12 @@ instance.interceptors.response.use(
           return Promise.reject(refreshError);
         }
 
+        // 로그아웃으로 토큰이 모두 지워진 뒤 화면에 남은 쿼리가 보낸 요청이면 이미 로그아웃된
+        // 상태이므로, 세션 만료 안내와 로그인 이동 없이 요청만 실패시킨다
+        if (isMissingRefreshToken && !(await getAccessToken().catch(() => null))) {
+          return Promise.reject(refreshError);
+        }
+
         // 일반 로그아웃과 같은 범위로 세션을 정리한다. 이 경로는 재발급을 시작한 요청 하나만 타므로
         // 기다리던 요청이 여러 개여도 안내는 한 번만 뜬다
         await clearSession(queryClientInstance);
