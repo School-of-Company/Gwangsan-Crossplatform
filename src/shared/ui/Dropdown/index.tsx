@@ -12,23 +12,17 @@ interface DropdownProps<T extends string> {
   onSelect?: (item: T) => void;
 }
 
-export function Dropdown<T extends string>({
-  label,
-  items,
-  placeholder,
-  selectedItem,
-  onSelect,
-  width = 'full',
-}: DropdownProps<T>) {
+export function Dropdown<T extends string>(props: DropdownProps<T>) {
+  const { label, items, placeholder, selectedItem, onSelect, width = 'full' } = props;
   const colors = useThemeColors();
   const [show, setShow] = useState(false);
   const [selected, setSelected] = useState<T | null>(selectedItem || null);
 
-  const selectedLabel = selected
-    ? items.find((item) => item.value === selected)?.label
-    : selectedItem
-      ? items.find((item) => item.value === selectedItem)?.label
-      : undefined;
+  // selectedItem을 넘기면(값이 undefined여도) 부모 값을 그대로 보여준다. 내부 상태를 우선하면
+  // 부모가 선택을 되돌려도(예: 지점 변경 실패) 화면엔 마지막으로 누른 항목이 남았다.
+  const isControlled = 'selectedItem' in props;
+  const current = isControlled ? selectedItem : (selected ?? selectedItem);
+  const selectedLabel = current ? items.find((item) => item.value === current)?.label : undefined;
 
   return (
     // 열린 동안만 위로 띄운다. zIndex만으로는 안드로이드에서 뒤 요소에 가려질 수 있어

@@ -49,8 +49,15 @@ export default function ProfileEditPageView() {
   }, [profileData]);
 
   const handleBranchSelect = (selectedPlaceIdStr: string) => {
+    if (selectedPlaceIdStr === placeId) return;
+    const previousPlaceId = placeId;
     setPlaceId(selectedPlaceIdStr);
-    updateBranchMutation.mutate({ placeId: parseInt(selectedPlaceIdStr, 10) });
+    // 실패하면 드롭다운을 이전 지점으로 되돌린다. 안 그러면 서버엔 반영되지 않았는데
+    // 화면엔 바뀐 지점이 남아 바뀐 것처럼 보였다(Gwangsan-Server#448)
+    updateBranchMutation.mutate(
+      { placeId: parseInt(selectedPlaceIdStr, 10) },
+      { onError: () => setPlaceId(previousPlaceId) }
+    );
   };
 
   const handleSubmit = () => {
