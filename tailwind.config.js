@@ -9,19 +9,20 @@ module.exports = {
         cafe24: ['Cafe24SsurroundOTF'],
       },
       fontSize: {
-        // lineHeight는 기준 글자 크기 기준으로 여유를 둔다. 기기/접근성 글자 크기를 키우면
-        // 한글 글자(특히 받침)가 줄 높이보다 커져 위/아래가 잘리는 문제가 있었다 (#779).
-        titleLarge: ['30px', { lineHeight: '135%', fontWeight: '600' }],
-        titleMedium: ['26px', { lineHeight: '135%', fontWeight: '600' }],
-        titleMedium2: ['24px', { lineHeight: '135%', fontWeight: '600' }],
-        titleSmall: ['20px', { lineHeight: '145%', fontWeight: '600' }],
-        body1: ['18px', { lineHeight: '155%', fontWeight: '600' }],
-        body2: ['18px', { lineHeight: '155%', fontWeight: '400' }],
-        body3: ['16px', { lineHeight: '155%', fontWeight: '600' }],
-        body4: ['16px', { lineHeight: '155%', fontWeight: '400' }],
-        body5: ['14px', { lineHeight: '155%', fontWeight: '400' }],
-        label: ['14px', { lineHeight: '155%', fontWeight: '500' }],
-        caption: ['12px', { lineHeight: '155%', fontWeight: '400' }],
+        // lineHeight는 지정하지 않는다. NativeWind는 '140%' 같은 퍼센트 lineHeight를 지원하지
+        // 않아 경고만 남기고 버리므로 실제로는 늘 폰트 기본 줄 높이가 쓰여 왔다. 고정 줄 높이는
+        // 접근성 글자 크기를 키웠을 때 한글이 잘리는 원인이 되므로 기본 줄 높이를 유지한다.
+        titleLarge: ['30px', { fontWeight: '600' }],
+        titleMedium: ['26px', { fontWeight: '600' }],
+        titleMedium2: ['24px', { fontWeight: '600' }],
+        titleSmall: ['20px', { fontWeight: '600' }],
+        body1: ['18px', { fontWeight: '600' }],
+        body2: ['18px', { fontWeight: '400' }],
+        body3: ['16px', { fontWeight: '600' }],
+        body4: ['16px', { fontWeight: '400' }],
+        body5: ['14px', { fontWeight: '400' }],
+        label: ['14px', { fontWeight: '500' }],
+        caption: ['12px', { fontWeight: '400' }],
       },
       colors: {
         sub: {
