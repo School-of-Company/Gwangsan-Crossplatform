@@ -123,8 +123,10 @@ export const useTradeHandlers = ({
       if (isCompleted) {
         patchProduct({ isCompleted: true, isCompletable: false });
         // 거래가 확정되면 서버에서 광산이 차감/적립된다. 내 프로필은 5분간 캐시되므로 바로 다시
-        // 받아오지 않으면 잔액이 이전 값(예: 0)으로 남아 있었다(#785)
+        // 받아오지 않으면 잔액이 이전 값(예: 0)으로 남아 있었다(#785). 홈 화면 광산 배너는 별도
+        // 쿼리(myInformation)를 써서 함께 무효화해야 한다.
         queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
+        queryClient.invalidateQueries({ queryKey: ['myInformation'] });
 
         Toast.show({
           type: 'success',

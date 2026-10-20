@@ -1055,6 +1055,8 @@ describe('useMessageSync', () => {
       });
 
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myInformation'] });
     });
 
     it('거래 완료가 아닌 상태 변경이면 내 프로필 쿼리를 invalidate하지 않는다', async () => {
@@ -1072,6 +1074,8 @@ describe('useMessageSync', () => {
       });
 
       expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myInformation'] });
     });
 
     it('product를 정상적으로 patch했으면 chatRoomData를 다시 invalidate하지 않는다', async () => {
