@@ -1,8 +1,8 @@
 import { HEAD, PLACES, PLACE_ITEMS } from '../place';
 
 describe('PLACE_ITEMS', () => {
-  it('6개의 장소 항목을 포함한다', () => {
-    expect(PLACE_ITEMS).toHaveLength(6);
+  it('2개의 장소 항목을 포함한다', () => {
+    expect(PLACE_ITEMS).toHaveLength(2);
   });
 
   it('각 항목이 id(number)와 name(string)을 가진다', () => {
@@ -23,6 +23,8 @@ describe('PLACE_ITEMS', () => {
     expect(PLACES).toContain('고실마을');
     expect(PLACES).not.toContain('신가');
     expect(PLACES).not.toContain('수완마을');
+    expect(PLACES).not.toContain('광산구도시재생공동체센터');
+    expect(PLACES).not.toContain('투게더광산나눔문화센터');
   });
 });
 
@@ -44,13 +46,6 @@ describe('HEAD', () => {
       13: '광산구자원봉사센터',
       14: '광산구지역사회보장협의체',
       15: '투게더광산나눔문화센터',
-    });
-  });
-
-  it('HEAD의 각 value가 PLACE_ITEMS에 존재하는 name과 일치한다', () => {
-    Object.entries(HEAD).forEach(([id, name]) => {
-      const item = PLACE_ITEMS.find((p) => p.id === Number(id));
-      expect(item?.name).toBe(name);
     });
   });
 });
