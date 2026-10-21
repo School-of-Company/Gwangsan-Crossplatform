@@ -139,6 +139,12 @@ export default function ProfileMenu({ isMe, memberId }: ProfileMenuProps) {
         {isMe && <TradeMenuRow label="차단 목록" onPress={() => router.push('/profile/blocked')} />}
       </View>
 
+      {isMe && (
+        <View className="overflow-hidden rounded-xl bg-surface-muted">
+          <TradeMenuRow label="문의/의견 보내기" onPress={() => router.push('/feedback')} />
+        </View>
+      )}
+
       {appVersion && (
         <View className="h-[56px] w-full flex-row items-center justify-between rounded-xl bg-surface-muted px-6">
           <Text className="text-lg font-medium text-gray-900">버전</Text>

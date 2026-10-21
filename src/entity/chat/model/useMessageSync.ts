@@ -236,9 +236,11 @@ export const useMessageSync = ({
         queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(data.roomId) });
       }
 
-      // 상대가 거래를 확정해도 내 광산이 바뀌므로, 5분 캐시된 내 프로필을 바로 다시 받아온다(#785)
+      // 상대가 거래를 확정해도 내 광산이 바뀌므로, 5분 캐시된 내 프로필과 홈 화면 광산 배너
+      // (myInformation)를 바로 다시 받아온다(#785)
       if (data.isCompleted) {
         queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
+        queryClient.invalidateQueries({ queryKey: ['myInformation'] });
       }
 
       if (!chatRoomQueryKey) return;

@@ -73,10 +73,10 @@ describe('ProfileMenu', () => {
     expect(queryByText('로그아웃')).toBeNull();
   });
 
-  it('본인 프로필에서는 판매관리/거래내역/후기/차단 목록 행 각각에 chevron 아이콘을 표시한다', () => {
+  it('본인 프로필에서는 판매관리/거래내역/후기/차단 목록/문의 행 각각에 chevron 아이콘을 표시한다', () => {
     const { getAllByTestId } = render(<ProfileMenu isMe memberId={1} />);
 
-    expect(getAllByTestId('chevron-icon')).toHaveLength(4);
+    expect(getAllByTestId('chevron-icon')).toHaveLength(5);
   });
 
   it('상대방 프로필에서는 판매관리/거래내역/후기 행에만 chevron 아이콘을 표시한다', () => {
@@ -129,6 +129,20 @@ describe('ProfileMenu', () => {
     const { queryByText } = render(<ProfileMenu isMe={false} memberId={5} />);
 
     expect(queryByText('차단 목록')).toBeNull();
+  });
+
+  it('본인 프로필에서 "문의/의견 보내기"를 누르면 문의 페이지로 이동한다', () => {
+    const { getByText } = render(<ProfileMenu isMe memberId={1} />);
+
+    fireEvent.press(getByText('문의/의견 보내기'));
+
+    expect(push).toHaveBeenCalledWith('/feedback');
+  });
+
+  it('상대방 프로필에서는 "문의/의견 보내기" 행이 보이지 않는다', () => {
+    const { queryByText } = render(<ProfileMenu isMe={false} memberId={5} />);
+
+    expect(queryByText('문의/의견 보내기')).toBeNull();
   });
 
   it('"후기"를 누르면 해당 회원의 리뷰 페이지로 이동한다', () => {

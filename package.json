@@ -83,7 +83,7 @@
     "react-native-worklets": "^0.8.3",
     "scrolloop": "^0.5.2",
     "socket.io-client": "^4.8.4",
-    "zod": "^3.25.72",
+    "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -108,11 +108,11 @@
     "msw": "^2.15.0",
     "nyc": "^18.0.0",
     "patch-package": "^8.0.1",
-    "prettier": "^3.9.9",
+    "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "react-test-renderer": "^19.1.0",
     "tailwindcss": "^3.4.0",
-    "ts-jest": "^29.4.14",
+    "ts-jest": "^29.4.15",
     "typescript": "~6.0.3",
     "yaml": "^2.9.0"
   },

@@ -185,6 +185,8 @@ describe('useTradeHandlers', () => {
       });
 
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myInformation'] });
     });
 
     it('실패 시 내 프로필 쿼리를 invalidate하지 않는다', async () => {
@@ -200,6 +202,8 @@ describe('useTradeHandlers', () => {
       });
 
       expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myInformation'] });
     });
 
     it('성공 시 chatRoomData 캐시를 isCompleted=true, isCompletable=false로 즉시 업데이트한다', async () => {
@@ -239,6 +243,8 @@ describe('useTradeHandlers', () => {
       });
 
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myInformation'] });
     });
 
     it('실패 시 캐시를 변경하지 않는다', async () => {
@@ -410,6 +416,8 @@ describe('useTradeHandlers', () => {
       });
 
       expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
+
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myInformation'] });
     });
 
     it('다시 조회에 실패하면 완료로 단정하지 않고 요청 안내 Toast를 표시한다', async () => {

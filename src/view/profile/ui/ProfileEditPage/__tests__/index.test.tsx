@@ -225,8 +225,28 @@ describe('ProfileEditPageView', () => {
     fireEvent.press(getByText('신창'));
     fireEvent.press(getByText('고실마을'));
 
-    expect(mockMutateBranch).toHaveBeenCalledWith({ placeId: 2 });
+    expect(mockMutateBranch).toHaveBeenCalledWith({ placeId: 2 }, expect.any(Object));
     expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  it('이미 선택된 지점을 다시 고르면 updateBranch를 호출하지 않는다', () => {
+    const { getAllByText, getByText } = render(<ProfileEditPageView />);
+
+    fireEvent.press(getByText('신창'));
+    fireEvent.press(getAllByText('신창')[1]);
+
+    expect(mockMutateBranch).not.toHaveBeenCalled();
+  });
+
+  it('지점 변경에 실패하면 드롭다운을 이전 지점으로 되돌린다', () => {
+    mockMutateBranch.mockImplementation((_data, options) => options?.onError?.(new Error('실패')));
+    const { getByText, queryByText } = render(<ProfileEditPageView />);
+
+    fireEvent.press(getByText('신창'));
+    fireEvent.press(getByText('고실마을'));
+
+    expect(getByText('신창')).toBeTruthy();
+    expect(queryByText('고실마을')).toBeNull();
   });
 
   it('별칭을 바꾸지 않으면 서버에 저장된 원본 별칭을 그대로 보낸다(#780)', () => {

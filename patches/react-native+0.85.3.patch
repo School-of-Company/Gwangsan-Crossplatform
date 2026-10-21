@@ -1,0 +1,34 @@
+diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInput.js b/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
+--- a/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
++++ b/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
+@@ -904,6 +904,8 @@
+ ) = function TextInput({
+   ref: forwardedRef,
+   allowFontScaling = true,
++  // Gwangsan: Text와 동일하게 접근성 글자 확대를 1.3배로 제한한다.
++  maxFontSizeMultiplier = 1.3,
+   rejectResponderTermination = true,
+   underlineColorAndroid = 'transparent',
+   autoComplete,
+@@ -923,6 +925,7 @@
+   return (
+     <InternalTextInput
+       allowFontScaling={allowFontScaling}
++      maxFontSizeMultiplier={maxFontSizeMultiplier}
+       rejectResponderTermination={rejectResponderTermination}
+       underlineColorAndroid={underlineColorAndroid}
+       editable={readOnly !== undefined ? !readOnly : editable}
+diff --git a/node_modules/react-native/Libraries/Text/Text.js b/node_modules/react-native/Libraries/Text/Text.js
+--- a/node_modules/react-native/Libraries/Text/Text.js
++++ b/node_modules/react-native/Libraries/Text/Text.js
+@@ -287,6 +287,10 @@
+ 
+   processedProps.accessible = _accessible;
+   processedProps.allowFontScaling = allowFontScaling !== false;
++  // Gwangsan: 기기 접근성 글자 크기를 최대 1.3배까지만 반영한다. 그 이상 커지면
++  // 고정 폭 레이아웃(홈 카드, 하단 탭, 목록)에서 글자가 잘린다.
++  processedProps.maxFontSizeMultiplier =
++    processedProps.maxFontSizeMultiplier ?? 1.3;
+   processedProps.disabled = _disabled;
+   processedProps.ellipsizeMode = ellipsizeMode ?? 'tail';
+   processedProps.children = children;
