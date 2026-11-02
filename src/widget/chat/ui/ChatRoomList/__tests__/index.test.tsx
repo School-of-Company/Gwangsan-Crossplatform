@@ -35,6 +35,14 @@ jest.mock('~/entity/profile/model/useBlockUser', () => ({
   useBlockUser: jest.fn(),
 }));
 
+// 진입 전 프리페치(useChatEntry.prefetchRoom)는 API 모듈을 직접 쓰므로, 아래 barrel mock의
+// getChatRoomData와 같은 mock 함수를 쓰게 연결한다
+jest.mock('~/entity/chat/api/getChatMessages', () => ({
+  CHAT_MESSAGE_PAGE_SIZE: 30,
+  getChatRoomData: (...args: unknown[]) =>
+    jest.requireMock('@/entity/chat').getChatRoomData(...args),
+}));
+
 jest.mock('@/entity/chat', () => ({
   useChatRooms: jest.fn(),
   useChatSocket: jest.fn(),
@@ -42,9 +50,6 @@ jest.mock('@/entity/chat', () => ({
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
-  CHAT_MESSAGE_PAGE_SIZE: 30,
-  seedMessagePagesFromSnapshot: jest.requireActual('~/entity/chat/lib/messageCache')
-    .seedMessagePagesFromSnapshot,
   ChatRoomItem: ({ room, onPress, onLongPress, isExiting, onExited }: any) => {
     const { TouchableOpacity, View, Text } = require('react-native');
     return (

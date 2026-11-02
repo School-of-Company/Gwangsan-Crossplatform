@@ -7,14 +7,21 @@ import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from 
 import type { RoomId } from '@/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
-import { isSystemMessage } from '../lib/messagePolicy';
 import { matchPendingEcho } from '../lib/pendingEcho';
+import {
+  applyIncomingMessageToRooms,
+  applyMessageEditToRooms,
+  applyRoomListUpdate,
+  applyTransactionStateToRooms,
+  isLastMessageOfRoom,
+  patchRoomProductTransaction,
+  type RoomListUpdatePayload,
+} from '../lib/roomListCache';
 import type { TransactionStateChangedPayload } from '../lib/socketService';
 import {
   addMessageToPages,
   applyMessageUpdate,
   getNewestMessage,
-  isSameMessageId,
   mapMessagePages,
   removeMessageById,
   type ChatMessagePages,
@@ -88,36 +95,9 @@ export const useMessageSync = ({
         }
 
         if (chatRoomQueryKey) {
-          queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-            if (!oldData) return oldData;
-
-            return oldData.map((room) => {
-              if (room.roomId !== message.roomId) return room;
-              if (room.messageId === message.messageId) return room;
-
-              const incomingTime = new Date(message.createdAt).getTime();
-              const lastTime = new Date(room.lastMessageTime).getTime();
-              const isStale = Number.isFinite(lastTime) && incomingTime < lastTime;
-              if (isStale) return room;
-
-              const isActiveRoom = room.roomId === currentRoomId;
-              // SYSTEM 메시지는 상대가 보낸 대화가 아니므로 안 읽은 수를 늘리지 않는다
-              const nextUnreadCount = isActiveRoom
-                ? 0
-                : message.isMine || isSystemMessage(message)
-                  ? room.unreadMessageCount
-                  : room.unreadMessageCount + 1;
-
-              return {
-                ...room,
-                messageId: message.messageId,
-                lastMessage: message.content || '(사진)',
-                lastMessageType: message.messageType,
-                lastMessageTime: message.createdAt,
-                unreadMessageCount: nextUnreadCount,
-              };
-            });
-          });
+          queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (oldData) =>
+            applyIncomingMessageToRooms(oldData, message, currentRoomId)
+          );
         }
       } catch (error) {
         logger.error('handleReceiveMessage error', error);
@@ -136,35 +116,12 @@ export const useMessageSync = ({
   );
 
   const handleUpdateRoomList = useCallback(
-    (data: {
-      roomId: number;
-      lastMessage: string;
-      lastMessageType: string;
-      lastMessageTime: string;
-    }) => {
-      if (!chatRoomQueryKey) {
-        return;
-      }
+    (data: RoomListUpdatePayload) => {
+      if (!chatRoomQueryKey) return;
 
-      queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-        if (!oldData) {
-          return oldData;
-        }
-
-        const updatedData = oldData.map((room) => {
-          if (room.roomId === data.roomId) {
-            return {
-              ...room,
-              lastMessage: data.lastMessage,
-              lastMessageType: data.lastMessageType as any,
-              lastMessageTime: data.lastMessageTime,
-            };
-          }
-          return room;
-        });
-
-        return updatedData;
-      });
+      queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (oldData) =>
+        applyRoomListUpdate(oldData, data)
+      );
     },
     [queryClient, chatRoomQueryKey]
   );
@@ -178,25 +135,10 @@ export const useMessageSync = ({
       let patchedExistingProduct = false;
       let reservationChanged = false;
       queryClient.setQueryData<ChatRoomWithProduct>(chatRoomDataKeys.room(data.roomId), (old) => {
-        if (!old?.product) return old;
-        patchedExistingProduct = true;
-        reservationChanged =
-          typeof data.isReserved === 'boolean' && data.isReserved !== old.product.isReserved;
-        return {
-          ...old,
-          product: {
-            ...old.product,
-            isCompleted: data.isCompleted,
-            isCompletable:
-              data.isCompletable ??
-              (!data.isCompleted &&
-                (data.requestedBySeller == null ||
-                  data.requestedBySeller !== old.product.isSeller)),
-            ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
-            // 거래 취소 시 서버가 createdAt: null을 보내므로 무조건 대입해야 반영된다
-            createdAt: data.createdAt ?? null,
-          },
-        };
+        const result = patchRoomProductTransaction(old, data);
+        patchedExistingProduct = result.patched;
+        reservationChanged = result.reservationChanged;
+        return result.next;
       });
 
       // 이 방에 처음 생기는 거래 요청이면 payload만으로는 title/images 등을 채울 수 없어 위에서 patch가
@@ -216,32 +158,9 @@ export const useMessageSync = ({
 
       if (!chatRoomQueryKey) return;
 
-      queryClient.setQueryData(chatRoomQueryKey, (oldData: ChatRoomListItem[] | undefined) => {
-        if (!oldData) return oldData;
-
-        let hasChange = false;
-        const nextData = oldData.map((room) => {
-          if (room.roomId !== data.roomId || !room.product) return room;
-          if (
-            room.product.isCompleted === data.isCompleted &&
-            (typeof data.isReserved !== 'boolean' || room.product.isReserved === data.isReserved)
-          ) {
-            return room;
-          }
-
-          hasChange = true;
-          return {
-            ...room,
-            product: {
-              ...room.product,
-              isCompleted: data.isCompleted,
-              ...(typeof data.isReserved === 'boolean' ? { isReserved: data.isReserved } : {}),
-            },
-          };
-        });
-
-        return hasChange ? nextData : oldData;
-      });
+      queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (oldData) =>
+        applyTransactionStateToRooms(oldData, data)
+      );
 
       // 새로 생성된 거래 요청처럼 캐시에 없는 필드(title/images 등)는 목록을 다시 받아와 채운다.
       queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
@@ -260,11 +179,7 @@ export const useMessageSync = ({
 
       if (!chatRoomQueryKey) return;
       queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (old) =>
-        old?.map((room) =>
-          room.roomId === data.roomId && isSameMessageId(room.messageId, data.messageId)
-            ? { ...room, lastMessage: data.content }
-            : room
-        )
+        applyMessageEditToRooms(old, data)
       );
     },
     [queryClient, chatRoomQueryKey]
@@ -281,9 +196,7 @@ export const useMessageSync = ({
 
       if (!chatRoomQueryKey) return;
       const rooms = queryClient.getQueryData<ChatRoomListItem[]>(chatRoomQueryKey);
-      const isLastMessage = rooms?.some(
-        (room) => room.roomId === data.roomId && isSameMessageId(room.messageId, data.messageId)
-      );
+      const isLastMessage = isLastMessageOfRoom(rooms, data.roomId, data.messageId);
       // 마지막 메시지가 지워지면 그 이전 메시지는 캐시만으로 알 수 없어 목록을 다시 받아온다
       if (isLastMessage) {
         queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });

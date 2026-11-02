@@ -1,35 +1,24 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
   Dimensions,
-  FlatList,
-  ListRenderItemInfo,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  RefreshControl,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 import { Header, PillTabs, BottomSheetModalWrapper, Button, AlertModal } from '~/shared/ui';
-import { MODE, ModeType } from '~/shared/types/mode';
+import { ActionSheetRow, SellingPanel } from '~/widget/profile/ui';
 import { PostType } from '~/shared/types/postType';
-import { ProductType, TYPE } from '~/shared/types/type';
 import { useDeletePost } from '~/entity/post/model/useDeletePost';
 import { useGetProfile } from '../../model/useGetProfile';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useGetSellingPosts } from '../../model/useGetSellingPosts';
 import { sellingPostsQueryKeys } from '../../model/sellingPostsQueryKeys';
 import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
-import type { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
-import { useThemeColors } from '~/shared/lib/theme';
 
 type SellingTab = 'onSale' | 'sold';
 
@@ -41,274 +30,6 @@ const SELLING_TABS = [
 const getTabIndex = (tab: SellingTab) => SELLING_TABS.findIndex((t) => t.value === tab);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const STATUS_LABEL: Record<ProductType, Record<ModeType, string>> = {
-  [TYPE.OBJECT]: {
-    [MODE.GIVER]: '물건을 팔아요',
-    [MODE.RECEIVER]: '물건이 필요해요',
-  },
-  [TYPE.SERVICE]: {
-    [MODE.GIVER]: '서비스를 할 수 있어요',
-    [MODE.RECEIVER]: '서비스를 해주세요',
-  },
-};
-
-interface ActionSheetRowProps {
-  label: string;
-  labelClassName?: string;
-  disabled?: boolean;
-  onPress?: () => void;
-}
-
-// 카드 우측 점 3개 메뉴(수정/삭제/닫기) 버튼 한 줄. 눌렀을 때 살짝 작아지는 효과를 준다.
-const ActionSheetRow = ({
-  label,
-  labelClassName = 'text-gray-900',
-  disabled = false,
-  onPress,
-}: ActionSheetRowProps) => {
-  const scale = useState(() => new Animated.Value(1))[0];
-
-  const handlePressIn = useCallback(() => {
-    Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
-  }, [scale]);
-
-  const handlePressOut = useCallback(() => {
-    Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
-  }, [scale]);
-
-  return (
-    <TouchableOpacity
-      activeOpacity={1}
-      disabled={disabled}
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      className={disabled ? 'opacity-50' : ''}>
-      <Animated.View
-        className="h-[56px] items-center justify-center"
-        style={{ transform: [{ scale }] }}>
-        <Text className={`text-lg font-medium ${labelClassName}`}>{label}</Text>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-};
-
-const SellingPostCard = ({
-  post,
-  receivedReviews,
-  isReviewsLoading,
-  onMenuPress,
-}: {
-  post: PostType;
-  receivedReviews?: ReviewPostType[];
-  isReviewsLoading?: boolean;
-  onMenuPress: (post: PostType) => void;
-}) => {
-  const router = useRouter();
-  const colors = useThemeColors();
-  const { id, type, mode, title, gwangsan, isCompleted, buyer, imageUrls = [], images = [] } = post;
-  const isTemporary = id < 0;
-
-  const handlePress = useCallback(() => {
-    if (isTemporary) return;
-    router.push(`/post/${id}`);
-  }, [router, id, isTemporary]);
-
-  const handleMenuPress = useCallback(() => {
-    onMenuPress(post);
-  }, [onMenuPress, post]);
-
-  // 이 게시물(거래)에 대해 실제로 받은 후기가 있을 때만 버튼을 보여주고 그 상세로 이동한다
-  const matchedReview = receivedReviews?.find((review) => review.productId === id);
-
-  const handleReviewsPress = useCallback(() => {
-    if (!matchedReview) return;
-    router.push(`/cancelTrade/${matchedReview.reviewId}`);
-  }, [router, matchedReview]);
-
-  const firstImage =
-    imageUrls?.[0]?.imageUrl ??
-    (Array.isArray(images) && images.length > 0
-      ? typeof images[0] === 'string'
-        ? images[0]
-        : (images[0]?.imageUrl ?? null)
-      : null);
-
-  useEffect(() => {
-    if (firstImage) {
-      ExpoImage.prefetch(firstImage);
-    }
-  }, [firstImage]);
-
-  return (
-    <View className="overflow-hidden rounded-2xl bg-gray-50">
-      <View className="gap-4 px-5 py-5">
-        <View className="flex-row items-center gap-4">
-          <TouchableOpacity
-            onPress={handlePress}
-            className="flex-1 flex-row items-center gap-4"
-            activeOpacity={isTemporary ? 1 : 0.7}
-            disabled={isTemporary}>
-            <ExpoImage
-              source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
-              style={{ width: 80, height: 80, borderRadius: 12 }}
-              cachePolicy="memory-disk"
-              contentFit="cover"
-              recyclingKey={firstImage ?? 'placeholder'}
-              transition={200}
-            />
-            <View className="flex-1 gap-1">
-              <View className="flex-row items-center gap-1.5">
-                <Text className="shrink text-lg font-semibold text-foreground" numberOfLines={1}>
-                  {title}
-                </Text>
-                {isCompleted && buyer && (
-                  <Text className="text-xs text-gray-500" numberOfLines={1}>
-                    구매자 {buyer.nickname}
-                  </Text>
-                )}
-              </View>
-              <Text className="text-sm font-medium text-gray-700">{STATUS_LABEL[type][mode]}</Text>
-              <Text className="text-sm text-gray-500">{gwangsan} 광산</Text>
-            </View>
-          </TouchableOpacity>
-          {!isTemporary && !isCompleted && (
-            <TouchableOpacity
-              onPress={handleMenuPress}
-              accessibilityRole="button"
-              accessibilityLabel="게시글 메뉴"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              className="p-1"
-              testID={`selling-card-menu-${id}`}>
-              <Ionicons name="ellipsis-vertical" size={20} color={colors['gray-400']} />
-            </TouchableOpacity>
-          )}
-        </View>
-        {!isTemporary && isCompleted && isReviewsLoading && (
-          <View
-            className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
-            testID={`selling-card-reviews-loading-${id}`}>
-            <ActivityIndicator color="white" />
-          </View>
-        )}
-        {!isTemporary && isCompleted && !isReviewsLoading && matchedReview && (
-          <TouchableOpacity
-            onPress={handleReviewsPress}
-            className="w-full items-center rounded-lg bg-main-500 px-5 py-2.5"
-            testID={`selling-card-reviews-${id}`}>
-            <Text className="text-label font-medium text-white">받은 후기 보기</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-};
-
-interface SellingPanelProps {
-  testIDPrefix: string;
-  posts: PostType[];
-  emptyMessage: string;
-  receivedReviews?: ReviewPostType[];
-  isReviewsLoading?: boolean;
-  isPending: boolean;
-  isRefetching: boolean;
-  isFetchingNextPage: boolean;
-  isFetchNextPageError: boolean;
-  onEndReached: () => void;
-  onRetryNextPage: () => void;
-  onRefresh: () => void;
-  onMenuPress: (post: PostType) => void;
-}
-
-// 게시글이 많아질 수 있어 목록은 FlatList로 가상화하고, 끝에 닿으면 다음 페이지를
-// 이어서 받는다. 추가 로딩 실패는 목록을 비우지 않고 하단에서 재시도로 복구한다.
-const SellingPanel = memo(
-  ({
-    testIDPrefix,
-    posts,
-    emptyMessage,
-    receivedReviews,
-    isReviewsLoading,
-    isPending,
-    isRefetching,
-    isFetchingNextPage,
-    isFetchNextPageError,
-    onEndReached,
-    onRetryNextPage,
-    onRefresh,
-    onMenuPress,
-  }: SellingPanelProps) => {
-    const renderItem = useCallback(
-      ({ item }: ListRenderItemInfo<PostType>) => (
-        <SellingPostCard
-          post={item}
-          receivedReviews={receivedReviews}
-          isReviewsLoading={isReviewsLoading}
-          onMenuPress={onMenuPress}
-        />
-      ),
-      [receivedReviews, isReviewsLoading, onMenuPress]
-    );
-
-    const renderFooter = useCallback(() => {
-      if (isFetchNextPageError) {
-        return (
-          <TouchableOpacity
-            testID={`${testIDPrefix}-retry`}
-            onPress={onRetryNextPage}
-            className="items-center rounded-lg bg-gray-50 px-5 py-3">
-            <Text className="text-label text-gray-700">
-              더 불러오지 못했습니다. 다시 시도하려면 누르세요.
-            </Text>
-          </TouchableOpacity>
-        );
-      }
-
-      if (isFetchingNextPage) {
-        return (
-          <View testID={`${testIDPrefix}-loading-more`} className="items-center py-4">
-            <ActivityIndicator color="#8FC31D" />
-          </View>
-        );
-      }
-
-      return null;
-    }, [isFetchNextPageError, isFetchingNextPage, onRetryNextPage, testIDPrefix]);
-
-    const renderEmpty = useCallback(() => {
-      if (isPending) {
-        return (
-          <View testID={`${testIDPrefix}-loading`} className="pt-20">
-            <ActivityIndicator color="#8FC31D" />
-          </View>
-        );
-      }
-
-      return <Text className="pt-20 text-center text-gray-500">{emptyMessage}</Text>;
-    }, [isPending, emptyMessage, testIDPrefix]);
-
-    return (
-      <FlatList
-        testID={testIDPrefix}
-        style={{ width: SCREEN_WIDTH }}
-        data={posts}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        contentContainerStyle={{ gap: 16, paddingHorizontal: 24, paddingBottom: 36 }}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-        onEndReached={onEndReached}
-        onEndReachedThreshold={0.4}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-        ListEmptyComponent={renderEmpty}
-        ListFooterComponent={renderFooter}
-      />
-    );
-  }
-);
-
-const keyExtractor = (post: PostType) => String(post.id);
 
 export default function SellingPageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
