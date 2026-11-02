@@ -64,9 +64,7 @@ const makeReview = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const mockToss = (
-  options: { data?: unknown[]; isError?: boolean; refetch?: jest.Mock } = {}
-) => {
+const mockToss = (options: { data?: unknown[]; isError?: boolean; refetch?: jest.Mock } = {}) => {
   mockUseGetReviews.mockImplementation(() => ({
     data: options.data ?? [],
     isError: options.isError ?? false,
