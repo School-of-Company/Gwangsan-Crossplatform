@@ -43,6 +43,7 @@ export {
 export type { MessageUpdatedPayload, MessageDeletedPayload } from './lib/messageCache';
 export { useFindChatRoom } from './model/useFindChatRoom';
 export { useChatRoomData } from './model/useChatRoomData';
+export { useChatOtherUser, type ChatOtherUserInfo } from './model/useChatOtherUser';
 export {
   useImageLoader,
   type UseImageLoaderReturn,
