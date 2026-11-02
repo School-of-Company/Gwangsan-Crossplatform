@@ -144,6 +144,16 @@ describe('ChatRoomItem', () => {
     expect(onMenuPress).toHaveBeenCalledWith(1);
   });
 
+  it('메뉴 버튼에 스크린리더용 라벨을 지정한다', () => {
+    const onMenuPress = jest.fn();
+    const { getByRole } = render(
+      <ChatRoomItem room={baseRoom} onPress={jest.fn()} onMenuPress={onMenuPress} />
+    );
+
+    fireEvent.press(getByRole('button', { name: '채팅방 메뉴' }));
+    expect(onMenuPress).toHaveBeenCalledWith(1);
+  });
+
   it('onMenuPress가 없어도 메뉴 버튼을 눌렀을 때 에러가 발생하지 않는다', () => {
     const { UNSAFE_getAllByType } = render(<ChatRoomItem room={baseRoom} onPress={jest.fn()} />);
     const { TouchableOpacity } = require('react-native');
