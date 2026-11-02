@@ -4,6 +4,12 @@ import { chatRoomKeys } from '../chatQueryKeys';
 import { selectChatOtherUser, useChatOtherUser } from '../useChatOtherUser';
 import type { RoomId } from '~/shared/types/chatType';
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+}));
+
 const ROOM_ID = 10 as RoomId;
 
 const makeMessage = (overrides: Partial<ChatMessageResponse> = {}): ChatMessageResponse =>
