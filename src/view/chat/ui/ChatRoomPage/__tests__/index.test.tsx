@@ -798,14 +798,21 @@ describe('ChatRoomPage', () => {
     expect(mockMarkRoomAsRead).toHaveBeenCalledWith(10);
   });
 
-  it('ChatInput의 disabled는 connectionState가 connected가 아니면 true이다', () => {
+  it('소켓 연결이 끊겨도 ChatInput을 막지 않고(대기열 경유 전송) 끊김 배너를 띄운다', () => {
     mockUseChatRoomController.mockReturnValue(
       makeChatMessagesReturn({ connectionState: 'disconnected' })
     );
 
     const { getByTestId } = render(<ChatRoomPage />);
 
-    expect(getByTestId('chat-input-disabled').props.children).toBe('true');
+    expect(getByTestId('chat-input-disabled').props.children).toBe('false');
+    expect(getByTestId('chat-connection-banner')).toBeTruthy();
+  });
+
+  it('연결돼 있으면 연결 상태 배너를 띄우지 않는다', () => {
+    const { queryByTestId } = render(<ChatRoomPage />);
+
+    expect(queryByTestId('chat-connection-banner')).toBeNull();
   });
 
   it('ChatInput의 disabled는 connectionState가 connected이면 false이다', () => {

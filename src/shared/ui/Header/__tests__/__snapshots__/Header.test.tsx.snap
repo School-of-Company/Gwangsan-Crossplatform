@@ -55,13 +55,20 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
       채팅방
     </Text>
     <View
-      className="size-2 rounded-full"
-      style={
-        {
-          "backgroundColor": "#22C55E",
+      accessibilityLabel="연결됨"
+      accessible={true}
+      className="flex-row items-center gap-1"
+      testID="header-connection-indicator"
+    >
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#22C55E",
+          }
         }
-      }
-    />
+      />
+    </View>
   </View>
   <View
     className="w-10"
@@ -124,13 +131,25 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
       채팅방
     </Text>
     <View
-      className="size-2 rounded-full"
-      style={
-        {
-          "backgroundColor": "#F59E0B",
+      accessibilityLabel="연결 중"
+      accessible={true}
+      className="flex-row items-center gap-1"
+      testID="header-connection-indicator"
+    >
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#F59E0B",
+          }
         }
-      }
-    />
+      />
+      <Text
+        className="text-caption text-gray-500"
+      >
+        연결 중
+      </Text>
+    </View>
   </View>
   <View
     className="w-10"
@@ -193,13 +212,25 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
       채팅방
     </Text>
     <View
-      className="size-2 rounded-full"
-      style={
-        {
-          "backgroundColor": "#EF4444",
+      accessibilityLabel="연결 끊김"
+      accessible={true}
+      className="flex-row items-center gap-1"
+      testID="header-connection-indicator"
+    >
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#EF4444",
+          }
         }
-      }
-    />
+      />
+      <Text
+        className="text-caption text-gray-500"
+      >
+        연결 끊김
+      </Text>
+    </View>
   </View>
   <View
     className="w-10"
