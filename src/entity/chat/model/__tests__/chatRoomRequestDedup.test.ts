@@ -1,14 +1,16 @@
-import { waitFor } from '@testing-library/react-native';
+import { act, waitFor } from '@testing-library/react-native';
 import { QueryClient } from '@tanstack/react-query';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatMessages } from '../useChatMessages';
 import { useChatRoomData } from '../useChatRoomData';
-import { chatRoomDataKeys } from '../chatQueryKeys';
-import { getChatRoomData } from '../../api/getChatMessages';
+import { chatMessageKeys, chatRoomDataKeys } from '../chatQueryKeys';
+import { getChatRoomData, CHAT_MESSAGE_PAGE_SIZE } from '../../api/getChatMessages';
+import type { ChatMessagePages } from '../../lib/messageCache';
 
 // 채팅방 진입 시 GET /chat/{roomId} 요청 횟수를 확인한다(#731)
 
 jest.mock('../../api/getChatMessages', () => ({
+  CHAT_MESSAGE_PAGE_SIZE: 30,
   getChatMessages: jest.fn(),
   getChatRoomData: jest.fn(),
 }));
@@ -99,5 +101,67 @@ describe('채팅방 진입 요청 중복 제거', () => {
 
     await waitFor(() => expect(result.current.data).toHaveLength(1));
     expect(mockGetChatRoomData).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('이전 메시지 페이지 로드', () => {
+  // 서버처럼 최신순으로 fromId부터 count개
+  const makeMessages = (fromId: number, count: number) =>
+    Array.from({ length: count }, (_, i) => {
+      const id = fromId - i;
+      return {
+        ...roomResponse.messages[0],
+        messageId: id,
+        createdAt: `2026-09-29T10:${String(id).padStart(2, '0')}:00`,
+      };
+    });
+
+  it('최신 페이지가 가득 차 있으면 가장 오래된 메시지를 커서로 이전 페이지를 요청한다', async () => {
+    const latest = makeMessages(59, CHAT_MESSAGE_PAGE_SIZE); // 59..30
+    const older = makeMessages(29, 5); // 29..25
+    mockGetChatRoomData
+      .mockResolvedValueOnce({ product: null, messages: latest })
+      .mockResolvedValueOnce({ product: null, messages: older });
+
+    const { result } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+    await waitFor(() => expect(result.current.data).toHaveLength(CHAT_MESSAGE_PAGE_SIZE));
+    expect(result.current.hasNextPage).toBe(true);
+
+    await act(async () => {
+      await result.current.fetchNextPage();
+    });
+
+    const oldestOfLatest = latest[latest.length - 1];
+    expect(mockGetChatRoomData).toHaveBeenLastCalledWith(ROOM_ID, {
+      cursor: { lastCreatedAt: oldestOfLatest.createdAt, lastMessageId: oldestOfLatest.messageId },
+    });
+    await waitFor(() => expect(result.current.data).toHaveLength(CHAT_MESSAGE_PAGE_SIZE + 5));
+    expect(result.current.data[0].messageId).toBe(25);
+    expect(result.current.data[result.current.data.length - 1].messageId).toBe(59);
+    expect(result.current.hasNextPage).toBe(false);
+  });
+
+  it('방을 나가면 쌓아 둔 이전 페이지를 버리고 최신 페이지만 남긴다', async () => {
+    mockGetChatRoomData
+      .mockResolvedValueOnce({ product: null, messages: makeMessages(59, CHAT_MESSAGE_PAGE_SIZE) })
+      .mockResolvedValueOnce({ product: null, messages: makeMessages(29, 5) });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    const { result, unmount } = renderHookWithProviders(() => useChatMessages(ROOM_ID), {
+      queryClient,
+    });
+    await waitFor(() => expect(result.current.hasNextPage).toBe(true));
+    await act(async () => {
+      await result.current.fetchNextPage();
+    });
+    expect(
+      queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(ROOM_ID))?.pages
+    ).toHaveLength(2);
+
+    unmount();
+
+    const cached = queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(ROOM_ID));
+    expect(cached?.pages).toHaveLength(1);
+    expect(cached?.pageParams).toEqual([null]);
   });
 });

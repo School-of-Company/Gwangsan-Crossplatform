@@ -19,8 +19,10 @@ import {
   chatRoomKeys,
   chatMessageKeys,
   getChatRoomData,
+  seedMessagePagesFromSnapshot,
+  CHAT_MESSAGE_PAGE_SIZE,
 } from '@/entity/chat';
-import type { ChatRoomListItem, ChatMessageResponse } from '@/entity/chat';
+import type { ChatRoomListItem, ChatMessagePages } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
@@ -31,14 +33,6 @@ import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
-
-// 배열 정렬 방향에 기대지 않고 실제 최신 시각을 구한다 — REST/소켓 배열의 정렬 방향이
-// 다를 수 있다(#610). 파싱 불가능한 값은 최신 판정에 끼어들지 않도록 무시한다.
-const getLatestMessageTime = (messages: readonly ChatMessageResponse[]): number =>
-  messages.reduce((max, message) => {
-    const time = new Date(message.createdAt).getTime();
-    return Number.isFinite(time) && time > max ? time : max;
-  }, 0);
 
 interface ActionSheetRowProps {
   label: string;
@@ -144,7 +138,7 @@ export function ChatRoomList() {
 
   // 상품의 '채팅하기'로 재참여하면 같은 roomId가 서버 목록에 다시 나타난다. hiddenRoomIds는
   // 나가기 애니메이션용 임시 캐시라 자동으로 정리되지 않으므로, 재참여로 복원된 방을 그대로
-  // 두면 계속 숨겨진 채로 남는다(#609). useChatSocket의 blockStateRoomId와 같은 방식으로,
+  // 두면 계속 숨겨진 채로 남는다. useChatSocket의 blockStateRoomId와 같은 방식으로,
   // effect 대신 렌더링 중 chatRooms 변화를 감지해 즉시 걷어낸다. 단, 그 방에 대한 나가기
   // 요청이 아직 진행 중이면(삭제 완료 전에 폴링 응답이 먼저 도착한 경우) 되살리지 않는다.
   const [prevChatRooms, setPrevChatRooms] = useState(chatRooms);
@@ -177,21 +171,9 @@ export function ChatRoomList() {
           staleTime: 30 * 1000,
         })
         .then((data) => {
-          // 서버는 Redis Stream 발행 후 DB에 비동기로 저장하므로, 이 REST snapshot에는
-          // 방금 보낸 메시지가 아직 없을 수 있다. 무조건 덮어쓰면 소켓 echo로 이미 반영된
-          // 최신 메시지가 재입장 시 일시적으로 사라진다(#610) — 기존 캐시와 snapshot 중
-          // 최대 createdAt이 더 큰 쪽을 그대로 쓴다. 배열 병합/ID union은 하지 않는다
-          // (소켓·REST 간 ID 표현 차이로 중복이 생길 수 있고, 서버 페이지 크기 제한을
-          // 클라이언트가 깨뜨리게 된다).
-          queryClient.setQueryData(
-            chatMessageKeys.room(roomId),
-            (oldData: ChatMessageResponse[] | undefined) => {
-              if (!oldData || oldData.length === 0) return [...data.messages];
-
-              return getLatestMessageTime(data.messages) > getLatestMessageTime(oldData)
-                ? [...data.messages]
-                : oldData;
-            }
+          // 방금 보낸 메시지가 snapshot에 아직 없을 수 있어 더 최신인 쪽을 남긴다
+          queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
+            seedMessagePagesFromSnapshot(oldData, data.messages, CHAT_MESSAGE_PAGE_SIZE)
           );
         })
         .catch(() => {});
