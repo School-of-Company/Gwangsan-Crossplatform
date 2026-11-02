@@ -98,42 +98,30 @@ describe('useGetPosts', () => {
       expect(mockToastShow).not.toHaveBeenCalled();
     });
 
-    it('4xx 응답이면 토스트를 띄우고 false를 반환한다', () => {
+    it('4xx 응답이면 토스트 없이 false를 반환한다', () => {
       mockGetPosts.mockResolvedValue([]);
       const throwOnError = getThrowOnError();
 
       expect(throwOnError(makeAxiosError(404))).toBe(false);
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: '게시물 불러오기 실패',
-        text2: 'failed',
-      });
+      expect(mockToastShow).not.toHaveBeenCalled();
     });
 
-    it('AxiosError가 아니면 토스트를 띄우고 false를 반환한다', () => {
+    it('AxiosError가 아니면 토스트 없이 false를 반환한다', () => {
       mockGetPosts.mockResolvedValue([]);
       const throwOnError = getThrowOnError();
       const error = new Error('network down');
 
       expect(throwOnError(error)).toBe(false);
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: '게시물 불러오기 실패',
-        text2: 'network down',
-      });
+      expect(mockToastShow).not.toHaveBeenCalled();
     });
 
-    it('status가 없는 AxiosError면 토스트를 띄우고 false를 반환한다', () => {
+    it('status가 없는 AxiosError면 토스트 없이 false를 반환한다', () => {
       mockGetPosts.mockResolvedValue([]);
       const throwOnError = getThrowOnError();
       const error = new AxiosError('no response', 'ERR_NETWORK');
 
       expect(throwOnError(error)).toBe(false);
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: '게시물 불러오기 실패',
-        text2: 'no response',
-      });
+      expect(mockToastShow).not.toHaveBeenCalled();
     });
   });
 });
