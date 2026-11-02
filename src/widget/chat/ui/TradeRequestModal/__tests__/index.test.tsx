@@ -6,7 +6,6 @@ import { TradeRequestModal } from '../index';
 jest.mock('~/shared/ui', () => ({
   BottomSheetModalWrapper: ({ isVisible, children, title, onClose }: any) => {
     if (!isVisible) return null;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View>
@@ -17,7 +16,6 @@ jest.mock('~/shared/ui', () => ({
     );
   },
   Button: ({ children, onPress, disabled }: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { TouchableOpacity, Text } = require('react-native');
     return (
       <TouchableOpacity

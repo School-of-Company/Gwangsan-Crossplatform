@@ -5,7 +5,6 @@ import { ReservationTimeSheet } from '../index';
 jest.mock('~/shared/ui/BottomSheetModalWrapper', () => ({
   BottomSheetModalWrapper: ({ isVisible, children, onClose }: any) => {
     if (!isVisible) return null;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, TouchableOpacity } = require('react-native');
     return (
       <View>
@@ -21,7 +20,6 @@ jest.mock('~/shared/ui/BottomSheetModalWrapper', () => ({
 // actual pan-handling business logic (onStart/onUpdate/onEnd bodies) is gesture
 // plumbing, not something worth simulating here.
 jest.mock('react-native-gesture-handler', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   const createPanStub = () => {
     const stub: any = {};
