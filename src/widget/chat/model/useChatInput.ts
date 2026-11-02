@@ -148,6 +148,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       const images = selectedImages.map((img) => ({
         imageId: img.imageId,
         imageUrl: img.localUri,
+        remoteUrl: img.imageUrl,
       }));
 
       onSendMessage(content, imageIds, images);
