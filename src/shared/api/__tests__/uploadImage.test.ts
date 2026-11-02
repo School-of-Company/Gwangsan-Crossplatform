@@ -1,5 +1,7 @@
+import { AxiosError } from 'axios';
 import { uploadImage } from '../uploadImage';
 import { instance } from '~/shared/lib/axios';
+import { createAxiosError } from '~/test-utils/axiosError';
 import * as FileSystem from 'expo-file-system';
 
 jest.mock('@sentry/react-native', () => ({
@@ -114,6 +116,19 @@ describe('uploadImage', () => {
     mockPost.mockRejectedValue(new Error('Upload failed'));
 
     await expect(uploadImage('file:///local/path/photo.jpg')).rejects.toThrow('Upload failed');
+  });
+
+  it('서버 4xx는 서버 메시지로 바꾸되 상태 코드를 유지한 AxiosError로 던진다', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockPost.mockRejectedValue(
+      createAxiosError(413, { message: '업로드할 수 있는 크기를 초과했습니다.' })
+    );
+
+    const error = await uploadImage('file:///local/path/photo.jpg').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(413);
+    expect((error as Error).message).toBe('업로드할 수 있는 크기를 초과했습니다.');
   });
 
   describe('Android 플랫폼', () => {

@@ -1,16 +1,8 @@
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
 import { ActivityIndicator } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { KakaoMapMarkerWebView } from '../KakaoMapMarkerWebView';
 
-// EXPO_PUBLIC_KAKAO_JS_KEY is inlined at babel-transform time by
-// react-native-dotenv from the repo's committed .env file (see the identical
-// note in ReservationMapPage/__tests__/KakaoMapWebView.test.tsx).
-const rootEnvPath = path.resolve(__dirname, '../../../../../../.env');
-const parsedEnv = dotenv.parse(fs.readFileSync(rootEnvPath));
-const KAKAO_JS_KEY = parsedEnv.EXPO_PUBLIC_KAKAO_JS_KEY;
+const KAKAO_JS_KEY = process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
 
 let lastWebViewProps: any = null;
 
@@ -30,10 +22,6 @@ describe('KakaoMapMarkerWebView', () => {
 
   beforeEach(() => {
     lastWebViewProps = null;
-  });
-
-  it('sanity check: .env defines a non-empty EXPO_PUBLIC_KAKAO_JS_KEY (precondition for the tests below)', () => {
-    expect(KAKAO_JS_KEY).toBeTruthy();
   });
 
   it('카카오 JS 키가 있으면 appKey와 중심 좌표가 담긴 HTML source로 WebView를 렌더링한다', () => {
@@ -105,5 +93,25 @@ describe('KakaoMapMarkerWebView', () => {
     const { UNSAFE_getByType } = render(<KakaoMapMarkerWebView center={center} />);
 
     expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+  });
+
+  it('지도 준비(ready) 메시지를 받으면 로딩 스피너를 걷어낸다', () => {
+    const { UNSAFE_queryByType } = render(<KakaoMapMarkerWebView center={center} />);
+
+    act(() => {
+      lastWebViewProps.onMessage({ nativeEvent: { data: JSON.stringify({ type: 'ready' }) } });
+    });
+
+    expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+  });
+
+  it('스피너가 사라진 뒤에도 WebView는 그대로 유지된다', () => {
+    const { getByTestId } = render(<KakaoMapMarkerWebView center={center} />);
+
+    act(() => {
+      lastWebViewProps.onMessage({ nativeEvent: { data: '{}' } });
+    });
+
+    expect(getByTestId('kakao-webview')).toBeTruthy();
   });
 });

@@ -1,4 +1,5 @@
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { CachedImage } from '~/shared/ui/CachedImage';
 
 interface GwangsanBannerProps {
   gwangsan?: number;
@@ -7,10 +8,12 @@ interface GwangsanBannerProps {
 export default function GwangsanBanner({ gwangsan }: GwangsanBannerProps) {
   return (
     <View className="flex flex-row items-center gap-3 bg-background px-6 py-5">
-      <Image
+      <CachedImage
         source={require('~/shared/assets/png/Gwangsan.png')}
         style={{ width: 48, height: 44 }}
-        resizeMode="contain"
+        contentFit="contain"
+        accessible
+        accessibilityLabel="광산 화폐 아이콘"
       />
       <View className="flex gap-1">
         <Text className="text-body1 text-foreground">광산</Text>

@@ -407,6 +407,14 @@ const ImageUploader = ({
               key={`${uri}-${idx}`}
               onPress={() => removeImage(idx)}
               disabled={readonly || isUploading}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isUploading
+                  ? `사진 ${idx + 1} 업로드 중`
+                  : isFailed
+                    ? `사진 ${idx + 1} 업로드 실패, 눌러서 삭제`
+                    : `사진 ${idx + 1} 삭제`
+              }
               className="relative h-12 w-12">
               <Image
                 source={{ uri }}
@@ -428,6 +436,8 @@ const ImageUploader = ({
         {canAddMoreImages && (
           <TouchableOpacity
             onPress={pickImage}
+            accessibilityRole="button"
+            accessibilityLabel="사진 추가"
             className="h-12 w-12 items-center justify-center rounded-full bg-gray-50">
             <Icon name="add" size={24} color={colors.foreground} />
           </TouchableOpacity>

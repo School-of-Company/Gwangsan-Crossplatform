@@ -67,7 +67,7 @@ const ActionSheetRow = ({
   disabled = false,
   onPress,
 }: ActionSheetRowProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(() => {
     Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
@@ -176,6 +176,8 @@ const SellingPostCard = ({
           {!isTemporary && !isCompleted && (
             <TouchableOpacity
               onPress={handleMenuPress}
+              accessibilityRole="button"
+              accessibilityLabel="게시글 메뉴"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className="p-1"
               testID={`selling-card-menu-${id}`}>

@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Update npm
@@ -64,7 +64,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Update npm
@@ -98,7 +98,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Update npm
@@ -135,14 +135,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      # 기존에 확인된 취약점(21건, critical 1건)이 아직 해소되지 않아 우선 리포트만 남깁니다.
-      # 정리가 끝나면 `continue-on-error`를 제거해 실패 게이트로 전환하세요.
-      - name: Run npm audit (report only, not yet blocking)
+      # critical은 0건이라 실패 게이트로 둔다. 남은 high(@expo/cli의 zod 3, metro의 image-size,
+      # expo-router의 query-string → decode-uri-component)는 Expo SDK 메이저 업그레이드로만 해소돼 리포트만 남긴다.
+      - name: Run npm audit (blocking on critical)
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Run npm audit (report high, not blocking)
         continue-on-error: true
         run: npm audit --omit=dev --audit-level=high

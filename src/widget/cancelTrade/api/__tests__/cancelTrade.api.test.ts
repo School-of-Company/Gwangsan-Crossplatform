@@ -1,4 +1,6 @@
+import { AxiosError } from 'axios';
 import { instance } from '~/shared/lib/axios';
+import { createAxiosError } from '~/test-utils/axiosError';
 import { cancelTrade } from '../cancelTrade';
 
 jest.mock('~/shared/lib/axios', () => ({
@@ -35,5 +37,15 @@ describe('cancelTrade', () => {
     mockPost.mockRejectedValue(new Error('Server error'));
 
     await expect(cancelTrade('사유', [], 1)).rejects.toThrow('Server error');
+  });
+
+  it('4xx는 서버 메시지로 바꾸되 상태 코드를 유지한 AxiosError로 던진다', async () => {
+    mockPost.mockRejectedValue(createAxiosError(409, { message: '이미 철회된 거래입니다.' }));
+
+    const error = await cancelTrade('사유', [], 1).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(409);
+    expect((error as Error).message).toBe('이미 철회된 거래입니다.');
   });
 });

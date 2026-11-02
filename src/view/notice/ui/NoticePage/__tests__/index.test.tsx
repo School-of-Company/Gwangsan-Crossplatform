@@ -98,9 +98,10 @@ describe('NoticePage', () => {
       refetch: mockRefetch,
     });
 
-    const { queryByTestId } = renderWithProviders(<NoticePage />);
+    const { queryByTestId, getByText } = renderWithProviders(<NoticePage />);
 
     expect(queryByTestId('notice-item-1')).toBeNull();
+    expect(getByText('등록된 공지사항이 없습니다.')).toBeTruthy();
   });
 
   it('헤더에 "공지" 타이틀을 표시한다', () => {

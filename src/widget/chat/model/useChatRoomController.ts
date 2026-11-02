@@ -24,6 +24,7 @@ interface UseChatRoomControllerReturn {
   readonly otherUserInfo: { nickname: string; id?: number };
   readonly isLoading: boolean;
   readonly isError: boolean;
+  readonly refetch: () => void;
   readonly connectionState: 'connected' | 'connecting' | 'disconnected';
   readonly isBlockedByOtherUser: boolean;
   readonly messageHandlers: {
@@ -44,7 +45,7 @@ export const useChatRoomController = ({
 }: UseChatRoomControllerParams): UseChatRoomControllerReturn => {
   const flatListRef = useAnimatedRef<FlatList>();
 
-  const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
+  const { data: messages, isLoading, isError, refetch } = useChatMessagesEntity(roomId);
 
   const chatMessageQueryKey = useMemo(() => chatMessageKeys.room(roomId), [roomId]);
 
@@ -100,6 +101,7 @@ export const useChatRoomController = ({
     otherUserInfo,
     isLoading,
     isError,
+    refetch,
     connectionState,
     isBlockedByOtherUser,
     messageHandlers,
