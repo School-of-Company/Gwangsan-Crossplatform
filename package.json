@@ -1,6 +1,6 @@
 {
-  "name": "my-expo-app",
-  "version": "1.0.0",
+  "name": "gwangsan-crossplatform",
+  "version": "1.2.2",
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -145,5 +145,8 @@
       }
     }
   },
-  "overrides": {}
+  "overrides": {},
+  "engines": {
+    "node": ">=22.13.0"
+  }
 }
