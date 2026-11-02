@@ -101,6 +101,7 @@ export function ChatRoomList() {
     nickname: string;
     memberId: number;
   } | null>(null);
+  const [leaveTargetRoomId, setLeaveTargetRoomId] = useState<RoomId | null>(null);
   const hasRooms = (chatRooms?.length ?? 0) > 0;
 
   // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
@@ -198,8 +199,15 @@ export function ChatRoomList() {
     [router, queryClient, joinRoom]
   );
 
-  const handleRefresh = useCallback(() => {
-    refetch();
+  // 30초 폴링에도 isRefetching이 켜지므로, 사용자가 당겨서 새로고침한 동안만 스피너를 유지한다
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsPullRefreshing(false);
+    }
   }, [refetch]);
 
   const handleChatRoomLongPress = useCallback((roomId: RoomId) => {
@@ -210,14 +218,24 @@ export function ChatRoomList() {
     setActionTargetRoomId(null);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleLeavePress = useCallback(() => {
     if (actionTargetRoomId === null) return;
+    setLeaveTargetRoomId(actionTargetRoomId);
+    setActionTargetRoomId(null);
+  }, [actionTargetRoomId]);
+
+  const handleCloseLeaveAlert = useCallback(() => {
+    setLeaveTargetRoomId(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (leaveTargetRoomId === null) return;
 
     // 슬라이드 아웃 애니메이션은 API 응답과 무관하게 먼저 재생한다 — 낙관적 업데이트.
     // 실제 삭제 요청은 애니메이션이 끝나 목록에서 제거된 뒤 handleChatRoomExited에서 보낸다.
-    setExitingRoomId(actionTargetRoomId);
-    setActionTargetRoomId(null);
-  }, [actionTargetRoomId]);
+    setExitingRoomId(leaveTargetRoomId);
+    setLeaveTargetRoomId(null);
+  }, [leaveTargetRoomId]);
 
   const handleBlockPress = useCallback(() => {
     if (actionTargetRoom === null || actionTargetMemberId === undefined) return;
@@ -320,7 +338,7 @@ export function ChatRoomList() {
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
-      <Text className="text-base text-gray-500">아직 채팅방 없습니다</Text>
+      <Text className="text-base text-gray-500">아직 채팅방이 없습니다</Text>
     </View>
   );
 
@@ -336,7 +354,7 @@ export function ChatRoomList() {
         data={visibleChatRooms}
         renderItem={renderChatRoomItem}
         keyExtractor={(item) => item.roomId.toString()}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+        refreshControl={<RefreshControl refreshing={isPullRefreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={isLoading ? renderLoadingState : renderEmptyState}
         showsVerticalScrollIndicator={false}
         className="flex-1"
@@ -364,7 +382,7 @@ export function ChatRoomList() {
               label={deleteChatRoomMutation.isPending ? '나가는 중...' : '채팅방 나가기'}
               labelClassName="text-error-500"
               disabled={deleteChatRoomMutation.isPending}
-              onPress={handleConfirmDelete}
+              onPress={handleLeavePress}
             />
           </View>
           <View className="mb-3">
@@ -387,6 +405,15 @@ export function ChatRoomList() {
         isLoading={block.isPending}
         onCancel={handleCloseBlockAlert}
         onConfirm={handleConfirmBlock}
+      />
+
+      <AlertModal
+        isVisible={leaveTargetRoomId !== null}
+        message="채팅방을 나가시겠습니까?"
+        confirmText="나가기"
+        destructive
+        onCancel={handleCloseLeaveAlert}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );
