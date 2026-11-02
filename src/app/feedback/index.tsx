@@ -1,10 +1,10 @@
 import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import FeedbackPage from '~/view/feedback/ui/FeedbackPage';
+import { FeedbackListPage } from '~/view/feedback';
 
-export default function Feedback() {
+export default function FeedbackList() {
   return (
-    <FeatureErrorBoundary featureName="Feedback">
-      <FeedbackPage />
+    <FeatureErrorBoundary featureName="FeedbackList">
+      <FeedbackListPage />
     </FeatureErrorBoundary>
   );
 }

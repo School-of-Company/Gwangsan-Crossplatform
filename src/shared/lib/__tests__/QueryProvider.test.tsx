@@ -11,7 +11,8 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
-import QueryProvider, { shouldRetryQuery } from '../QueryProvider';
+import QueryProvider, { shouldRetryQuery, shouldThrowQueryError } from '../QueryProvider';
+import { toAppError } from '../errorHandler';
 import { setQueryClientInstance } from '../axios';
 import * as Sentry from '@sentry/react-native';
 
@@ -125,6 +126,14 @@ describe('QueryProvider', () => {
 
     it('AxiosError가 아니면 던지지 않는다', () => {
       expect(callThrowOnError(new Error('boom'), undefined)).toBe(false);
+    });
+
+    it('toAppError로 메시지가 바뀐 AxiosError도 상태 코드로 판단한다', () => {
+      const error = toAppError(makeAxiosError(502));
+
+      expect(shouldThrowQueryError(error, false)).toBe(true);
+      expect(shouldThrowQueryError(error, true)).toBe(false);
+      expect(shouldThrowQueryError(toAppError(makeAxiosError(403)), false)).toBe(false);
     });
   });
 

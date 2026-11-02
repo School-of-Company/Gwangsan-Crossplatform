@@ -48,6 +48,10 @@ export function Header({
       <TouchableOpacity
         onPress={handleBack}
         disabled={!showBackButton}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+        accessibilityElementsHidden={!showBackButton}
+        importantForAccessibility={showBackButton ? 'auto' : 'no-hide-descendants'}
         className={
           showBackButton
             ? 'w-10 items-center justify-center'
@@ -71,7 +75,11 @@ export function Header({
         )}
       </View>
       {showMenuButton ? (
-        <TouchableOpacity onPress={onMenuPress} className="w-10 items-center justify-center">
+        <TouchableOpacity
+          onPress={onMenuPress}
+          accessibilityRole="button"
+          accessibilityLabel="메뉴 더보기"
+          className="w-10 items-center justify-center">
           <Icon name="ellipsis-vertical" size={24} />
         </TouchableOpacity>
       ) : (

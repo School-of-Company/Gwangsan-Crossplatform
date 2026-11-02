@@ -269,6 +269,8 @@ export function BottomSheetModalWrapper({
                   {showCloseButton && (
                     <TouchableOpacity
                       onPress={onClose}
+                      accessibilityRole="button"
+                      accessibilityLabel="닫기"
                       className="absolute right-0"
                       style={{ right: 0 }}>
                       <Icon name="close" size={24} color={colors['gray-700']} />

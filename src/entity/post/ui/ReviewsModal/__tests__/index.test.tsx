@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import ReviewsModal from '../index';
 
 jest.mock('~/shared/ui', () => ({
@@ -100,6 +100,33 @@ describe('ReviewsModal', () => {
     fireEvent.press(getByTestId('submit-button'));
 
     expect(onSubmit).toHaveBeenCalledWith(70, '좋은 거래였어요');
+  });
+
+  it('제출이 끝나기 전에 "작성완료"를 연타해도 onSubmit은 한 번만 호출된다', async () => {
+    let resolveSubmit: () => void = () => {};
+    const onSubmit = jest.fn(() => new Promise<void>((resolve) => (resolveSubmit = resolve)));
+    const { getByTestId } = render(
+      <ReviewsModal {...defaultProps} contents="좋은 거래였어요" onSubmit={onSubmit} />
+    );
+
+    fireEvent.press(getByTestId('submit-button'));
+    fireEvent.press(getByTestId('submit-button'));
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    await act(async () => resolveSubmit());
+    fireEvent.press(getByTestId('submit-button'));
+
+    expect(onSubmit).toHaveBeenCalledTimes(2);
+  });
+
+  it('제출 중이면 버튼을 비활성화하고 "작성 중..."을 표시한다', () => {
+    const { getByTestId, getByText } = render(
+      <ReviewsModal {...defaultProps} contents="좋은 거래였어요" isSubmitting />
+    );
+
+    expect(getByTestId('submit-button')).toBeDisabled();
+    expect(getByText('작성 중...')).toBeTruthy();
   });
 
   it('내용을 입력하고 제출하면 입력한 내용이 onSubmit에 전달된다', () => {

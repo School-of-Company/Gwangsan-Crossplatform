@@ -25,6 +25,17 @@ export const shouldRetryQuery = (failureCount: number, error: unknown): boolean 
   return status === undefined || status >= 500;
 };
 
+// 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도
+// 화면 전체를 ErrorBoundary로 날리지 않고 기존 데이터를 유지한다.
+export const shouldThrowQueryError = (error: unknown, hasCachedData: boolean): boolean => {
+  if (hasCachedData) return false;
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    return status !== undefined && status >= 500;
+  }
+  return false;
+};
+
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
@@ -71,16 +82,7 @@ const queryClient = new QueryClient({
       retry: shouldRetryQuery,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
-      // 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도
-      // 화면 전체를 ErrorBoundary로 날리지 않고 기존 데이터를 유지한다.
-      throwOnError: (error, query) => {
-        if (query.state.data !== undefined) return false;
-        if (error instanceof AxiosError) {
-          const status = error.response?.status;
-          return status !== undefined && status >= 500;
-        }
-        return false;
-      },
+      throwOnError: (error, query) => shouldThrowQueryError(error, query.state.data !== undefined),
     },
   },
 });

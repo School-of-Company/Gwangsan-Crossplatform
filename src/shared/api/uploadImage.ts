@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { ImageType } from '../types/imageType';
 import { logger } from '../lib/logger';
+import { toAppError } from '../lib/errorHandler';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -44,6 +45,6 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
     return response.data;
   } catch (error) {
     logger.error('uploadImage failed', error);
-    throw error;
+    throw toAppError(error);
   }
 };

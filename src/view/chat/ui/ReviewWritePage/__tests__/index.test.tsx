@@ -117,6 +117,44 @@ describe('ReviewWritePage', () => {
     expect(node?.props.disabled).toBe(true);
   });
 
+  it('후기 내용이 비어있으면 비활성 사유를 표시하고, 입력하면 사라진다', () => {
+    const { getByTestId, getByPlaceholderText, queryByTestId } = render(<ReviewWritePage />);
+
+    expect(getByTestId('review-write-disabled-reason').props.children).toBe(
+      '후기 내용을 입력해 주세요.'
+    );
+
+    fireEvent.changeText(getByPlaceholderText('거래의 후기를 입력해주세요'), '좋았어요');
+
+    expect(queryByTestId('review-write-disabled-reason')).toBeNull();
+  });
+
+  it('거래 정보(상품·상대방)가 없으면 내용을 입력해도 버튼을 비활성화하고 사유를 표시한다', () => {
+    mockUseChatRoomData.mockReturnValue({ data: undefined, isError: false });
+
+    const { getByTestId, getByPlaceholderText, getByText } = render(<ReviewWritePage />);
+    fireEvent.changeText(getByPlaceholderText('거래의 후기를 입력해주세요'), '좋았어요');
+
+    expect(getByTestId('review-write-disabled-reason').props.children).toBe(
+      '거래 정보를 불러오는 중이에요.'
+    );
+    let node: any = getByText('작성완료');
+    while (node && node.props.disabled === undefined) {
+      node = node.parent;
+    }
+    expect(node?.props.disabled).toBe(true);
+  });
+
+  it('거래 정보 조회에 실패하면 실패 사유를 표시한다', () => {
+    mockUseChatRoomData.mockReturnValue({ data: undefined, isError: true });
+
+    const { getByTestId } = render(<ReviewWritePage />);
+
+    expect(getByTestId('review-write-disabled-reason').props.children).toBe(
+      '거래 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
+    );
+  });
+
   it('후기 내용을 입력하고 작성완료를 누르면 createReview가 호출되고 뒤로 이동한다', async () => {
     const { getByPlaceholderText, getByText } = render(<ReviewWritePage />);
 

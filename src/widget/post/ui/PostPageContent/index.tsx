@@ -5,16 +5,14 @@ import {
   View,
   TouchableOpacity,
   RefreshControl,
-  Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  useWindowDimensions,
 } from 'react-native';
 import MiniProfile from '~/entity/post/ui/miniProfile';
 import { Button, SlideIndicator } from '~/shared/ui';
 import type { PostDetailResponse } from '~/entity/post/api/getItem';
 import { CachedImage } from '~/shared/ui/CachedImage';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface PostPageContentProps {
   readonly data: PostDetailResponse;
@@ -53,16 +51,17 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
   onRefresh,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { width: screenWidth } = useWindowDimensions();
   const imageScrollRef = useRef<ScrollView>(null);
 
   const handleImageIndicatorPress = (index: number) => {
-    imageScrollRef.current?.scrollTo({ x: SCREEN_WIDTH * index, animated: true });
+    imageScrollRef.current?.scrollTo({ x: screenWidth * index, animated: true });
     setCurrentImageIndex(index);
   };
 
   const handleImageScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    setCurrentImageIndex(Math.round(contentOffsetX / SCREEN_WIDTH));
+    setCurrentImageIndex(Math.round(contentOffsetX / screenWidth));
   };
 
   return (
@@ -84,7 +83,7 @@ export const PostPageContent: React.FC<PostPageContentProps> = ({
                 <CachedImage
                   key={image.imageId ?? index}
                   source={{ uri: image.imageUrl }}
-                  style={{ width: SCREEN_WIDTH, height: 280 }}
+                  style={{ width: screenWidth, height: 280 }}
                 />
               ))}
             </ScrollView>

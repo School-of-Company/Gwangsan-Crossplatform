@@ -307,6 +307,7 @@ const makeChatMessagesReturn = (overrides = {}) => ({
   otherUserInfo: { nickname: '상대방', id: 7 },
   isLoading: false,
   isError: false,
+  refetch: jest.fn(),
   connectionState: 'connected',
   isBlockedByOtherUser: false,
   messageHandlers: { sendMessage: mockSendMessage, renderMessage: jest.fn() },
@@ -380,12 +381,15 @@ describe('ChatRoomPage', () => {
     expect(UNSAFE_getAllByType(ActivityIndicator).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('에러 상태일 때 에러 메시지를 표시한다', () => {
-    mockUseChatRoomController.mockReturnValue(makeChatMessagesReturn({ isError: true }));
+  it('에러 상태일 때 한국어 오류 문구와 다시 시도 버튼을 표시하고, 누르면 다시 조회한다', () => {
+    const refetch = jest.fn();
+    mockUseChatRoomController.mockReturnValue(makeChatMessagesReturn({ isError: true, refetch }));
 
     const { getByText } = render(<ChatRoomPage />);
 
-    expect(getByText('Failed to load chat room')).toBeTruthy();
+    expect(getByText('채팅방을 불러오지 못했습니다.')).toBeTruthy();
+    fireEvent.press(getByText('다시 시도'));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('채팅방 조회가 404면 토스트를 띄우고 채팅 목록으로 돌려보낸다', async () => {
