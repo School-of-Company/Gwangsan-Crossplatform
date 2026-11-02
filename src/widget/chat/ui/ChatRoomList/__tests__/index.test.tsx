@@ -43,7 +43,6 @@ jest.mock('@/entity/chat', () => ({
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
   ChatRoomItem: ({ room, onPress, onLongPress, isExiting, onExited }: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { TouchableOpacity, View, Text } = require('react-native');
     return (
       <View>

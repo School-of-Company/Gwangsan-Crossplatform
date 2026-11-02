@@ -10,8 +10,7 @@ jest.mock('@sentry/react-native', () => ({
 const mockInit = Sentry.init as jest.Mock;
 const VALID_DSN = 'https://abc123@o123.ingest.sentry.io/456';
 
-// sentry.ts의 process.env.EXPO_PUBLIC_SENTRY_DSN은 babel(react-native-dotenv)이 변환 시점에
-// 문자열로 박아 넣고, jest.setup.js가 그 값을 test-placeholder로 고정한다. 그래서 모듈 로드 때의
+// jest.setup.js가 EXPO_PUBLIC_SENTRY_DSN을 test-placeholder로 고정하므로 모듈 로드 때의
 // 자동 초기화는 항상 건너뛰고, 유효한 DSN 분기는 initSentry에 DSN을 직접 넘겨 확인한다.
 describe('모듈 로드 시 초기화', () => {
   it('테스트 placeholder DSN이면 Sentry를 초기화하지 않는다', () => {

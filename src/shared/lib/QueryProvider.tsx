@@ -7,7 +7,7 @@ import {
   onlineManager,
 } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import type { ReactQueryDevtools as ReactQueryDevtoolsType } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
@@ -16,6 +16,14 @@ import { isNetworkOrTimeoutError } from './errorHandler';
 import * as Sentry from '@sentry/react-native';
 
 const MAX_QUERY_RETRY = 1;
+
+// devtools는 DOM 기반이라 웹 개발 빌드에서만 쓴다. 정적 import하면 네이티브·프로덕션 번들에도
+// 포함되므로, 조건이 상수로 접히는 프로덕션 빌드에서는 require 자체가 제거되도록 조건부로 불러온다.
+const ReactQueryDevtools: typeof ReactQueryDevtoolsType | null =
+  __DEV__ && Platform.OS === 'web'
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('@tanstack/react-query-devtools').ReactQueryDevtools
+    : null;
 
 // 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다. 예전에는
 // 전부 한 번 더 요청해 에러 처리가 늦어지고 토스트가 두 번 뜨기도 했다(#739)
@@ -122,7 +130,7 @@ export default function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {Platform.OS === 'web' && <ReactQueryDevtools initialIsOpen={false} />}
+      {ReactQueryDevtools && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }

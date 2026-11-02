@@ -67,7 +67,7 @@ const ActionSheetRow = ({
   disabled = false,
   onPress,
 }: ActionSheetRowProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(() => {
     Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
