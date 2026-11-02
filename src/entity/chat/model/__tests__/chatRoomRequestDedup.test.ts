@@ -135,7 +135,7 @@ describe('이전 메시지 페이지 로드', () => {
     expect(mockGetChatRoomData).toHaveBeenLastCalledWith(ROOM_ID, {
       cursor: { lastCreatedAt: oldestOfLatest.createdAt, lastMessageId: oldestOfLatest.messageId },
     });
-    expect(result.current.data).toHaveLength(CHAT_MESSAGE_PAGE_SIZE + 5);
+    await waitFor(() => expect(result.current.data).toHaveLength(CHAT_MESSAGE_PAGE_SIZE + 5));
     expect(result.current.data[0].messageId).toBe(25);
     expect(result.current.data[result.current.data.length - 1].messageId).toBe(59);
     expect(result.current.hasNextPage).toBe(false);
