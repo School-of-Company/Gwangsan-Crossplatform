@@ -134,6 +134,17 @@ describe('PostPageView', () => {
       expect(getByText('게시글을 불러오는데 실패했습니다.')).toBeTruthy();
     });
 
+    it('에러 화면에 헤더와 다시 시도 버튼을 보여주고, 누르면 onRefresh를 호출한다', () => {
+      const ret = makeUsePostActionReturn({ error: new Error('Not found'), data: null });
+      mockUsePostAction.mockReturnValue(ret);
+
+      const { getByText } = render(<PostPageView />);
+
+      expect(getByText('게시글')).toBeTruthy();
+      fireEvent.press(getByText('다시 시도'));
+      expect(ret.actionHandlers.onRefresh).toHaveBeenCalledTimes(1);
+    });
+
     it('data가 null이면 에러 메시지를 표시한다', () => {
       mockUsePostAction.mockReturnValue(makeUsePostActionReturn({ data: null }));
 

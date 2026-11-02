@@ -1,4 +1,5 @@
 import React from 'react';
+import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders } from '~/test-utils';
 import NoticeDetailPage from '../index';
 
@@ -66,6 +67,21 @@ describe('NoticeDetailPage', () => {
     const { getByText } = renderWithProviders(<NoticeDetailPage />);
 
     expect(getByText('공지사항을 불러오는데 실패했습니다.')).toBeTruthy();
+  });
+
+  it('에러 화면에서 다시 시도를 누르면 refetch를 호출한다', () => {
+    const refetch = jest.fn();
+    mockUseGetNoticeDetail.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('Not found'),
+      refetch,
+    });
+
+    const { getByText } = renderWithProviders(<NoticeDetailPage />);
+
+    fireEvent.press(getByText('다시 시도'));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('data가 null이면 에러 UI를 표시한다', () => {

@@ -274,6 +274,16 @@ describe('ItemFormPage', () => {
       expect(await findByText('게시글을 불러오는데 실패했습니다.')).toBeTruthy();
     });
 
+    it('게시글 조회 실패 화면에서 다시 시도를 누르면 다시 조회한다', async () => {
+      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+      mockGetItem.mockRejectedValue(new Error('not found'));
+
+      const { findByText } = renderWithProviders(<ItemFormPage />);
+      fireEvent.press(await findByText('다시 시도'));
+
+      await waitFor(() => expect(mockGetItem).toHaveBeenCalledTimes(2));
+    });
+
     it('게시글 조회에 성공하면 기존 값으로 폼을 채우고 "수정하기" 버튼을 보여준다', async () => {
       mockUseLocalSearchParams.mockReturnValue({ id: '5' });
       mockGetItem.mockResolvedValue(
