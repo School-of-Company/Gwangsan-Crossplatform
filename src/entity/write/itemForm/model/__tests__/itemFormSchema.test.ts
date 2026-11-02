@@ -3,6 +3,7 @@ import {
   createItemFormRequestBody,
   getGwangsanError,
   GWANGSAN_MAX,
+  GWANGSAN_MIN,
 } from '../itemFormSchema';
 
 describe('itemFormSchema', () => {
@@ -43,16 +44,16 @@ describe('itemFormSchema', () => {
     if (!result.success) expect(result.error.issues[0].message).toBe('내용을 입력해주세요');
   });
 
-  it('gwangsan이 0이면 실패한다', () => {
-    const result = itemFormSchema.safeParse({ ...validData, gwangsan: 0 });
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error.issues[0].message).toBe('광산을 입력해주세요');
+  it('gwangsan이 0이나 음수여도 통과한다', () => {
+    expect(itemFormSchema.safeParse({ ...validData, gwangsan: 0 }).success).toBe(true);
+    expect(itemFormSchema.safeParse({ ...validData, gwangsan: -1 }).success).toBe(true);
   });
 
-  it('gwangsan이 음수이면 실패한다', () => {
-    const result = itemFormSchema.safeParse({ ...validData, gwangsan: -1 });
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error.issues[0].message).toBe('광산을 입력해주세요');
+  it('gwangsan이 서버 Integer 최솟값보다 작으면 실패한다', () => {
+    expect(itemFormSchema.safeParse({ ...validData, gwangsan: GWANGSAN_MIN }).success).toBe(true);
+    expect(itemFormSchema.safeParse({ ...validData, gwangsan: GWANGSAN_MIN - 1 }).success).toBe(
+      false
+    );
   });
 
   it('title이 서버 제한(20자)을 넘으면 실패한다', () => {
@@ -81,20 +82,22 @@ describe('getGwangsanError', () => {
     expect(getGwangsanError('')).toBeNull();
   });
 
-  it('1 이상 최댓값 이하면 null을 반환한다', () => {
+  it('Integer 범위 안이면 0과 음수도 null을 반환한다', () => {
     expect(getGwangsanError('1')).toBeNull();
+    expect(getGwangsanError('0')).toBeNull();
+    expect(getGwangsanError('-500')).toBeNull();
+    expect(getGwangsanError(String(GWANGSAN_MIN))).toBeNull();
     expect(getGwangsanError(String(GWANGSAN_MAX))).toBeNull();
   });
 
-  it('0이면 하한 안내 문구를 반환한다', () => {
-    expect(getGwangsanError('0')).toBe('광산은 1 이상으로 입력해 주세요.');
-    expect(getGwangsanError('000')).toBe('광산은 1 이상으로 입력해 주세요.');
+  it('숫자가 아니면(예: "-"만 입력) 안내 문구를 반환한다', () => {
+    expect(getGwangsanError('-')).toBe('광산을 숫자로 입력해 주세요.');
   });
 
-  it('최댓값을 넘으면 상한 안내 문구를 반환한다', () => {
-    expect(getGwangsanError(String(GWANGSAN_MAX + 1))).toBe(
-      `광산은 ${GWANGSAN_MAX.toLocaleString('ko-KR')} 이하로 입력해 주세요.`
-    );
+  it('범위를 벗어나면 범위 안내 문구를 반환한다', () => {
+    const message = '광산은 -2,147,483,648 ~ 2,147,483,647 사이로 입력해 주세요.';
+    expect(getGwangsanError(String(GWANGSAN_MAX + 1))).toBe(message);
+    expect(getGwangsanError(String(GWANGSAN_MIN - 1))).toBe(message);
   });
 });
 
