@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { logger } from '@/shared/lib/logger';
 import { Button, Header, Input } from '@/shared/ui';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { TextField } from '@/shared/ui/TextField';
 import ImageUploader from '@/shared/ui/ImageUploader';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
@@ -42,7 +43,7 @@ const ItemFormPage = () => {
     type: typeParam,
     mode: modeParam,
   } = useLocalSearchParams<{ id?: string; type?: string; mode?: string }>();
-  const { data: postData, isLoading, error } = useGetItem(id);
+  const { data: postData, isLoading, error, refetch: refetchPost } = useGetItem(id);
   const editPostMutation = useEditPost();
 
   useEffect(() => {
@@ -174,8 +175,9 @@ const ItemFormPage = () => {
 
   if (id && (error || !postData)) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
+      <SafeAreaView className="flex-1 bg-background">
+        <Header headerTitle="게시글" />
+        <ErrorFallback title="게시글을 불러오는데 실패했습니다." onRetry={() => refetchPost()} />
       </SafeAreaView>
     );
   }
