@@ -1,7 +1,17 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { getChatRoomData } from '../api/getChatMessages';
+import { getChatRoomData, CHAT_MESSAGE_PAGE_SIZE } from '../api/getChatMessages';
+import {
+  addMessageToPages,
+  flattenMessagePages,
+  keepNewestPage,
+  mapMessagePages,
+  toMessagePage,
+  type ChatMessagePage,
+  type ChatMessagePageCursor,
+  type ChatMessagePages,
+} from '../lib/messageCache';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
@@ -28,29 +38,47 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
     useShallow((state) => state.pendingMessages.filter((msg) => msg.roomId === roomId))
   );
 
-  const query = useQuery({
+  const query = useInfiniteQuery({
     queryKey: chatMessageKeys.room(roomId),
-    // 메시지와 거래 상품(useChatRoomData)은 같은 GET /chat/{roomId} 응답에서 나온다. 직접 요청하지 않고
-    // chatRoomData 쿼리를 거쳐, 같은 응답을 받는 요청(채팅 목록의 진입 전 프리페치, useChatRoomData의
-    // 마운트 조회)이 이미 진행 중이면 그 요청에 합류한다(#731). staleTime: 0이라 이미 끝난 캐시만
-    // 있을 때는 새로 받아오므로, 아래 refetchOnMount: 'always'의 의도(#626)는 그대로 유지된다.
-    queryFn: async () => {
-      const data = await queryClient.fetchQuery({
-        queryKey: chatRoomDataKeys.room(roomId),
-        queryFn: () => getChatRoomData(roomId),
-        staleTime: 0,
-      });
-      return [...data.messages];
+    // 최신 페이지는 메시지와 거래 상품(useChatRoomData)이 같은 GET /chat/{roomId} 응답에서 나온다.
+    // 직접 요청하지 않고 chatRoomData 쿼리를 거쳐, 같은 응답을 받는 요청(채팅 목록의 진입 전 프리페치,
+    // useChatRoomData의 마운트 조회)이 이미 진행 중이면 그 요청에 합류한다. staleTime: 0이라
+    // 이미 끝난 캐시만 있을 때는 새로 받아오므로, 아래 refetchOnMount: 'always'의 의도는 그대로다.
+    // 그보다 오래된 페이지는 커서로 직접 요청한다.
+    queryFn: async ({ pageParam }): Promise<ChatMessagePage> => {
+      if (pageParam === null) {
+        const data = await queryClient.fetchQuery({
+          queryKey: chatRoomDataKeys.room(roomId),
+          queryFn: () => getChatRoomData(roomId),
+          staleTime: 0,
+        });
+        return toMessagePage(data.messages, CHAT_MESSAGE_PAGE_SIZE);
+      }
+      const data = await getChatRoomData(roomId, { cursor: pageParam });
+      return toMessagePage(data.messages, CHAT_MESSAGE_PAGE_SIZE);
     },
+    initialPageParam: null as ChatMessagePageCursor | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: enabled && !!roomId,
     refetchInterval,
     staleTime: 5000,
-    // 재입장 프리페치 캐시가 최신 메시지를 놓쳤을 수 있어 staleTime과 무관하게 항상 재조회한다(#626)
+    // 재입장 프리페치 캐시가 최신 메시지를 놓쳤을 수 있어 staleTime과 무관하게 항상 재조회한다
     refetchOnMount: 'always',
   });
 
+  // 위로 스크롤해 쌓은 이전 페이지는 방을 나가면 버린다. 남겨 두면 재입장 때마다(refetchOnMount)
+  // 쌓인 페이지 수만큼 요청이 다시 나간다
+  useEffect(
+    () => () => {
+      queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), keepNewestPage);
+    },
+    [queryClient, roomId]
+  );
+
+  const serverMessages = useMemo(() => flattenMessagePages(query.data), [query.data]);
+
   const allMessages: EnhancedChatMessage[] = useMemo(() => {
-    const serverMessages: EnhancedChatMessage[] = (query.data || []).map((msg) => ({
+    const sentMessages: EnhancedChatMessage[] = serverMessages.map((msg) => ({
       ...msg,
       status: MESSAGE_STATUS.SENT,
     }));
@@ -70,10 +98,10 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
       tempId: pending.tempId,
     }));
 
-    return [...serverMessages, ...pendingAsMessages].sort(
+    return [...sentMessages, ...pendingAsMessages].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-  }, [query.data, pendingMessages]);
+  }, [serverMessages, pendingMessages]);
 
   const { myMessages, otherMessages } = useMemo(() => {
     if (!allMessages) return { myMessages: [], otherMessages: [] };
@@ -93,18 +121,8 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
 
   const addMessage = useCallback(
     (newMessage: ChatMessageResponse) => {
-      queryClient.setQueryData(
-        chatMessageKeys.room(roomId),
-        (oldData: ChatMessageResponse[] | undefined) => {
-          if (!oldData) return [newMessage];
-
-          const exists = oldData.some((msg) => msg.messageId === newMessage.messageId);
-          if (exists) return oldData;
-
-          return [...oldData, newMessage].sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        }
+      queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
+        addMessageToPages(oldData, newMessage)
       );
     },
     [queryClient, roomId]
@@ -112,14 +130,14 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
 
   const updateMessage = useCallback(
     (messageId: number, updater: (message: ChatMessageResponse) => ChatMessageResponse) => {
-      queryClient.setQueryData(
-        chatMessageKeys.room(roomId),
-        (oldData: ChatMessageResponse[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((message) =>
-            message.messageId === messageId ? updater(message) : message
-          );
-        }
+      queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
+        mapMessagePages(oldData, (messages) =>
+          messages.some((message) => message.messageId === messageId)
+            ? messages.map((message) =>
+                message.messageId === messageId ? updater(message) : message
+              )
+            : messages
+        )
       );
     },
     [queryClient, roomId]

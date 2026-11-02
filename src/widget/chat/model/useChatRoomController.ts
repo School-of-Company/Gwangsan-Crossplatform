@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FlatList } from 'react-native';
 import { useAnimatedRef, type AnimatedRef } from 'react-native-reanimated';
 import {
@@ -36,6 +36,11 @@ interface UseChatRoomControllerReturn {
   };
   readonly scrollToEnd: (animated?: boolean) => void;
   readonly markRoomAsRead: (roomId: RoomId) => Promise<void>;
+  readonly olderMessages: {
+    readonly hasMore: boolean;
+    readonly isLoading: boolean;
+    readonly load: () => void;
+  };
 }
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
@@ -45,7 +50,15 @@ export const useChatRoomController = ({
 }: UseChatRoomControllerParams): UseChatRoomControllerReturn => {
   const flatListRef = useAnimatedRef<FlatList>();
 
-  const { data: messages, isLoading, isError, refetch } = useChatMessagesEntity(roomId);
+  const {
+    data: messages,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useChatMessagesEntity(roomId);
 
   const chatMessageQueryKey = useMemo(() => chatMessageKeys.room(roomId), [roomId]);
 
@@ -70,17 +83,27 @@ export const useChatRoomController = ({
 
   const otherUserInfo = useChatOtherUser(roomId, safeMessages);
 
-  const scrollToEnd = useCallback((animated = true) => {
-    // getItemLayout 없이 가변 높이 아이템을 쓰는 FlatList에서는 scrollToEnd()가 참조하는
-    // JS 트래킹 contentLength가 최신 레이아웃(막 추가된 padding/메시지)을 반영하기 전이면
-    // 실제 끝보다 짧게 스크롤된다. 네이티브 스크롤뷰가 알아서 clamp하는 매우 큰 offset으로
-    // 스크롤하면 항상 진짜 끝에 도달한다.
-    flatListRef.current?.scrollToOffset({ offset: 10_000_000, animated });
-  }, []);
+  // 메시지 목록은 inverted FlatList라 offset 0이 가장 최근 메시지(화면 맨 아래)다. 새 메시지가
+  // 와도 여기서 강제로 내리지 않는다 — 바닥 근처일 때만 목록이 스스로 따라 내려간다(ChatRoomContent)
+  const scrollToEnd = useCallback(
+    (animated = true) => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated });
+    },
+    [flatListRef]
+  );
 
-  useEffect(() => {
-    if (messages && messages.length > 0) setTimeout(() => scrollToEnd(true), 100);
-  }, [messages?.length, scrollToEnd, messages]);
+  const loadOlderMessages = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const olderMessages = useMemo(
+    () => ({
+      hasMore: Boolean(hasNextPage),
+      isLoading: isFetchingNextPage,
+      load: loadOlderMessages,
+    }),
+    [hasNextPage, isFetchingNextPage, loadOlderMessages]
+  );
 
   const messageHandlers = {
     sendMessage: useCallback(
@@ -107,5 +130,6 @@ export const useChatRoomController = ({
     messageHandlers,
     scrollToEnd,
     markRoomAsRead,
+    olderMessages,
   };
 };

@@ -6,6 +6,16 @@ import { markChatAsRead } from '../../api/markChatAsRead';
 import type { ChatMessageResponse, ChatRoomListItem } from '../chatTypes';
 import type { QueryClient } from '@tanstack/react-query';
 import { chatMessageKeys } from '../chatQueryKeys';
+import {
+  createMessagePages,
+  flattenMessagePages,
+  type ChatMessagePage,
+  type ChatMessagePages,
+} from '../../lib/messageCache';
+
+// 메시지 캐시는 페이지 단위(무한 쿼리)라 한 페이지짜리 캐시로 감싸 넣는다
+const asPages = (messages: readonly unknown[]): ChatMessagePages =>
+  createMessagePages({ messages: messages as ChatMessagePage['messages'], nextCursor: null });
 
 jest.mock('../../api/markChatAsRead', () => ({
   markChatAsRead: jest.fn(),
@@ -93,7 +103,7 @@ describe('useMessageSync', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chatRoomData', ROOM_ID] });
     });
 
-    it('chatRoomQueryKey가 없어도 currentRoomId의 chatRoomData는 invalidate한다', async () => {
+    it('chatRoomQueryKey가 없어도 currentRoomId의 chatRoomData와 메시지는 invalidate한다', async () => {
       const rendered = renderHookWithProviders(() => useMessageSync({ currentRoomId: ROOM_ID }));
       await act(async () => {});
       const invalidateSpy = jest.spyOn(rendered.queryClient, 'invalidateQueries');
@@ -103,7 +113,9 @@ describe('useMessageSync', () => {
       });
 
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chatRoomData', ROOM_ID] });
-      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+      // 끊긴 동안 놓친 메시지를 채우려 메시지(무한 쿼리)도 최신 페이지부터 다시 받는다
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: chatMessageKeys.room(ROOM_ID) });
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
     });
 
     it('currentRoomId가 없으면 chatRoomData를 invalidate하지 않는다', async () => {
@@ -125,20 +137,20 @@ describe('useMessageSync', () => {
   describe('handleReceiveMessage', () => {
     it('현재 roomId의 메시지를 캐시에 추가한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(makeMessage());
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached).toHaveLength(1);
       expect(cached?.[0].messageId).toBe(1);
     });
 
     it('서버가 isMine:true로 보낸 메시지는 senderId와 무관하게 그대로 신뢰한다(#619)', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       // senderId는 상대방(OTHER_USER_ID)이어도 서버가 isMine:true를 명시했다면 그대로 따른다 —
       // 클라이언트가 로컬 세션 캐시로 재계산하지 않는다.
@@ -146,33 +158,33 @@ describe('useMessageSync', () => {
         result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID, isMine: true }));
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached?.[0].isMine).toBe(true);
     });
 
     it('서버가 isMine:false로 보낸 메시지는 senderId와 무관하게 그대로 신뢰한다(#619)', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       // senderId는 나(MY_USER_ID)여도 서버가 isMine:false를 명시했다면 그대로 따른다.
       act(() => {
         result.current.handleReceiveMessage(makeMessage({ senderId: MY_USER_ID, isMine: false }));
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached?.[0].isMine).toBe(false);
     });
 
     it('같은 messageId가 이미 있으면 중복 추가하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
       const msg = makeMessage({ messageId: 1 });
-      queryClient.setQueryData(CHAT_MSG_KEY, [msg]);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([msg]));
 
       act(() => {
         result.current.handleReceiveMessage(msg);
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached).toHaveLength(1);
     });
 
@@ -180,26 +192,26 @@ describe('useMessageSync', () => {
       const { result, queryClient } = await renderSync();
       const later = makeMessage({ messageId: 1, createdAt: '2024-01-01T12:00:00Z' });
       const earlier = makeMessage({ messageId: 2, createdAt: '2024-01-01T09:00:00Z' });
-      queryClient.setQueryData(CHAT_MSG_KEY, [later]);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([later]));
 
       act(() => {
         result.current.handleReceiveMessage(earlier);
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached?.[0].messageId).toBe(2);
       expect(cached?.[1].messageId).toBe(1);
     });
 
     it('다른 roomId 메시지는 현재 방의 채팅 메시지 캐시에 추가하지 않는다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(makeMessage({ roomId: 999 }));
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached).toHaveLength(0);
     });
 
@@ -208,7 +220,7 @@ describe('useMessageSync', () => {
         useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
       );
       await act(async () => {});
-      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         rendered.result.current.handleReceiveMessage(
@@ -216,7 +228,9 @@ describe('useMessageSync', () => {
         );
       });
 
-      const cached = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(
+        rendered.queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY)
+      );
       expect(cached).toHaveLength(1);
     });
 
@@ -233,7 +247,7 @@ describe('useMessageSync', () => {
         useMessageSync({ chatRoomQueryKey: CHAT_ROOM_KEY })
       );
       await act(async () => {});
-      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         rendered.result.current.handleReceiveMessage(
@@ -253,7 +267,7 @@ describe('useMessageSync', () => {
     it('다른 방을 보고 있는 중에도 메시지가 온 방 자체의 캐시는 갱신된다(#626)', async () => {
       const OTHER_ROOM_ID = 200;
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(chatMessageKeys.room(OTHER_ROOM_ID), []);
+      queryClient.setQueryData(chatMessageKeys.room(OTHER_ROOM_ID), asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -261,8 +275,8 @@ describe('useMessageSync', () => {
         );
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(
-        chatMessageKeys.room(OTHER_ROOM_ID)
+      const cached = flattenMessagePages(
+        queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(OTHER_ROOM_ID))
       );
       expect(cached).toHaveLength(1);
     });
@@ -509,7 +523,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -536,7 +550,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -568,7 +582,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -612,7 +626,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -648,7 +662,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -664,13 +678,13 @@ describe('useMessageSync', () => {
         );
       });
 
-      const cached = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cached = flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY));
       expect(cached?.[0].images).toEqual([{ imageId: 10, imageUrl: 'file:///local/preview.jpg' }]);
     });
 
     it('다른 roomId 메시지도 room list는 업데이트한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
       queryClient.setQueryData(CHAT_ROOM_KEY, [
         { ...makeRoomListItem(), roomId: 999, messageId: 1 },
       ]);
@@ -686,7 +700,9 @@ describe('useMessageSync', () => {
         );
       });
 
-      const msgCache = queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const msgCache = flattenMessagePages(
+        queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY)
+      );
       expect(msgCache).toHaveLength(0);
 
       const rooms = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
@@ -708,7 +724,7 @@ describe('useMessageSync', () => {
       mockMarkChatAsRead.mockRejectedValue(new Error('mark failed'));
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       await act(async () => {
         result.current.handleReceiveMessage(makeMessage({ senderId: OTHER_USER_ID }));
@@ -745,7 +761,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -778,7 +794,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       act(() => {
         result.current.handleReceiveMessage(
@@ -803,7 +819,7 @@ describe('useMessageSync', () => {
       });
 
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       expect(() => {
         act(() => {
@@ -819,7 +835,7 @@ describe('useMessageSync', () => {
         useMessageSync({ currentRoomId: ROOM_ID, chatMessageQueryKey: CHAT_MSG_KEY })
       );
       await act(async () => {});
-      rendered.queryClient.setQueryData(CHAT_MSG_KEY, []);
+      rendered.queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       expect(() => {
         act(() => {
@@ -827,7 +843,9 @@ describe('useMessageSync', () => {
         });
       }).not.toThrow();
 
-      const cachedMessages = rendered.queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY);
+      const cachedMessages = flattenMessagePages(
+        rendered.queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY)
+      );
       expect(cachedMessages).toHaveLength(1);
       expect(rendered.queryClient.getQueryData(CHAT_ROOM_KEY)).toBeUndefined();
     });
@@ -1491,10 +1509,13 @@ describe('useMessageSync', () => {
       mockMarkChatAsRead.mockResolvedValue(undefined);
       const { result, queryClient } = await renderSync();
 
-      queryClient.setQueryData(CHAT_MSG_KEY, [
-        makeMessage({ messageId: 1, createdAt: '2024-01-01T09:00:00Z' }),
-        makeMessage({ messageId: 2, createdAt: '2024-01-01T12:00:00Z' }),
-      ]);
+      queryClient.setQueryData(
+        CHAT_MSG_KEY,
+        asPages([
+          makeMessage({ messageId: 1, createdAt: '2024-01-01T09:00:00Z' }),
+          makeMessage({ messageId: 2, createdAt: '2024-01-01T12:00:00Z' }),
+        ])
+      );
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -1508,7 +1529,7 @@ describe('useMessageSync', () => {
       const { result, queryClient } = await renderSync();
 
       queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 5 })]);
-      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage()]);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([makeMessage()]));
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -1524,7 +1545,7 @@ describe('useMessageSync', () => {
 
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 3 })]);
-      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage()]);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([makeMessage()]));
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -1548,9 +1569,10 @@ describe('useMessageSync', () => {
       rendered.queryClient.setQueryData(CHAT_ROOM_KEY, [
         makeRoomListItem({ unreadMessageCount: 3 }),
       ]);
-      rendered.queryClient.setQueryData(chatMessageKeys.room(ROOM_ID), [
-        makeMessage({ messageId: 5 }),
-      ]);
+      rendered.queryClient.setQueryData(
+        chatMessageKeys.room(ROOM_ID),
+        asPages([makeMessage({ messageId: 5 })])
+      );
 
       await act(async () => {
         await rendered.result.current.markRoomAsRead(ROOM_ID);
@@ -1575,7 +1597,7 @@ describe('useMessageSync', () => {
     it('메시지가 없으면 API를 호출하지 않고 unreadCount만 0으로 설정한다', async () => {
       const { result, queryClient } = await renderSync();
       queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem({ unreadMessageCount: 2 })]);
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -1594,7 +1616,7 @@ describe('useMessageSync', () => {
         makeRoomListItem({ roomId: ROOM_ID, unreadMessageCount: 5 }),
         makeRoomListItem({ roomId: 999, unreadMessageCount: 3 }),
       ]);
-      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage()]);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([makeMessage()]));
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -1610,7 +1632,7 @@ describe('useMessageSync', () => {
       queryClient.setQueryData(CHAT_ROOM_KEY, [
         makeRoomListItem({ unreadMessageCount: 4, messageId: undefined as unknown as number }),
       ]);
-      queryClient.setQueryData(CHAT_MSG_KEY, []);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([]));
 
       await act(async () => {
         await result.current.markRoomAsRead(ROOM_ID);
@@ -1625,7 +1647,10 @@ describe('useMessageSync', () => {
   describe('handleMessageUpdated', () => {
     it('수정된 메시지의 내용과 수정 시각을 메시지 캐시에 반영한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage({ messageId: 1, content: '원래' })]);
+      queryClient.setQueryData(
+        CHAT_MSG_KEY,
+        asPages([makeMessage({ messageId: 1, content: '원래' })])
+      );
 
       act(() => {
         result.current.handleMessageUpdated({
@@ -1636,9 +1661,9 @@ describe('useMessageSync', () => {
         });
       });
 
-      expect(queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)?.[0]).toEqual(
-        expect.objectContaining({ content: '수정됨', editedAt: '2024-01-01T11:00:00Z' })
-      );
+      expect(
+        flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY))?.[0]
+      ).toEqual(expect.objectContaining({ content: '수정됨', editedAt: '2024-01-01T11:00:00Z' }));
     });
 
     it('수정된 메시지가 채팅방 목록의 마지막 메시지면 미리보기도 바꾼다', async () => {
@@ -1681,17 +1706,19 @@ describe('useMessageSync', () => {
   describe('handleMessageDeleted', () => {
     it('삭제된 메시지를 메시지 캐시에서 흔적 없이 뺀다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, [
-        makeMessage({ messageId: 1 }),
-        makeMessage({ messageId: 2 }),
-      ]);
+      queryClient.setQueryData(
+        CHAT_MSG_KEY,
+        asPages([makeMessage({ messageId: 1 }), makeMessage({ messageId: 2 })])
+      );
 
       act(() => {
         result.current.handleMessageDeleted({ roomId: ROOM_ID, messageId: 1 });
       });
 
       expect(
-        queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)?.map((m) => m.messageId)
+        flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY))?.map(
+          (m) => m.messageId
+        )
       ).toEqual([2]);
     });
 
@@ -1709,13 +1736,92 @@ describe('useMessageSync', () => {
 
     it('잘못된 payload는 무시한다', async () => {
       const { result, queryClient } = await renderSync();
-      queryClient.setQueryData(CHAT_MSG_KEY, [makeMessage({ messageId: 1 })]);
+      queryClient.setQueryData(CHAT_MSG_KEY, asPages([makeMessage({ messageId: 1 })]));
 
       act(() => {
         result.current.handleMessageDeleted(undefined as never);
       });
 
-      expect(queryClient.getQueryData<ChatMessageResponse[]>(CHAT_MSG_KEY)).toHaveLength(1);
+      expect(
+        flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY))
+      ).toHaveLength(1);
+    });
+  });
+
+  describe('이전 페이지까지 불러온 캐시', () => {
+    // pages[0]: 최신 페이지(3, 4), pages[1]: 위로 스크롤해 불러온 이전 페이지(1, 2)
+    const seedTwoPages = (queryClient: QueryClient) => {
+      const message = (messageId: number) =>
+        makeMessage({ messageId, createdAt: `2024-01-01T10:0${messageId}:00Z` });
+      queryClient.setQueryData<ChatMessagePages>(CHAT_MSG_KEY, {
+        pages: [
+          { messages: [message(3), message(4)], nextCursor: null },
+          { messages: [message(1), message(2)], nextCursor: null },
+        ],
+        pageParams: [null, { lastCreatedAt: '2024-01-01T10:03:00Z', lastMessageId: 3 }],
+      });
+    };
+    const ids = (queryClient: QueryClient) =>
+      flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY)).map(
+        (m) => m.messageId
+      );
+
+    it('새 메시지는 최신 페이지 끝에 들어가고 이전 페이지는 그대로다', async () => {
+      const { result, queryClient } = await renderSync();
+      seedTwoPages(queryClient);
+
+      act(() => {
+        result.current.handleReceiveMessage(
+          makeMessage({ messageId: 5, createdAt: '2024-01-01T10:05:00Z' })
+        );
+      });
+
+      const cached = queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY);
+      expect(cached?.pages).toHaveLength(2);
+      expect(cached?.pages[0].messages.map((m) => m.messageId)).toEqual([3, 4, 5]);
+      expect(ids(queryClient)).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('이전 페이지에 있는 메시지의 수정도 반영한다', async () => {
+      const { result, queryClient } = await renderSync();
+      seedTwoPages(queryClient);
+
+      act(() => {
+        result.current.handleMessageUpdated({
+          roomId: ROOM_ID,
+          messageId: '1',
+          content: '옛 메시지 수정',
+          editedAt: '2024-01-01T11:00:00Z',
+        });
+      });
+
+      expect(
+        flattenMessagePages(queryClient.getQueryData<ChatMessagePages>(CHAT_MSG_KEY))[0]
+      ).toEqual(expect.objectContaining({ messageId: 1, content: '옛 메시지 수정' }));
+    });
+
+    it('이전 페이지에 있는 메시지의 삭제도 반영한다', async () => {
+      const { result, queryClient } = await renderSync();
+      seedTwoPages(queryClient);
+
+      act(() => {
+        result.current.handleMessageDeleted({ roomId: ROOM_ID, messageId: 2 });
+      });
+
+      expect(ids(queryClient)).toEqual([1, 3, 4]);
+    });
+
+    it('읽음 처리는 최신 페이지의 마지막 메시지 기준으로 한다', async () => {
+      mockMarkChatAsRead.mockResolvedValue(undefined);
+      const { result, queryClient } = await renderSync();
+      seedTwoPages(queryClient);
+      queryClient.setQueryData(CHAT_ROOM_KEY, [makeRoomListItem()]);
+
+      await act(async () => {
+        await result.current.markRoomAsRead(ROOM_ID);
+      });
+
+      expect(mockMarkChatAsRead).toHaveBeenCalledWith(ROOM_ID, 4);
     });
   });
 });

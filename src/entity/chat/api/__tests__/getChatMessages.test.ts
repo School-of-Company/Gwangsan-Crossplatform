@@ -1,4 +1,4 @@
-import { getChatRoomData, getChatMessages } from '../getChatMessages';
+import { getChatRoomData, getChatMessages, CHAT_MESSAGE_PAGE_SIZE } from '../getChatMessages';
 import { instance } from '@/shared/lib/axios';
 import Toast from 'react-native-toast-message';
 
@@ -72,6 +72,31 @@ describe('getChatRoomData', () => {
 
       expect(result.messages[0].isMine).toBe(true);
       expect(result.messages[1].isMine).toBe(false);
+    });
+  });
+
+  describe('페이지 요청', () => {
+    it('커서 없이 부르면 최신 페이지를 페이지 크기만큼 요청한다', async () => {
+      mockGet.mockResolvedValue({ data: { messages: [] } });
+
+      await getChatRoomData(100);
+
+      expect(mockGet).toHaveBeenCalledWith('/chat/100', {
+        params: { limit: CHAT_MESSAGE_PAGE_SIZE },
+      });
+    });
+
+    it('커서를 넘기면 lastCreatedAt·lastMessageId로 이전 페이지를 요청한다', async () => {
+      mockGet.mockResolvedValue({ data: { messages: [] } });
+
+      await getChatRoomData(100, {
+        cursor: { lastCreatedAt: '2026-01-02T03:04:05', lastMessageId: 9 },
+        limit: 10,
+      });
+
+      expect(mockGet).toHaveBeenCalledWith('/chat/100', {
+        params: { lastCreatedAt: '2026-01-02T03:04:05', lastMessageId: 9, limit: 10 },
+      });
     });
   });
 

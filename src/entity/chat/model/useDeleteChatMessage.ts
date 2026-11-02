@@ -1,14 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { deleteChatMessage } from '../api/deleteChatMessage';
-import { isSameMessageId, removeMessageById } from '../lib/messageCache';
+import {
+  isSameMessageId,
+  mapMessagePages,
+  removeMessageById,
+  type ChatMessagePages,
+} from '../lib/messageCache';
 import { chatMessageKeys } from './chatQueryKeys';
 import { chatRoomKeys } from './useChatRooms';
-import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
+import type { ChatRoomListItem } from './chatTypes';
 import type { MessageId, RoomId } from '@/shared/types/chatType';
 
 interface DeleteChatMessageContext {
-  readonly previousMessages?: ChatMessageResponse[];
+  readonly previousMessages?: ChatMessagePages;
 }
 
 export const useDeleteChatMessage = (roomId: RoomId) => {
@@ -33,10 +38,10 @@ export const useDeleteChatMessage = (roomId: RoomId) => {
     mutationFn: (messageId) => deleteChatMessage(messageId),
     onMutate: async (messageId) => {
       await queryClient.cancelQueries({ queryKey: messageKey });
-      const previousMessages = queryClient.getQueryData<ChatMessageResponse[]>(messageKey);
+      const previousMessages = queryClient.getQueryData<ChatMessagePages>(messageKey);
 
-      queryClient.setQueryData<ChatMessageResponse[]>(messageKey, (old) =>
-        removeMessageById(old, messageId)
+      queryClient.setQueryData<ChatMessagePages>(messageKey, (old) =>
+        mapMessagePages(old, (messages) => removeMessageById(messages, messageId))
       );
 
       return { previousMessages };

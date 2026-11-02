@@ -1,7 +1,7 @@
 export { createChatRoom } from './api/createChatRoom';
 export { findChatRoom } from './api/findChatRoom';
 export { getChatRooms } from './api/getChatRooms';
-export { getChatMessages, getChatRoomData } from './api/getChatMessages';
+export { getChatMessages, getChatRoomData, CHAT_MESSAGE_PAGE_SIZE } from './api/getChatMessages';
 export { markChatAsRead } from './api/markChatAsRead';
 export { deleteChatRoom } from './api/deleteChatRoom';
 export { updateChatMessage } from './api/updateChatMessage';
@@ -40,7 +40,14 @@ export {
   isSystemMessage,
   MESSAGE_MODIFY_WINDOW_MS,
 } from './lib/messagePolicy';
-export type { MessageUpdatedPayload, MessageDeletedPayload } from './lib/messageCache';
+export {
+  flattenMessagePages,
+  seedMessagePagesFromSnapshot,
+  type MessageUpdatedPayload,
+  type MessageDeletedPayload,
+  type ChatMessagePage,
+  type ChatMessagePages,
+} from './lib/messageCache';
 export { useFindChatRoom } from './model/useFindChatRoom';
 export { useChatRoomData } from './model/useChatRoomData';
 export { useChatOtherUser, type ChatOtherUserInfo } from './model/useChatOtherUser';

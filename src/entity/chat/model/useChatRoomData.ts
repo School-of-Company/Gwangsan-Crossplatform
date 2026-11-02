@@ -10,7 +10,7 @@ interface UseChatRoomDataOptions {
   readonly roomId: RoomId;
   readonly enabled?: boolean;
   // 폴링 여부는 채팅방 화면 한 곳에서만 정한다. React Query는 observer마다 interval을 따로 돌리므로
-  // 같은 방을 구독하는 다른 화면·훅이 기본값으로 폴링하면 화면의 폴링 중지가 무력화된다(#731).
+  // 같은 방을 구독하는 다른 화면·훅이 기본값으로 폴링하면 화면의 폴링 중지가 무력화된다.
   // 소켓이 연결돼 있으면 새 메시지(receiveMessage)와 거래 상태(transactionStateChanged)가 실시간으로
   // 들어오고, 재연결 시에도 다시 조회하므로 폴링이 필요 없다
   readonly polling?: boolean;

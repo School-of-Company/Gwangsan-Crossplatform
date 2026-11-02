@@ -3,6 +3,7 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useChatMessages, chatMessageKeys } from '../useChatMessages';
 import { getChatMessages } from '../../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
+import { flattenMessagePages, type ChatMessagePages } from '../../lib/messageCache';
 
 // useChatMessages는 getChatRoomData 응답의 messages를 쓴다. 기존 테스트가 getChatMessages로
 // 메시지 목록을 지정하므로, getChatRoomData가 그 값을 감싸 돌려주게 한다
@@ -317,7 +318,9 @@ describe('useChatMessages', () => {
         result.current.addMessage(newMsg);
       });
 
-      const cached = queryClient.getQueryData(chatMessageKeys.room(ROOM_ID));
+      const cached = flattenMessagePages(
+        queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(ROOM_ID))
+      );
       expect(cached).toEqual([newMsg]);
     });
 
@@ -330,7 +333,7 @@ describe('useChatMessages', () => {
         result.current.updateMessage(1, (m) => ({ ...m, checked: true }));
       });
 
-      const cached = queryClient.getQueryData(chatMessageKeys.room(ROOM_ID));
+      const cached = queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(ROOM_ID));
       expect(cached).toBeUndefined();
     });
 
