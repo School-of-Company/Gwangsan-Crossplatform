@@ -134,7 +134,7 @@ export const useChatQueueStore = create<ChatQueueState>()(
         );
       },
 
-      // 로그아웃 시 이전 계정의 전송 대기·실패 메시지가 다음 계정에 남지 않도록 비운다(#737)
+      // 로그아웃 시 이전 계정의 전송 대기·실패 메시지가 다음 계정에 남지 않도록 비운다
       reset: () => set({ pendingMessages: [] }),
     }),
     {
