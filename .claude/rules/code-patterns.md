@@ -110,3 +110,21 @@ import { instance } from '~/shared/lib/axios';   // ✓ preferred
 import { Button } from '@/shared/ui/Button';      // ✓ also OK
 import { Button } from '../../../shared/ui/Button'; // ✗
 ```
+
+## Comments
+
+Write a comment only for the *why* that the code cannot show: a platform workaround, a server
+contract, a non-obvious constraint. Keep it to 1–3 lines.
+
+```ts
+// ✓ 안드로이드 한글 조합 중 value를 다시 넣으면 자소가 분리되므로 입력 중에는 제어하지 않는다
+// ✓ 서버 페이지 계약 (Gwangsan-Server#405) — size 1~100, last_id 커서
+
+// ✗ 예전에는 토스트가 두 번 떴다(#739)     ← change history: belongs in the commit/PR
+// ✗ 지점 변경 API 추가 (#781)               ← own issue number: belongs in the commit
+```
+
+Rules:
+- No change history ("예전에는 ~", "~가 원인이었다") and no issue numbers of this repo (`#NNN`) — put them in the commit message or PR
+- References to another repo's contract (e.g. `Gwangsan-Server#405`) are OK when they explain where an API rule comes from
+- Keep workaround notes that prevent a regression (e.g. Fabric `scrollTo` frame skip, Android Hangul IME), but compress them to the reason

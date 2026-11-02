@@ -57,7 +57,7 @@ const BlockedUserRow = ({ member }: BlockedUserRowProps) => {
 export default function BlockedUsersPageView() {
   const { data: blockList, isLoading, isError, error } = useGetBlockList();
 
-  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다(#740)
+  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다
   useEffect(() => {
     if (!isError) return;
     Toast.show({

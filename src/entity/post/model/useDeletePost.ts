@@ -9,8 +9,7 @@ import { postKeys } from '~/shared/model/postQueryKeys';
 
 interface UseDeletePostParams {
   onSuccess?: () => void;
-  // 게시글 목록 외에 함께 무효화할 쿼리(판매·구매 내역 등). 판매내역 화면이 이 훅을 그대로 복사해
-  // 무효화 키만 바꿔 쓰던 중복을 없애기 위해 추가했다(#741)
+  // 게시글 목록 외에 함께 무효화할 쿼리(판매·구매 내역 등)
   invalidateKeys?: readonly QueryKey[];
 }
 

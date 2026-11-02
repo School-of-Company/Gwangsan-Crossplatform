@@ -175,7 +175,7 @@ export default function PurchasedPageView() {
   );
 
   // 받아둔 목록이 없으면 오류 화면이 대신 보이므로, 목록을 유지한 채 새로고침이 실패했을 때만 알린다.
-  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다(#740)
+  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다
   useEffect(() => {
     if (!isError || !postsData) return;
     Toast.show({
