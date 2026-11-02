@@ -205,7 +205,9 @@ class SocketManager implements ISocketManager {
 export const getChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
     url: SOCKET_URL,
-    transports: ['polling', 'websocket'],
+    // 운영 프록시(nginx)가 WebSocket 업그레이드를 그대로 통과시키므로 HTTP long-polling 핸드셰이크를
+    // 거치지 않고 바로 WebSocket으로 연결한다. 채팅 서버는 단일 인스턴스라 polling용 sticky session도 필요 없다
+    transports: ['websocket'],
     timeout: 15000,
     reconnection: true,
     autoConnect: true,
