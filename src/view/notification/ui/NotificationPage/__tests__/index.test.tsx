@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { useGetAlertList } from '~/entity/notification';
 import { AlertType } from '~/entity/notification/model/alertTypes';
 import NotificationPage from '../index';
@@ -74,6 +74,20 @@ describe('NotificationPage', () => {
     expect(getByText('알림을 불러오는데 실패했습니다.')).toBeTruthy();
   });
 
+  it('에러 화면에서 다시 시도를 누르면 refetch를 호출한다', () => {
+    mockUseGetAlertList.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('Failed'),
+      refetch: mockRefetch,
+    });
+
+    const { getByText } = render(<NotificationPage />);
+
+    fireEvent.press(getByText('다시 시도'));
+    expect(mockRefetch).toHaveBeenCalled();
+  });
+
   it('apiResponse가 없으면 데이터가 있어도 에러 메시지를 표시한다', () => {
     mockUseGetAlertList.mockReturnValue({
       data: [makeAlert()],
@@ -110,9 +124,10 @@ describe('NotificationPage', () => {
       refetch: mockRefetch,
     });
 
-    const { queryByTestId } = render(<NotificationPage />);
+    const { queryByTestId, getByText } = render(<NotificationPage />);
 
     expect(queryByTestId('notification-item-1')).toBeNull();
+    expect(getByText('새로운 알림이 없습니다.')).toBeTruthy();
   });
 
   it('헤더에 "알림" 타이틀을 표시한다', () => {

@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 import { MODE } from '~/shared/types/mode';
 import type { PostType } from '~/shared/types/postType';
 import type { ProductType } from '~/shared/types/type';
@@ -42,6 +42,6 @@ export const getSellingPosts = async ({
 
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

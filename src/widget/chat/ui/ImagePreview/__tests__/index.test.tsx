@@ -31,6 +31,16 @@ describe('ImagePreview', () => {
     expect(renderedImages[1].props.source).toEqual({ uri: 'file://2.png' });
   });
 
+  it('사진과 제거 버튼에 순서가 담긴 스크린리더용 라벨을 지정한다', () => {
+    const images = [makeImage({ imageId: 1 }), makeImage({ imageId: 2, localUri: 'file://2.png' })];
+    const { getByLabelText, getByRole } = render(
+      <ImagePreview images={images} onRemoveImage={jest.fn()} />
+    );
+
+    expect(getByLabelText('첨부할 사진 2')).toBeTruthy();
+    expect(getByRole('button', { name: '사진 2 첨부 취소' })).toBeTruthy();
+  });
+
   it('제거 버튼을 누르면 onRemoveImage가 해당 imageId로 호출된다', () => {
     const onRemoveImage = jest.fn();
     const images = [makeImage({ imageId: 5 })];

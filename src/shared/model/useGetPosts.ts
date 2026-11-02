@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import Toast from 'react-native-toast-message';
 import { getPosts } from '../api/getPosts';
 import { PostType } from '../types/postType';
 import { ModeType } from '../types/mode';
@@ -11,15 +10,10 @@ export const useGetPosts = (mode?: ModeType, type?: ProductType) => {
   return useQuery<PostType[]>({
     queryKey: postKeys.list(mode, type),
     queryFn: () => getPosts(type, mode),
+    // 5xx만 ErrorBoundary로 던지고, 나머지 실패는 화면(PostList)의 ErrorFallback이 보여준다
     throwOnError: (error) => {
       const status = error instanceof AxiosError ? error.response?.status : undefined;
-      if (status !== undefined && status >= 500) return true;
-      Toast.show({
-        type: 'error',
-        text1: '게시물 불러오기 실패',
-        text2: error.message,
-      });
-      return false;
+      return status !== undefined && status >= 500;
     },
   });
 };

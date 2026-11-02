@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export interface CancelTradeResponse {
   cancelled: boolean;
@@ -17,6 +17,6 @@ export const cancelTrade = async (
     });
     return data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
