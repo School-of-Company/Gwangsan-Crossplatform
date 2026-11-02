@@ -81,13 +81,13 @@ export default function PostList({ category, type }: { category: Category; type:
     [data]
   );
 
-  // 조회에 실패했는데 "게시물이 없습니다."로 보이면 사용자가 실패를 알 수 없다(#740)
+  // 조회에 실패했는데 "게시물이 없습니다."로 보이면 사용자가 실패를 알 수 없다
   if (isPostsError && !rawPosts) {
     return <ErrorFallback onRetry={() => refetch()} />;
   }
 
   // 차단 목록을 불러오지 못하면 차단한 사용자의 글을 걸러낼 수 없다. 차단한 사람의 글이 보이는 대신
-  // 목록을 보여주지 않고 다시 시도하게 한다(#740)
+  // 목록을 보여주지 않고 다시 시도하게 한다
   if (isBlockListError && !blockList) {
     return <ErrorFallback onRetry={() => refetchBlockList()} />;
   }

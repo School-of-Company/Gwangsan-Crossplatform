@@ -7,7 +7,7 @@ import { toAppError } from '../lib/errorHandler';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// 전역 타임아웃(5초)은 최대 10MB 업로드에는 짧아 셀룰러 환경에서 업로드가 자주 실패했다(#739)
+// 전역 타임아웃(5초)은 최대 10MB 업로드에는 짧아 셀룰러 환경에서 실패하므로 따로 길게 잡는다
 export const UPLOAD_TIMEOUT_MS = 60_000;
 
 export const uploadImage = async (uri: string): Promise<ImageType> => {
