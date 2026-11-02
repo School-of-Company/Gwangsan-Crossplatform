@@ -20,6 +20,7 @@ export default function PostPageView() {
     isDeleteAlertVisible,
     reviewLight,
     reviewContents,
+    isSubmittingReview,
     isChatLoading,
     isTradeRequestLoading,
     modalHandlers,
@@ -76,6 +77,7 @@ export default function PostPageView() {
         contents={reviewContents}
         onContentsChange={reviewHandlers.onContentsChange}
         onAnimationComplete={reviewHandlers.onAnimationComplete}
+        isSubmitting={isSubmittingReview}
       />
 
       <AlertModal
