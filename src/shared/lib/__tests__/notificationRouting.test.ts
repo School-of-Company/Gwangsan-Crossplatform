@@ -1,4 +1,8 @@
-import { createNotificationDedupeGuard, resolveNotificationAction } from '../notificationRouting';
+import {
+  createNotificationDedupeGuard,
+  parseNotificationData,
+  resolveNotificationAction,
+} from '../notificationRouting';
 
 describe('resolveNotificationAction', () => {
   it('CHTTING_REQUEST + sourceId이면 chatEntry 액션을 반환한다', () => {
@@ -74,5 +78,47 @@ describe('createNotificationDedupeGuard', () => {
     expect(guard.shouldProcess(undefined)).toBe(true);
     expect(guard.shouldProcess(undefined)).toBe(true);
     expect(guard.shouldProcess(null)).toBe(true);
+  });
+});
+
+describe('parseNotificationData', () => {
+  // 서버 ExpoPushAdapter.buildData는 모든 값을 문자열로 보낸다
+  it.each(['CHATTING', 'RESERVATION_REMINDER', 'RESERVATION_CANCEL'])(
+    '서버가 보내는 %s 푸시는 roomId로 채팅방 이동 액션이 된다',
+    (alertType) => {
+      const data = parseNotificationData({ alertType, sourceId: '42', roomId: '42' });
+
+      expect(data).toEqual({ alertType, sourceId: 42, roomId: 42 });
+      expect(resolveNotificationAction(data ?? undefined)).toEqual({ type: 'room', roomId: 42 });
+    }
+  );
+
+  it('앱이 모르는 alertType이어도 파싱에 실패하지 않는다', () => {
+    expect(parseNotificationData({ alertType: 'RECOMMENDATION', sourceId: '3' })).toEqual({
+      alertType: 'RECOMMENDATION',
+      sourceId: 3,
+    });
+  });
+
+  it('TRADE_COMPLETE 푸시는 기존처럼 게시글 후기 경로로 이동한다', () => {
+    const data = parseNotificationData({ alertType: 'TRADE_COMPLETE', sourceId: '9' });
+
+    expect(resolveNotificationAction(data ?? undefined)).toEqual({
+      type: 'push',
+      href: '/post/9?review=1',
+    });
+  });
+
+  it.each([
+    ['음수 roomId', { alertType: 'CHATTING', roomId: '-1' }],
+    ['숫자가 아닌 sourceId', { alertType: 'NOTICE', sourceId: '../admin' }],
+    ['문자열이 아닌 alertType', { alertType: 123 }],
+  ])('%s처럼 잘못된 값이면 null을 반환한다', (_label, payload) => {
+    expect(parseNotificationData(payload)).toBeNull();
+  });
+
+  it('객체가 아니면 null을 반환한다', () => {
+    expect(parseNotificationData(undefined)).toBeNull();
+    expect(parseNotificationData('CHATTING')).toBeNull();
   });
 });
