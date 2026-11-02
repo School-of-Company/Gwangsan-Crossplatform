@@ -3,7 +3,7 @@ import { getData } from './getData';
 import { setData } from './setData';
 import { logger } from './logger';
 
-// 사용자가 생체 인증 로그인을 켰는지 여부. 동의한 경우에만 토큰을 생체 인증 키체인에 저장한다(#737)
+// 사용자가 생체 인증 로그인을 켰는지 여부. 동의한 경우에만 토큰을 생체 인증 키체인에 저장한다
 const BIOMETRIC_PREFERENCE_KEY = 'biometricLoginEnabled';
 
 const AUTHENTICATION_PROMPT = { title: '생체 인증으로 로그인', cancel: '취소' };
@@ -80,7 +80,7 @@ export const clearCredentialsForBiometric = async (): Promise<void> => {
 };
 
 // 토큰이 재발급되면 생체 인증용 사본도 새 토큰으로 바꾼다. 그대로 두면 다음 생체 로그인에서
-// 이미 폐기된 토큰이 다시 저장되어 곧바로 세션이 만료된다(#737)
+// 이미 폐기된 토큰이 다시 저장되어 곧바로 세션이 만료된다
 export const syncBiometricCredentials = async (
   accessToken: string,
   refreshToken: string

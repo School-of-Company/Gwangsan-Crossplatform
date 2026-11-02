@@ -4,7 +4,7 @@ const KAKAO_LOCAL_SEARCH_PATH = '/v2/local/search/keyword.json';
 const KAKAO_LOCAL_CATEGORY_PATH = '/v2/local/search/category.json';
 const KAKAO_COORD2ADDRESS_PATH = '/v2/local/geo/coord2address.json';
 
-// raw fetch는 타임아웃이 없어 네트워크가 느리면 검색 화면이 로딩 상태로 멈췄다(#739)
+// raw fetch는 타임아웃이 없어 네트워크가 느리면 검색 화면이 로딩 상태로 멈추므로 axios 인스턴스를 쓴다
 export const kakaoClient = axios.create({
   baseURL: 'https://dapi.kakao.com',
   timeout: 10_000,

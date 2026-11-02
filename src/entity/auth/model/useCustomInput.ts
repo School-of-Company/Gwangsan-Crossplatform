@@ -23,10 +23,8 @@ export function useCustomInput({ onSubmit }: UseCustomInputProps = {}) {
     setIsAddingCustomItem(false);
   }, []);
 
-  // 입력창의 텍스트는 CustomInputCard 내부에서 로컬 상태로 관리한다(타이핑마다 이
-  // 훅과 부모 컴포넌트를 거쳐 포털에 재등록되면, 그 한 프레임 지연 때문에 안드로이드
-  // 한글 입력 조합 중 자소가 분리되는 문제가 있었다). 제출 시점의 최종 텍스트만
-  // 여기로 전달받는다.
+  // 입력창의 텍스트는 CustomInputCard 내부 로컬 상태로 둔다. 타이핑마다 포털에 재등록되면
+  // 한 프레임 지연으로 안드로이드 한글 조합 중 자소가 분리된다. 제출 시점의 텍스트만 받는다.
   const handleSubmitCustomItem = useCallback(
     (text: string) => {
       const newItem = text.trim();

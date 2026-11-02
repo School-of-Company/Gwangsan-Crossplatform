@@ -8,7 +8,7 @@ cssInterop(Image, { className: 'style' });
 export type CachedImageProps = ImageProps & { className?: string };
 
 // 네트워크 이미지를 메모리와 디스크에 캐시해, 같은 화면에 다시 들어오거나 앱을 다시 켜도
-// 이미 받은 이미지를 다시 내려받지 않는다(#732). RN Image는 디스크 캐시 정책을 지정할 수 없다.
+// 이미 받은 이미지를 다시 내려받지 않는다. RN Image는 디스크 캐시 정책을 지정할 수 없다.
 export function CachedImage({
   cachePolicy = 'memory-disk',
   contentFit = 'cover',

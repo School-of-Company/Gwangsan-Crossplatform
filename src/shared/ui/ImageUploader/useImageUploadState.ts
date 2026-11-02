@@ -12,8 +12,7 @@ export interface ImageUploadState {
   readonly hasFailedImages: boolean;
 }
 
-// 사진을 여러 장 올려도 결과는 토스트 한 번으로 알린다. 예전에는 장마다 성공 토스트가 떠
-// 5장을 올리면 토스트가 5개 겹쳐 떴다
+// 사진을 여러 장 올려도 결과는 토스트 한 번으로 알린다
 const showUploadResultToast = (successCount: number, totalCount: number) => {
   if (totalCount === 0) return;
 

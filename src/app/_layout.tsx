@@ -158,7 +158,7 @@ export default function RootLayout() {
           <StatusBar style="auto" />
           <ThemeProvider value={navigationTheme}>
             <QueryProvider>
-              {/* 알림 핸들러도 렌더 중 에러가 나면 앱 전체가 죽지 않도록 바운더리 안에 둔다(#740) */}
+              {/* 알림 핸들러도 렌더 중 에러가 나면 앱 전체가 죽지 않도록 바운더리 안에 둔다 */}
               <RootErrorBoundary>
                 <ChatNotificationHandler />
                 <Stack
