@@ -8,6 +8,7 @@ import type { RoomId } from '@/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
 import { isSystemMessage } from '../lib/messagePolicy';
+import { matchPendingEcho } from '../lib/pendingEcho';
 import type { TransactionStateChangedPayload } from '../lib/socketService';
 import {
   addMessageToPages,
@@ -63,32 +64,7 @@ export const useMessageSync = ({
         {
           const targetMessageQueryKey = chatMessageKeys.room(message.roomId);
           const queueState = useChatQueueStore.getState();
-          const matchingTemp = queueState.pendingMessages.find((msg) => {
-            // 상대방이 보낸 메시지가 우연히 같은 content/이미지 개수를 가져도 내가 보낸 pending
-            // 항목을 지워버리지 않도록, 반드시 내가 보낸 echo에 대해서만 매칭한다.
-            if (
-              !message.isMine ||
-              msg.roomId !== message.roomId ||
-              msg.messageType !== message.messageType
-            ) {
-              return false;
-            }
-            if (msg.messageType === 'IMAGE') {
-              if (message.images && message.images.length > 0) {
-                if (message.images.length !== msg.imageIds.length) {
-                  return false;
-                }
-                const receivedImageIds = new Set(message.images.map((img) => img.imageId));
-                return msg.imageIds.every((id) => receivedImageIds.has(id));
-              }
-              // 서버가 전송 직후 echo에는 images를 채워 보내지 않아(Gwangsan-Chatting-Server
-              // chat.service.ts의 알려진 동작) 이미지 개수/ID로 대조할 수 없는 경우가 있다.
-              // pendingMessages는 추가된 순서를 유지하므로 find()가 자연히 같은 방에서 가장
-              // 먼저 보낸(=서버가 가장 먼저 처리했을) 이미지 메시지를 골라 FIFO로 매칭한다.
-              return true;
-            }
-            return msg.content === message.content;
-          });
+          const matchingTemp = matchPendingEcho(queueState.pendingMessages, message);
 
           // echo에 images가 비어있으면(위 서버 이슈) 그대로 캐시에 넣을 경우 사진이 안 보이는
           // 메시지가 되어, 방을 나갔다 REST로 다시 불러오기 전까진 화면에서 사라져 보인다.

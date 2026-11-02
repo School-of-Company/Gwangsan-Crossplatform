@@ -8,13 +8,22 @@ import type { RoomId, SendableMessageType } from '~/shared/types/chatType';
 import Toast from 'react-native-toast-message';
 import { logger } from '~/shared/lib/logger';
 
-const SEND_TIMEOUT_MS = 10000;
-
 // Expo Router 스택은 이전 화면을 언마운트하지 않으므로, 같은 방의 채팅방 화면이 스택에 두 번
 // 쌓이면(채팅방 → 프로필 → 게시글 → 같은 채팅방) 이 훅도 여러 개 살아있을 수 있다. 재연결·재시도
 // 트리거는 store 전체를 구독하는 전역 효과라 인스턴스 수만큼 중복 실행되면 같은 메시지가
 // 여러 소켓 emit으로 중복 전송된다. roomId당 정확히 하나의 인스턴스만 이 트리거를 맡도록 한다.
 const activeAutoRetryOwners = new Set<RoomId>();
+
+// 채팅방 화면이 열려 있지 않은 방의 대기 메시지는 전역 대기열 복구(useChatQueueRecovery)가 보낸다
+export const hasActiveAutoRetryOwner = (roomId: RoomId) => activeAutoRetryOwners.has(roomId);
+
+export const SEND_TIMEOUT_MS = 10000;
+
+// 소켓 emit 자체가 실패한 경우(서버에 닿지 않았으니 다시 보내도 중복되지 않는다)에만 자동으로
+// 다시 시도한다. 2초 → 4초 → 8초 뒤 세 번까지 시도하고, 그래도 실패하면 토스트로 알린다.
+// 응답(echo)이 오지 않은 타임아웃은 서버가 받았을 수 있어 자동 재전송하지 않는다.
+export const MAX_AUTO_RETRY_COUNT = 3;
+export const getAutoRetryDelay = (retryCount: number) => Math.min(2000 * 2 ** retryCount, 30_000);
 
 const showSendFailedToast = (onRetry: () => void) => {
   Toast.show({
@@ -80,9 +89,8 @@ export const useResilientMessageSender = ({
 
         setStatus(tempId, MESSAGE_STATUS.SENDING);
 
-        // IMAGE 타입은 서버가 content 없이도 허용한다(TEXT만 필수). 과거에는 캡션이 없을 때
-        // 공백 문자(' ')를 채워 보냈는데, 이 값이 그대로 저장·echo되어 사진 밑에 빈 말풍선이
-        // 매번 뜨는 원인이 되었다 — 빈 문자열은 falsy라 캡션 UI가 렌더링되지 않는다.
+        // IMAGE는 content 없이도 서버가 받는다. 공백(' ')을 채우면 그대로 저장돼 사진 밑에 빈 말풍선이
+        // 생기므로 빈 문자열로 보낸다
         await socketSendMessage(roomId, content ?? '', messageType, imageIds);
 
         setTimeout(() => {
@@ -97,6 +105,18 @@ export const useResilientMessageSender = ({
       } catch (error) {
         logger.error('Message send failed', error);
         setStatus(tempId, MESSAGE_STATUS.FAILED);
+        const retryCount =
+          useChatQueueStore.getState().pendingMessages.find((m) => m.tempId === tempId)
+            ?.retryCount ?? 0;
+        if (retryCount < MAX_AUTO_RETRY_COUNT) {
+          setTimeout(() => {
+            const current = useChatQueueStore
+              .getState()
+              .pendingMessages.find((m) => m.tempId === tempId);
+            if (current?.status === MESSAGE_STATUS.FAILED) retry(tempId);
+          }, getAutoRetryDelay(retryCount));
+          return;
+        }
         showSendFailedToast(() => retry(tempId));
       }
     },
