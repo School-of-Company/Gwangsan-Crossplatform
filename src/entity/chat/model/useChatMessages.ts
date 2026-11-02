@@ -42,8 +42,8 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
     queryKey: chatMessageKeys.room(roomId),
     // 최신 페이지는 메시지와 거래 상품(useChatRoomData)이 같은 GET /chat/{roomId} 응답에서 나온다.
     // 직접 요청하지 않고 chatRoomData 쿼리를 거쳐, 같은 응답을 받는 요청(채팅 목록의 진입 전 프리페치,
-    // useChatRoomData의 마운트 조회)이 이미 진행 중이면 그 요청에 합류한다(#731). staleTime: 0이라
-    // 이미 끝난 캐시만 있을 때는 새로 받아오므로, 아래 refetchOnMount: 'always'의 의도(#626)는 그대로다.
+    // useChatRoomData의 마운트 조회)이 이미 진행 중이면 그 요청에 합류한다. staleTime: 0이라
+    // 이미 끝난 캐시만 있을 때는 새로 받아오므로, 아래 refetchOnMount: 'always'의 의도는 그대로다.
     // 그보다 오래된 페이지는 커서로 직접 요청한다.
     queryFn: async ({ pageParam }): Promise<ChatMessagePage> => {
       if (pageParam === null) {
@@ -62,7 +62,7 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
     enabled: enabled && !!roomId,
     refetchInterval,
     staleTime: 5000,
-    // 재입장 프리페치 캐시가 최신 메시지를 놓쳤을 수 있어 staleTime과 무관하게 항상 재조회한다(#626)
+    // 재입장 프리페치 캐시가 최신 메시지를 놓쳤을 수 있어 staleTime과 무관하게 항상 재조회한다
     refetchOnMount: 'always',
   });
 

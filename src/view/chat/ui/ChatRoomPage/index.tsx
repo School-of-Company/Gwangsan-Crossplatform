@@ -67,7 +67,7 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  // 소켓이 연결된 동안에는 새 메시지와 거래 상태가 실시간으로 들어오므로 폴링하지 않는다(#731).
+  // 소켓이 연결된 동안에는 새 메시지와 거래 상태가 실시간으로 들어오므로 폴링하지 않는다.
   // 같은 쿼리를 구독하는 다른 곳은 폴링을 지정하지 않으므로 이 화면의 설정만 적용된다
   const { data: roomData, error: roomDataError } = useChatRoomData({
     roomId,
@@ -79,7 +79,6 @@ export default function ChatRoomPage() {
   const { unblock } = useBlockUser(otherUserInfo.id);
   // isBlocked는 내가 차단한 목록 기준이라, 상대방이 나를 차단한 경우는 잡아내지 못한다.
   // 그 경우는 메시지 전송이 서버에서 거부될 때 소켓 error 이벤트로만 알 수 있다.
-  // (School-of-Company/Gwangsan-Crossplatform#566)
   const isChatBlocked = isBlocked || isBlockedByOtherUser;
   const visibleMessages = useMemo(
     () => (isBlocked ? messages.filter((m) => m.isMine) : messages),
@@ -138,11 +137,8 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  // 채팅 입력 중 키보드가 올라온 상태로 바텀시트를 띄우면 키보드가 시트를 가린다.
-  // Keyboard.dismiss() 직후 바로 시트를 열면, 키보드가 실제로 내려가며 발생하는
-  // 레이아웃 변동과 시트의 등장 애니메이션(onLayout 기준)이 겹쳐 배경 딤 애니메이션이
-  // 씹히는 경우가 있었다 — 그래서 키보드가 완전히 내려간 뒤(keyboardDidHide)에만
-  // 시트를 연다. 애초에 키보드가 없었다면 바로 연다.
+  // 키보드가 내려가는 레이아웃 변동과 바텀시트 등장 애니메이션이 겹치면 배경 딤이 씹히므로,
+  // 키보드가 떠 있으면 완전히 내려간 뒤(keyboardDidHide) 시트를 연다
   const isKeyboardVisibleRef = useRef(false);
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {

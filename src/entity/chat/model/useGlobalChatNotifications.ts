@@ -22,7 +22,7 @@ const getListUpdatedAt = (queryClient: QueryClient) =>
   queryClient.getQueryState(chatRoomKeys.list())?.dataUpdatedAt ?? 0;
 
 // 나간 방은 GET /chat/rooms 목록에서 제외되므로, 그 목록에 없다는 사실 자체가 "나감" 신호다.
-// 비어있거나 오래된 캐시로 나감 여부를 판정하면 안 되므로(#609), 방금 받은 캐시에서 방을 못 찾으면
+// 비어있거나 오래된 캐시로 나감 여부를 판정하면 안 되므로, 방금 받은 캐시에서 방을 못 찾으면
 // 새로 생긴 방일 수 있어 최신 목록을 한 번 더 받아 확인한다. 조회에 실패하면 나감 여부를 알 수
 // 없으니 알림은 그대로 띄운다(안전한 기본값).
 // 반환값의 servedFromCache는 간격 제한 때문에 새로 받지 않았다는 뜻으로, 호출부가 뒤늦게 한 번 더
@@ -104,7 +104,7 @@ export const useGlobalChatNotifications = () => {
   useEffect(() => {
     const handleReceiveMessage = async (message: ChatMessageResponse) => {
       // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
-      // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다(#619).
+      // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다.
       if (message.isMine) return;
 
       // 예약 취소 같은 SYSTEM 메시지는 서버가 따로 푸시를 보내므로(Gwangsan-Server#426) 로컬 알림을

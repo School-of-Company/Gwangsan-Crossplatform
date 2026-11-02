@@ -227,29 +227,21 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
 
-  // KeyboardStickyView(ChatRoomPage)가 입력창을 닫힘 상태에서 이만큼 위로 띄우므로,
-  // 그 여백은 항상 정적으로 확보해 둔다(이전 버전의 "10 + basePadding"과 동일한 총량 유지)
+  // KeyboardStickyView(ChatRoomPage)가 닫힘 상태에서 입력창을 띄우는 만큼의 고정 여백
   const closedGap = 10 + (Platform.OS === 'ios' ? insets.bottom : 40);
 
-  // 키보드가 완전히 열렸을 때 마지막 말풍선과 입력창 사이에 남기고 싶은 여백(작을수록 붙는다).
-  // closedGap과 별도 상수라 닫힘 상태 여백을 안 건드리고 이 값만으로 열림 상태 간격을 조절한다
+  // 키보드가 열렸을 때 마지막 말풍선과 입력창 사이 여백
   const openGap = 0;
 
-  // height는 키보드가 닫혀있으면 0, 열려있으면 음수(예: -300)로, 네이티브 키보드
-  // 애니메이션과 프레임 단위로 동기화되는 값이다(KeyboardStickyView가 입력창을 띄울 때
-  // 쓰는 것과 동일한 값). 이 값을 그대로 스페이서 높이/스크롤 위치에 반영하면 리스트도
-  // 키보드와 같은 속도로 움직인다
+  // 닫힘 0, 열림 음수(-300 등). 네이티브 키보드 애니메이션과 프레임 단위로 동기화돼 리스트가 키보드와 같이 움직인다
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
-  // 정적 패딩(closedGap)에 이 스페이서를 더한 총량이, 닫힘 상태에서는 closedGap 그대로,
-  // 열림 상태에서는 keyboardHeight + openGap이 되도록 맞춘다
+  // closedGap + 스페이서 = 닫힘 시 closedGap, 열림 시 키보드 높이 + openGap
   const keyboardSpacerStyle = useAnimatedStyle(() => ({
     height: Math.max(0, -keyboardHeight.value - closedGap + openGap),
   }));
 
-  // 스페이서가 늘어나 스크롤 가능 영역이 커지는 동안, 같은 UI 스레드 프레임에서 리스트도
-  // 함께 맨 아래로 밀어야 마지막 메시지가 계속 화면에 붙어서 올라간다. inverted 목록이라
-  // 맨 아래(가장 최근 메시지)가 offset 0이다
+  // 스페이서가 늘어나는 같은 UI 프레임에서 맨 아래(inverted라 offset 0)로 붙여야 마지막 메시지가 따라 올라간다
   useAnimatedReaction(
     () => keyboardHeight.value,
     (current, previous) => {
@@ -259,11 +251,8 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     }
   );
 
-  // Fabric에서는 scrollTo()가 같은 프레임에 커밋되지 않고 한 프레임 밀릴 수 있어(키보드
-  // 애니메이션이 끝나는 순간 리스트가 툭 튀었다 돌아오는 원인), 매 프레임 transform이
-  // 바뀌는 화면에 보이지 않는 뷰를 하나 더 두어 강제로 커밋을 발생시킨다. 이 라이브러리의
-  // KeyboardChatScrollView가 쓰는 것과 동일한 우회책이다
-  // (see https://github.com/software-mansion/react-native-reanimated/issues/9000)
+  // Fabric에서 scrollTo()가 한 프레임 밀려 리스트가 튀는 문제 우회: 매 프레임 transform이 바뀌는
+  // 보이지 않는 뷰로 강제 커밋한다(KeyboardChatScrollView와 같은 방식, reanimated#9000)
   const commitStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -keyboardHeight.value }],
   }));
@@ -343,7 +332,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       insertByTimestamp(items, tradeItem);
     }
 
-    // 게시글 작성자는 거래 요청 없이도 바로 예약할 수 있으므로(#787), 예약·완료 카드는 거래 요청
+    // 게시글 작성자는 거래 요청 없이도 바로 예약할 수 있으므로, 예약·완료 카드는 거래 요청
     // 카드 유무와 상관없이 product 상태만 보고 그린다
     if (product) {
       // 서버가 예약/완료 시각(reservedAt/completedAt, Gwangsan-Server#426)을 주면 거래 요청 카드처럼

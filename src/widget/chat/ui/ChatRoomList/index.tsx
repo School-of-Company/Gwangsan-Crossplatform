@@ -138,7 +138,7 @@ export function ChatRoomList() {
 
   // 상품의 '채팅하기'로 재참여하면 같은 roomId가 서버 목록에 다시 나타난다. hiddenRoomIds는
   // 나가기 애니메이션용 임시 캐시라 자동으로 정리되지 않으므로, 재참여로 복원된 방을 그대로
-  // 두면 계속 숨겨진 채로 남는다(#609). useChatSocket의 blockStateRoomId와 같은 방식으로,
+  // 두면 계속 숨겨진 채로 남는다. useChatSocket의 blockStateRoomId와 같은 방식으로,
   // effect 대신 렌더링 중 chatRooms 변화를 감지해 즉시 걷어낸다. 단, 그 방에 대한 나가기
   // 요청이 아직 진행 중이면(삭제 완료 전에 폴링 응답이 먼저 도착한 경우) 되살리지 않는다.
   const [prevChatRooms, setPrevChatRooms] = useState(chatRooms);
@@ -171,7 +171,7 @@ export function ChatRoomList() {
           staleTime: 30 * 1000,
         })
         .then((data) => {
-          // 방금 보낸 메시지가 snapshot에 아직 없을 수 있어 더 최신인 쪽을 남긴다(#610)
+          // 방금 보낸 메시지가 snapshot에 아직 없을 수 있어 더 최신인 쪽을 남긴다
           queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
             seedMessagePagesFromSnapshot(oldData, data.messages, CHAT_MESSAGE_PAGE_SIZE)
           );
