@@ -873,14 +873,17 @@ describe('ChatRoomPage', () => {
     expect(mockRouterPush).not.toHaveBeenCalledWith('/chatting/10/review');
   });
 
-  it('메시지가 있으면 마운트 후 스크롤을 맨 아래로 이동시킨다', async () => {
+  it('메시지가 있어도 화면이 강제로 맨 아래로 스크롤하지 않는다(inverted 목록이 최신부터 보여준다)', async () => {
     mockUseChatRoomController.mockReturnValue(
       makeChatMessagesReturn({ messages: [{ id: 1, content: 'hi' }] })
     );
 
     render(<ChatRoomPage />);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
 
-    await waitFor(() => expect(mockScrollToEnd).toHaveBeenCalledWith(true), { timeout: 1000 });
+    expect(mockScrollToEnd).not.toHaveBeenCalled();
   });
 
   it('채팅 목록에서 스크롤 요청 시 scrollToEnd가 호출된다', () => {

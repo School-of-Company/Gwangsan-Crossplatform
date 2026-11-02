@@ -56,6 +56,7 @@ export default function ChatRoomPage() {
     messageHandlers,
     scrollToEnd,
     markRoomAsRead,
+    olderMessages,
   } = useChatRoomController({ roomId });
 
   const messageActions = useMessageActions(roomId);
@@ -222,12 +223,6 @@ export default function ChatRoomPage() {
       router.replace('/chatting');
     }
   }, [roomDataError, router]);
-
-  useEffect(() => {
-    if (visibleMessages.length > 0) {
-      setTimeout(() => scrollToEnd(true), 100);
-    }
-  }, [visibleMessages.length, scrollToEnd]);
 
   const { handleTradeRequest: executeTradeRequest, isLoading: isTradeRequestLoading } =
     useTradeRequest({
@@ -397,6 +392,7 @@ export default function ChatRoomPage() {
         showReviewButton={isTradeCompleted}
         hasReviewedTrade={Boolean(myTradeReview)}
         onMyMessageLongPress={messageActions.openMessageMenu}
+        olderMessages={olderMessages}
       />
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
