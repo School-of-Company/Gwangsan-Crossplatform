@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { FlatList } from 'react-native';
 import { useAnimatedRef, type AnimatedRef } from 'react-native-reanimated';
 import {
@@ -8,17 +7,18 @@ import {
   chatRoomKeys,
 } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
-import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
-import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
+import { useResilientMessageSender } from '~/entity/chat/model/useResilientMessageSender';
+import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
+import { ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
-import type { ChatMessageResponse, ChatRoomListItem } from '~/entity/chat';
+import type { ChatMessageResponse } from '~/entity/chat';
 import type { PendingMessageImage } from '~/shared/store/useChatQueueStore';
 
-interface UseChatMessagesParams {
+interface UseChatRoomControllerParams {
   readonly roomId: RoomId;
 }
 
-interface UseChatMessagesReturn {
+interface UseChatRoomControllerReturn {
   readonly flatListRef: AnimatedRef<FlatList>;
   readonly messages: ChatMessageResponse[];
   readonly otherUserInfo: { nickname: string; id?: number };
@@ -32,7 +32,6 @@ interface UseChatMessagesReturn {
       imageIds: number[],
       images?: PendingMessageImage[]
     ) => void;
-    readonly renderMessage: ({ item }: { item: ChatMessageResponse }) => null;
   };
   readonly scrollToEnd: (animated?: boolean) => void;
   readonly markRoomAsRead: (roomId: RoomId) => Promise<void>;
@@ -40,9 +39,10 @@ interface UseChatMessagesReturn {
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
 
-export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessagesReturn => {
+export const useChatRoomController = ({
+  roomId,
+}: UseChatRoomControllerParams): UseChatRoomControllerReturn => {
   const flatListRef = useAnimatedRef<FlatList>();
-  const queryClient = useQueryClient();
 
   const { data: messages, isLoading, isError } = useChatMessagesEntity(roomId);
 
@@ -67,17 +67,7 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
 
   const safeMessages = ensureMessagesArray(messages);
 
-  const otherUserInfo = useMemo(() => {
-    const roomsCache = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_QUERY_KEY);
-    const currentRoom = roomsCache?.find((r) => r.roomId === roomId);
-    if (currentRoom?.member) {
-      return {
-        nickname: currentRoom.member.nickname,
-        id: Number(currentRoom.member.memberId),
-      };
-    }
-    return extractOtherUserInfo(safeMessages);
-  }, [queryClient, roomId, safeMessages]);
+  const otherUserInfo = useChatOtherUser(roomId, safeMessages);
 
   const scrollToEnd = useCallback((animated = true) => {
     // getItemLayout 없이 가변 높이 아이템을 쓰는 FlatList에서는 scrollToEnd()가 참조하는
@@ -102,10 +92,6 @@ export const useChatMessages = ({ roomId }: UseChatMessagesParams): UseChatMessa
       },
       [resilientSendMessage]
     ),
-
-    renderMessage: useCallback(({ item }: { item: ChatMessageResponse }) => {
-      return null;
-    }, []),
   };
 
   return {
