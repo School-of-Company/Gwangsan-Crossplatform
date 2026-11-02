@@ -10,7 +10,7 @@
     "test": "jest --watchAll=false",
     "test:watch": "jest --watchAll",
     "test:coverage": "jest --coverage",
-    "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --max-warnings 66 && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
+    "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --max-warnings 62 && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "web": "expo start --web",
     "e2e:build:ios": "detox build --configuration ios.sim.debug",
