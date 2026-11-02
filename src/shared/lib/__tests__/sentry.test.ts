@@ -1,57 +1,156 @@
 import * as Sentry from '@sentry/react-native';
+import type { Breadcrumb, ErrorEvent } from '@sentry/react-native';
+import { beforeBreadcrumb, beforeSend, initSentry, isValidSentryDsn } from '../sentry';
 
 jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),
   mobileReplayIntegration: jest.fn(() => 'mobile-replay-integration'),
 }));
 
-// ROOT CAUSE of the original failure (both assertions saw 0 calls):
-//
-// sentry.ts reads `process.env.EXPO_PUBLIC_SENTRY_DSN` directly, but that expression is
-// NOT a live runtime lookup in Jest. babel-plugin-react-native-dotenv (configured in
-// babel.config.js) statically rewrites every `process.env.<KEY>` member expression it can
-// resolve into a hard-coded string literal *at transform time*, sourced from the .env file
-// (merged with whatever `process.env` holds when the plugin's factory function first runs
-// for this babel-config cache key). That factory only runs once per process/cache key —
-// it is not re-invoked per test file or per `require()` call.
-//
-// jest.setup.js runs before any test file and unconditionally seeds
-// `process.env.EXPO_PUBLIC_SENTRY_DSN` with a 'test-placeholder' value if it isn't already
-// set (specifically so unrelated suites that transitively import sentry.ts don't trigger a
-// real Sentry.init). Because that happens before the first file transform, the literal baked
-// into the compiled sentry.ts is always the placeholder DSN in this test environment —
-// and sentry.ts's own `isValidDsn` check explicitly excludes anything containing
-// 'test-placeholder'. So `isValidDsn` is always `false` here, and the `Sentry.init(...)`
-// call is dead code from this suite's point of view.
-//
-// This was NOT a jest.mock ordering / module-caching bug (there is no dynamic re-require
-// or jest.resetModules() that would fix it): mutating `process.env.EXPO_PUBLIC_SENTRY_DSN`
-// at test runtime has zero effect, verified empirically — it only takes effect if the
-// variable is exported in the shell *before* the Node/Jest process starts (i.e. before
-// jest.setup.js and babel ever run), which isn't something a single test file can arrange
-// for itself without a separate process. The two original assertions were simply asserting
-// a code path (`isValidDsn === true`) that is structurally unreachable in this suite —
-// the fix is to assert the module's actual, real behavior under test instead.
-describe('sentry init', () => {
-  it('does not initialize Sentry, because the DSN inlined at build time is the test placeholder', () => {
-    // Import for side effects: sentry.ts calls Sentry.init(...) at module load time, gated
-    // on isValidDsn. Any earlier import already exercised this (module singleton), so this
-    // require is here for documentation/intent — it does not re-run the module body.
-    require('../sentry');
+const mockInit = Sentry.init as jest.Mock;
+const VALID_DSN = 'https://abc123@o123.ingest.sentry.io/456';
 
-    expect(Sentry.init).not.toHaveBeenCalled();
-  });
-
-  it('does not build the mobile replay integration either, since it lives inside the same gated block', () => {
+// sentry.ts의 process.env.EXPO_PUBLIC_SENTRY_DSN은 babel(react-native-dotenv)이 변환 시점에
+// 문자열로 박아 넣고, jest.setup.js가 그 값을 test-placeholder로 고정한다. 그래서 모듈 로드 때의
+// 자동 초기화는 항상 건너뛰고, 유효한 DSN 분기는 initSentry에 DSN을 직접 넘겨 확인한다.
+describe('모듈 로드 시 초기화', () => {
+  it('테스트 placeholder DSN이면 Sentry를 초기화하지 않는다', () => {
+    expect(mockInit).not.toHaveBeenCalled();
     expect(Sentry.mobileReplayIntegration).not.toHaveBeenCalled();
   });
 });
 
-// NOTE ON COVERAGE: the body of `if (isValidDsn) { Sentry.init(...) }` (the Sentry.init call
-// and its `integrations: [Sentry.mobileReplayIntegration()]` argument) is intentionally left
-// uncovered by this suite. Exercising it would require the DSN validation to actually
-// succeed, which — per the root-cause analysis above — is not reachable from inside a Jest
-// test process given this repo's babel/env setup. Forcing it would mean either mutating the
-// shared .env file (affects every test/dev run, including other agents/CI) or re-implementing
-// a parallel, non-standard transform pipeline that no longer represents the real compiled
-// module. Both are worse than leaving one small, well-understood branch unexercised.
+describe('isValidSentryDsn', () => {
+  it.each([
+    [VALID_DSN, true],
+    ['https://key@sentry.example.com/1', true],
+    [undefined, false],
+    ['', false],
+    ['http://abc@o1.ingest.sentry.io/2', false],
+    ['https://o1.ingest.sentry.io/2', false],
+    ['https://abc@o1.ingest.sentry.io/project', false],
+    ['https://test-placeholder@sentry.io/0', false],
+  ])('%s → %s', (dsn, expected) => {
+    expect(isValidSentryDsn(dsn)).toBe(expected);
+  });
+});
+
+describe('initSentry', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('유효하지 않은 DSN이면 초기화하지 않고 false를 반환한다', () => {
+    expect(initSentry('not-a-dsn')).toBe(false);
+    expect(initSentry(undefined)).toBe(false);
+    expect(mockInit).not.toHaveBeenCalled();
+  });
+
+  it('인자를 생략하면 빌드 시 주입된 DSN(테스트에서는 placeholder)을 쓴다', () => {
+    expect(initSentry()).toBe(false);
+    expect(mockInit).not.toHaveBeenCalled();
+  });
+
+  it('유효한 DSN이면 개인정보 필터와 마스킹된 리플레이로 초기화한다', () => {
+    expect(initSentry(VALID_DSN)).toBe(true);
+
+    expect(Sentry.mobileReplayIntegration).toHaveBeenCalledWith({
+      maskAllText: true,
+      maskAllImages: true,
+    });
+    expect(mockInit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dsn: VALID_DSN,
+        enabled: !__DEV__,
+        tracesSampleRate: 0.2,
+        beforeSend,
+        beforeBreadcrumb,
+        integrations: ['mobile-replay-integration'],
+      })
+    );
+  });
+});
+
+describe('beforeSend', () => {
+  it('요청의 인증 헤더·바디·쿠키·쿼리스트링을 가린다', () => {
+    const event = {
+      request: {
+        url: 'https://api.gwangsan.io.kr/api/member?token=secret',
+        headers: { Authorization: 'Bearer x', Cookie: 'a=b', 'Content-Type': 'application/json' },
+        data: { password: '1234' },
+        cookies: { session: 'abc' },
+        query_string: 'token=secret',
+      },
+    } as unknown as ErrorEvent;
+
+    const result = beforeSend(event, {}) as ErrorEvent;
+
+    expect(result.request).toEqual({
+      url: 'https://api.gwangsan.io.kr/api/member',
+      headers: {
+        Authorization: '[Filtered]',
+        Cookie: '[Filtered]',
+        'Content-Type': 'application/json',
+      },
+      data: '[Filtered]',
+      cookies: { '*': '[Filtered]' },
+      query_string: '[Filtered]',
+    });
+  });
+
+  it('비어 있는 요청 필드는 그대로 둔다', () => {
+    const event = { request: {} } as unknown as ErrorEvent;
+
+    const result = beforeSend(event, {}) as ErrorEvent;
+
+    expect(result.request).toEqual({
+      headers: undefined,
+      data: undefined,
+      cookies: undefined,
+      query_string: undefined,
+      url: undefined,
+    });
+  });
+
+  it('이벤트에 담긴 브레드크럼도 함께 걸러낸다', () => {
+    const event = {
+      breadcrumbs: [{ message: 'GET /post?q=1', data: { url: '/post?q=1', body: 'x' } }],
+    } as unknown as ErrorEvent;
+
+    const result = beforeSend(event, {}) as ErrorEvent;
+
+    expect(result.breadcrumbs).toEqual([
+      { message: 'GET /post', data: { url: '/post', body: '[Filtered]' } },
+    ]);
+  });
+
+  it('request·breadcrumbs가 없는 이벤트는 그대로 반환한다', () => {
+    const event = { message: 'boom' } as ErrorEvent;
+
+    expect(beforeSend(event, {})).toEqual({ message: 'boom' });
+  });
+});
+
+describe('beforeBreadcrumb', () => {
+  it('헤더·요청 바디를 가리고 URL과 메시지의 쿼리스트링을 지운다', () => {
+    const breadcrumb: Breadcrumb = {
+      message: 'POST /auth/signin?redirect=1',
+      data: {
+        url: '/auth/signin?redirect=1',
+        headers: { authorization: 'Bearer x', accept: '*/*' },
+        requestBody: { password: '1234' },
+      },
+    };
+
+    expect(beforeBreadcrumb(breadcrumb)).toEqual({
+      message: 'POST /auth/signin',
+      data: {
+        url: '/auth/signin',
+        headers: { authorization: '[Filtered]', accept: '*/*' },
+        requestBody: '[Filtered]',
+      },
+    });
+  });
+
+  it('data와 message가 없으면 그대로 둔다', () => {
+    expect(beforeBreadcrumb({ category: 'ui.click' })).toEqual({ category: 'ui.click' });
+  });
+});
