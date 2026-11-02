@@ -202,18 +202,21 @@ const ItemFormPage = () => {
             />
             <Input
               label="주제"
+              testID="ItemForm-title-input"
               placeholder="주제를 작성해주세요"
               value={title}
               onChangeText={setTitle}
             />
             <TextField
               label="내용"
+              testID="ItemForm-content-input"
               placeholder="내용을 작성해주세요"
               value={content}
               onChangeText={setContent}
             />
             <Input
               label="광산"
+              testID="ItemForm-gwangsan-input"
               placeholder="광산을 입력해주세요"
               value={gwangsan}
               onChangeText={handleGwangsanChange}
