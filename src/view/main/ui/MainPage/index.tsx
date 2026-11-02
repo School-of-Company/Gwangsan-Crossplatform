@@ -7,16 +7,17 @@ import { useGetMyInformation } from '../../../../shared/model/useGetMyInformatio
 import Toast from 'react-native-toast-message';
 
 export default function MainPageView() {
-  const { data, isError, error } = useGetMyInformation();
+  const { data, isError } = useGetMyInformation();
 
+  // 서버 메시지 원문은 사용자에게 의미가 없으므로 고정 문구만 보여준다
   useEffect(() => {
     if (isError)
       Toast.show({
         type: 'error',
         text1: '정보 조회 실패',
-        text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        text2: '잠시 후 다시 시도해 주세요.',
       });
-  }, [isError, error]);
+  }, [isError]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>

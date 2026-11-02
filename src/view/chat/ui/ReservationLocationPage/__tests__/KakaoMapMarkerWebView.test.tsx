@@ -1,5 +1,5 @@
 import { ActivityIndicator } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { KakaoMapMarkerWebView } from '../KakaoMapMarkerWebView';
 
 const KAKAO_JS_KEY = process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
@@ -93,5 +93,25 @@ describe('KakaoMapMarkerWebView', () => {
     const { UNSAFE_getByType } = render(<KakaoMapMarkerWebView center={center} />);
 
     expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+  });
+
+  it('지도 준비(ready) 메시지를 받으면 로딩 스피너를 걷어낸다', () => {
+    const { UNSAFE_queryByType } = render(<KakaoMapMarkerWebView center={center} />);
+
+    act(() => {
+      lastWebViewProps.onMessage({ nativeEvent: { data: JSON.stringify({ type: 'ready' }) } });
+    });
+
+    expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+  });
+
+  it('스피너가 사라진 뒤에도 WebView는 그대로 유지된다', () => {
+    const { getByTestId } = render(<KakaoMapMarkerWebView center={center} />);
+
+    act(() => {
+      lastWebViewProps.onMessage({ nativeEvent: { data: '{}' } });
+    });
+
+    expect(getByTestId('kakao-webview')).toBeTruthy();
   });
 });

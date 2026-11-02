@@ -7,7 +7,7 @@ import { TextField } from '~/shared/ui/TextField';
 import { Dropdown } from '@/shared/ui/Dropdown';
 import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
 import { SPECIALTIES } from '~/shared/consts/specialties';
-import { PLACE_ITEMS } from '@/shared/consts/place';
+import { PLACE_ITEMS, findPlaceItem } from '@/shared/consts/place';
 import { useGetMyProfile } from '../../model/useGetMyProfile';
 import { useUpdateProfile } from '../../model/useUpdateProfile';
 import { useUpdateBranch } from '../../model/useUpdateBranch';
@@ -43,7 +43,7 @@ export default function ProfileEditPageView() {
 
       setDescription(profileData.description || '');
 
-      const currentPlace = PLACE_ITEMS.find((item) => item.name === profileData.placeName);
+      const currentPlace = findPlaceItem(profileData);
       setPlaceId(currentPlace ? String(currentPlace.id) : undefined);
     }
   }, [profileData]);

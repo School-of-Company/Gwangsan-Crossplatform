@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header, PillTabs } from '~/shared/ui';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { ReviewPost } from '~/entity/reviews/ui';
 import { useGetReviews, ReviewsMode } from '../../../../entity/reviews/model/useGetReviews';
 import { useGetReceivedReviewsInfinite } from '../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
@@ -34,28 +35,39 @@ const EMPTY_MESSAGE: Record<ReviewsMode, string> = {
   toss: '작성한 후기가 없습니다.',
 };
 
-const ERROR_MESSAGE = '후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const ERROR_TITLE = '후기를 불러오지 못했습니다.';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // "작성한 후기"(toss)는 이번 서버 페이지네이션 대상이 아니라서 기존 방식(전체 배열,
 // 일반 ScrollView)을 그대로 유지한다.
 const ReviewsPanel = memo(
-  ({ posts, mode, isError }: { posts: ReviewPostType[]; mode: ReviewsMode; isError: boolean }) => (
+  ({
+    posts,
+    mode,
+    isError,
+    onRetry,
+  }: {
+    posts: ReviewPostType[];
+    mode: ReviewsMode;
+    isError: boolean;
+    onRetry: () => void;
+  }) => (
     <ScrollView
       style={{ width: SCREEN_WIDTH }}
+      contentContainerStyle={{ flexGrow: 1 }}
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled>
-      {posts.length > 0 ? (
+      {posts.length === 0 && isError ? (
+        <ErrorFallback title={ERROR_TITLE} onRetry={onRetry} />
+      ) : posts.length > 0 ? (
         <View className="gap-4 px-6 pb-9">
           {posts.map((post) => (
             <ReviewPost key={post.reviewId} review={post} mode={mode} />
           ))}
         </View>
       ) : (
-        <Text className="pt-20 text-center text-gray-500">
-          {isError ? ERROR_MESSAGE : EMPTY_MESSAGE[mode]}
-        </Text>
+        <Text className="pt-20 text-center text-gray-500">{EMPTY_MESSAGE[mode]}</Text>
       )}
     </ScrollView>
   )
@@ -73,6 +85,7 @@ const ReceiveReviewsPanel = memo(
     isFetchNextPageError,
     onEndReached,
     onRetryNextPage,
+    onRetry,
   }: {
     posts: ReviewPostType[];
     isInitialLoading: boolean;
@@ -82,6 +95,7 @@ const ReceiveReviewsPanel = memo(
     isFetchNextPageError: boolean;
     onEndReached: () => void;
     onRetryNextPage: () => void;
+    onRetry: () => void;
   }) => {
     if (isInitialLoading) {
       return (
@@ -105,9 +119,11 @@ const ReceiveReviewsPanel = memo(
         onEndReachedThreshold={0.5}
         onEndReached={hasNextPage && !isFetchingNextPage ? onEndReached : undefined}
         ListEmptyComponent={
-          <Text className="pt-20 text-center text-gray-500">
-            {isError ? ERROR_MESSAGE : EMPTY_MESSAGE.receive}
-          </Text>
+          isError ? (
+            <ErrorFallback title={ERROR_TITLE} onRetry={onRetry} />
+          ) : (
+            <Text className="pt-20 text-center text-gray-500">{EMPTY_MESSAGE.receive}</Text>
+          )
         }
         ListFooterComponent={
           isFetchingNextPage ? (
@@ -138,7 +154,11 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   // (react-query는 enabled가 꺼져도 이미 받아온 데이터는 캐시에 유지하므로
   // 탭을 다시 전환해도 곧바로 이전 데이터를 다시 보여줄 수 있다.)
   const receiveInfinite = useGetReceivedReviewsInfinite(id, activeMode === 'receive');
-  const { data: tossPosts = [], isError: tossIsError } = useGetReviews('toss', id, {
+  const {
+    data: tossPosts = [],
+    isError: tossIsError,
+    refetch: refetchToss,
+  } = useGetReviews('toss', id, {
     enabled: activeMode === 'toss',
   });
 
@@ -200,8 +220,14 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
           isFetchNextPageError={receiveInfinite.isFetchNextPageError}
           onEndReached={handleReceiveEndReached}
           onRetryNextPage={() => receiveInfinite.fetchNextPage()}
+          onRetry={() => receiveInfinite.refetch()}
         />
-        <ReviewsPanel posts={tossPosts} mode="toss" isError={tossIsError} />
+        <ReviewsPanel
+          posts={tossPosts}
+          mode="toss"
+          isError={tossIsError}
+          onRetry={() => refetchToss()}
+        />
       </ScrollView>
     </SafeAreaView>
   );
