@@ -19,6 +19,7 @@ import { ReviewPost } from '~/entity/reviews/ui';
 import { useGetReviews, ReviewsMode } from '../../../../entity/reviews/model/useGetReviews';
 import { useGetReceivedReviewsInfinite } from '../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
 import { ReviewPostType } from '../../../../entity/reviews/model/reviewPostType';
+import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
 
 interface ReviewsPageViewProps {
   mode: ReviewsMode;
@@ -169,7 +170,12 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   // 활성 탭만 조회하도록, 현재 보고 있지 않은 탭의 쿼리는 비활성화한다.
   // (react-query는 enabled가 꺼져도 이미 받아온 데이터는 캐시에 유지하므로
   // 탭을 다시 전환해도 곧바로 이전 데이터를 다시 보여줄 수 있다.)
-  const receiveInfinite = useGetReceivedReviewsInfinite(id, activeMode === 'receive');
+  const { data: myInfo } = useGetMyInformation();
+  const receiveInfinite = useGetReceivedReviewsInfinite(
+    id,
+    activeMode === 'receive',
+    myInfo?.memberId
+  );
   const {
     data: tossPosts = [],
     isError: tossIsError,

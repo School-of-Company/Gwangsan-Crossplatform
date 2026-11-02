@@ -17,6 +17,10 @@ jest.mock('../../../../../entity/reviews/model/useGetReceivedReviewsInfinite', (
   useGetReceivedReviewsInfinite: jest.fn(),
 }));
 
+jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
+  useGetMyInformation: () => ({ data: { memberId: 1 } }),
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
 }));
@@ -116,14 +120,14 @@ describe('ReviewsPageView', () => {
     it('마운트 시 활성 탭(받은 후기)만 조회하도록 활성화되고, 비활성 탭(작성한 후기)은 비활성 상태로 호출된다', () => {
       render(<ReviewsPageView mode="receive" />);
 
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', true);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', true, 1);
       expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '1', { enabled: false });
     });
 
     it('작성한 후기 페이지로 마운트하면 반대로 작성한 후기만 활성화된다', () => {
       render(<ReviewsPageView mode="toss" />);
 
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', false);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', false, 1);
       expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '1', { enabled: true });
     });
 
@@ -133,7 +137,7 @@ describe('ReviewsPageView', () => {
       fireEvent.press(getByTestId('reviews-tab-toss'));
 
       expect(getByText('작성한 후기(active)')).toBeTruthy();
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', false);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', false, 1);
       expect(mockUseGetReviews).toHaveBeenLastCalledWith('toss', '1', { enabled: true });
     });
 
@@ -143,7 +147,7 @@ describe('ReviewsPageView', () => {
       fireEvent.press(getByTestId('reviews-tab-receive'));
 
       expect(getByText('받은 후기(active)')).toBeTruthy();
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', true);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', true, 1);
     });
   });
 
@@ -203,7 +207,7 @@ describe('ReviewsPageView', () => {
 
       render(<ReviewsPageView mode="receive" />);
 
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('9', true);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('9', true, 1);
       expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '9', { enabled: false });
     });
 

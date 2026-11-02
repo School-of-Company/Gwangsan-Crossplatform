@@ -19,9 +19,9 @@ import { Header, PillTabs } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { MODE } from '~/shared/types/mode';
 import { PostType } from '~/shared/types/postType';
-import { useGetProfile } from '../../model/useGetProfile';
-import { useGetMyPosts } from '../../model/useGetMyPosts';
-import { useGetPosts } from '../../model/useGetPosts';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
+import { useGetMyPosts } from '~/entity/profile/model/useGetMyPosts';
+import { useGetMemberPosts } from '~/entity/profile/model/useGetMemberPosts';
 
 type TradeTab = 'purchased' | 'sold';
 type CounterpartRole = 'seller' | 'buyer';
@@ -147,7 +147,7 @@ export default function PurchasedPageView() {
 
   const { data: profileData } = useGetProfile(id);
   const myPosts = useGetMyPosts(isMe);
-  const otherPosts = useGetPosts(id);
+  const otherPosts = useGetMemberPosts(id);
   const { data: postsData, isError, isLoading, refetch } = isMe ? myPosts : otherPosts;
 
   const handleRefresh = useCallback(async () => {

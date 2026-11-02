@@ -4,9 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { renderWithProviders } from '~/test-utils';
 import SellingPageView from '../index';
-import { useGetProfile } from '~/view/profile/model/useGetProfile';
-import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
-import { useGetSellingPosts } from '~/view/profile/model/useGetSellingPosts';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
+import { useGetSellingPosts } from '~/entity/profile/model/useGetSellingPosts';
 import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
 import { deletePost } from '~/entity/post/api/deletePost';
 
@@ -26,10 +26,13 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetSellingPosts', () => ({ useGetSellingPosts: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetSellingPosts', () => ({ useGetSellingPosts: jest.fn() }));
 jest.mock('~/entity/reviews/model/useGetReviews', () => ({ useGetReviews: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
+  useGetMyInformation: () => ({ data: { memberId: 1 } }),
+}));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {

@@ -2,9 +2,9 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import ProfileEditPageView from '../index';
-import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
-import { useUpdateProfile } from '~/view/profile/model/useUpdateProfile';
-import { useUpdateBranch } from '~/view/profile/model/useUpdateBranch';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
+import { useUpdateProfile } from '~/entity/profile/model/useUpdateProfile';
+import { useUpdateBranch } from '~/entity/profile/model/useUpdateBranch';
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
@@ -16,9 +16,9 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle }: any) => {

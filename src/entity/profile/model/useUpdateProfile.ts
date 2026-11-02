@@ -3,6 +3,7 @@ import { updateProfile, UpdateProfileRequest } from '../api/updateProfile';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { ProfileType } from '~/shared/types/profileType';
+import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
@@ -15,15 +16,18 @@ export const useUpdateProfile = () => {
       const applyUpdate = (prev: ProfileType | undefined) =>
         prev ? { ...prev, ...variables } : prev;
       const myProfile = queryClient.setQueryData<ProfileType>(
-        ['myProfile', 'current'],
+        profileQueryKeys.myProfile(),
         applyUpdate
       );
       if (myProfile) {
-        queryClient.setQueryData<ProfileType>(['profile', String(myProfile.memberId)], applyUpdate);
+        queryClient.setQueryData<ProfileType>(
+          profileQueryKeys.profile(String(myProfile.memberId)),
+          applyUpdate
+        );
       }
 
-      queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: profileQueryKeys.myProfile() });
+      queryClient.invalidateQueries({ queryKey: profileQueryKeys.profileAll });
       Toast.show({
         type: 'success',
         text1: '성공',

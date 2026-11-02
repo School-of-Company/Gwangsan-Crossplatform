@@ -3,9 +3,9 @@ import { act, render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import PurchasedPageView from '../index';
-import { useGetProfile } from '~/view/profile/model/useGetProfile';
-import { useGetMyPosts } from '~/view/profile/model/useGetMyPosts';
-import { useGetPosts } from '~/view/profile/model/useGetPosts';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
+import { useGetMyPosts } from '~/entity/profile/model/useGetMyPosts';
+import { useGetMemberPosts } from '~/entity/profile/model/useGetMemberPosts';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
@@ -21,9 +21,9 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
-jest.mock('~/view/profile/model/useGetPosts', () => ({ useGetPosts: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMemberPosts', () => ({ useGetMemberPosts: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {
@@ -52,7 +52,7 @@ const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseGetProfile = useGetProfile as jest.Mock;
 const mockUseGetMyPosts = useGetMyPosts as jest.Mock;
-const mockUseGetPosts = useGetPosts as jest.Mock;
+const mockUseGetMemberPosts = useGetMemberPosts as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -60,7 +60,7 @@ beforeEach(() => {
   mockUseRouter.mockReturnValue({ push });
   mockUseGetProfile.mockReturnValue({ data: undefined, error: null, isError: false });
   mockUseGetMyPosts.mockReturnValue({ data: [], error: null, isError: false });
-  mockUseGetPosts.mockReturnValue({ data: [], error: null, isError: false });
+  mockUseGetMemberPosts.mockReturnValue({ data: [], error: null, isError: false });
 });
 
 describe('PurchasedPageView', () => {
@@ -68,7 +68,7 @@ describe('PurchasedPageView', () => {
     const { getByTestId } = render(<PurchasedPageView />);
 
     expect(mockUseGetMyPosts).toHaveBeenCalledWith(true);
-    expect(mockUseGetPosts).toHaveBeenCalledWith(undefined);
+    expect(mockUseGetMemberPosts).toHaveBeenCalledWith(undefined);
 
     const header = JSON.parse(getByTestId('header').props.children);
     expect(header.headerTitle).toBe('거래내역');
@@ -85,7 +85,7 @@ describe('PurchasedPageView', () => {
     const { getByTestId } = render(<PurchasedPageView />);
 
     expect(mockUseGetMyPosts).toHaveBeenCalledWith(false);
-    expect(mockUseGetPosts).toHaveBeenCalledWith('5');
+    expect(mockUseGetMemberPosts).toHaveBeenCalledWith('5');
 
     const header = JSON.parse(getByTestId('header').props.children);
     expect(header.headerTitle).toBe('상대방님의 거래 내역');

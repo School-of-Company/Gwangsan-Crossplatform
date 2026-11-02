@@ -2,7 +2,7 @@ import React from 'react';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
+import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
 import { useChatRoomController } from '~/widget/chat/model/useChatRoomController';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
@@ -22,7 +22,7 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('~/shared/model/useGetMyInformation', () => ({
+jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 

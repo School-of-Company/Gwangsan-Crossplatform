@@ -24,7 +24,7 @@ import { ChatInput, MyMessage } from '@/widget/chat';
 import { MessageActionOverlay } from '@/widget/chat/ui/MessageActionOverlay';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
-import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
+import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
 import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
 import type { ChatApiError } from '~/entity/chat';
 import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat/lib/messageRenderer';
