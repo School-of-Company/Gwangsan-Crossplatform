@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import MainPageView from '../index';
@@ -116,6 +116,25 @@ describe('MainPageView', () => {
         text2: '잠시 후 다시 시도해 주세요.',
       })
     );
+  });
+
+  it('당겨서 새로고침하면 내 정보를 다시 조회한다', async () => {
+    const refetch = jest.fn().mockResolvedValue(undefined);
+    mockUseGetMyInformation.mockReturnValue({
+      data: undefined,
+      isError: false,
+      error: null,
+      refetch,
+    });
+
+    const { getByTestId } = render(<MainPageView />);
+
+    await act(async () => {
+      await getByTestId('main-scroll').props.refreshControl.props.onRefresh();
+    });
+
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(getByTestId('main-scroll').props.refreshControl.props.refreshing).toBe(false);
   });
 
   it('isError가 false이면 Toast를 호출하지 않는다', () => {

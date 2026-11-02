@@ -2,13 +2,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +38,6 @@ const EMPTY_MESSAGE: Record<ReviewsMode, string> = {
 
 const ERROR_TITLE = '후기를 불러오지 못했습니다.';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 // "작성한 후기"(toss)는 이번 서버 페이지네이션 대상이 아니라서 기존 방식(전체 배열,
 // 일반 ScrollView)을 그대로 유지한다.
 const ReviewsPanel = memo(
@@ -47,17 +46,25 @@ const ReviewsPanel = memo(
     mode,
     isError,
     onRetry,
+    width,
+    refreshing,
+    onRefresh,
   }: {
     posts: ReviewPostType[];
     mode: ReviewsMode;
     isError: boolean;
     onRetry: () => void;
+    width: number;
+    refreshing: boolean;
+    onRefresh: () => void;
   }) => (
     <ScrollView
-      style={{ width: SCREEN_WIDTH }}
+      testID="toss-reviews-list"
+      style={{ width }}
       contentContainerStyle={{ flexGrow: 1 }}
       showsVerticalScrollIndicator={false}
-      nestedScrollEnabled>
+      nestedScrollEnabled
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       {posts.length === 0 && isError ? (
         <ErrorFallback title={ERROR_TITLE} onRetry={onRetry} />
       ) : posts.length > 0 ? (
@@ -86,6 +93,9 @@ const ReceiveReviewsPanel = memo(
     onEndReached,
     onRetryNextPage,
     onRetry,
+    width,
+    refreshing,
+    onRefresh,
   }: {
     posts: ReviewPostType[];
     isInitialLoading: boolean;
@@ -96,10 +106,13 @@ const ReceiveReviewsPanel = memo(
     onEndReached: () => void;
     onRetryNextPage: () => void;
     onRetry: () => void;
+    width: number;
+    refreshing: boolean;
+    onRefresh: () => void;
   }) => {
     if (isInitialLoading) {
       return (
-        <View style={{ width: SCREEN_WIDTH }} className="flex-1 items-center justify-center">
+        <View style={{ width }} className="flex-1 items-center justify-center">
           <ActivityIndicator color="#8FC31D" />
         </View>
       );
@@ -108,7 +121,7 @@ const ReceiveReviewsPanel = memo(
     return (
       <FlatList
         testID="receive-reviews-list"
-        style={{ width: SCREEN_WIDTH }}
+        style={{ width }}
         data={posts}
         keyExtractor={(item) => item.reviewId}
         renderItem={({ item }) => <ReviewPost review={item} mode="receive" />}
@@ -116,6 +129,7 @@ const ReceiveReviewsPanel = memo(
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 36, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onEndReachedThreshold={0.5}
         onEndReached={hasNextPage && !isFetchingNextPage ? onEndReached : undefined}
         ListEmptyComponent={
@@ -148,6 +162,8 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   const rawParams = useLocalSearchParams();
   const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
   const [activeMode, setActiveMode] = useState<ReviewsMode>(mode);
+  const [refreshing, setRefreshing] = useState(false);
+  const { width: screenWidth } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
 
   // 활성 탭만 조회하도록, 현재 보고 있지 않은 탭의 쿼리는 비활성화한다.
@@ -182,13 +198,23 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
     }
   }, [receiveInfinite]);
 
+  const { refetch: refetchReceive } = receiveInfinite;
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await (activeMode === 'receive' ? refetchReceive() : refetchToss());
+    } finally {
+      setRefreshing(false);
+    }
+  }, [activeMode, refetchReceive, refetchToss]);
+
   const handleTabChange = (nextMode: ReviewsMode) => {
     setActiveMode(nextMode);
-    scrollRef.current?.scrollTo({ x: getTabIndex(nextMode) * SCREEN_WIDTH, animated: true });
+    scrollRef.current?.scrollTo({ x: getTabIndex(nextMode) * screenWidth, animated: true });
   };
 
   const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
     const nextMode = TABS[index]?.value;
     if (nextMode && nextMode !== activeMode) setActiveMode(nextMode);
   };
@@ -209,7 +235,7 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
         pagingEnabled
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
-        contentOffset={{ x: getTabIndex(mode) * SCREEN_WIDTH, y: 0 }}
+        contentOffset={{ x: getTabIndex(mode) * screenWidth, y: 0 }}
         onMomentumScrollEnd={handleMomentumScrollEnd}>
         <ReceiveReviewsPanel
           posts={receivePosts}
@@ -221,12 +247,18 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
           onEndReached={handleReceiveEndReached}
           onRetryNextPage={() => receiveInfinite.fetchNextPage()}
           onRetry={() => receiveInfinite.refetch()}
+          width={screenWidth}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
         />
         <ReviewsPanel
           posts={tossPosts}
           mode="toss"
           isError={tossIsError}
           onRetry={() => refetchToss()}
+          width={screenWidth}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
         />
       </ScrollView>
     </SafeAreaView>

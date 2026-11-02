@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useGetReviews } from '../../../../../entity/reviews/model/useGetReviews';
 import { useGetReceivedReviewsInfinite } from '../../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
@@ -263,6 +263,43 @@ describe('ReviewsPageView', () => {
       fireEvent(getByTestId('receive-reviews-list'), 'endReached');
 
       expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('당겨서 새로고침', () => {
+    it('받은 후기 탭에서 당기면 받은 후기만 다시 조회한다', async () => {
+      const refetch = jest.fn().mockResolvedValue(undefined);
+      const tossRefetch = jest.fn().mockResolvedValue(undefined);
+      mockReceiveInfinite({ refetch });
+      mockToss({ refetch: tossRefetch });
+
+      const { getByTestId } = render(<ReviewsPageView mode="receive" />);
+
+      await act(async () => {
+        await getByTestId('receive-reviews-list').props.refreshControl.props.onRefresh();
+      });
+
+      expect(refetch).toHaveBeenCalledTimes(1);
+      expect(tossRefetch).not.toHaveBeenCalled();
+      expect(getByTestId('receive-reviews-list').props.refreshControl.props.refreshing).toBe(
+        false
+      );
+    });
+
+    it('작성한 후기 탭에서 당기면 작성한 후기만 다시 조회한다', async () => {
+      const refetch = jest.fn().mockResolvedValue(undefined);
+      const tossRefetch = jest.fn().mockResolvedValue(undefined);
+      mockReceiveInfinite({ refetch });
+      mockToss({ refetch: tossRefetch });
+
+      const { getByTestId } = render(<ReviewsPageView mode="toss" />);
+
+      await act(async () => {
+        await getByTestId('toss-reviews-list').props.refreshControl.props.onRefresh();
+      });
+
+      expect(tossRefetch).toHaveBeenCalledTimes(1);
+      expect(refetch).not.toHaveBeenCalled();
     });
   });
 

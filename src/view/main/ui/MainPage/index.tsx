@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { ScrollView } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '~/entity/main/ui/header';
 import { GwangsanBanner, Inform, MainSlideViewer } from '~/widget/main';
@@ -7,7 +7,17 @@ import { useGetMyInformation } from '../../../../shared/model/useGetMyInformatio
 import Toast from 'react-native-toast-message';
 
 export default function MainPageView() {
-  const { data, isError } = useGetMyInformation();
+  const { data, isError, refetch } = useGetMyInformation();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   // 서버 메시지 원문은 사용자에게 의미가 없으므로 고정 문구만 보여준다
   useEffect(() => {
@@ -22,7 +32,10 @@ export default function MainPageView() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header />
-      <ScrollView className="flex-1">
+      <ScrollView
+        testID="main-scroll"
+        className="flex-1"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <MainSlideViewer />
         <GwangsanBanner gwangsan={data?.gwangsan} />
         <Inform
