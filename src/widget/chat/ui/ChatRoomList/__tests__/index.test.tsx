@@ -4,6 +4,7 @@ import { FlatList } from 'react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import Toast from 'react-native-toast-message';
 import { ChatRoomList } from '../index';
+import { resetNavigationLock } from '~/shared/lib/navigationGuard';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
@@ -83,6 +84,7 @@ const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  resetNavigationLock();
   mockUseChatRooms.mockReturnValue(makeChatRoomsReturn());
   mockUseChatSocket.mockReturnValue({ joinRoom: mockJoinRoom });
   mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: false });
@@ -219,6 +221,21 @@ describe('ChatRoomList', () => {
     expect(mockJoinRoom).toHaveBeenCalledWith(7);
     expect(mockGetChatRoomData).toHaveBeenCalledWith(7);
     await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+  });
+
+  it('채팅방을 빠르게 두 번 누르면 한 번만 이동한다', () => {
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+    );
+
+    const { getByTestId } = render(<ChatRoomList />);
+
+    fireEvent.press(getByTestId('room-7'));
+    fireEvent.press(getByTestId('room-7'));
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockJoinRoom).toHaveBeenCalledTimes(1);
+    expect(mockGetChatRoomData).toHaveBeenCalledTimes(1);
   });
 
   it('미리 받아오기가 실패해도 조용히 무시하고 화면 이동은 그대로 진행한다', async () => {

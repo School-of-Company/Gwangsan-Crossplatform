@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import Post from '../index';
+import { resetNavigationLock } from '~/shared/lib/navigationGuard';
 
 const mockPush = jest.fn();
 
@@ -33,7 +34,10 @@ const makePost = (overrides = {}) => ({
   ...overrides,
 });
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  resetNavigationLock();
+});
 
 describe('Post', () => {
   it('썸네일을 메모리와 디스크에 캐시해 앱을 다시 켜도 다시 내려받지 않는다(#732)', () => {
@@ -72,6 +76,15 @@ describe('Post', () => {
     fireEvent.press(getByText('테스트 게시글'));
 
     expect(mockPush).toHaveBeenCalledWith('/post/5');
+  });
+
+  it('빠르게 두 번 누르면 상세 화면으로 한 번만 이동한다', () => {
+    const { getByText } = render(<Post {...makePost({ id: 5 })} />);
+
+    fireEvent.press(getByText('테스트 게시글'));
+    fireEvent.press(getByText('테스트 게시글'));
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
   });
 
   it('id가 0 미만이면 누를 때 이동하지 않는다', () => {

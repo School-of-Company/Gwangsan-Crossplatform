@@ -1,4 +1,4 @@
-import { useMemo, useCallback, memo, useState, useEffect } from 'react';
+import { useMemo, useCallback, memo, useState, useEffect, useRef } from 'react';
 import { View, ScrollView, Dimensions } from 'react-native';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
@@ -13,6 +13,7 @@ interface ReviewsModalProps {
   contents: string;
   onContentsChange: (contents: string) => void;
   onAnimationComplete?: () => void;
+  isSubmitting?: boolean;
 }
 
 const ReviewsModal = ({
@@ -24,6 +25,7 @@ const ReviewsModal = ({
   contents,
   onContentsChange,
   onAnimationComplete,
+  isSubmitting = false,
 }: ReviewsModalProps) => {
   const [localLight, setLocalLight] = useState(light);
   const [localContents, setLocalContents] = useState(contents);
@@ -40,9 +42,15 @@ const ReviewsModal = ({
 
   const isDisabled = useMemo(() => localContents.trim().length === 0, [localContents]);
 
+  // 제출 중 표시(isSubmitting)는 다음 렌더에야 버튼을 막으므로 같은 프레임의 연타는 ref로 막는다
+  const isSubmittingRef = useRef(false);
   const handleSubmit = useCallback(async () => {
-    if (localContents.trim()) {
+    if (isSubmittingRef.current || !localContents.trim()) return;
+    isSubmittingRef.current = true;
+    try {
       await onSubmit(localLight, localContents.trim());
+    } finally {
+      isSubmittingRef.current = false;
     }
   }, [localContents, localLight, onSubmit]);
 
@@ -80,8 +88,8 @@ const ReviewsModal = ({
             style={{ maxHeight: maxTextFieldHeight }}
           />
         </ScrollView>
-        <Button disabled={isDisabled} onPress={handleSubmit}>
-          작성완료
+        <Button disabled={isDisabled || isSubmitting} onPress={handleSubmit}>
+          {isSubmitting ? '작성 중...' : '작성완료'}
         </Button>
       </View>
     </BottomSheetModalWrapper>

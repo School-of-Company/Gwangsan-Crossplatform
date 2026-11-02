@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { renderWithProviders } from '~/test-utils';
@@ -220,6 +220,29 @@ describe('ItemFormPage', () => {
         )
       );
       expect(mockRouterReplace).toHaveBeenCalledWith({ pathname: '/main' });
+    });
+  });
+
+  describe('연타 방지', () => {
+    it('등록 버튼을 같은 프레임에 연타해도 등록 API는 한 번만 호출된다', async () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      let resolveCreate: (value: unknown) => void = () => {};
+      mockCreateItem.mockReturnValue(new Promise((resolve) => (resolveCreate = resolve)));
+      const { getByPlaceholderText, getByText } = renderWithProviders(<ItemFormPage />);
+
+      fillRequiredFields(getByPlaceholderText);
+      const submitButton = getByText('등록하기');
+      // 하나의 act 안에서 누르면 그 사이에 리렌더가 없어 같은 프레임의 연타와 같다
+      act(() => {
+        fireEvent.press(submitButton);
+        fireEvent.press(submitButton);
+        fireEvent.press(submitButton);
+      });
+
+      await waitFor(() => expect(mockCreateItem).toHaveBeenCalledTimes(1));
+      resolveCreate({ id: 1 });
+      await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledTimes(1));
+      expect(mockCreateItem).toHaveBeenCalledTimes(1);
     });
   });
 

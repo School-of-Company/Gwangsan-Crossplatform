@@ -26,6 +26,7 @@ import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
+import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
@@ -164,6 +165,8 @@ export function ChatRoomList() {
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
+      if (!acquireNavigationLock()) return;
+
       // 채팅방에 들어가기 전에 데이터를 미리 받아오고 소켓 방에 미리 join해
       // 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이 바로 보이게 한다.
       queryClient

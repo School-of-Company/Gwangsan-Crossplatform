@@ -33,6 +33,8 @@ const ItemFormPage = () => {
   const [imageIds, setImageIds] = useState<number[]>([]);
   const [imageUploadState, setImageUploadState] = useState<ImageUploadState | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // state는 렌더 전까지 반영되지 않아 같은 프레임의 연타로 글이 두 번 등록될 수 있어 ref로 잠근다
+  const isSubmittingRef = useRef(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const createItemMutation = useCreateItem();
@@ -110,9 +112,10 @@ const ItemFormPage = () => {
   };
 
   const handleSubmit = async () => {
-    try {
-      if (isSubmitting) return;
+    // try 안에서 return하면 finally가 진행 중인 첫 제출의 잠금까지 풀어버린다
+    if (isSubmittingRef.current) return;
 
+    try {
       if (imageUploadState?.hasUploadingImages) {
         Toast.show({
           type: 'error',
@@ -131,6 +134,7 @@ const ItemFormPage = () => {
         return;
       }
 
+      isSubmittingRef.current = true;
       setIsSubmitting(true);
 
       const requestBody = createItemFormRequestBody({
@@ -156,6 +160,7 @@ const ItemFormPage = () => {
     } catch (error) {
       logger.error('ItemForm submit failed', error);
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
