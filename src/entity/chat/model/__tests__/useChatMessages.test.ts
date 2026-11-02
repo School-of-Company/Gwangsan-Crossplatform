@@ -352,16 +352,16 @@ describe('useChatMessages', () => {
   });
 
   describe('에러 처리', () => {
-    it('API 에러 발생 시 onError 콜백이 호출된다', async () => {
+    it('API 에러 발생 시 isError와 error를 노출한다', async () => {
       const error = new Error('API error');
       mockGetChatMessages.mockRejectedValue(error);
-      const onError = jest.fn();
 
-      renderHookWithProviders(() => useChatMessages(ROOM_ID, { onError }));
+      const { result } = renderHookWithProviders(() => useChatMessages(ROOM_ID));
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalled();
+        expect(result.current.isError).toBe(true);
       });
+      expect(result.current.error).toBe(error);
     });
   });
 });

@@ -11,7 +11,8 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
-import QueryProvider, { shouldRetryQuery } from '../QueryProvider';
+import QueryProvider, { shouldRetryQuery, shouldThrowQueryError } from '../QueryProvider';
+import { toAppError } from '../errorHandler';
 import { setQueryClientInstance } from '../axios';
 import * as Sentry from '@sentry/react-native';
 
@@ -125,6 +126,14 @@ describe('QueryProvider', () => {
 
     it('AxiosError가 아니면 던지지 않는다', () => {
       expect(callThrowOnError(new Error('boom'), undefined)).toBe(false);
+    });
+
+    it('toAppError로 메시지가 바뀐 AxiosError도 상태 코드로 판단한다', () => {
+      const error = toAppError(makeAxiosError(502));
+
+      expect(shouldThrowQueryError(error, false)).toBe(true);
+      expect(shouldThrowQueryError(error, true)).toBe(false);
+      expect(shouldThrowQueryError(toAppError(makeAxiosError(403)), false)).toBe(false);
     });
   });
 
@@ -307,6 +316,48 @@ describe('QueryProvider', () => {
       listener({ isConnected: null });
 
       expect(onlineManager.isOnline()).toBe(true);
+    });
+  });
+
+  describe('ReactQueryDevtools', () => {
+    // 모듈 최상단에서 플랫폼을 판별하므로, 플랫폼을 바꾼 격리 레지스트리에서 React·RNTL까지 새로 불러와 렌더링한다.
+    // 격리된 RNTL은 테스트 안에서 정리 훅을 등록할 수 없어 pure 엔트리를 쓰고 직접 unmount한다.
+    let devtoolsLoaded = false;
+
+    const renderHostTypes = (os: string): string[] => {
+      let types: string[] = [];
+      jest.isolateModules(() => {
+        require('react-native').Platform.OS = os;
+        const IsolatedReact = require('react');
+        jest.doMock('@tanstack/react-query-devtools', () => {
+          devtoolsLoaded = true;
+          return { ReactQueryDevtools: () => IsolatedReact.createElement('devtools-mock') };
+        });
+        const { render: isolatedRender } = require('@testing-library/react-native/pure');
+        const IsolatedProvider = require('../QueryProvider').default;
+        const rendered = isolatedRender(
+          IsolatedReact.createElement(IsolatedProvider, null, IsolatedReact.createElement('child'))
+        );
+        const json = rendered.toJSON();
+        types = ((Array.isArray(json) ? json : [json]) as { type: string }[]).map((n) => n.type);
+        rendered.unmount();
+      });
+      return types;
+    };
+
+    afterEach(() => {
+      devtoolsLoaded = false;
+      jest.dontMock('@tanstack/react-query-devtools');
+    });
+
+    it('웹 개발 환경에서는 devtools를 불러와 렌더링한다', () => {
+      expect(renderHostTypes('web')).toEqual(['child', 'devtools-mock']);
+      expect(devtoolsLoaded).toBe(true);
+    });
+
+    it('네이티브에서는 devtools 모듈을 불러오지도 렌더링하지도 않는다', () => {
+      expect(renderHostTypes('ios')).toEqual(['child']);
+      expect(devtoolsLoaded).toBe(false);
     });
   });
 });

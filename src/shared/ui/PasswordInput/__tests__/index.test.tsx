@@ -20,6 +20,12 @@ describe('PasswordInput', () => {
     expect(UNSAFE_getByType(TextInput).props.secureTextEntry).toBe(false);
   });
 
+  it('토글 버튼 라벨이 비밀번호 표시 상태에 맞게 바뀐다', () => {
+    const { getByRole } = render(<PasswordInput label="비밀번호" />);
+    fireEvent.press(getByRole('button', { name: '비밀번호 보기' }));
+    expect(getByRole('button', { name: '비밀번호 숨기기' })).toBeTruthy();
+  });
+
   it('토글 버튼을 두 번 클릭하면 다시 secureTextEntry가 true로 바뀐다', () => {
     const { UNSAFE_getByType } = render(<PasswordInput label="비밀번호" />);
     fireEvent.press(UNSAFE_getByType(TouchableOpacity));

@@ -11,7 +11,7 @@ import { FEEDBACK_TYPES, useCreateFeedback, type FeedbackType } from '~/entity/f
 
 const MAX_CONTENT_LENGTH = 1000;
 
-export default function FeedbackPage() {
+export default function FeedbackWritePage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);

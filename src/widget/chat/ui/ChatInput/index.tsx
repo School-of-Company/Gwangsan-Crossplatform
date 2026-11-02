@@ -74,6 +74,7 @@ const ChatInputComponent = ({
           <TouchableOpacity
             testID="chat-input-cancel-edit"
             onPress={onCancelEdit}
+            accessibilityRole="button"
             accessibilityLabel="메시지 수정 취소"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Icon name="close" size={20} color={colors['gray-500']} />
@@ -107,6 +108,9 @@ const ChatInputComponent = ({
               className="mr-3 p-2"
               onPress={chatInput.handleImagePicker}
               disabled={!canSelectImage}
+              accessibilityRole="button"
+              accessibilityLabel={chatInput.isUploading ? '사진 업로드 중' : '사진 첨부'}
+              accessibilityState={{ disabled: !canSelectImage }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               {chatInput.isUploading ? (
                 <ActivityIndicator size="small" color={colors['gray-500']} />
@@ -124,6 +128,7 @@ const ChatInputComponent = ({
           testID="chat-input-send"
           onPress={handleSend}
           disabled={!canSend}
+          accessibilityRole="button"
           accessibilityLabel={isEditing ? '메시지 수정 완료' : '메시지 보내기'}
           className={`h-12 w-12 items-center justify-center rounded-full ${
             canSend ? 'bg-orange-400' : 'bg-gray-300'

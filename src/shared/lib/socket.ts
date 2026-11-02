@@ -202,7 +202,7 @@ class SocketManager implements ISocketManager {
   }
 }
 
-export const createChatSocketManager = (): ISocketManager => {
+export const getChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
     url: SOCKET_URL,
     transports: ['polling', 'websocket'],
@@ -214,4 +214,4 @@ export const createChatSocketManager = (): ISocketManager => {
   return SocketManager.getInstance(config);
 };
 
-export const chatSocket = createChatSocketManager();
+export const chatSocket = getChatSocketManager();

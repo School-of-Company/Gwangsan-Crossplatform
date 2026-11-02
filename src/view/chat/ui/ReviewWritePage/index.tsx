@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -9,7 +9,7 @@ import { Button, Header, ProgressBar } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import { ChatRoomProductInfo } from '~/widget/chat/ui/ChatRoomProductInfo';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
 import { useGetItem } from '~/entity/post';
 import { createReview } from '~/entity/post/api/createReview';
 import { logger } from '~/shared/lib/logger';
@@ -23,8 +23,8 @@ export default function ReviewWritePage() {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
 
-  const { data: roomData } = useChatRoomData({ roomId });
-  const { otherUserInfo } = useChatMessages({ roomId });
+  const { data: roomData, isError: isRoomDataError } = useChatRoomData({ roomId });
+  const otherUserInfo = useChatOtherUser(roomId, roomData?.messages);
   const productId = roomData?.product?.id;
   const { data: productDetail } = useGetItem(productId?.toString());
 
@@ -32,7 +32,20 @@ export default function ReviewWritePage() {
   const [contents, setContents] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isDisabled = contents.trim().length === 0 || isSubmitting;
+  const isTradeInfoReady = !!productId && !!otherUserInfo.id;
+  const isContentEmpty = contents.trim().length === 0;
+  const isDisabled = !isTradeInfoReady || isContentEmpty || isSubmitting;
+
+  // 버튼이 왜 눌리지 않는지 알 수 있도록 비활성 사유를 버튼 위에 보여준다
+  const disabledReason = isSubmitting
+    ? null
+    : !isTradeInfoReady
+      ? isRoomDataError
+        ? '거래 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'
+        : '거래 정보를 불러오는 중이에요.'
+      : isContentEmpty
+        ? '후기 내용을 입력해 주세요.'
+        : null;
 
   const handleSubmit = useCallback(async () => {
     if (!productId || !otherUserInfo.id || isDisabled) return;
@@ -91,6 +104,13 @@ export default function ReviewWritePage() {
 
       <KeyboardStickyView offset={{ closed: -insets.bottom, opened: 0 }}>
         <View className="bg-background px-5 pb-3 pt-5">
+          {disabledReason && (
+            <Text
+              testID="review-write-disabled-reason"
+              className="mb-2 text-center text-sm text-gray-500">
+              {disabledReason}
+            </Text>
+          )}
           <Button disabled={isDisabled} onPress={handleSubmit}>
             {isSubmitting ? '작성 중...' : '작성완료'}
           </Button>

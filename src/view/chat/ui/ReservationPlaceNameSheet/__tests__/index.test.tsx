@@ -1,10 +1,13 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import { TouchableOpacity } from 'react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
+import { TextInput, TouchableOpacity } from 'react-native';
 import { ReservationPlaceNameSheet } from '../index';
 
+let lastSheetProps: any = null;
 jest.mock('~/shared/ui/BottomSheetModalWrapper', () => ({
-  BottomSheetModalWrapper: ({ isVisible, children, title }: any) => {
+  BottomSheetModalWrapper: (props: any) => {
+    const { isVisible, children, title } = props;
+    lastSheetProps = props;
     if (!isVisible) return null;
     const { View, Text } = require('react-native');
     return (
@@ -39,6 +42,7 @@ const defaultProps = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  lastSheetProps = null;
 });
 
 describe('ReservationPlaceNameSheet', () => {
@@ -96,5 +100,28 @@ describe('ReservationPlaceNameSheet', () => {
 
     fireEvent.press(confirmButton);
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('시트 열림 애니메이션이 끝난 뒤에야 장소명 입력칸에 포커스한다', () => {
+    const focusSpy = jest.spyOn(TextInput.prototype, 'focus').mockImplementation(() => {});
+    render(<ReservationPlaceNameSheet {...defaultProps} />);
+
+    expect(focusSpy).not.toHaveBeenCalled();
+
+    act(() => lastSheetProps.onOpenAnimationComplete());
+
+    expect(focusSpy).toHaveBeenCalledTimes(1);
+    focusSpy.mockRestore();
+  });
+
+  it('시트 닫기 요청을 onClose로 전달하고 기존 장소명을 초기값으로 보여준다', () => {
+    const onClose = jest.fn();
+    const { getByDisplayValue } = render(
+      <ReservationPlaceNameSheet {...defaultProps} placeName="광산구청" onClose={onClose} />
+    );
+
+    expect(getByDisplayValue('광산구청')).toBeTruthy();
+    lastSheetProps.onClose();
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

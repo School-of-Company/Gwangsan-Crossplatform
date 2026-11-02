@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { getChatRoomData } from '../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
-import type { ChatMessageResponse, ChatApiError } from './chatTypes';
+import type { ChatMessageResponse } from './chatTypes';
 import type { RoomId } from '@/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 
@@ -12,7 +12,6 @@ export { chatMessageKeys };
 interface UseChatMessagesOptions {
   enabled?: boolean;
   refetchInterval?: number;
-  onError?: (error: ChatApiError) => void;
 }
 
 export interface EnhancedChatMessage extends ChatMessageResponse {
@@ -21,7 +20,7 @@ export interface EnhancedChatMessage extends ChatMessageResponse {
 }
 
 export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions = {}) => {
-  const { enabled = true, refetchInterval, onError } = options;
+  const { enabled = true, refetchInterval } = options;
 
   const queryClient = useQueryClient();
 
@@ -49,10 +48,6 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
     // 재입장 프리페치 캐시가 최신 메시지를 놓쳤을 수 있어 staleTime과 무관하게 항상 재조회한다(#626)
     refetchOnMount: 'always',
   });
-
-  if (query.error && onError) {
-    onError(query.error as ChatApiError);
-  }
 
   const allMessages: EnhancedChatMessage[] = useMemo(() => {
     const serverMessages: EnhancedChatMessage[] = (query.data || []).map((msg) => ({

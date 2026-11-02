@@ -160,6 +160,8 @@ const ChatRoomItemComponent = ({
           {renderUnreadBadge()}
           <TouchableOpacity
             onPress={handleMenuPress}
+            accessibilityRole="button"
+            accessibilityLabel="채팅방 메뉴"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="-mr-1 p-1">
             <Ionicons name="ellipsis-vertical" size={16} color={colors['gray-400']} />

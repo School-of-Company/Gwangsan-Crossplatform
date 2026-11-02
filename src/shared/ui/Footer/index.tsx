@@ -26,12 +26,12 @@ const SHOW_DURATION = 150; // 모달이 닫히고 푸터가 다시 올라오는 
 const FALLBACK_HIDE_OFFSET = 90; // 레이아웃 측정 전에 숨김이 트리거될 때의 대체 이동 거리
 
 function useFooterHideAnimation(isHidden: boolean, footerHeight: number) {
-  const translateY = useRef(
-    new Animated.Value(isHidden ? footerHeight || FALLBACK_HIDE_OFFSET : 0)
-  ).current;
+  const translateY = useState(
+    () => new Animated.Value(isHidden ? footerHeight || FALLBACK_HIDE_OFFSET : 0)
+  )[0];
   // 1 = 완전히 펼쳐짐, 0 = 완전히 접힘. 탭바가 사라지는 동안 차지하던
   // 레이아웃 공간도 함께 접혀야 모달 아래에 빈 공간이 남지 않는다.
-  const collapse = useRef(new Animated.Value(isHidden ? 0 : 1)).current;
+  const collapse = useState(() => new Animated.Value(isHidden ? 0 : 1))[0];
   const isMounted = useRef(false);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ function useFooterHideAnimation(isHidden: boolean, footerHeight: number) {
 }
 
 function useIconPressScale() {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(
     (_e: GestureResponderEvent) => {
@@ -112,6 +112,10 @@ export function Footer({
   const noticeScale = useIconPressScale();
   const profileScale = useIconPressScale();
 
+  // 안 읽은 메시지 표시는 색 점뿐이라 스크린리더에는 개수를 라벨로 함께 읽어준다
+  const chattingLabel =
+    totalUnreadCount > 0 ? `채팅, 읽지 않은 메시지 ${totalUnreadCount}개` : '채팅';
+
   const navigateToTab = (routeName: TabRouteName) => {
     if (activeRouteName === routeName) return;
     navigation.navigate(routeName);
@@ -124,6 +128,7 @@ export function Footer({
       pointerEvents={isHidden ? 'none' : 'auto'}>
       <Animated.View
         className="relative bottom-0 flex-row border-t border-gray-200 bg-background px-2 pt-1"
+        accessibilityRole="tablist"
         onLayout={handleLayout}
         style={{
           paddingBottom: Math.max(insets.bottom, 12),
@@ -135,7 +140,10 @@ export function Footer({
           activeOpacity={1}
           onPressIn={homeScale.handlePressIn}
           onPressOut={homeScale.handlePressOut}
-          onPress={() => navigateToTab('main')}>
+          onPress={() => navigateToTab('main')}
+          accessibilityRole="tab"
+          accessibilityLabel={'홈'}
+          accessibilityState={{ selected: activeRouteName === 'main' }}>
           <Animated.View style={{ transform: [{ scale: homeScale.scale }] }}>
             <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
               <Path
@@ -158,7 +166,10 @@ export function Footer({
           activeOpacity={1}
           onPressIn={chattingScale.handlePressIn}
           onPressOut={chattingScale.handlePressOut}
-          onPress={() => navigateToTab('chatting')}>
+          onPress={() => navigateToTab('chatting')}
+          accessibilityRole="tab"
+          accessibilityLabel={chattingLabel}
+          accessibilityState={{ selected: activeRouteName === 'chatting' }}>
           <Animated.View
             className="relative"
             style={{ transform: [{ scale: chattingScale.scale }] }}>
@@ -184,7 +195,9 @@ export function Footer({
           activeOpacity={1}
           onPressIn={writeScale.handlePressIn}
           onPressOut={writeScale.handlePressOut}
-          onPress={onWritePress ?? (() => router.push('/write'))}>
+          onPress={onWritePress ?? (() => router.push('/write'))}
+          accessibilityRole="button"
+          accessibilityLabel="글쓰기">
           <Animated.View style={{ transform: [{ scale: writeScale.scale }] }}>
             <Svg width={32} height={32} viewBox="0 0 32 32" fill="none">
               <Path
@@ -208,7 +221,10 @@ export function Footer({
           activeOpacity={1}
           onPressIn={noticeScale.handlePressIn}
           onPressOut={noticeScale.handlePressOut}
-          onPress={() => navigateToTab('notice')}>
+          onPress={() => navigateToTab('notice')}
+          accessibilityRole="tab"
+          accessibilityLabel={'공지'}
+          accessibilityState={{ selected: activeRouteName === 'notice' }}>
           <Animated.View style={{ transform: [{ scale: noticeScale.scale }] }}>
             <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
               <Path
@@ -231,7 +247,10 @@ export function Footer({
           activeOpacity={1}
           onPressIn={profileScale.handlePressIn}
           onPressOut={profileScale.handlePressOut}
-          onPress={() => navigateToTab('profile')}>
+          onPress={() => navigateToTab('profile')}
+          accessibilityRole="tab"
+          accessibilityLabel={'프로필'}
+          accessibilityState={{ selected: activeRouteName === 'profile' }}>
           <Animated.View style={{ transform: [{ scale: profileScale.scale }] }}>
             <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
               <Path

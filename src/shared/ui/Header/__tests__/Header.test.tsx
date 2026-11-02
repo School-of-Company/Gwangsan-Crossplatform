@@ -6,9 +6,7 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   return function MockIcon(props: any) {
     return React.createElement(View, { testID: `icon-${props.name}` });
@@ -65,6 +63,21 @@ describe('Header', () => {
     const { getByText } = render(<Header headerTitle="채팅방" onTitlePress={onTitlePress} />);
     fireEvent.press(getByText('채팅방'));
     expect(onTitlePress).toHaveBeenCalledTimes(1);
+  });
+
+  it('뒤로가기·메뉴 버튼에 스크린리더용 라벨과 버튼 역할을 지정한다', () => {
+    const { getByRole } = render(
+      <Header headerTitle="제목" showMenuButton onMenuPress={jest.fn()} />
+    );
+    expect(getByRole('button', { name: '뒤로 가기' })).toBeTruthy();
+    expect(getByRole('button', { name: '메뉴 더보기' })).toBeTruthy();
+  });
+
+  it('뒤로가기 버튼을 숨기면 스크린리더에서도 숨긴다', () => {
+    const { getByLabelText } = render(<Header headerTitle="제목" showBackButton={false} />);
+    const back = getByLabelText('뒤로 가기', { includeHiddenElements: true });
+    expect(back.props.accessibilityElementsHidden).toBe(true);
+    expect(back.props.importantForAccessibility).toBe('no-hide-descendants');
   });
 
   it('스냅샷 - 기본 상태', () => {

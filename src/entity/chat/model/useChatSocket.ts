@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
-import { createChatSocketManager } from '@/shared/lib/socket';
+import { getChatSocketManager } from '@/shared/lib/socket';
 import { createChatSocketService, type SocketErrorPayload } from '../lib/socketService';
 import { isBlockedSocketError } from '../lib/blockError';
 import { useSocketConnection } from './useSocketConnection';
@@ -23,7 +23,7 @@ export const useChatSocket = ({
   chatMessageQueryKey,
 }: useChatSocketProps = {}) => {
   const chatSocketService = useMemo(() => {
-    const socketManager = createChatSocketManager();
+    const socketManager = getChatSocketManager();
     return createChatSocketService(socketManager);
   }, []);
 
@@ -83,12 +83,9 @@ export const useChatSocket = ({
     [currentRoomId]
   );
 
-  const joinedRoomRef = useRef<RoomId | null>(null);
-
   const joinCurrentRoom = useCallback(() => {
     if (currentRoomId && chatSocketService.isConnected) {
       chatSocketService.joinRoom(currentRoomId);
-      joinedRoomRef.current = currentRoomId;
     }
   }, [currentRoomId, chatSocketService]);
 
@@ -111,18 +108,12 @@ export const useChatSocket = ({
     onError: currentRoomId !== undefined ? handleSocketError : undefined,
   });
 
+  // 소켓은 앱 전체가 공유하는 싱글턴이라 화면이 언마운트될 때 방을 나가지 않는다. 같은 방을 보는
+  // 다른 화면(스택 아래 채팅방)까지 실시간 수신이 끊기고, 서버도 leaveRoom을 처리하지 않는다.
   useEffect(() => {
     if (!currentRoomId) return;
-
     joinCurrentRoom();
-
-    return () => {
-      if (joinedRoomRef.current !== null && chatSocketService.isConnected) {
-        chatSocketService.leaveRoom(joinedRoomRef.current);
-        joinedRoomRef.current = null;
-      }
-    };
-  }, [currentRoomId, chatSocketService, joinCurrentRoom]);
+  }, [currentRoomId, joinCurrentRoom]);
 
   useEffect(() => {
     return () => {
@@ -156,20 +147,12 @@ export const useChatSocket = ({
     [chatSocketService]
   );
 
-  const leaveRoom = useCallback(
-    (roomId: RoomId) => {
-      chatSocketService.leaveRoom(roomId);
-    },
-    [chatSocketService]
-  );
-
   return {
     isConnected: connection.isConnected,
     connectionState: connection.connectionState,
     isBlockedByOtherUser,
     sendMessage,
     joinRoom,
-    leaveRoom,
     markRoomAsRead,
     connect: connection.connect,
     disconnect: connection.disconnect,

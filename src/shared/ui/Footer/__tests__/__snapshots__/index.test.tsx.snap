@@ -12,6 +12,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
   }
 >
   <View
+    accessibilityRole="tablist"
     className="relative bottom-0 flex-row border-t border-gray-200 bg-background px-2 pt-1"
     collapsable={false}
     onLayout={[Function]}
@@ -27,13 +28,15 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
     }
   >
     <View
+      accessibilityLabel="홈"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": true,
         }
       }
       accessibilityValue={
@@ -142,13 +145,15 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       </Text>
     </View>
     <View
+      accessibilityLabel="채팅"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": false,
         }
       }
       accessibilityValue={
@@ -256,6 +261,8 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       </Text>
     </View>
     <View
+      accessibilityLabel="글쓰기"
+      accessibilityRole="button"
       accessibilityState={
         {
           "busy": undefined,
@@ -391,13 +398,15 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       </View>
     </View>
     <View
+      accessibilityLabel="공지"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": false,
         }
       }
       accessibilityValue={
@@ -506,13 +515,15 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
       </Text>
     </View>
     <View
+      accessibilityLabel="프로필"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": false,
         }
       }
       accessibilityValue={
@@ -637,6 +648,7 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
   }
 >
   <View
+    accessibilityRole="tablist"
     className="relative bottom-0 flex-row border-t border-gray-200 bg-background px-2 pt-1"
     collapsable={false}
     onLayout={[Function]}
@@ -652,13 +664,15 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
     }
   >
     <View
+      accessibilityLabel="홈"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": true,
         }
       }
       accessibilityValue={
@@ -767,13 +781,15 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       </Text>
     </View>
     <View
+      accessibilityLabel="채팅, 읽지 않은 메시지 5개"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": false,
         }
       }
       accessibilityValue={
@@ -884,6 +900,8 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       </Text>
     </View>
     <View
+      accessibilityLabel="글쓰기"
+      accessibilityRole="button"
       accessibilityState={
         {
           "busy": undefined,
@@ -1019,13 +1037,15 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       </View>
     </View>
     <View
+      accessibilityLabel="공지"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": false,
         }
       }
       accessibilityValue={
@@ -1134,13 +1154,15 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
       </Text>
     </View>
     <View
+      accessibilityLabel="프로필"
+      accessibilityRole="tab"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
           "disabled": undefined,
           "expanded": undefined,
-          "selected": undefined,
+          "selected": false,
         }
       }
       accessibilityValue={

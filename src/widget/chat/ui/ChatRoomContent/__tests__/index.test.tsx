@@ -20,9 +20,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   return function MockIcon(props: any) {
     return React.createElement(View, { testID: `icon-${props.name}` });
@@ -30,9 +28,7 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
 });
 
 jest.mock('../../MyMessage', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
     MyMessage: ({ message, isLast, onLongPress }: any) => (
@@ -47,9 +43,7 @@ jest.mock('../../MyMessage', () => {
 });
 
 jest.mock('../../OtherMessage', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
     OtherMessage: ({ message, showProfile }: any) => (
@@ -62,9 +56,7 @@ jest.mock('../../OtherMessage', () => {
 });
 
 jest.mock('../../ChatDateDivider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
     ChatDateDivider: ({ label }: any) => <Text testID="date-divider">{label}</Text>,
@@ -72,9 +64,7 @@ jest.mock('../../ChatDateDivider', () => {
 });
 
 jest.mock('~/entity/chat', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require('react-native');
   return {
     TradeEmbed: ({ product }: any) => <Text testID={`trade-embed-${product.id}`} />,

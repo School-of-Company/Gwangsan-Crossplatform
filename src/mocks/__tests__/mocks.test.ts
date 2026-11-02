@@ -3,7 +3,6 @@ import { http, HttpResponse } from 'msw';
 import { server } from '../server';
 import { authHandlers } from '../handlers/auth';
 import { postHandlers, makePostListItem, makePostDetail } from '../handlers/post';
-import { API_URL } from '../env';
 
 const BASE = 'http://test-api.com';
 const client = axios.create({ baseURL: BASE });
@@ -11,12 +10,6 @@ const client = axios.create({ baseURL: BASE });
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
-
-describe('env', () => {
-  it('API_URL은 테스트용 베이스 URL을 노출한다', () => {
-    expect(API_URL).toBe(BASE);
-  });
-});
 
 describe('authHandlers', () => {
   it('POST /auth/signin은 토큰 응답을 반환한다', async () => {

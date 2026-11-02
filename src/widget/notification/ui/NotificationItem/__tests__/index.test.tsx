@@ -8,6 +8,15 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
+const mockNavigateToChat = jest.fn();
+const mockNavigateToRoom = jest.fn();
+jest.mock('~/entity/chat/model/useChatEntry', () => ({
+  useChatEntry: () => ({
+    navigateToChat: mockNavigateToChat,
+    navigateToRoom: mockNavigateToRoom,
+  }),
+}));
+
 const mockPush = jest.fn();
 const mockUseRouter = useRouter as jest.Mock;
 
@@ -32,6 +41,12 @@ describe('NotificationItem — 기본 렌더링', () => {
     expect(getByText('거래 알림')).toBeTruthy();
     expect(getByText('내용입니다')).toBeTruthy();
   });
+
+  it('알림 이미지에 대체 텍스트를 지정한다', () => {
+    const { getByLabelText } = render(<NotificationItem {...baseProps} />);
+
+    expect(getByLabelText('광산 알림 아이콘')).toBeTruthy();
+  });
 });
 
 describe('NotificationItem — 클릭 동작', () => {
@@ -55,8 +70,52 @@ describe('NotificationItem — 클릭 동작', () => {
     expect(mockPush).toHaveBeenCalledWith('/cancelTrade/5');
   });
 
-  it('그 외 타입 클릭 시 이동하지 않는다', () => {
-    const { getByText } = render(<NotificationItem {...baseProps} alertType={AlertType.NOTICE} />);
+  it('NOTICE 타입 클릭 시 공지 상세로 이동한다', () => {
+    const { getByText } = render(
+      <NotificationItem {...baseProps} alertType={AlertType.NOTICE} sourceId={3} />
+    );
+
+    fireEvent.press(getByText('거래 알림'));
+
+    expect(mockPush).toHaveBeenCalledWith('/notice/3');
+  });
+
+  it('FEEDBACK_ANSWER 타입 클릭 시 sourceId의 문의 상세로 이동한다', () => {
+    const { getByText } = render(
+      <NotificationItem {...baseProps} alertType={AlertType.FEEDBACK_ANSWER} sourceId={12} />
+    );
+
+    fireEvent.press(getByText('거래 알림'));
+
+    expect(mockPush).toHaveBeenCalledWith('/feedback/12');
+  });
+
+  it('CHTTING_REQUEST 타입 클릭 시 상품 채팅방으로 진입한다', () => {
+    const { getByText } = render(
+      <NotificationItem {...baseProps} alertType={AlertType.CHTTING_REQUEST} sourceId={8} />
+    );
+
+    fireEvent.press(getByText('거래 알림'));
+
+    expect(mockNavigateToChat).toHaveBeenCalledWith(8);
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('이동할 곳이 없는 타입 클릭 시 이동하지 않는다', () => {
+    const { getByText } = render(
+      <NotificationItem {...baseProps} alertType={AlertType.RECOMMENDER} />
+    );
+
+    fireEvent.press(getByText('거래 알림'));
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockNavigateToChat).not.toHaveBeenCalled();
+  });
+
+  it('sourceId가 0이면 이동하지 않는다', () => {
+    const { getByText } = render(
+      <NotificationItem {...baseProps} alertType={AlertType.FEEDBACK_ANSWER} sourceId={0} />
+    );
 
     fireEvent.press(getByText('거래 알림'));
 

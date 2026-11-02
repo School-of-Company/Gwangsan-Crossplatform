@@ -1,9 +1,9 @@
 import { renderHookWithProviders, createQueryClient } from '~/test-utils';
-import { useChatMessages } from '../useChatMessages';
+import { useChatRoomController } from '../useChatRoomController';
 
 import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
 import { useChatSocket } from '~/entity/chat/model/useChatSocket';
-import { useResilientMessageSender } from '~/entity/chat/hooks/useResilientMessageSender';
+import { useResilientMessageSender } from '~/entity/chat/model/useResilientMessageSender';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 
 jest.mock('~/entity/chat', () => ({
@@ -16,7 +16,7 @@ jest.mock('~/entity/chat/model/useChatSocket', () => ({
   useChatSocket: jest.fn(),
 }));
 
-jest.mock('~/entity/chat/hooks/useResilientMessageSender', () => ({
+jest.mock('~/entity/chat/model/useResilientMessageSender', () => ({
   useResilientMessageSender: jest.fn(),
 }));
 
@@ -49,11 +49,11 @@ beforeEach(() => {
   setupMocks();
 });
 
-describe('useChatMessages', () => {
+describe('useChatRoomController', () => {
   describe('초기 상태', () => {
     it('messages, isLoading, isError, connectionState를 반환한다', () => {
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.messages).toEqual([]);
@@ -64,7 +64,7 @@ describe('useChatMessages', () => {
 
     it('flatListRef를 반환한다', () => {
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.flatListRef).toBeDefined();
@@ -72,7 +72,7 @@ describe('useChatMessages', () => {
 
     it('markRoomAsRead 함수를 반환한다', () => {
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(typeof result.current.markRoomAsRead).toBe('function');
@@ -84,7 +84,7 @@ describe('useChatMessages', () => {
       mockExtractOtherUserInfo.mockReturnValue({ nickname: '광산주민', id: 42 });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.otherUserInfo).toEqual({ nickname: '광산주민', id: 42 });
@@ -103,7 +103,7 @@ describe('useChatMessages', () => {
       );
 
       const { result } = renderHookWithProviders(
-        () => useChatMessages({ roomId: 'room-1' as any }),
+        () => useChatRoomController({ roomId: 'room-1' as any }),
         { queryClient: preloadedClient }
       );
 
@@ -120,7 +120,7 @@ describe('useChatMessages', () => {
       });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.connectionState).toBe('disconnected');
@@ -134,7 +134,7 @@ describe('useChatMessages', () => {
       });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.connectionState).toBe('connecting');
@@ -147,7 +147,7 @@ describe('useChatMessages', () => {
       mockUseResilientMessageSender.mockReturnValue({ sendMessage: mockResilientSend });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       result.current.messageHandlers.sendMessage('내용', [1, 2]);
@@ -160,7 +160,7 @@ describe('useChatMessages', () => {
       mockUseResilientMessageSender.mockReturnValue({ sendMessage: mockResilientSend });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       result.current.messageHandlers.sendMessage('안녕하세요', []);
@@ -173,7 +173,7 @@ describe('useChatMessages', () => {
       mockUseResilientMessageSender.mockReturnValue({ sendMessage: mockResilientSend });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       result.current.messageHandlers.sendMessage(null, []);
@@ -186,7 +186,7 @@ describe('useChatMessages', () => {
       mockUseResilientMessageSender.mockReturnValue({ sendMessage: mockResilientSend });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       result.current.messageHandlers.sendMessage('', []);
@@ -195,24 +195,10 @@ describe('useChatMessages', () => {
     });
   });
 
-  describe('messageHandlers.renderMessage', () => {
-    it('renderMessage는 항상 null을 반환한다', () => {
-      const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
-      );
-
-      const output = result.current.messageHandlers.renderMessage({
-        item: { id: 1, content: '테스트' } as any,
-      });
-
-      expect(output).toBeNull();
-    });
-  });
-
   describe('scrollToEnd', () => {
     it('scrollToEnd 함수를 반환한다', () => {
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(typeof result.current.scrollToEnd).toBe('function');
@@ -220,7 +206,7 @@ describe('useChatMessages', () => {
 
     it('flatListRef가 없어도 scrollToEnd 호출 시 오류가 없다', () => {
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       result.current.scrollToEnd(false);
@@ -235,7 +221,7 @@ describe('useChatMessages', () => {
       });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
       const scrollToOffsetSpy = jest.fn();
       (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
@@ -251,7 +237,7 @@ describe('useChatMessages', () => {
       mockUseChatMessagesEntity.mockReturnValue({ data: [], isLoading: false, isError: false });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
       const scrollToOffsetSpy = jest.fn();
       (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
@@ -273,7 +259,7 @@ describe('useChatMessages', () => {
       });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.isBlockedByOtherUser).toBe(true);
@@ -285,7 +271,7 @@ describe('useChatMessages', () => {
       mockUseChatMessagesEntity.mockReturnValue({ data: [], isLoading: true, isError: false });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.isLoading).toBe(true);
@@ -295,10 +281,27 @@ describe('useChatMessages', () => {
       mockUseChatMessagesEntity.mockReturnValue({ data: [], isLoading: false, isError: true });
 
       const { result } = renderHookWithProviders(() =>
-        useChatMessages({ roomId: 'room-1' as any })
+        useChatRoomController({ roomId: 'room-1' as any })
       );
 
       expect(result.current.isError).toBe(true);
+    });
+
+    it('엔티티 쿼리의 refetch를 그대로 반환한다', () => {
+      const refetch = jest.fn();
+      mockUseChatMessagesEntity.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: true,
+        refetch,
+      });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatRoomController({ roomId: 'room-1' as any })
+      );
+
+      result.current.refetch();
+      expect(refetch).toHaveBeenCalledTimes(1);
     });
   });
 });

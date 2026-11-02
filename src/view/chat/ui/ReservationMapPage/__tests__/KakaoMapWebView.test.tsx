@@ -1,27 +1,8 @@
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
 import { ActivityIndicator } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { KakaoMapWebView } from '../KakaoMapWebView';
 
-// NOTE on `process.env.EXPO_PUBLIC_KAKAO_JS_KEY`:
-// `babel-plugin react-native-dotenv` (configured in babel.config.js) statically
-// replaces any `process.env.<KEY>` member expression with a literal value parsed
-// straight from the repo's committed `.env` file, at babel-transform time — see
-// node_modules/react-native-dotenv/index.js's `MemberExpression` visitor. This
-// happens once per test-process, independent of anything the test does to
-// `process.env` at runtime (the exact same constraint documented in
-// jest.setup.js for EXPO_PUBLIC_SENTRY_DSN, and independently reproducible via
-// the currently-failing src/shared/api/__tests__/kakaoLocalSearch.test.ts, which
-// attempts the identical env-toggle pattern for EXPO_PUBLIC_KAKAO_REST_API_KEY).
-// Because `.env` in this repo defines a real, non-empty EXPO_PUBLIC_KAKAO_JS_KEY,
-// `appKey` in KakaoMapWebView.tsx is always a truthy compile-time constant here,
-// so the `!appKey` fallback branch can never execute in this test run — it is
-// intentionally left uncovered (see final report).
-const rootEnvPath = path.resolve(__dirname, '../../../../../../.env');
-const parsedEnv = dotenv.parse(fs.readFileSync(rootEnvPath));
-const KAKAO_JS_KEY = parsedEnv.EXPO_PUBLIC_KAKAO_JS_KEY;
+const KAKAO_JS_KEY = process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
 
 let lastWebViewProps: any = null;
 
@@ -41,10 +22,6 @@ describe('KakaoMapWebView', () => {
 
   beforeEach(() => {
     lastWebViewProps = null;
-  });
-
-  it('sanity check: .env defines a non-empty EXPO_PUBLIC_KAKAO_JS_KEY (precondition for the tests below)', () => {
-    expect(KAKAO_JS_KEY).toBeTruthy();
   });
 
   it('카카오 JS 키가 있으면 appKey와 초기 중심 좌표가 담긴 HTML source로 WebView를 렌더링한다', () => {

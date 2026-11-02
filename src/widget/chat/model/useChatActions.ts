@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
+import type { ChatMessageResponse } from '~/entity/chat';
 
-interface UpdateProfileRequestseChatActionParams {
+interface UseChatActionParams {
   readonly otherUserInfo: { nickname: string; id?: number };
 }
 
@@ -10,27 +11,28 @@ interface UseChatActionReturn {
     readonly goToProfile: (userId: number) => void;
     readonly goToOtherUserProfile: () => void;
   };
-  readonly formatLastMessageDate: (messages: any[]) => string;
+  readonly formatLastMessageDate: (messages: readonly ChatMessageResponse[]) => string;
 }
 
-export const useChatAction = ({
-  otherUserInfo,
-}: UpdateProfileRequestseChatActionParams): UseChatActionReturn => {
+export const useChatAction = ({ otherUserInfo }: UseChatActionParams): UseChatActionReturn => {
   const router = useRouter();
 
-  const navigationHandlers = {
-    goToProfile: useCallback(() => {
-      router.push('/profile');
-    }, [router]),
+  const goToProfile = useCallback(
+    (userId: number) => {
+      router.push(`/profile?id=${userId}`);
+    },
+    [router]
+  );
 
-    goToOtherUserProfile: useCallback(() => {
-      if (otherUserInfo.id) {
-        router.push(`/profile?id=${otherUserInfo.id}`);
-      }
-    }, [otherUserInfo.id, router]),
-  };
+  const goToOtherUserProfile = useCallback(() => {
+    if (otherUserInfo.id) {
+      goToProfile(otherUserInfo.id);
+    }
+  }, [otherUserInfo.id, goToProfile]);
 
-  const formatLastMessageDate = useCallback((messages: any[]) => {
+  const navigationHandlers = { goToProfile, goToOtherUserProfile };
+
+  const formatLastMessageDate = useCallback((messages: readonly ChatMessageResponse[]) => {
     if (messages.length === 0) return '대화를 시작해보세요';
 
     const lastMessage = messages[messages.length - 1];

@@ -30,7 +30,6 @@ const createMockSocketService = (
     destroy: jest.fn(),
     sendMessage: jest.fn(),
     joinRoom: jest.fn(),
-    leaveRoom: jest.fn(),
     on: jest.fn((event: string, handler: Handler) => {
       if (!registered.has(event)) registered.set(event, new Set());
       registered.get(event)!.add(handler);
