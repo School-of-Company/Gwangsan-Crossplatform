@@ -32,6 +32,12 @@ describe('NotificationItem — 기본 렌더링', () => {
     expect(getByText('거래 알림')).toBeTruthy();
     expect(getByText('내용입니다')).toBeTruthy();
   });
+
+  it('알림 이미지에 대체 텍스트를 지정한다', () => {
+    const { getByLabelText } = render(<NotificationItem {...baseProps} />);
+
+    expect(getByLabelText('광산 알림 아이콘')).toBeTruthy();
+  });
 });
 
 describe('NotificationItem — 클릭 동작', () => {
