@@ -1,13 +1,14 @@
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { NoticeDetailSlideViewer } from '~/widget/notice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetNoticeDetail } from '~/entity/notice/model/useGetNoticeDetail';
 
 const NoticeDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: notice, isLoading, error } = useGetNoticeDetail(id);
+  const { data: notice, isLoading, error, refetch } = useGetNoticeDetail(id);
 
   if (isLoading) {
     return (
@@ -24,9 +25,7 @@ const NoticeDetailPage = () => {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="공지" />
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-error-500">공지사항을 불러오는데 실패했습니다.</Text>
-        </View>
+        <ErrorFallback title="공지사항을 불러오는데 실패했습니다." onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }

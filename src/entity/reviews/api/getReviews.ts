@@ -1,5 +1,5 @@
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 import { assertValidId } from '~/shared/lib/validateId';
 import { ReviewPostType } from '../model/reviewPostType';
 
@@ -21,7 +21,7 @@ export const getReceiveReview = async (
       : await instance.get<ReviewPostType[]>(`/review/${id}`);
     return data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
 
@@ -35,7 +35,7 @@ export const getMyReceivedReview = async (
       : await instance.get<ReviewPostType[]>('/review/current');
     return data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
 
@@ -44,6 +44,6 @@ export const getTossReview = async (): Promise<ReviewPostType[]> => {
     const { data } = await instance.get<ReviewPostType[]>('/review');
     return data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

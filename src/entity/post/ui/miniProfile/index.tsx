@@ -1,4 +1,5 @@
-import { Image, Text, View, TouchableOpacity } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
+import { CachedImage } from '~/shared/ui/CachedImage';
 import { useRouter } from 'expo-router';
 
 interface MiniProfileProps {
@@ -18,11 +19,15 @@ export default function MiniProfile({ nickname, placeName, light, memberId }: Mi
   return (
     <TouchableOpacity
       onPress={handleProfilePress}
+      accessibilityRole="button"
+      accessibilityHint="작성자 프로필로 이동합니다"
       className="flex-row items-center justify-between border-b border-b-gray-100 px-6 py-4">
       <View className="flex-row items-center gap-3">
-        <Image
+        <CachedImage
           className="h-[50px] w-[50px]"
           source={require('~/shared/assets/png/defaultProfile.png')}
+          accessible
+          accessibilityLabel={`${nickname} 프로필 사진`}
         />
         <View className="gap-[5px]">
           <Text className="text-body3 text-foreground">{nickname}</Text>

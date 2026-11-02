@@ -105,8 +105,8 @@ export function CustomInputCard({
   const removeSheet = useBottomSheetPortalStore((s) => s.removeSheet);
   const insets = useSafeAreaInsets();
   const [show, setShow] = useState(isVisible);
-  const translateY = useRef(new Animated.Value(CARD_HIDDEN_OFFSET)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useState(() => new Animated.Value(CARD_HIDDEN_OFFSET))[0];
+  const opacity = useState(() => new Animated.Value(0))[0];
   // 카드가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
   const hasAnimatedOpenRef = useRef(false);
 

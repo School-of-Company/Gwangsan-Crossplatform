@@ -19,7 +19,10 @@ export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
         label={label}
         secureTextEntry={!isVisible}
         icon={
-          <TouchableOpacity onPress={() => setIsVisible((prev) => !prev)}>
+          <TouchableOpacity
+            onPress={() => setIsVisible((prev) => !prev)}
+            accessibilityRole="button"
+            accessibilityLabel={isVisible ? '비밀번호 숨기기' : '비밀번호 보기'}>
             <Icon
               name={isVisible ? 'eye-outline' : 'eye-off-outline'}
               size={20}

@@ -19,6 +19,7 @@ import { ChatRoomContent } from '@/widget/chat/ui/ChatRoomContent';
 import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
+import { ErrorFallback } from '@/shared/ui/ErrorFallback';
 import { ChatInput, MyMessage } from '@/widget/chat';
 import { MessageActionOverlay } from '@/widget/chat/ui/MessageActionOverlay';
 import type { RoomId } from '@/shared/types/chatType';
@@ -50,6 +51,7 @@ export default function ChatRoomPage() {
     otherUserInfo,
     isLoading,
     isError,
+    refetch: refetchMessages,
     connectionState,
     isBlockedByOtherUser,
     messageHandlers,
@@ -350,8 +352,9 @@ export default function ChatRoomPage() {
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <Text className="text-error-500">Failed to load chat room</Text>
+      <SafeAreaView className="flex-1 bg-background">
+        <Header headerTitle="채팅" />
+        <ErrorFallback title="채팅방을 불러오지 못했습니다." onRetry={() => refetchMessages()} />
       </SafeAreaView>
     );
   }

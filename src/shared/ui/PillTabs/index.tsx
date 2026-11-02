@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, LayoutChangeEvent, Text, TouchableOpacity, View } from 'react-native';
 
 export interface PillTabOption<T extends string> {
@@ -31,7 +31,7 @@ export function PillTabs<T extends string>({
     tabs.findIndex((tab) => tab.value === value),
     0
   );
-  const thumbPosition = useRef(new Animated.Value(activeIndex)).current;
+  const thumbPosition = useState(() => new Animated.Value(activeIndex))[0];
 
   useEffect(() => {
     Animated.timing(thumbPosition, {
