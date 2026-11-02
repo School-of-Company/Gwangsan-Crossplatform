@@ -100,11 +100,11 @@ describe('MainPageView', () => {
     expect(getByTestId('slide-viewer')).toBeTruthy();
   });
 
-  it('isError가 true이면 Toast로 에러 메시지를 보여준다', async () => {
+  it('isError가 true이면 서버 메시지 대신 고정 안내 문구로 Toast를 보여준다', async () => {
     mockUseGetMyInformation.mockReturnValue({
       data: undefined,
       isError: true,
-      error: new Error('요청 실패'),
+      error: new Error('Internal Server Error: NullPointerException'),
     });
 
     render(<MainPageView />);
@@ -113,25 +113,7 @@ describe('MainPageView', () => {
       expect(mockToastShow).toHaveBeenCalledWith({
         type: 'error',
         text1: '정보 조회 실패',
-        text2: '요청 실패',
-      })
-    );
-  });
-
-  it('error가 Error 인스턴스가 아니면 기본 메시지를 보여준다', async () => {
-    mockUseGetMyInformation.mockReturnValue({
-      data: undefined,
-      isError: true,
-      error: 'string error',
-    });
-
-    render(<MainPageView />);
-
-    await waitFor(() =>
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: '정보 조회 실패',
-        text2: '알 수 없는 오류가 발생했습니다.',
+        text2: '잠시 후 다시 시도해 주세요.',
       })
     );
   });

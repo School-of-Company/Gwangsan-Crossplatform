@@ -64,10 +64,11 @@ const makeReview = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const mockToss = (options: { data?: unknown[]; isError?: boolean } = {}) => {
+const mockToss = (options: { data?: unknown[]; isError?: boolean; refetch?: jest.Mock } = {}) => {
   mockUseGetReviews.mockImplementation(() => ({
     data: options.data ?? [],
     isError: options.isError ?? false,
+    refetch: options.refetch ?? jest.fn(),
   }));
 };
 
@@ -80,6 +81,7 @@ const mockReceiveInfinite = (
     isFetchingNextPage?: boolean;
     isFetchNextPageError?: boolean;
     fetchNextPage?: jest.Mock;
+    refetch?: jest.Mock;
   } = {}
 ) => {
   mockUseGetReceivedReviewsInfinite.mockReturnValue({
@@ -90,6 +92,7 @@ const mockReceiveInfinite = (
     isFetchingNextPage: options.isFetchingNextPage ?? false,
     isFetchNextPageError: options.isFetchNextPageError ?? false,
     fetchNextPage: options.fetchNextPage ?? jest.fn(),
+    refetch: options.refetch ?? jest.fn(),
   });
 };
 
@@ -184,12 +187,15 @@ describe('ReviewsPageView', () => {
       expect(getByText('받은 후기가 없습니다.')).toBeTruthy();
     });
 
-    it('isError가 true이면 에러 메시지를 표시한다', () => {
-      mockReceiveInfinite({ isError: true });
+    it('isError가 true이면 다시 시도 화면을 보여주고, 누르면 refetch를 호출한다', () => {
+      const refetch = jest.fn();
+      mockReceiveInfinite({ isError: true, refetch });
 
       const { getByText } = render(<ReviewsPageView mode="receive" />);
 
-      expect(getByText('후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')).toBeTruthy();
+      expect(getByText('후기를 불러오지 못했습니다.')).toBeTruthy();
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalledTimes(1);
     });
 
     it('배열 형태의 id 파라미터는 첫 번째 값을 사용한다', () => {
@@ -273,6 +279,17 @@ describe('ReviewsPageView', () => {
       const { getByText } = render(<ReviewsPageView mode="toss" />);
 
       expect(getByText('작성한 후기가 없습니다.')).toBeTruthy();
+    });
+
+    it('조회에 실패하면 다시 시도 화면을 보여주고, 누르면 refetch를 호출한다', () => {
+      const refetch = jest.fn();
+      mockToss({ isError: true, refetch });
+
+      const { getByText } = render(<ReviewsPageView mode="toss" />);
+
+      expect(getByText('후기를 불러오지 못했습니다.')).toBeTruthy();
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalledTimes(1);
     });
   });
 });

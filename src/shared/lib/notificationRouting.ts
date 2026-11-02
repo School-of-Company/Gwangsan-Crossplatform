@@ -7,6 +7,7 @@ export interface NotificationData {
   alertType?: string;
   sourceId?: number;
   roomId?: number;
+  feedbackId?: number;
 }
 
 // 알림 페이로드는 푸시 서버/OS를 거쳐 들어오는 신뢰할 수 없는 외부 입력이므로, 라우팅에
@@ -19,6 +20,7 @@ const notificationDataSchema = z.object({
   alertType: z.string().optional(),
   sourceId: z.coerce.number().int().positive().optional(),
   roomId: z.coerce.number().int().positive().optional(),
+  feedbackId: z.coerce.number().int().positive().optional(),
 });
 
 export const parseNotificationData = (data: unknown): NotificationData | null => {
@@ -32,8 +34,8 @@ export type NotificationRouteAction =
   | { type: 'push'; href: string }
   | { type: 'none' };
 
-// _layout.tsx의 알림 응답 핸들러가 어디로 이동해야 하는지 결정하는 순수 함수.
-// 실제 라우팅(router.push 등)은 호출부(_layout.tsx)가 반환값을 보고 수행한다.
+// 푸시 알림(_layout.tsx)과 알림 목록 항목(NotificationItem)을 눌렀을 때 어디로 이동해야
+// 하는지 결정하는 순수 함수. 실제 라우팅(router.push 등)은 호출부가 반환값을 보고 수행한다.
 export const resolveNotificationAction = (
   data: NotificationData | undefined
 ): NotificationRouteAction => {
@@ -48,6 +50,15 @@ export const resolveNotificationAction = (
   }
   if (data?.alertType === 'REVIEW' && data?.sourceId != null) {
     return { type: 'push', href: `/cancelTrade/${data.sourceId}` };
+  }
+  if (data?.alertType === 'NOTICE' && data?.sourceId != null) {
+    return { type: 'push', href: `/notice/${data.sourceId}` };
+  }
+  // 문의 답변 푸시는 data.feedbackId와 data.sourceId에 같은 값을 넣어 보내고,
+  // 알림 목록 항목에는 sourceId만 있다.
+  const feedbackId = data?.feedbackId ?? data?.sourceId;
+  if (data?.alertType === 'FEEDBACK_ANSWER' && feedbackId != null) {
+    return { type: 'push', href: `/feedback/${feedbackId}` };
   }
   return { type: 'none' };
 };

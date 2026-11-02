@@ -43,6 +43,26 @@ describe('resolveNotificationAction', () => {
     expect(action).toEqual({ type: 'push', href: '/cancelTrade/5' });
   });
 
+  it('NOTICE + sourceId이면 공지 상세로 push 액션을 반환한다', () => {
+    expect(resolveNotificationAction({ alertType: 'NOTICE', sourceId: 4 })).toEqual({
+      type: 'push',
+      href: '/notice/4',
+    });
+  });
+
+  it('FEEDBACK_ANSWER이면 feedbackId의 문의 상세로 push 액션을 반환한다', () => {
+    expect(
+      resolveNotificationAction({ alertType: 'FEEDBACK_ANSWER', feedbackId: 9, sourceId: 9 })
+    ).toEqual({ type: 'push', href: '/feedback/9' });
+  });
+
+  it('FEEDBACK_ANSWER에 feedbackId가 없으면 sourceId로 문의 상세를 연다', () => {
+    expect(resolveNotificationAction({ alertType: 'FEEDBACK_ANSWER', sourceId: 3 })).toEqual({
+      type: 'push',
+      href: '/feedback/3',
+    });
+  });
+
   it('매칭되는 조건이 없으면 none 액션을 반환한다', () => {
     expect(resolveNotificationAction({ alertType: 'NOTICE' })).toEqual({ type: 'none' });
     expect(resolveNotificationAction(undefined)).toEqual({ type: 'none' });
@@ -56,6 +76,7 @@ describe('resolveNotificationAction', () => {
       type: 'none',
     });
     expect(resolveNotificationAction({ alertType: 'REVIEW' })).toEqual({ type: 'none' });
+    expect(resolveNotificationAction({ alertType: 'FEEDBACK_ANSWER' })).toEqual({ type: 'none' });
   });
 });
 
@@ -97,6 +118,20 @@ describe('parseNotificationData', () => {
     expect(parseNotificationData({ alertType: 'RECOMMENDATION', sourceId: '3' })).toEqual({
       alertType: 'RECOMMENDATION',
       sourceId: 3,
+    });
+  });
+
+  it('FEEDBACK_ANSWER 푸시는 feedbackId로 문의 상세로 이동한다', () => {
+    const data = parseNotificationData({
+      alertType: 'FEEDBACK_ANSWER',
+      sourceId: '5',
+      feedbackId: '5',
+    });
+
+    expect(data).toEqual({ alertType: 'FEEDBACK_ANSWER', sourceId: 5, feedbackId: 5 });
+    expect(resolveNotificationAction(data ?? undefined)).toEqual({
+      type: 'push',
+      href: '/feedback/5',
     });
   });
 

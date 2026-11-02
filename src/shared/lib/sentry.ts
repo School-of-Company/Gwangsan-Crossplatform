@@ -4,9 +4,14 @@ import type { Breadcrumb, ReactNativeOptions } from '@sentry/react-native';
 type BeforeSend = NonNullable<ReactNativeOptions['beforeSend']>;
 type BeforeBreadcrumb = NonNullable<ReactNativeOptions['beforeBreadcrumb']>;
 
-const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-const isValidDsn =
-  !!dsn && /^https:\/\/[^@]+@[^/]+\/\d+$/.test(dsn) && !dsn.includes('test-placeholder');
+// 빌드 시 주입되는 값. 테스트 환경에서는 jest.setup.js의 placeholder로 고정된다.
+const ENV_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+const DSN_PATTERN = /^https:\/\/[^@]+@[^/]+\/\d+$/;
+
+// DSN이 실제 Sentry 프로젝트 주소 형태이고 테스트용 placeholder가 아닐 때만 유효하다.
+export const isValidSentryDsn = (dsn: string | undefined): dsn is string =>
+  !!dsn && DSN_PATTERN.test(dsn) && !dsn.includes('test-placeholder');
 
 const REDACTED = '[Filtered]';
 const SENSITIVE_HEADER_KEYS = new Set([
@@ -32,7 +37,7 @@ const scrubHeaders = (
 
 // Sentry 이벤트(에러/트랜잭션)에 Authorization 헤더, 요청 바디, 쿼리스트링이 그대로
 // 담기지 않도록 전송 직전에 걸러낸다.
-const beforeSend: BeforeSend = (event) => {
+export const beforeSend: BeforeSend = (event) => {
   if (event.request) {
     event.request = {
       ...event.request,
@@ -67,9 +72,13 @@ const scrubBreadcrumb = (breadcrumb: Breadcrumb): Breadcrumb => {
   return breadcrumb;
 };
 
-const beforeBreadcrumb: BeforeBreadcrumb = (breadcrumb) => scrubBreadcrumb(breadcrumb);
+export const beforeBreadcrumb: BeforeBreadcrumb = (breadcrumb) => scrubBreadcrumb(breadcrumb);
 
-if (isValidDsn) {
+// DSN을 인자로 받아 테스트에서 유효/무효 DSN을 각각 주입해 볼 수 있게 한다.
+// 초기화했으면 true, DSN이 유효하지 않아 건너뛰었으면 false를 반환한다.
+export const initSentry = (dsn: string | undefined = ENV_DSN): boolean => {
+  if (!isValidSentryDsn(dsn)) return false;
+
   Sentry.init({
     dsn,
     enabled: !__DEV__,
@@ -81,4 +90,7 @@ if (isValidDsn) {
     beforeBreadcrumb,
     integrations: [Sentry.mobileReplayIntegration({ maskAllText: true, maskAllImages: true })],
   });
-}
+  return true;
+};
+
+initSentry();
