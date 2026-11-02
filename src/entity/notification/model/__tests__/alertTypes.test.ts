@@ -1,8 +1,8 @@
 import { AlertType } from '../alertTypes';
 
 describe('AlertType', () => {
-  it('11개의 알림 유형을 포함한다', () => {
-    expect(Object.keys(AlertType)).toHaveLength(11);
+  it('12개의 알림 유형을 포함한다', () => {
+    expect(Object.keys(AlertType)).toHaveLength(12);
   });
 
   it.each([
@@ -17,6 +17,7 @@ describe('AlertType', () => {
     ['TRADE_CANCEL_REJECT', 'TRADE_CANCEL_REJECT'],
     ['REPORT', 'REPORT'],
     ['REPORT_REJECT', 'REPORT_REJECT'],
+    ['FEEDBACK_ANSWER', 'FEEDBACK_ANSWER'],
   ] as const)('%s의 값은 "%s"이다', (key, value) => {
     expect(AlertType[key as keyof typeof AlertType]).toBe(value);
   });
