@@ -7,7 +7,10 @@ import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { findChatRoom } from '../api/findChatRoom';
 import { createChatRoom } from '../api/createChatRoom';
 import { getChatRooms } from '../api/getChatRooms';
+import { getChatRoomData, CHAT_MESSAGE_PAGE_SIZE } from '../api/getChatMessages';
+import { seedMessagePagesFromSnapshot, type ChatMessagePages } from '../lib/messageCache';
 import { chatRoomKeys } from './useChatRooms';
+import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import type { RoomId, ProductId } from '@/shared/types/chatType';
 
 const isNotFoundError = (error: unknown) =>
@@ -17,6 +20,27 @@ export const useChatEntry = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+
+  // 채팅 목록에서 방을 누른 직후 호출해, 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이
+  // 바로 보이게 한다. 실패해도 채팅방 화면이 다시 받아오므로 조용히 무시한다
+  const prefetchRoom = useCallback(
+    (roomId: RoomId) => {
+      queryClient
+        .fetchQuery({
+          queryKey: chatRoomDataKeys.room(roomId),
+          queryFn: () => getChatRoomData(roomId),
+          staleTime: 30 * 1000,
+        })
+        .then((data) => {
+          // 방금 보낸 메시지가 snapshot에 아직 없을 수 있어 더 최신인 쪽을 남긴다
+          queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
+            seedMessagePagesFromSnapshot(oldData, data.messages, CHAT_MESSAGE_PAGE_SIZE)
+          );
+        })
+        .catch(() => {});
+    },
+    [queryClient]
+  );
 
   const navigateToRoom = useCallback(
     async (roomId: RoomId) => {
@@ -44,8 +68,7 @@ export const useChatEntry = () => {
         const room = await findChatRoom(productId);
         await navigateToRoom(room.roomId);
       } catch (error) {
-        // 채팅방이 아직 없으면(404) 새로 만든다. 예전에는 서버 문구("해당하는 채팅방을 찾을 수
-        // 없습니다.")로 판단해, 문구가 바뀌면 채팅방을 만들지 못했다(#739)
+        // 채팅방이 아직 없으면(404) 새로 만든다. 서버 문구가 아니라 상태 코드로 판단한다
         if (isNotFoundError(error)) {
           try {
             const newRoom = await createChatRoom(productId);
@@ -75,7 +98,7 @@ export const useChatEntry = () => {
         const room = await createChatRoom(productId);
         await navigateToRoom(room.roomId);
       } catch (error) {
-        // API는 토스트를 띄우지 않으므로 여기서 안내한다(#739)
+        // API는 토스트를 띄우지 않으므로 여기서 안내한다
         Toast.show({
           type: 'error',
           text1: '채팅방에 들어가지 못했어요',
@@ -91,6 +114,7 @@ export const useChatEntry = () => {
   return {
     navigateToChat,
     navigateToRoom,
+    prefetchRoom,
     rejoinChat,
     isLoading,
   };

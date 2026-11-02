@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -24,32 +24,17 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '~/shared/ui';
 import { getCurrentLocation } from '~/shared/lib/getCurrentLocation';
-import {
-  getAddressName,
-  searchNearbyPlaces,
-  searchPlaces,
-  type KakaoPlace,
-} from '~/shared/api/kakaoLocalSearch';
+import type { KakaoPlace } from '~/shared/api/kakaoLocalSearch';
 import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
-import { logger } from '~/shared/lib/logger';
 import { formatDisplayAddress } from '~/shared/lib/formatAddress';
 import { KakaoMapWebView } from '~/view/chat/ui/ReservationMapPage/KakaoMapWebView';
 import { ReservationPlaceNameSheet } from '~/view/chat/ui/ReservationPlaceNameSheet';
-
-const SEARCH_DEBOUNCE_MS = 300;
-// 드래그가 끝나고(마커를 놓고) 이 시간 동안 추가 이동이 없으면 그때 한 번만 조회한다.
-const NEARBY_DEBOUNCE_MS = 500;
-const NEARBY_RADIUS_METERS = 1000;
-const NEARBY_RESULT_COUNT = 3;
+import { useKakaoPlaceSearch } from '~/view/chat/model/useKakaoPlaceSearch';
+import { useNearbyPlaces, type SelectedCoordinate } from '~/view/chat/model/useNearbyPlaces';
 
 // 광산구청 좌표 — 지도의 기준(초기) 위치
 const DEFAULT_CENTER = { latitude: 35.1397, longitude: 126.7938 };
 const MARKER_COLOR = '#8FC31D';
-
-interface SelectedCoordinate {
-  readonly latitude: number;
-  readonly longitude: number;
-}
 
 // "교통,수송 > 지하철,전철 > 광주1호선" 같은 카테고리 경로에서 가장 구체적인 마지막 항목만 보여준다.
 const getCategoryLabel = (categoryName: string): string => {
@@ -99,24 +84,27 @@ export function ReservationMapPage() {
   const router = useRouter();
   const { setCoordinates, setPlaceName } = useReservationLocationStore();
 
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchRequestIdRef = useRef(0);
-  const nearbyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const nearbyRequestIdRef = useRef(0);
-  const lastFetchedCoordinateRef = useRef<SelectedCoordinate | null>(null);
+  const {
+    searchQuery,
+    suggestions,
+    isSearching,
+    isSearchActive,
+    changeSearchQuery: handleChangeSearchQuery,
+    clearSearch,
+  } = useKakaoPlaceSearch();
+  const {
+    nearbyPlaces,
+    isLoadingNearby,
+    hasLoadedNearbyOnce,
+    currentAddress,
+    fetchNearbyPlaces,
+    scheduleFetchNearbyPlaces,
+    getLastFetchedCoordinate,
+  } = useNearbyPlaces();
 
   const [cameraCenter, setCameraCenter] = useState<SelectedCoordinate | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<KakaoPlace[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [nearbyPlaces, setNearbyPlaces] = useState<KakaoPlace[]>([]);
-  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
-  const [hasLoadedNearbyOnce, setHasLoadedNearbyOnce] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState('');
   const [isPlaceNameSheetVisible, setIsPlaceNameSheetVisible] = useState(false);
   const [placeNameDraft, setPlaceNameDraft] = useState('');
-
-  const isSearchActive = searchQuery.trim().length > 0;
 
   // cameraCenter는 값이 바뀌지 않아도 매 렌더링마다 새 객체를 만들면
   // expo-maps가 카메라를 계속 리셋해서 지도가 새로고침되는 것처럼 보인다.
@@ -124,46 +112,6 @@ export function ReservationMapPage() {
     () => (cameraCenter ? { coordinates: cameraCenter, zoom: 15 } : null),
     [cameraCenter]
   );
-
-  const fetchNearbyPlaces = useCallback(async (coordinate: SelectedCoordinate) => {
-    const last = lastFetchedCoordinateRef.current;
-    // 마커 위치가 실제로 바뀌지 않았다면(같은 좌표로 중복 호출) 다시 조회하지 않는다.
-    if (last && last.latitude === coordinate.latitude && last.longitude === coordinate.longitude) {
-      return;
-    }
-    lastFetchedCoordinateRef.current = coordinate;
-
-    const requestId = (nearbyRequestIdRef.current += 1);
-    setIsLoadingNearby(true);
-
-    try {
-      const [places, addressNameFromApi] = await Promise.all([
-        searchNearbyPlaces(coordinate, NEARBY_RADIUS_METERS),
-        getAddressName(coordinate).catch((error) => {
-          logger.error('getAddressName failed', error);
-          return '';
-        }),
-      ]);
-      // coord2address가 비어서 오면(간헐적 실패 등) 근처 장소 중 가장 가까운 곳의 주소로 대체한다.
-      const addressName =
-        addressNameFromApi || places[0]?.road_address_name || places[0]?.address_name || '';
-      if (nearbyRequestIdRef.current === requestId) {
-        setNearbyPlaces(places.slice(0, NEARBY_RESULT_COUNT));
-        setCurrentAddress(addressName);
-      }
-    } catch (error) {
-      logger.error('fetchNearbyPlaces failed', error);
-      if (nearbyRequestIdRef.current === requestId) {
-        setNearbyPlaces([]);
-        setCurrentAddress('');
-      }
-    } finally {
-      if (nearbyRequestIdRef.current === requestId) {
-        setIsLoadingNearby(false);
-        setHasLoadedNearbyOnce(true);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -187,65 +135,24 @@ export function ReservationMapPage() {
     };
   }, [fetchNearbyPlaces]);
 
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-      if (nearbyTimeoutRef.current) clearTimeout(nearbyTimeoutRef.current);
-    };
-  }, []);
-
   const handleCameraMove = useCallback(
     (event: { coordinates: Coordinates }) => {
       const { latitude, longitude } = event.coordinates;
       if (latitude === undefined || longitude === undefined) return;
-      const coordinate = { latitude, longitude };
-
-      if (nearbyTimeoutRef.current) clearTimeout(nearbyTimeoutRef.current);
-      nearbyTimeoutRef.current = setTimeout(() => {
-        fetchNearbyPlaces(coordinate);
-      }, NEARBY_DEBOUNCE_MS);
+      scheduleFetchNearbyPlaces({ latitude, longitude });
     },
-    [fetchNearbyPlaces]
+    [scheduleFetchNearbyPlaces]
   );
-
-  const handleChangeSearchQuery = useCallback((text: string) => {
-    setSearchQuery(text);
-
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-
-    const query = text.trim();
-    if (!query) {
-      setSuggestions([]);
-      return;
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      const requestId = (searchRequestIdRef.current += 1);
-      setIsSearching(true);
-      searchPlaces(query)
-        .then((results) => {
-          if (searchRequestIdRef.current === requestId) setSuggestions(results);
-        })
-        .catch((error) => {
-          logger.error('searchPlaces failed', error);
-          if (searchRequestIdRef.current === requestId) setSuggestions([]);
-        })
-        .finally(() => {
-          if (searchRequestIdRef.current === requestId) setIsSearching(false);
-        });
-    }, SEARCH_DEBOUNCE_MS);
-  }, []);
 
   const handleSelectSearchSuggestion = useCallback(
     (place: KakaoPlace) => {
       const coordinate = { latitude: Number(place.y), longitude: Number(place.x) };
       setCameraCenter(coordinate);
-      setSearchQuery('');
-      setSuggestions([]);
+      clearSearch();
       Keyboard.dismiss();
       fetchNearbyPlaces(coordinate);
     },
-    [fetchNearbyPlaces]
+    [fetchNearbyPlaces, clearSearch]
   );
 
   const handleSelectNearbyPlace = useCallback(
@@ -268,13 +175,20 @@ export function ReservationMapPage() {
   }, []);
 
   const handleConfirmPlaceName = useCallback(() => {
-    const coordinate = lastFetchedCoordinateRef.current;
+    const coordinate = getLastFetchedCoordinate();
     if (!coordinate || !placeNameDraft.trim()) return;
     setCoordinates(coordinate.latitude, coordinate.longitude, currentAddress);
     setPlaceName(placeNameDraft.trim());
     setIsPlaceNameSheetVisible(false);
     router.back();
-  }, [currentAddress, placeNameDraft, router, setCoordinates, setPlaceName]);
+  }, [
+    currentAddress,
+    placeNameDraft,
+    router,
+    setCoordinates,
+    setPlaceName,
+    getLastFetchedCoordinate,
+  ]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right', 'bottom']}>

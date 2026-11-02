@@ -17,12 +17,8 @@ import {
   useChatSocket,
   useDeleteChatRoom,
   chatRoomKeys,
-  chatMessageKeys,
-  getChatRoomData,
-  seedMessagePagesFromSnapshot,
-  CHAT_MESSAGE_PAGE_SIZE,
 } from '@/entity/chat';
-import type { ChatRoomListItem, ChatMessagePages } from '@/entity/chat';
+import type { ChatRoomListItem } from '@/entity/chat';
 import type { RoomId } from '@/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
@@ -30,7 +26,7 @@ import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
-import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
+import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
 
@@ -78,6 +74,7 @@ const ActionSheetRow = ({
 export function ChatRoomList() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { prefetchRoom } = useChatEntry();
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
   // 채팅방별 액션 시트(차단/신고/나가기)가 열려있는 채팅방
   const [actionTargetRoomId, setActionTargetRoomId] = useState<RoomId | null>(null);
@@ -164,24 +161,11 @@ export function ChatRoomList() {
 
       // 채팅방에 들어가기 전에 데이터를 미리 받아오고 소켓 방에 미리 join해
       // 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이 바로 보이게 한다.
-      queryClient
-        .fetchQuery({
-          queryKey: chatRoomDataKeys.room(roomId),
-          queryFn: () => getChatRoomData(roomId),
-          staleTime: 30 * 1000,
-        })
-        .then((data) => {
-          // 방금 보낸 메시지가 snapshot에 아직 없을 수 있어 더 최신인 쪽을 남긴다
-          queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
-            seedMessagePagesFromSnapshot(oldData, data.messages, CHAT_MESSAGE_PAGE_SIZE)
-          );
-        })
-        .catch(() => {});
-
+      prefetchRoom(roomId);
       joinRoom(roomId);
       router.push(`/chatting/${roomId}`);
     },
-    [router, queryClient, joinRoom]
+    [router, prefetchRoom, joinRoom]
   );
 
   // 30초 폴링에도 isRefetching이 켜지므로, 사용자가 당겨서 새로고침한 동안만 스피너를 유지한다
