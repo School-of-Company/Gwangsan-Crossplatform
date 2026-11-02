@@ -7,7 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -53,7 +53,7 @@ const ActionSheetRow = ({
   disabled = false,
   onPress,
 }: ActionSheetRowProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(() => {
     Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();

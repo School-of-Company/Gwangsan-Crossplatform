@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Animated, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
@@ -25,7 +25,7 @@ const PressableCardRow = ({
   rowClassName,
   children,
 }: PressableCardRowProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(() => {
     Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();

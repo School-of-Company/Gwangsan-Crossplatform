@@ -79,8 +79,8 @@ export function BottomSheetModalWrapper({
   // 밀어 올리고도 키보드에 가려지는 높이. 시트 내부 하단 패딩으로 보정해 버튼이
   // 키보드 뒤로 숨지 않게 한다.
   const [keyboardOverlap, setKeyboardOverlap] = useState(0);
-  const translateY = useRef(new Animated.Value(modalHeight)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useState(() => new Animated.Value(modalHeight))[0];
+  const backdropOpacity = useState(() => new Animated.Value(0))[0];
   const dragStartValue = useRef(0);
   // 시트가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
   // 열릴 때(isVisible 효과)마다 false로 리셋된다.
@@ -89,6 +89,8 @@ export function BottomSheetModalWrapper({
 
   const panResponder = useMemo(
     () =>
+      // 핸들러는 제스처 이벤트 안에서만 ref를 읽으므로 렌더 중 접근이 아니다.
+      // eslint-disable-next-line react-hooks/refs
       PanResponder.create({
         // 시작 시점엔 절대 가로채지 않는다 — 버튼 탭이 정상적으로 눌리게 하기 위함.
         // 아래로 끄는 움직임이 뚜렷해지는 순간(move, capture 단계)에만 시트가
