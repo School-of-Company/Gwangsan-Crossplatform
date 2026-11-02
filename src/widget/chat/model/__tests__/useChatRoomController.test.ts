@@ -212,40 +212,81 @@ describe('useChatRoomController', () => {
       result.current.scrollToEnd(false);
     });
 
-    it('메시지가 도착하면 100ms 후 자동으로 scrollToEnd를 호출한다', () => {
+    it('scrollToEnd는 inverted 목록의 맨 아래(offset 0)로 스크롤한다', () => {
+      const { result } = renderHookWithProviders(() =>
+        useChatRoomController({ roomId: 'room-1' as any })
+      );
+      const scrollToOffsetSpy = jest.fn();
+      (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
+
+      result.current.scrollToEnd(true);
+
+      expect(scrollToOffsetSpy).toHaveBeenCalledWith({ offset: 0, animated: true });
+    });
+
+    it('메시지가 도착해도 스스로 강제 스크롤하지 않는다(바닥 근처 판단은 목록이 한다)', () => {
       jest.useFakeTimers();
+      try {
+        mockUseChatMessagesEntity.mockReturnValue({
+          data: [{ messageId: 1, content: 'hi' }],
+          isLoading: false,
+          isError: false,
+        });
+
+        const { result } = renderHookWithProviders(() =>
+          useChatRoomController({ roomId: 'room-1' as any })
+        );
+        const scrollToOffsetSpy = jest.fn();
+        (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
+
+        jest.advanceTimersByTime(1000);
+
+        expect(scrollToOffsetSpy).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
+  describe('olderMessages', () => {
+    it('이전 페이지가 있으면 load가 fetchNextPage를 부른다', () => {
+      const fetchNextPage = jest.fn();
       mockUseChatMessagesEntity.mockReturnValue({
-        data: [{ messageId: 1, content: 'hi' }],
+        data: [],
         isLoading: false,
         isError: false,
+        hasNextPage: true,
+        isFetchingNextPage: false,
+        fetchNextPage,
       });
 
       const { result } = renderHookWithProviders(() =>
         useChatRoomController({ roomId: 'room-1' as any })
       );
-      const scrollToOffsetSpy = jest.fn();
-      (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
+      result.current.olderMessages.load();
 
-      jest.advanceTimersByTime(100);
-
-      expect(scrollToOffsetSpy).toHaveBeenCalledWith({ offset: 10_000_000, animated: true });
-      jest.useRealTimers();
+      expect(result.current.olderMessages.hasMore).toBe(true);
+      expect(fetchNextPage).toHaveBeenCalledTimes(1);
     });
 
-    it('메시지가 없으면 자동 스크롤을 예약하지 않는다', () => {
-      jest.useFakeTimers();
-      mockUseChatMessagesEntity.mockReturnValue({ data: [], isLoading: false, isError: false });
+    it('불러오는 중이거나 더 없으면 다시 요청하지 않는다', () => {
+      const fetchNextPage = jest.fn();
+      mockUseChatMessagesEntity.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+        hasNextPage: true,
+        isFetchingNextPage: true,
+        fetchNextPage,
+      });
 
       const { result } = renderHookWithProviders(() =>
         useChatRoomController({ roomId: 'room-1' as any })
       );
-      const scrollToOffsetSpy = jest.fn();
-      (result.current.flatListRef as any).current = { scrollToOffset: scrollToOffsetSpy };
+      result.current.olderMessages.load();
 
-      jest.advanceTimersByTime(200);
-
-      expect(scrollToOffsetSpy).not.toHaveBeenCalled();
-      jest.useRealTimers();
+      expect(result.current.olderMessages.isLoading).toBe(true);
+      expect(fetchNextPage).not.toHaveBeenCalled();
     });
   });
 
