@@ -73,7 +73,9 @@ export default function Post({
       </View>
       <View className="flex-1">
         <View className="flex-row items-center gap-1.5">
+          {/* 목록(VirtualList)이 카드 높이를 고정값으로 배치하므로 긴 제목이 줄바꿈돼 카드가 커지지 않게 한다 */}
           <Text
+            numberOfLines={1}
             className={`shrink text-lg font-semibold text-foreground ${isTemporary ? 'opacity-70' : ''}`}>
             {title}
           </Text>
@@ -87,12 +89,12 @@ export default function Post({
           {gwangsan} 광산
         </Text>
         {seller && (
-          <Text testID="post-seller" className="text-xs text-gray-500">
+          <Text testID="post-seller" numberOfLines={1} className="text-xs text-gray-500">
             판매자: {seller.nickname}
           </Text>
         )}
         {buyer && (
-          <Text testID="post-buyer" className="text-xs text-gray-500">
+          <Text testID="post-buyer" numberOfLines={1} className="text-xs text-gray-500">
             구매자: {buyer.nickname}
           </Text>
         )}
