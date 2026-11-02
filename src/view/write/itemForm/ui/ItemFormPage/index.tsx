@@ -10,10 +10,16 @@ import {
 import { logger } from '@/shared/lib/logger';
 import { Button, Header, Input } from '@/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
+import { AlertModal } from '~/shared/ui/AlertModal';
 import { TextField } from '@/shared/ui/TextField';
 import ImageUploader from '@/shared/ui/ImageUploader';
 import type { ImageUploadState } from '@/shared/ui/ImageUploader';
-import { createItemFormRequestBody, useCreateItem } from '~/entity/write/itemForm';
+import {
+  createItemFormRequestBody,
+  getGwangsanError,
+  ITEM_TITLE_MAX_LENGTH,
+  useCreateItem,
+} from '~/entity/write/itemForm';
 import { getModeLabel, getTypeLabel } from '~/widget/write/model/options';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -22,6 +28,7 @@ import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { useEditPost } from '~/entity/post/model/useEditPost';
 import { useGetItem } from '~/entity/post';
+import { useLeaveConfirm } from '../../model/useLeaveConfirm';
 
 const ItemFormPage = () => {
   const [title, setTitle] = useState('');
@@ -73,13 +80,43 @@ const ItemFormPage = () => {
     (!imageUploadState.hasUploadingImages && !imageUploadState.hasFailedImages);
   const hasAtLeastOneImage = (images?.length ?? 0) > 0 || (imageIds?.length ?? 0) > 0;
 
+  const gwangsanError = getGwangsanError(gwangsan);
+
   const isFormValid =
     mode.trim().length > 0 &&
     type.trim().length > 0 &&
     title.trim().length > 0 &&
     content.trim().length > 0 &&
     gwangsan.trim().length > 0 &&
+    !gwangsanError &&
     (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
+
+  // 버튼이 왜 눌리지 않는지 알 수 있도록 첫 번째로 부족한 항목을 버튼 위에 알려준다.
+  // 이미지 업로드 중·실패는 버튼 문구로 이미 보여준다.
+  const disabledReason = (() => {
+    if (isFormValid || isSubmitting || !imagesReady) return null;
+    if (mustHaveImage && !hasAtLeastOneImage)
+      return '물건 나눔 글에는 사진을 1장 이상 올려 주세요.';
+    if (title.trim().length === 0) return '주제를 입력해 주세요.';
+    if (content.trim().length === 0) return '내용을 입력해 주세요.';
+    if (gwangsan.trim().length === 0) return '광산을 입력해 주세요.';
+    return gwangsanError;
+  })();
+
+  const isDirty = postData
+    ? title !== postData.title ||
+      content !== postData.content ||
+      gwangsan !== postData.gwangsan.toString() ||
+      imageIds.join(',') !== (postData.images ?? []).map((img) => img.imageId).join(',')
+    : !id &&
+      (title.trim().length > 0 ||
+        content.trim().length > 0 ||
+        gwangsan.length > 0 ||
+        images.length > 0);
+
+  const { isConfirmVisible, confirmLeave, cancelLeave, allowLeave } = useLeaveConfirm(
+    isDirty && !isSubmitting
+  );
 
   const initialImages = useMemo(
     () =>
@@ -150,6 +187,7 @@ const ItemFormPage = () => {
         await createItemMutation.mutateAsync(requestBody);
       }
 
+      allowLeave();
       router.replace({
         pathname: '/main',
       });
@@ -207,6 +245,7 @@ const ItemFormPage = () => {
               placeholder="주제를 작성해주세요"
               value={title}
               onChangeText={setTitle}
+              maxLength={ITEM_TITLE_MAX_LENGTH}
             />
             <TextField
               label="내용"
@@ -222,15 +261,37 @@ const ItemFormPage = () => {
               onFocus={handleGwangsanFocus}
               keyboardType="numeric"
             />
+            {gwangsanError && (
+              <Text testID="gwangsan-error" className="-mt-4 text-sm text-error-500">
+                {gwangsanError}
+              </Text>
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
       <View className="bg-background px-5 pt-5">
+        {disabledReason && (
+          <Text
+            testID="item-form-disabled-reason"
+            className="mb-2 text-center text-sm text-gray-500">
+            {disabledReason}
+          </Text>
+        )}
         <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
           {getButtonText()}
         </Button>
       </View>
+
+      <AlertModal
+        isVisible={isConfirmVisible}
+        message={'작성 중인 내용이 있어요.\n저장하지 않고 나가시겠습니까?'}
+        cancelText="계속 작성"
+        confirmText="나가기"
+        destructive
+        onCancel={cancelLeave}
+        onConfirm={confirmLeave}
+      />
     </SafeAreaView>
   );
 };
