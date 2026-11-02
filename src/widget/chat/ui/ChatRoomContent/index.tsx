@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,11 @@ import {
   Platform,
   Keyboard,
   Pressable,
+  TouchableOpacity,
+  ActivityIndicator,
   type ListRenderItem,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -63,8 +67,22 @@ interface ResolvedTradeReservedEmbed {
   readonly onOpenMap?: () => void;
 }
 
+// 말풍선 묶음·시간 표시는 이웃 메시지에 따라 정해지므로 목록 데이터를 만들 때 미리 계산해 둔다.
+// renderItem이 목록 전체(이웃)를 참조하지 않아야 메시지 하나가 추가될 때 모든 행이 다시 그려지지 않는다
+interface MessageDisplay {
+  readonly isLastMine: boolean;
+  readonly isFollowedByGrouped: boolean;
+  readonly showTime: boolean;
+  readonly showProfile: boolean;
+}
+
 type ChatListItem =
-  | { readonly type: 'message'; readonly timestamp: string; readonly data: EnhancedChatMessage }
+  | {
+      readonly type: 'message';
+      readonly timestamp: string;
+      readonly data: EnhancedChatMessage;
+      readonly display?: MessageDisplay;
+    }
   | { readonly type: 'trade'; readonly timestamp: string; readonly data: ResolvedTradeEmbed }
   | {
       readonly type: 'tradeReserved';
@@ -102,7 +120,16 @@ interface ChatRoomContentProps {
   readonly showReviewButton?: boolean;
   readonly hasReviewedTrade?: boolean;
   readonly onMyMessageLongPress?: (message: EnhancedChatMessage, anchor: MessageAnchor) => void;
+  readonly olderMessages?: {
+    readonly hasMore: boolean;
+    readonly isLoading: boolean;
+    readonly load: () => void;
+  };
 }
+
+// 목록이 inverted라 offset 0이 가장 최근 메시지(화면 맨 아래)다. 이 거리 안에 있으면 "바닥 근처"로 보고
+// 새 메시지가 오면 그대로 따라 내려가고, 더 위를 읽는 중이면 위치를 지킨 채 "새 메시지" 버튼을 띄운다
+export const NEAR_BOTTOM_THRESHOLD = 120;
 
 // 빈 화면 안내는 콘텐츠 영역 전체 높이 기준으로 가운데 정렬되는데, KeyboardStickyView는
 // 입력창만 옮기고 콘텐츠 영역 높이는 줄이지 않는다. 입력창이 닫힘 상태보다 더 올라간 만큼
@@ -138,6 +165,51 @@ const keyExtractor = (item: ChatListItem): string => {
   return `d-${item.timestamp}`;
 };
 
+const DEFAULT_MESSAGE_DISPLAY: MessageDisplay = {
+  isLastMine: false,
+  isFollowedByGrouped: false,
+  showTime: true,
+  showProfile: true,
+};
+
+// previous/next는 시간순(오래된 → 최신) 기준 이웃이다
+const getMessageDisplay = (
+  message: EnhancedChatMessage,
+  previousItem: ChatListItem | undefined,
+  nextItem: ChatListItem | undefined,
+  lastMyMessageId: EnhancedChatMessage['messageId'] | null
+): MessageDisplay => {
+  // 다음 메시지와 시간(분 단위)이 같으면 현재 메시지의 시간 표시는 숨기고 아래쪽에만 노출한다
+  const hasSameTimeAsNext =
+    nextItem?.type === 'message' &&
+    formatMessageTime(nextItem.data.createdAt) === formatMessageTime(message.createdAt);
+
+  if (message.isMine) {
+    // 다음 메시지도 내가 연달아 보낸 것이면, '나와 다음 메시지 사이' 간격을 좁힌다
+    const isFollowedByGrouped = nextItem?.type === 'message' && nextItem.data.isMine;
+    return {
+      isLastMine: message.messageId === lastMyMessageId,
+      isFollowedByGrouped,
+      showTime: !(isFollowedByGrouped && hasSameTimeAsNext),
+      showProfile: false,
+    };
+  }
+
+  const isSameSenderContinuation = (candidate: ChatListItem | undefined) =>
+    candidate?.type === 'message' &&
+    !candidate.data.isMine &&
+    candidate.data.senderId === message.senderId;
+
+  // 프로필/닉네임 노출 여부는 '이전' 메시지 기준, 간격은 '다음' 메시지 기준으로 판단한다
+  const isFollowedByGrouped = isSameSenderContinuation(nextItem);
+  return {
+    isLastMine: false,
+    isFollowedByGrouped,
+    showTime: !(isFollowedByGrouped && hasSameTimeAsNext),
+    showProfile: !isSameSenderContinuation(previousItem),
+  };
+};
+
 export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   messages,
   hasMessages,
@@ -150,6 +222,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   showReviewButton,
   hasReviewedTrade,
   onMyMessageLongPress,
+  olderMessages,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -175,13 +248,13 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   }));
 
   // 스페이서가 늘어나 스크롤 가능 영역이 커지는 동안, 같은 UI 스레드 프레임에서 리스트도
-  // 함께 맨 아래로 밀어야 마지막 메시지가 계속 화면에 붙어서 올라간다. scrollToOffset과
-  // 마찬가지로 실제 끝보다 훨씬 큰 값으로 스크롤하면 네이티브가 알아서 clamp한다
+  // 함께 맨 아래로 밀어야 마지막 메시지가 계속 화면에 붙어서 올라간다. inverted 목록이라
+  // 맨 아래(가장 최근 메시지)가 offset 0이다
   useAnimatedReaction(
     () => keyboardHeight.value,
     (current, previous) => {
       if (current !== previous) {
-        scrollTo(flatListRef, 0, 10_000_000, false);
+        scrollTo(flatListRef, 0, 0, false);
       }
     }
   );
@@ -195,22 +268,42 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
     transform: [{ translateY: -keyboardHeight.value }],
   }));
 
-  // 스페이서가 애니메이션되는 동안 onContentSizeChange가 프레임마다 발생해, 그때마다 JS
-  // 스레드의 별도 애니메이션 스크롤(scrollToEnd(true))이 다시 시작되며 위 scrollTo와 서로
-  // 경쟁해 끊기는 느낌을 만든다. reanimated 훅을 더 쓰지 않고, 순수 JS 디바운스로 크기 변화가
-  // 잠잠해진 뒤 한 번만 호출되도록 한다
-  const scrollToEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isNearBottomRef = useRef(true);
+  const [hasUnseenNewMessage, setHasUnseenNewMessage] = useState(false);
 
-  const handleContentSizeChange = useCallback(() => {
-    if (scrollToEndTimeoutRef.current) clearTimeout(scrollToEndTimeoutRef.current);
-    scrollToEndTimeoutRef.current = setTimeout(onScrollToEnd, 100);
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const isNearBottom = event.nativeEvent.contentOffset.y <= NEAR_BOTTOM_THRESHOLD;
+    isNearBottomRef.current = isNearBottom;
+    if (isNearBottom) setHasUnseenNewMessage(false);
+  }, []);
+
+  // 가장 최근 메시지가 바뀌었을 때만 반응한다(수정·읽음 처리 같은 내용 변경은 무시). 위쪽을 읽는
+  // 중이면 버튼만 띄우고, 내가 보낸 메시지면 보낸 결과를 볼 수 있게 맨 아래로 내린다
+  const newestMessage = messages[messages.length - 1];
+  const newestMessageKey = newestMessage ? String(newestMessage.messageId) : null;
+  const isNewestMine = Boolean(newestMessage?.isMine);
+  const previousNewestKeyRef = useRef(newestMessageKey);
+  useEffect(() => {
+    const previousKey = previousNewestKeyRef.current;
+    previousNewestKeyRef.current = newestMessageKey;
+    if (previousKey === null || newestMessageKey === null || previousKey === newestMessageKey) {
+      return;
+    }
+    if (isNewestMine) {
+      onScrollToEnd();
+      return;
+    }
+    if (!isNearBottomRef.current) setHasUnseenNewMessage(true);
+  }, [newestMessageKey, isNewestMine, onScrollToEnd]);
+
+  const handleNewMessageButtonPress = useCallback(() => {
+    setHasUnseenNewMessage(false);
+    onScrollToEnd();
   }, [onScrollToEnd]);
 
-  useEffect(() => {
-    return () => {
-      if (scrollToEndTimeoutRef.current) clearTimeout(scrollToEndTimeoutRef.current);
-    };
-  }, []);
+  const handleEndReached = useCallback(() => {
+    if (olderMessages?.hasMore && !olderMessages.isLoading) olderMessages.load();
+  }, [olderMessages]);
 
   const lastMyMessageId = useMemo(() => {
     const lastMyMessage = [...messages]
@@ -319,29 +412,36 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       itemsWithDateDividers.push(item);
     });
 
-    return itemsWithDateDividers;
-  }, [messages, tradeEmbedConfig, showReviewButton, hasReviewedTrade]);
+    const withDisplay = itemsWithDateDividers.map((item, index) =>
+      item.type === 'message'
+        ? {
+            ...item,
+            display: getMessageDisplay(
+              item.data,
+              itemsWithDateDividers[index - 1],
+              itemsWithDateDividers[index + 1],
+              lastMyMessageId
+            ),
+          }
+        : item
+    );
+
+    // inverted 목록은 0번이 화면 맨 아래에 그려지므로 최신 항목이 앞에 오도록 뒤집는다
+    return withDisplay.reverse();
+  }, [messages, tradeEmbedConfig, showReviewButton, hasReviewedTrade, lastMyMessageId]);
 
   const renderItem = useCallback<ListRenderItem<ChatListItem>>(
     ({ item, index }) => {
       if (item.type === 'message') {
-        const previousItem = combinedData[index - 1];
-        const nextItem = combinedData[index + 1];
-
-        // 다음 메시지와 시간(분 단위)이 같으면 현재 메시지의 시간 표시는 숨기고 아래쪽에만 노출한다
-        const hasSameTimeAsNext =
-          nextItem?.type === 'message' &&
-          formatMessageTime(nextItem.data.createdAt) === formatMessageTime(item.data.createdAt);
+        const display = item.display ?? DEFAULT_MESSAGE_DISPLAY;
 
         if (item.data.isMine) {
-          // 다음 메시지도 내가 연달아 보낸 것이면, '나와 다음 메시지 사이' 간격을 좁힌다
-          const isFollowedByGrouped = nextItem?.type === 'message' && nextItem.data.isMine;
           return (
             <MyMessage
               message={item.data}
-              isLast={item.data.messageId === lastMyMessageId}
-              isFollowedByGrouped={isFollowedByGrouped}
-              showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+              isLast={display.isLastMine}
+              isFollowedByGrouped={display.isFollowedByGrouped}
+              showTime={display.showTime}
               onLongPress={
                 onMyMessageLongPress && canModifyMessage(item.data)
                   ? onMyMessageLongPress
@@ -351,22 +451,13 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           );
         }
 
-        const isSameSenderContinuation = (candidate: ChatListItem | undefined) =>
-          candidate?.type === 'message' &&
-          !candidate.data.isMine &&
-          candidate.data.senderId === item.data.senderId;
-
-        // 프로필/닉네임 노출 여부는 '이전' 메시지 기준, 간격은 '다음' 메시지 기준으로 판단한다
-        const isGrouped = isSameSenderContinuation(previousItem);
-        const isFollowedByGrouped = isSameSenderContinuation(nextItem);
-
         return (
           <OtherMessage
             message={item.data}
             onProfilePress={onProfilePress}
-            showProfile={!isGrouped}
-            isFollowedByGrouped={isFollowedByGrouped}
-            showTime={!(isFollowedByGrouped && hasSameTimeAsNext)}
+            showProfile={display.showProfile}
+            isFollowedByGrouped={display.isFollowedByGrouped}
+            showTime={display.showTime}
           />
         );
       }
@@ -408,7 +499,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
         />
       );
     },
-    [onProfilePress, onReviewButtonPress, lastMyMessageId, combinedData, onMyMessageLongPress]
+    [onProfilePress, onReviewButtonPress, onMyMessageLongPress]
   );
 
   const emptyStateStyle = useAnimatedStyle(() => ({
@@ -441,17 +532,40 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
 
   return (
     <>
+      {/* inverted라 Header가 화면 맨 아래(입력창 쪽), Footer가 맨 위(가장 오래된 메시지 위)에 그려지고,
+          contentContainer의 paddingTop도 화면에서는 아래쪽 여백이 된다 */}
       <FlatList
         ref={flatListRef}
+        testID="chat-message-list"
         data={combinedData}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
-        ListHeaderComponent={renderHeader}
+        inverted
+        ListHeaderComponent={<Animated.View style={keyboardSpacerStyle} />}
+        ListFooterComponent={
+          <>
+            {olderMessages?.isLoading && (
+              <ActivityIndicator
+                testID="chat-older-messages-loading"
+                className="py-3"
+                color={colors['gray-500']}
+              />
+            )}
+            {renderHeader()}
+          </>
+        }
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={handleContentSizeChange}
-        contentContainerStyle={{ paddingBottom: closedGap }}
-        ListFooterComponent={<Animated.View style={keyboardSpacerStyle} />}
+        contentContainerStyle={{ paddingTop: closedGap }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+        // 바닥 근처에서 새 메시지가 오면 따라 내려가고, 위쪽을 읽는 중이면 보던 위치를 유지한다
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: NEAR_BOTTOM_THRESHOLD,
+        }}
         initialNumToRender={15}
         maxToRenderPerBatch={10}
         windowSize={11}
@@ -462,6 +576,22 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
           같은 프레임에 커밋된다 — NativeWind의 className 경유는 Reanimated의 style prop
           가로채기와 충돌할 수 있어 라이브러리 원본과 동일하게 순수 style 객체를 쓴다 */}
       <Animated.View style={[{ display: 'none', position: 'absolute' }, commitStyle]} />
+      {hasUnseenNewMessage && (
+        <View
+          pointerEvents="box-none"
+          className="absolute inset-x-0 items-center"
+          style={{ bottom: closedGap + 8 }}>
+          <TouchableOpacity
+            testID="chat-new-message-button"
+            onPress={handleNewMessageButtonPress}
+            accessibilityRole="button"
+            accessibilityLabel="새 메시지 보기"
+            className="flex-row items-center gap-1 rounded-full bg-gray-900 px-4 py-2 opacity-90">
+            <Text className="text-label text-white">새 메시지</Text>
+            <Icon name="arrow-down" size={14} color="white" />
+          </TouchableOpacity>
+        </View>
+      )}
     </>
   );
 };

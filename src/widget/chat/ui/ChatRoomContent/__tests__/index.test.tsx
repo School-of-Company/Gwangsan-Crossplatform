@@ -2,7 +2,7 @@ import React from 'react';
 import { DeviceEventEmitter, FlatList, Text } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { AnimatedRef } from 'react-native-reanimated';
-import { ChatRoomContent, getEmptyStateBottomInset } from '../index';
+import { ChatRoomContent, getEmptyStateBottomInset, NEAR_BOTTOM_THRESHOLD } from '../index';
 import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import type { EnhancedChatMessage, TradeProduct } from '~/entity/chat';
 
@@ -122,6 +122,9 @@ const createProduct = (overrides: Partial<TradeProduct> = {}): TradeProduct => (
   ...overrides,
 });
 
+// 목록은 inverted라 data가 최신 → 오래된 순이다. 시간순으로 검증하려 뒤집어 본다
+const timeline = (list: { props: Record<string, any> }): any[] => [...list.props.data].reverse();
+
 const defaultProps = {
   messages: [],
   hasMessages: false,
@@ -191,7 +194,7 @@ describe('ChatRoomContent', () => {
     const list = UNSAFE_getByType(FlatList);
 
     expect(
-      list.props.data.map(
+      timeline(list).map(
         (item: any) =>
           `${item.type}-${item.data.messageId ?? item.data.product?.id ?? item.data.label}`
       )
@@ -233,7 +236,7 @@ describe('ChatRoomContent', () => {
     const list = UNSAFE_getByType(FlatList);
 
     expect(
-      list.props.data.map(
+      timeline(list).map(
         (item: any) =>
           `${item.type}-${item.data.messageId ?? item.data.product?.id ?? item.data.label}`
       )
@@ -257,9 +260,9 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data).toHaveLength(2);
-    expect(list.props.data[0].type).toBe('dateDivider');
-    expect(list.props.data[1].type).toBe('trade');
+    expect(timeline(list)).toHaveLength(2);
+    expect(timeline(list)[0].type).toBe('dateDivider');
+    expect(timeline(list)[1].type).toBe('trade');
     expect(getByTestId('trade-embed-50')).toBeTruthy();
   });
 
@@ -295,7 +298,7 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data.map((item: any) => item.type)).toEqual([
+    expect(timeline(list).map((item: any) => item.type)).toEqual([
       'dateDivider',
       'message',
       'trade',
@@ -359,7 +362,7 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data.map((item: any) => item.type)).toEqual([
+    expect(timeline(list).map((item: any) => item.type)).toEqual([
       'dateDivider',
       'message',
       'trade',
@@ -406,7 +409,7 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data.map((item: any) => item.type)).toEqual([
+    expect(timeline(list).map((item: any) => item.type)).toEqual([
       'dateDivider',
       'message',
       'message',
@@ -434,7 +437,7 @@ describe('ChatRoomContent', () => {
 
     expect(queryByTestId('chat-empty-state')).toBeNull();
     expect(
-      UNSAFE_getByType(FlatList).props.data.some((item: any) => item.type === 'tradeReserved')
+      timeline(UNSAFE_getByType(FlatList)).some((item: any) => item.type === 'tradeReserved')
     ).toBe(true);
   });
 
@@ -462,7 +465,7 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data.map((item: any) => item.type)).toEqual([
+    expect(timeline(list).map((item: any) => item.type)).toEqual([
       'dateDivider',
       'trade',
       'tradeCompleted',
@@ -488,7 +491,7 @@ describe('ChatRoomContent', () => {
     );
 
     const list = UNSAFE_getByType(FlatList);
-    const tradeItem = list.props.data.find((item: any) => item.type === 'trade');
+    const tradeItem = timeline(list).find((item: any) => item.type === 'trade');
 
     expect(tradeItem.data.showButtons).toBe(true);
   });
@@ -510,7 +513,7 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.data.map((item: any) => item.type)).toEqual(['dateDivider', 'trade']);
+    expect(timeline(list).map((item: any) => item.type)).toEqual(['dateDivider', 'trade']);
     expect(queryByTestId('trade-completed-embed')).toBeNull();
   });
 
@@ -534,9 +537,9 @@ describe('ChatRoomContent', () => {
 
     const list = UNSAFE_getByType(FlatList);
 
-    expect(list.props.keyExtractor(list.props.data[0])).toBe(`d-${message.createdAt}`);
-    expect(list.props.keyExtractor(list.props.data[1])).toBe('m-7');
-    expect(list.props.keyExtractor(list.props.data[2])).toBe('t-8');
+    expect(list.props.keyExtractor(timeline(list)[0])).toBe(`d-${message.createdAt}`);
+    expect(list.props.keyExtractor(timeline(list)[1])).toBe('m-7');
+    expect(list.props.keyExtractor(timeline(list)[2])).toBe('t-8');
   });
 
   it('내가 보낸 마지막 메시지에만 isLast를 전달한다', () => {
@@ -556,14 +559,16 @@ describe('ChatRoomContent', () => {
     expect(getByTestId('my-message-4').props.children).toBe('last');
   });
 
-  it('리스트 하단 패딩은 플랫폼 기준 고정값을 유지하고, 키보드 높이 변화는 애니메이션 스페이서(ListFooterComponent)가 담당한다', () => {
+  it('리스트 하단 패딩은 플랫폼 기준 고정값을 유지하고, 키보드 높이 변화는 애니메이션 스페이서(inverted라 ListHeaderComponent)가 담당한다', () => {
     const { UNSAFE_getByType } = render(
       <ChatRoomContent {...defaultProps} messages={[createMessage()]} hasMessages />
     );
 
     const list = UNSAFE_getByType(FlatList);
-    expect(list.props.contentContainerStyle.paddingBottom).toBe(10);
-    expect(list.props.ListFooterComponent).toBeTruthy();
+    expect(list.props.inverted).toBe(true);
+    // inverted 목록에서는 paddingTop이 화면 아래쪽 여백이 된다
+    expect(list.props.contentContainerStyle.paddingTop).toBe(10);
+    expect(list.props.ListHeaderComponent).toBeTruthy();
 
     // 키보드 높이는 이제 useReanimatedKeyboardAnimation의 SharedValue로 프레임 단위 동기화되므로,
     // 과거처럼 Keyboard 이벤트를 직접 구독하지 않는다 — 같은 이벤트를 흘려보내도 정적 패딩은 그대로다
@@ -572,7 +577,7 @@ describe('ChatRoomContent', () => {
     });
 
     const listAfterShow = UNSAFE_getByType(FlatList);
-    expect(listAfterShow.props.contentContainerStyle.paddingBottom).toBe(10);
+    expect(listAfterShow.props.contentContainerStyle.paddingTop).toBe(10);
   });
 
   describe('내 메시지 길게 누르기', () => {
@@ -629,17 +634,19 @@ describe('ChatRoomContent SYSTEM 메시지', () => {
     );
 
     const list = UNSAFE_getByType(FlatList);
-    expect(list.props.data.map((item: any) => item.type)).toEqual([
+    expect(timeline(list).map((item: any) => item.type)).toEqual([
       'dateDivider',
       'message',
       'system',
     ]);
-    expect(list.props.keyExtractor(list.props.data[2])).toBe('s-2');
+    expect(list.props.keyExtractor(timeline(list)[2])).toBe('s-2');
     expect(queryByTestId('other-message-2')).toBeNull();
-    expect(getAllByTestId('date-divider').map((node) => node.props.children)).toEqual([
-      '날짜-2026-05-28',
-      '상대방님이 예약을 취소했어요',
-    ]);
+    // 렌더 트리도 data 순서(최신 → 오래된)라 뒤집어 시간순으로 비교한다
+    expect(
+      getAllByTestId('date-divider')
+        .map((node) => node.props.children)
+        .reverse()
+    ).toEqual(['날짜-2026-05-28', '상대방님이 예약을 취소했어요']);
   });
 
   it('SYSTEM 메시지를 사이에 두면 같은 발신자 메시지라도 묶지 않고 프로필을 다시 보여준다', () => {
@@ -725,7 +732,7 @@ describe('ChatRoomContent 예약·완료 카드 위치', () => {
 
     const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
 
-    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'm2', 'tradeReserved', 'm3']);
+    expect(itemOrder(timeline(list))).toEqual(['m1', 'trade', 'm2', 'tradeReserved', 'm3']);
   });
 
   it('completedAt이 있으면 완료 카드를 그 시각으로 메시지 사이에 끼워 넣는다', () => {
@@ -737,7 +744,7 @@ describe('ChatRoomContent 예약·완료 카드 위치', () => {
 
     const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
 
-    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'tradeCompleted', 'm2', 'm3']);
+    expect(itemOrder(timeline(list))).toEqual(['m1', 'trade', 'tradeCompleted', 'm2', 'm3']);
   });
 
   it('reservedAt이 없거나 읽을 수 없으면(구버전 서버) 예약 카드를 맨 끝에 붙인다', () => {
@@ -749,7 +756,7 @@ describe('ChatRoomContent 예약·완료 카드 위치', () => {
 
     const list = renderWithProduct(product).UNSAFE_getByType(FlatList);
 
-    expect(itemOrder(list.props.data)).toEqual(['m1', 'trade', 'm2', 'm3', 'tradeReserved']);
+    expect(itemOrder(timeline(list))).toEqual(['m1', 'trade', 'm2', 'm3', 'tradeReserved']);
   });
 
   it('카드를 끼워 넣은 날짜에 맞춰 날짜 구분선을 다시 계산한다', () => {
@@ -778,7 +785,7 @@ describe('ChatRoomContent 예약·완료 카드 위치', () => {
     );
 
     const list = UNSAFE_getByType(FlatList);
-    expect(list.props.data.map((item: any) => item.type)).toEqual([
+    expect(timeline(list).map((item: any) => item.type)).toEqual([
       'dateDivider',
       'message',
       'trade',
@@ -805,5 +812,220 @@ describe('getEmptyStateBottomInset', () => {
 
   it('키보드가 닫히는 중 오프셋보다 낮아지면 음수 대신 0을 돌려준다', () => {
     expect(getEmptyStateBottomInset(-20, 34)).toBe(0);
+  });
+});
+
+describe('ChatRoomContent 페이지 로딩과 자동 스크롤', () => {
+  const at = (messageId: number, minute: number, overrides: Partial<EnhancedChatMessage> = {}) =>
+    createMessage({
+      messageId,
+      createdAt: `2026-05-28T01:${String(minute).padStart(2, '0')}:00.000Z`,
+      ...overrides,
+    });
+
+  const scrollTo = (list: any, y: number) =>
+    act(() => {
+      list.props.onScroll({ nativeEvent: { contentOffset: { x: 0, y } } });
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('최신 메시지가 data의 0번(inverted 목록의 맨 아래)에 온다', () => {
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent {...defaultProps} messages={[at(1, 1), at(2, 2)]} hasMessages />
+    );
+
+    const list = UNSAFE_getByType(FlatList);
+    expect(list.props.data[0]).toEqual(expect.objectContaining({ type: 'message' }));
+    expect(list.props.data[0].data.messageId).toBe(2);
+  });
+
+  it('바닥 근처에서 새 메시지를 따라 내려가도록 maintainVisibleContentPosition을 건다', () => {
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent {...defaultProps} messages={[at(1, 1)]} hasMessages />
+    );
+
+    expect(UNSAFE_getByType(FlatList).props.maintainVisibleContentPosition).toEqual({
+      minIndexForVisible: 0,
+      autoscrollToTopThreshold: NEAR_BOTTOM_THRESHOLD,
+    });
+  });
+
+  it('위(오래된 쪽) 끝에 닿으면 이전 페이지를 불러온다', () => {
+    const load = jest.fn();
+    const { UNSAFE_getByType } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={[at(1, 1)]}
+        hasMessages
+        olderMessages={{ hasMore: true, isLoading: false, load }}
+      />
+    );
+
+    act(() => UNSAFE_getByType(FlatList).props.onEndReached());
+
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('더 이전 페이지가 없거나 이미 불러오는 중이면 다시 요청하지 않는다', () => {
+    const load = jest.fn();
+    const { UNSAFE_getByType, rerender, getByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={[at(1, 1)]}
+        hasMessages
+        olderMessages={{ hasMore: false, isLoading: false, load }}
+      />
+    );
+    act(() => UNSAFE_getByType(FlatList).props.onEndReached());
+
+    rerender(
+      <ChatRoomContent
+        {...defaultProps}
+        messages={[at(1, 1)]}
+        hasMessages
+        olderMessages={{ hasMore: true, isLoading: true, load }}
+      />
+    );
+    act(() => UNSAFE_getByType(FlatList).props.onEndReached());
+
+    expect(load).not.toHaveBeenCalled();
+    expect(getByTestId('chat-older-messages-loading')).toBeTruthy();
+  });
+
+  it('위쪽을 읽는 중에 상대 메시지가 오면 스크롤하지 않고 "새 메시지" 버튼을 띄운다', () => {
+    const onScrollToEnd = jest.fn();
+    const { UNSAFE_getByType, rerender, getByTestId, queryByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1)]}
+        hasMessages
+      />
+    );
+    scrollTo(UNSAFE_getByType(FlatList), NEAR_BOTTOM_THRESHOLD + 500);
+
+    rerender(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1), at(2, 2)]}
+        hasMessages
+      />
+    );
+
+    expect(onScrollToEnd).not.toHaveBeenCalled();
+    fireEvent.press(getByTestId('chat-new-message-button'));
+    expect(onScrollToEnd).toHaveBeenCalledTimes(1);
+    expect(queryByTestId('chat-new-message-button')).toBeNull();
+  });
+
+  it('바닥 근처에서 상대 메시지가 오면 버튼을 띄우지 않는다(목록이 스스로 따라 내려간다)', () => {
+    const { rerender, queryByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={[at(1, 1)]} hasMessages />
+    );
+
+    rerender(<ChatRoomContent {...defaultProps} messages={[at(1, 1), at(2, 2)]} hasMessages />);
+
+    expect(queryByTestId('chat-new-message-button')).toBeNull();
+  });
+
+  it('버튼이 떠 있어도 사용자가 바닥 근처로 내려오면 사라진다', () => {
+    const { UNSAFE_getByType, rerender, queryByTestId } = render(
+      <ChatRoomContent {...defaultProps} messages={[at(1, 1)]} hasMessages />
+    );
+    scrollTo(UNSAFE_getByType(FlatList), 800);
+    rerender(<ChatRoomContent {...defaultProps} messages={[at(1, 1), at(2, 2)]} hasMessages />);
+    expect(queryByTestId('chat-new-message-button')).toBeTruthy();
+
+    scrollTo(UNSAFE_getByType(FlatList), 0);
+
+    expect(queryByTestId('chat-new-message-button')).toBeNull();
+  });
+
+  it('메시지 수정·읽음 처리처럼 최신 메시지가 그대로면 스크롤도 버튼도 생기지 않는다', () => {
+    const onScrollToEnd = jest.fn();
+    const { UNSAFE_getByType, rerender, queryByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1), at(2, 2)]}
+        hasMessages
+      />
+    );
+    scrollTo(UNSAFE_getByType(FlatList), 800);
+
+    rerender(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1), at(2, 2, { content: '수정됨', checked: true })]}
+        hasMessages
+      />
+    );
+
+    expect(onScrollToEnd).not.toHaveBeenCalled();
+    expect(queryByTestId('chat-new-message-button')).toBeNull();
+  });
+
+  it('위쪽을 읽는 중이라도 내가 보낸 메시지면 맨 아래로 내린다', () => {
+    const onScrollToEnd = jest.fn();
+    const { UNSAFE_getByType, rerender } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1)]}
+        hasMessages
+      />
+    );
+    scrollTo(UNSAFE_getByType(FlatList), 800);
+
+    rerender(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1), at(2, 2, { isMine: true })]}
+        hasMessages
+      />
+    );
+
+    expect(onScrollToEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('이전 페이지가 붙어(오래된 메시지 추가) 최신 메시지가 그대로면 반응하지 않는다', () => {
+    const onScrollToEnd = jest.fn();
+    const { rerender, queryByTestId } = render(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(5, 5)]}
+        hasMessages
+      />
+    );
+
+    rerender(
+      <ChatRoomContent
+        {...defaultProps}
+        onScrollToEnd={onScrollToEnd}
+        messages={[at(1, 1), at(2, 2), at(5, 5)]}
+        hasMessages
+      />
+    );
+
+    expect(onScrollToEnd).not.toHaveBeenCalled();
+    expect(queryByTestId('chat-new-message-button')).toBeNull();
+  });
+
+  it('메시지가 추가돼도 renderItem은 다시 만들어지지 않는다(묶음·시간 표시는 data에서 계산)', () => {
+    const { UNSAFE_getByType, rerender } = render(
+      <ChatRoomContent {...defaultProps} messages={[at(1, 1)]} hasMessages />
+    );
+    const firstRenderItem = UNSAFE_getByType(FlatList).props.renderItem;
+
+    rerender(<ChatRoomContent {...defaultProps} messages={[at(1, 1), at(2, 2)]} hasMessages />);
+
+    expect(UNSAFE_getByType(FlatList).props.renderItem).toBe(firstRenderItem);
   });
 });
