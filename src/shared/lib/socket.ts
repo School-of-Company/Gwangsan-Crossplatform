@@ -140,12 +140,8 @@ class SocketManager implements ISocketManager {
       logger.error('Socket connection error', error);
     }
 
-    // 채팅 소켓은 로그인 직후·화면 이동·앱 포그라운드 복귀 시마다 백그라운드로
-    // 자동 재연결을 시도한다(모든 호출부가 실패를 조용히 무시하거나 로깅만
-    // 함). 이 실패를 전역 Toast로 노출하면 로그인 등 소켓과 무관한 동작
-    // 직후에도 "오류" 토스트가 떠 사용자를 혼란시키므로(#585) 표시하지
-    // 않는다. 연결 상태는 채팅 화면의 connectionState 표시(Header dot)로
-    // 별도 전달된다.
+    // 소켓은 로그인 직후·포그라운드 복귀마다 백그라운드로 재연결하므로, 실패를 토스트로 띄우면
+    // 소켓과 무관한 동작 직후에도 오류가 뜬다. 연결 상태는 채팅 화면의 connectionState로 알린다.
     this.emit('connect_error', error);
   }
 
@@ -205,7 +201,9 @@ class SocketManager implements ISocketManager {
 export const getChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
     url: SOCKET_URL,
-    transports: ['polling', 'websocket'],
+    // 운영 프록시(nginx)가 WebSocket 업그레이드를 그대로 통과시키므로 HTTP long-polling 핸드셰이크를
+    // 거치지 않고 바로 WebSocket으로 연결한다. 채팅 서버는 단일 인스턴스라 polling용 sticky session도 필요 없다
+    transports: ['websocket'],
     timeout: 15000,
     reconnection: true,
     autoConnect: true,

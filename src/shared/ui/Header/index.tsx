@@ -2,6 +2,14 @@ import { View, TouchableOpacity, Text } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 
+type ConnectionState = 'connected' | 'connecting' | 'disconnected';
+
+const getConnectionColor = (state: ConnectionState) =>
+  state === 'connected' ? '#22C55E' : state === 'connecting' ? '#F59E0B' : '#EF4444';
+
+const getConnectionLabel = (state: ConnectionState) =>
+  state === 'connected' ? '연결됨' : state === 'connecting' ? '연결 중' : '연결 끊김';
+
 interface Props {
   onBack?: () => void;
   headerTitle: string;
@@ -9,7 +17,7 @@ interface Props {
   onMenuPress?: () => void;
   showMenuButton?: boolean;
   showBackButton?: boolean;
-  connectionState?: 'connected' | 'connecting' | 'disconnected';
+  connectionState?: ConnectionState;
 }
 
 export function Header({
@@ -29,18 +37,21 @@ export function Header({
     }
   };
 
+  // 색만으로는 상태를 구분하기 어려워 연결되지 않은 동안에는 문구를 함께 보여준다
   const connectionDot = connectionState !== undefined && (
     <View
-      className="size-2 rounded-full"
-      style={{
-        backgroundColor:
-          connectionState === 'connected'
-            ? '#22C55E'
-            : connectionState === 'connecting'
-              ? '#F59E0B'
-              : '#EF4444',
-      }}
-    />
+      testID="header-connection-indicator"
+      className="flex-row items-center gap-1"
+      accessible
+      accessibilityLabel={getConnectionLabel(connectionState)}>
+      <View
+        className="size-2 rounded-full"
+        style={{ backgroundColor: getConnectionColor(connectionState) }}
+      />
+      {connectionState !== 'connected' && (
+        <Text className="text-caption text-gray-500">{getConnectionLabel(connectionState)}</Text>
+      )}
+    </View>
   );
 
   return (

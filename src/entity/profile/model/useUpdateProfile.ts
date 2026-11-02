@@ -12,7 +12,7 @@ export const useUpdateProfile = () => {
     mutationFn: (data: UpdateProfileRequest) => updateProfile(data),
     onSuccess: (_, variables) => {
       // 서버가 수정된 값을 돌려주지 않으므로 보낸 값으로 캐시를 바로 고친다. invalidate만 하면
-      // refetch가 끝나기 전까지 돌아간 프로필 화면에 이전 별칭이 남아 있었다(#780)
+      // refetch가 끝나기 전까지 프로필 화면에 이전 별칭이 남는다
       const applyUpdate = (prev: ProfileType | undefined) =>
         prev ? { ...prev, ...variables } : prev;
       const myProfile = queryClient.setQueryData<ProfileType>(

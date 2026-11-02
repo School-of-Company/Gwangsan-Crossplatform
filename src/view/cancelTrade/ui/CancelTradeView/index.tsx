@@ -29,7 +29,7 @@ export default function CancelTradeView() {
     }
   }, [data]);
 
-  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화된 채로 남거나 빈 화면만 보였다(#740)
+  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화되지 않도록 오류 화면을 보여준다
   if (!data && (isReviewLoading || isReviewError)) {
     return (
       <SafeAreaView className="flex-1 bg-background">

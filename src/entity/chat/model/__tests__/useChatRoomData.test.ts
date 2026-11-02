@@ -77,7 +77,9 @@ describe('useChatRoomData', () => {
       Object.assign(new Error('해당하는 채팅방을 찾을 수 없습니다.'), { status: 404 })
     );
 
-    const { result } = renderHookWithProviders(() => useChatRoomData({ roomId: 100 }));
+    const { result } = renderHookWithProviders(() =>
+      useChatRoomData({ roomId: 100, polling: true })
+    );
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -85,32 +87,30 @@ describe('useChatRoomData', () => {
   });
 
   describe('폴링 간격', () => {
-    it('기본으로 30초마다 폴링한다', () => {
-      expect(getChatRoomDataRefetchInterval(null, false)).toBe(CHAT_ROOM_DATA_POLL_INTERVAL);
+    it('polling이면 30초마다 폴링한다', () => {
+      expect(getChatRoomDataRefetchInterval(null, true)).toBe(CHAT_ROOM_DATA_POLL_INTERVAL);
     });
 
-    it('소켓이 연결되어 pausePolling이면 폴링하지 않는다', () => {
-      expect(getChatRoomDataRefetchInterval(null, true)).toBe(false);
+    it('polling을 지정하지 않으면(캐시 구독만 하는 곳) 폴링하지 않는다', () => {
+      expect(getChatRoomDataRefetchInterval(null, false)).toBe(false);
     });
 
     it('채팅방이 없어 404가 나면 폴링하지 않는다', () => {
       const error = Object.assign(new Error('없음'), { status: 404 });
-      expect(getChatRoomDataRefetchInterval(error, false)).toBe(false);
+      expect(getChatRoomDataRefetchInterval(error, true)).toBe(false);
     });
 
     it('404가 아닌 에러는 계속 폴링해 복구를 기다린다', () => {
       const error = Object.assign(new Error('서버 오류'), { status: 500 });
-      expect(getChatRoomDataRefetchInterval(error, false)).toBe(CHAT_ROOM_DATA_POLL_INTERVAL);
+      expect(getChatRoomDataRefetchInterval(error, true)).toBe(CHAT_ROOM_DATA_POLL_INTERVAL);
     });
   });
 
-  it('pausePolling이면 시간이 지나도 다시 요청하지 않는다', async () => {
+  it('polling을 지정하지 않으면 시간이 지나도 다시 요청하지 않는다', async () => {
     jest.useFakeTimers();
     try {
       mockGetChatRoomData.mockResolvedValue(makeRoomData());
-      const { result } = renderHookWithProviders(() =>
-        useChatRoomData({ roomId: 100, pausePolling: true })
-      );
+      const { result } = renderHookWithProviders(() => useChatRoomData({ roomId: 100 }));
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       jest.advanceTimersByTime(5 * 60 * 1000);

@@ -1,6 +1,7 @@
 import { act, waitFor } from '@testing-library/react-native';
-import { renderHookWithProviders } from '~/test-utils';
-import { useChatRooms, chatRoomKeys } from '../useChatRooms';
+import { createQueryClient, renderHookWithProviders } from '~/test-utils';
+import { useChatRooms, chatRoomKeys, CHAT_ROOMS_POLL_INTERVAL } from '../useChatRooms';
+import { useChatSocketConnected } from '../useChatSocketConnected';
 import { getChatRooms } from '../../api/getChatRooms';
 import { markChatAsRead } from '../../api/markChatAsRead';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
@@ -13,6 +14,12 @@ jest.mock('../../api/getChatRooms', () => ({
 jest.mock('../../api/markChatAsRead', () => ({
   markChatAsRead: jest.fn(),
 }));
+
+jest.mock('../useChatSocketConnected', () => ({
+  useChatSocketConnected: jest.fn(() => false),
+}));
+
+const mockUseChatSocketConnected = useChatSocketConnected as jest.Mock;
 
 const mockGetChatRooms = getChatRooms as jest.Mock;
 const mockMarkChatAsRead = markChatAsRead as jest.Mock;
@@ -34,6 +41,42 @@ describe('useChatRooms', () => {
     jest.clearAllMocks();
     act(() => {
       useReadRoomsStore.getState().reset();
+    });
+  });
+
+  describe('폴링', () => {
+    const getRefetchInterval = (queryClient: ReturnType<typeof createQueryClient>) =>
+      queryClient.getQueryCache().find({ queryKey: chatRoomKeys.list() })?.observers[0]?.options
+        .refetchInterval;
+
+    it('소켓이 끊겨 있으면 주기적으로 목록을 다시 받는다', () => {
+      mockGetChatRooms.mockResolvedValue([]);
+      mockUseChatSocketConnected.mockReturnValue(false);
+      const queryClient = createQueryClient();
+
+      renderHookWithProviders(() => useChatRooms(), { queryClient });
+
+      expect(getRefetchInterval(queryClient)).toBe(CHAT_ROOMS_POLL_INTERVAL);
+    });
+
+    it('소켓이 연결돼 있으면 폴링하지 않는다', () => {
+      mockGetChatRooms.mockResolvedValue([]);
+      mockUseChatSocketConnected.mockReturnValue(true);
+      const queryClient = createQueryClient();
+
+      renderHookWithProviders(() => useChatRooms(), { queryClient });
+
+      expect(getRefetchInterval(queryClient)).toBe(false);
+    });
+
+    it('refetchInterval을 직접 넘기면 소켓 상태와 관계없이 그 값을 쓴다', () => {
+      mockGetChatRooms.mockResolvedValue([]);
+      mockUseChatSocketConnected.mockReturnValue(true);
+      const queryClient = createQueryClient();
+
+      renderHookWithProviders(() => useChatRooms({ refetchInterval: 5000 }), { queryClient });
+
+      expect(getRefetchInterval(queryClient)).toBe(5000);
     });
   });
 

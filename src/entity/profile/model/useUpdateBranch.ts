@@ -10,7 +10,7 @@ export const useUpdateBranch = () => {
     mutationFn: (data: UpdateBranchRequest) => updateBranch(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileQueryKeys.myProfile() });
-      // 메인 헤더 등에서 지점명을 보여주는 별도 쿼리(#781)
+      // 메인 헤더 등에서 지점명을 보여주는 별도 쿼리
       queryClient.invalidateQueries({ queryKey: profileQueryKeys.myInformation() });
       Toast.show({
         type: 'success',
