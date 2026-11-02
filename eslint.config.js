@@ -35,12 +35,7 @@ module.exports = defineConfig([
     rules: {
       'react/display-name': 'off',
       'react-hooks/refs': 'warn',
-      'import/no-unresolved': [
-        'error',
-        {
-          ignore: ['^@env$'],
-        },
-      ],
+      'import/no-unresolved': 'error',
     },
   },
 ]);

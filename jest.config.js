@@ -18,7 +18,6 @@ module.exports = {
     '^expo-linear-gradient$': '<rootDir>/__mocks__/expo-linear-gradient.js',
     '^@expo/vector-icons(/.*)?$': '<rootDir>/__mocks__/vector-icons.js',
     '^~/test-utils$': '<rootDir>/src/test-utils/index.ts',
-    '^@env$': '<rootDir>/src/mocks/env.ts',
     '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
     '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
     '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
