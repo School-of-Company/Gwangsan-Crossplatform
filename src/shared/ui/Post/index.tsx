@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { PostType } from '~/shared/types/postType';
+import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 
 interface PostProps extends PostType {
   paddingClassName?: string;
@@ -22,7 +23,7 @@ export default function Post({
   const router = useRouter();
 
   const handlePress = useCallback(() => {
-    if (id < 0) {
+    if (id < 0 || !acquireNavigationLock()) {
       return;
     }
     router.push(`/post/${id}`);
