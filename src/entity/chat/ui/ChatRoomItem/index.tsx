@@ -125,6 +125,7 @@ const ChatRoomItemComponent = ({
         .reduceMotion(ReduceMotion.Never)}
       style={exitStyle}>
       <TouchableOpacity
+        testID="chat-room-item"
         onPress={handlePress}
         onLongPress={handleLongPress}
         disabled={isExiting}

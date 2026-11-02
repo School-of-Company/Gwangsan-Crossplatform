@@ -6,6 +6,8 @@ describe('로그인', () => {
   afterAll(collectCoverage);
 
   beforeAll(async () => {
+    // 다른 테스트가 로그인해 두면 키체인에 토큰이 남아 홈으로 바로 들어가므로 로그아웃 상태로 시작한다
+    await device.clearKeychain();
     await launchAppResilient({
       newInstance: true,
       launchArgs: { detoxDisableSynchronization: 1 },

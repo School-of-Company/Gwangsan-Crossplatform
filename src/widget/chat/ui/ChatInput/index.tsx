@@ -88,6 +88,7 @@ const ChatInputComponent = ({
         className={`flex-row items-center px-4 py-4 ${isEditing ? '' : 'border-t border-gray-200'}`}>
         <View className="mr-3 min-h-[48px] flex-1 flex-row items-center rounded-full bg-gray-100">
           <TextInput
+            testID="chat-input-text"
             value={chatInput.textMessage}
             onChangeText={chatInput.updateMessage}
             placeholder="채팅을 입력해주세요"
