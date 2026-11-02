@@ -64,7 +64,7 @@ describe('PlaceStep — 렌더링', () => {
 
     const { getByText } = render(<PlaceStep />);
 
-    expect(getByText('신창')).toBeTruthy();
+    expect(getByText('신창지점')).toBeTruthy();
   });
 });
 
@@ -73,12 +73,12 @@ describe('PlaceStep — 지점 선택', () => {
     const { getAllByText, getByText, queryByText } = render(<PlaceStep />);
 
     fireEvent.press(getAllByText('지점을 선택해주세요')[1]);
-    expect(getByText('신창')).toBeTruthy();
+    expect(getByText('신창지점')).toBeTruthy();
 
-    fireEvent.press(getByText('신창'));
+    fireEvent.press(getByText('신창지점'));
 
-    expect(getByText('신창')).toBeTruthy();
-    expect(queryByText('고실마을')).toBeNull();
+    expect(getByText('신창지점')).toBeTruthy();
+    expect(queryByText('고실마을지점')).toBeNull();
   });
 });
 
@@ -105,11 +105,11 @@ describe('PlaceStep — 에러 초기화', () => {
     });
 
     fireEvent.press(getAllByText('지점을 선택해주세요')[1]);
-    fireEvent.press(getByText('신창'));
+    fireEvent.press(getByText('신창지점'));
 
-    // 지점 선택 후 드롭다운 라벨이 '신창'으로 바뀌어 description 문구만 남는다.
+    // 지점 선택 후 드롭다운 라벨이 '신창지점'으로 바뀌어 description 문구만 남는다.
     expect(getAllByText('지점을 선택해주세요')).toHaveLength(1);
-    expect(getByText('신창')).toBeTruthy();
+    expect(getByText('신창지점')).toBeTruthy();
   });
 });
 
@@ -118,7 +118,7 @@ describe('PlaceStep — 다음 단계로 이동', () => {
     const { getAllByText, getByText, getByTestId } = render(<PlaceStep />);
 
     fireEvent.press(getAllByText('지점을 선택해주세요')[1]);
-    fireEvent.press(getByText('신창'));
+    fireEvent.press(getByText('신창지점'));
     fireEvent.press(getByTestId('next-button'));
 
     expect(mockUpdateField).toHaveBeenCalledWith(4);

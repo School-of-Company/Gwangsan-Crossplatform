@@ -1,5 +1,7 @@
 import { AxiosError } from 'axios';
 import { instance } from '~/shared/lib/axios';
+import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvider';
+import { createAxiosError } from '~/test-utils/axiosError';
 import { getSellingPosts, SELLING_PAGE_SIZE } from '../getSellingPosts';
 
 jest.mock('~/shared/lib/axios', () => ({
@@ -85,5 +87,25 @@ describe('getSellingPosts', () => {
     mockGet.mockRejectedValue(error);
 
     await expect(getSellingPosts({})).rejects.toThrow('게시글을 찾을 수 없습니다.');
+  });
+
+  it('4xx는 상태 코드를 유지한 채 던져 재시도하지 않는다', async () => {
+    mockGet.mockRejectedValue(createAxiosError(404, { message: '게시글을 찾을 수 없습니다.' }));
+
+    const error = await getSellingPosts({}).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(404);
+    expect(shouldRetryQuery(0, error)).toBe(false);
+    expect(shouldThrowQueryError(error, false)).toBe(false);
+  });
+
+  it('5xx는 재시도하고 캐시가 없으면 ErrorBoundary로 보낸다', async () => {
+    mockGet.mockRejectedValue(createAxiosError(500));
+
+    const error = await getSellingPosts({}).catch((e: unknown) => e);
+
+    expect(shouldRetryQuery(0, error)).toBe(true);
+    expect(shouldThrowQueryError(error, false)).toBe(true);
   });
 });

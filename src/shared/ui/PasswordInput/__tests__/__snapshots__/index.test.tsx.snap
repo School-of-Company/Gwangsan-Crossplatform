@@ -23,6 +23,8 @@ exports[`PasswordInput 스냅샷 - 기본 (숨김 상태) 1`] = `
       className="absolute bottom-0 right-4 top-0 flex justify-center"
     >
       <View
+        accessibilityLabel="비밀번호 보기"
+        accessibilityRole="button"
         accessibilityState={
           {
             "busy": undefined,
@@ -84,6 +86,8 @@ exports[`PasswordInput 스냅샷 - 토글 후 (보임 상태) 1`] = `
       className="absolute bottom-0 right-4 top-0 flex justify-center"
     >
       <View
+        accessibilityLabel="비밀번호 숨기기"
+        accessibilityRole="button"
         accessibilityState={
           {
             "busy": undefined,
