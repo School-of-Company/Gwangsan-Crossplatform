@@ -57,7 +57,6 @@ export interface IChatSocketService {
   destroy(): void;
   sendMessage(payload: ChatSendMessagePayload): void;
   joinRoom(roomId: RoomId): void;
-  leaveRoom(roomId: RoomId): void;
 
   on<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
   off<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
@@ -137,11 +136,6 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     socketManager.emit('joinRoom', roomId);
   };
 
-  const leaveRoom = (roomId: RoomId): void => {
-    if (!socketManager.isConnected) return;
-    socketManager.emit('leaveRoom', roomId);
-  };
-
   return {
     get isConnected() {
       return socketManager.isConnected;
@@ -154,7 +148,6 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     destroy,
     sendMessage,
     joinRoom,
-    leaveRoom,
     on,
     off,
   };

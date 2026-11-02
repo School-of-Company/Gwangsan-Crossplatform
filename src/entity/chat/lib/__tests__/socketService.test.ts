@@ -318,21 +318,4 @@ describe('createChatSocketService', () => {
 
     expect(socketManager.emit).toHaveBeenCalledWith('joinRoom', 42);
   });
-
-  it('leaveRoom은 연결되지 않은 상태면 조용히 무시한다', () => {
-    const socketManager = createMockSocketManager({ isConnected: false });
-    const service = createChatSocketService(socketManager);
-
-    expect(() => service.leaveRoom(1)).not.toThrow();
-    expect(socketManager.emit).not.toHaveBeenCalled();
-  });
-
-  it('leaveRoom은 연결된 상태면 leaveRoom 이벤트를 emit한다', () => {
-    const socketManager = createMockSocketManager({ isConnected: true });
-    const service = createChatSocketService(socketManager);
-
-    service.leaveRoom(42);
-
-    expect(socketManager.emit).toHaveBeenCalledWith('leaveRoom', 42);
-  });
 });
