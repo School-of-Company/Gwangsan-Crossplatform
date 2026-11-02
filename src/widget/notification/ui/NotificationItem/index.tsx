@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { CachedImage } from '~/shared/ui/CachedImage';
 import { AlertType } from '~/entity/notification/model/alertTypes';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { formatDate } from '~/shared/lib/formatDate';
@@ -55,7 +56,12 @@ const NotificationItem = ({
     <Card className="mb-3 bg-background p-4" {...cardProps}>
       <View className="flex-row">
         <View className="mr-3">
-          <Image source={displayImage} className="h-16 w-16 rounded-lg" resizeMode="cover" />
+          <CachedImage
+            source={displayImage}
+            className="h-16 w-16 rounded-lg"
+            accessible
+            accessibilityLabel="광산 알림 아이콘"
+          />
         </View>
 
         <View className="flex-1">

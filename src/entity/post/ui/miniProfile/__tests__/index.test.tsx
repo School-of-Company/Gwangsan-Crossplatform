@@ -26,6 +26,12 @@ describe('MiniProfile', () => {
     expect(getByText('3단계')).toBeTruthy();
   });
 
+  it('프로필 사진에 닉네임이 담긴 대체 텍스트를 지정한다', () => {
+    const { getByLabelText } = render(<MiniProfile {...defaultProps} />);
+
+    expect(getByLabelText('홍길동 프로필 사진')).toBeTruthy();
+  });
+
   it('누르면 /profile?id=memberId 경로로 이동한다', () => {
     const { getByText } = render(<MiniProfile {...defaultProps} />);
 

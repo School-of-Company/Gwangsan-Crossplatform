@@ -125,6 +125,13 @@ describe('ChatInput', () => {
     expect(handleImagePicker).toHaveBeenCalled();
   });
 
+  it('사진 첨부 버튼에 스크린리더용 라벨과 버튼 역할을 지정한다', () => {
+    const { getByRole } = render(<ChatInput onSendMessage={jest.fn()} />);
+
+    expect(getByRole('button', { name: '사진 첨부' })).toBeTruthy();
+    expect(getByRole('button', { name: '메시지 보내기' })).toBeTruthy();
+  });
+
   it('선택된 이미지가 5장이면 이미지 버튼이 비활성화된다', () => {
     const selectedImages = Array.from({ length: 5 }, (_, i) => ({
       imageId: i,
