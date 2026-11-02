@@ -35,9 +35,10 @@ module.exports = {
         'ARCHS=arm64',
         '"EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64"',
         'ONLY_ACTIVE_ARCH=YES',
-        'CODE_SIGN_IDENTITY=""',
+        // 서명을 끄면(CODE_SIGNING_ALLOWED=NO) 시뮬레이터용 엔타이틀먼트가 바이너리에 들어가지 않아
+        // SecureStore(키체인) 접근이 실패하고 로그인 토큰을 저장하지 못한다. 인증서 없는 ad-hoc 서명을 쓴다.
+        'CODE_SIGN_IDENTITY=-',
         'CODE_SIGNING_REQUIRED=NO',
-        'CODE_SIGNING_ALLOWED=NO',
         'build',
       ].join(' '),
     },
@@ -56,9 +57,10 @@ module.exports = {
         'ARCHS=arm64',
         '"EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64"',
         'ONLY_ACTIVE_ARCH=YES',
-        'CODE_SIGN_IDENTITY=""',
+        // 서명을 끄면(CODE_SIGNING_ALLOWED=NO) 시뮬레이터용 엔타이틀먼트가 바이너리에 들어가지 않아
+        // SecureStore(키체인) 접근이 실패하고 로그인 토큰을 저장하지 못한다. 인증서 없는 ad-hoc 서명을 쓴다.
+        'CODE_SIGN_IDENTITY=-',
         'CODE_SIGNING_REQUIRED=NO',
-        'CODE_SIGNING_ALLOWED=NO',
         'COMPILER_INDEX_STORE_ENABLE=NO',
         'GCC_GENERATE_DEBUGGING_SYMBOLS=NO',
         'build',

@@ -76,6 +76,7 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
           ? TYPE_OPTIONS.map((option) => (
               <SelectionCard
                 key={option.value}
+                testID={`WriteEntryModal-type-${option.value}`}
                 icon={TYPE_ICONS[option.value](colors.foreground)}
                 label={option.label}
                 onPress={() => handleSelectType(option.value)}
@@ -85,6 +86,7 @@ export function WriteEntryModal({ isVisible, onClose }: WriteEntryModalProps) {
             MODE_OPTIONS[selectedType].map((option) => (
               <SelectionCard
                 key={option.value}
+                testID={`WriteEntryModal-mode-${option.value}`}
                 icon={
                   <Ionicons
                     name={MODE_ICONS[selectedType][option.value]}
