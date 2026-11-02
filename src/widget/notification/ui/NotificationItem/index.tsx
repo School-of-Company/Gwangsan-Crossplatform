@@ -1,7 +1,9 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { CachedImage } from '~/shared/ui/CachedImage';
 import { AlertType } from '~/entity/notification/model/alertTypes';
+import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { formatDate } from '~/shared/lib/formatDate';
+import { resolveNotificationAction } from '~/shared/lib/notificationRouting';
 import { useRouter } from 'expo-router';
 
 interface NotificationItemProps {
@@ -24,19 +26,31 @@ const NotificationItem = ({
 }: NotificationItemProps) => {
   const displayImage = require('~/shared/assets/png/gwangsanLogo.png');
   const router = useRouter();
+  const { navigateToChat, navigateToRoom } = useChatEntry();
+
+  // 푸시 알림을 눌렀을 때와 같은 규칙으로 이동할 곳을 정한다.
+  const action = resolveNotificationAction({ alertType, sourceId: sourceId || undefined });
+
+  const handlePress = () => {
+    switch (action.type) {
+      case 'chatEntry':
+        navigateToChat(action.productId);
+        break;
+      case 'room':
+        navigateToRoom(action.roomId);
+        break;
+      case 'push':
+        router.push(action.href);
+        break;
+      case 'none':
+        break;
+    }
+  };
 
   // 이동할 곳이 없는 알림은 카드를 터치 대상으로 만들지 않는다.
-  const pressRoute =
-    sourceId && alertType === AlertType.TRADE_COMPLETE
-      ? `/post/${sourceId}?review=1`
-      : sourceId && alertType === AlertType.REVIEW
-        ? `/cancelTrade/${sourceId}`
-        : null;
-
-  const Card: React.ComponentType<any> = pressRoute ? TouchableOpacity : View;
-  const cardProps = pressRoute
-    ? { activeOpacity: 0.7, onPress: () => router.push(pressRoute) }
-    : {};
+  const isPressable = action.type !== 'none';
+  const Card: React.ComponentType<any> = isPressable ? TouchableOpacity : View;
+  const cardProps = isPressable ? { activeOpacity: 0.7, onPress: handlePress } : {};
 
   return (
     <Card className="mb-3 bg-background p-4" {...cardProps}>
