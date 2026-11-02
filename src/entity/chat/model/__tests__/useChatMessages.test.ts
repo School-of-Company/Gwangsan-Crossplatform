@@ -3,11 +3,7 @@ import { renderHookWithProviders } from '~/test-utils';
 import { useChatMessages, chatMessageKeys } from '../useChatMessages';
 import { getChatMessages } from '../../api/getChatMessages';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
-import {
-  flattenMessagePages,
-  type ChatMessagePage,
-  type ChatMessagePages,
-} from '../../lib/messageCache';
+import { flattenMessagePages, type ChatMessagePages } from '../../lib/messageCache';
 
 // useChatMessages는 getChatRoomData 응답의 messages를 쓴다. 기존 테스트가 getChatMessages로
 // 메시지 목록을 지정하므로, getChatRoomData가 그 값을 감싸 돌려주게 한다
