@@ -6,6 +6,7 @@ import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chat
 import { logger } from '~/shared/lib/logger';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import { chatMessageKeys, chatRoomKeys } from './chatQueryKeys';
+import { useChatSocketConnected } from './useChatSocketConnected';
 
 export { chatRoomKeys };
 
@@ -16,16 +17,23 @@ const toSortableTime = (value: string | null | undefined): number => {
   return Number.isNaN(time) ? 0 : time;
 };
 
+export const CHAT_ROOMS_POLL_INTERVAL = 30 * 1000;
+
 interface UseChatRoomsOptions {
   enabled?: boolean;
-  refetchInterval?: number;
+  // 지정하지 않으면 소켓이 끊겨 있을 때만 CHAT_ROOMS_POLL_INTERVAL로 폴링한다. 연결돼 있는 동안에는
+  // 새 메시지·목록 갱신이 소켓 이벤트로 반영되므로 GET /chat/rooms를 반복하지 않는다
+  refetchInterval?: number | false;
   onError?: (error: ChatApiError) => void;
   // 탭바 뱃지처럼 화면 일부만 쓰는 곳은 조회가 실패해도 에러 바운더리로 던지지 않는다(#740)
   throwOnError?: boolean;
 }
 
 export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
-  const { enabled = true, refetchInterval = 30000, onError, throwOnError } = options;
+  const { enabled = true, onError, throwOnError } = options;
+  const isSocketConnected = useChatSocketConnected();
+  const refetchInterval =
+    options.refetchInterval ?? (isSocketConnected ? false : CHAT_ROOMS_POLL_INTERVAL);
 
   const queryClient = useQueryClient();
   const readMessageIds = useReadRoomsStore((state) => state.readMessageIds);

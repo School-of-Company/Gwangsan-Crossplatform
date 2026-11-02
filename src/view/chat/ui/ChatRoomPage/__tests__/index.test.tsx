@@ -1012,7 +1012,7 @@ describe('ChatRoomPage', () => {
       render(<ChatRoomPage />);
 
       expect(mockUseChatRoomData).toHaveBeenCalledWith(
-        expect.objectContaining({ roomId: 10, pausePolling: true })
+        expect.objectContaining({ roomId: 10, polling: false })
       );
     });
 
@@ -1023,9 +1023,7 @@ describe('ChatRoomPage', () => {
 
       render(<ChatRoomPage />);
 
-      expect(mockUseChatRoomData).toHaveBeenCalledWith(
-        expect.objectContaining({ pausePolling: false })
-      );
+      expect(mockUseChatRoomData).toHaveBeenCalledWith(expect.objectContaining({ polling: true }));
     });
   });
 
