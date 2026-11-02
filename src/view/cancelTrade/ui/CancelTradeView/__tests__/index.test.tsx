@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useGetReview } from '../../../model/useGetReview';
+import { useGetReview } from '~/entity/reviews/model/useGetReview';
 import { logger } from '~/shared/lib/logger';
 import CancelTradeView from '../index';
 
@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
 }));
 
-jest.mock('../../../model/useGetReview', () => ({
+jest.mock('~/entity/reviews/model/useGetReview', () => ({
   useGetReview: jest.fn(),
 }));
 

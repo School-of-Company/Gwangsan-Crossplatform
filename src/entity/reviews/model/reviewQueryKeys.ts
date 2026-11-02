@@ -7,4 +7,6 @@ export const reviewKeys = {
   received: (target: string | undefined) => [...reviewKeys.all, 'receive', target] as const,
   receivedInfinite: (target: string | undefined, pageSize: number) =>
     [...reviewKeys.all, 'receive', 'infinite', target, pageSize] as const,
+  // 후기 단건(거래 취소 화면에서 조회)
+  detail: (id: string) => [...reviewKeys.all, 'detail', id] as const,
 } as const;

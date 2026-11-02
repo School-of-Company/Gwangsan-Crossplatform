@@ -5,6 +5,7 @@ describe('reviewKeys', () => {
     expect(reviewKeys.toss().slice(0, 1)).toEqual(reviewKeys.all);
     expect(reviewKeys.received('current').slice(0, 1)).toEqual(reviewKeys.all);
     expect(reviewKeys.receivedInfinite('current', 20).slice(0, 1)).toEqual(reviewKeys.all);
+    expect(reviewKeys.detail('5').slice(0, 1)).toEqual(reviewKeys.all);
   });
 
   it('내가 쓴 후기는 화면과 상관없이 같은 키를 쓴다(이중 캐시 방지)', () => {

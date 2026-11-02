@@ -1,9 +1,9 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
-import { getReview } from '../api/getReview';
-import { useGetReview } from '../model/useGetReview';
+import { getReview } from '../../api/getReview';
+import { useGetReview } from '../useGetReview';
 
-jest.mock('../api/getReview', () => ({
+jest.mock('../../api/getReview', () => ({
   getReview: jest.fn(),
 }));
 
@@ -12,7 +12,7 @@ const mockGetReview = getReview as jest.Mock;
 beforeEach(() => jest.clearAllMocks());
 
 // getReview API 자체(instance.get 호출 등)의 실제 동작 검증은
-// src/view/cancelTrade/api/__tests__/getReview.api.test.ts 에서 수행한다.
+// src/entity/reviews/api/__tests__/getReview.test.ts 에서 수행한다.
 
 describe('useGetReview', () => {
   it('id가 있으면 getReview를 호출하고 데이터를 반환한다', async () => {
@@ -40,11 +40,13 @@ describe('useGetReview', () => {
     expect(mockGetReview).not.toHaveBeenCalled();
   });
 
-  it('queryKey가 [review, id]이다', async () => {
+  it('queryKey가 [reviews, detail, id]이다', async () => {
     mockGetReview.mockResolvedValue({});
 
     const { queryClient } = renderHookWithProviders(() => useGetReview('5'));
 
-    await waitFor(() => expect(queryClient.getQueryState(['review', '5'])).toBeDefined());
+    await waitFor(() =>
+      expect(queryClient.getQueryState(['reviews', 'detail', '5'])).toBeDefined()
+    );
   });
 });

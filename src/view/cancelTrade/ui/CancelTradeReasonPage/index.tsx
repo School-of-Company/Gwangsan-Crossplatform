@@ -7,7 +7,7 @@ import { Button, Header } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
 import { useCancelTrade } from '~/widget/cancelTrade/model/useCancelTrade';
-import { useGetReview } from '../../model/useGetReview';
+import { useGetReview } from '~/entity/reviews/model/useGetReview';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
 export default function CancelTradeReasonPage() {
