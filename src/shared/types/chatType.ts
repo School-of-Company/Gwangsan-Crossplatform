@@ -67,7 +67,7 @@ export interface ISocketManager {
   off<T = any>(event: string, handler: (data: T) => void): void;
 }
 
-// 채팅 서버 응답 타입. entity/chat/model/chatTypes에서 다시 내보낸다(#741)
+// 채팅 서버 응답 타입. entity/chat/model/chatTypes에서 다시 내보낸다
 export interface ProductImage {
   readonly imageId: number;
   readonly imageUrl: string;
