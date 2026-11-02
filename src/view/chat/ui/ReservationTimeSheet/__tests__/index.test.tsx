@@ -5,7 +5,6 @@ import { ReservationTimeSheet } from '../index';
 jest.mock('~/shared/ui/BottomSheetModalWrapper', () => ({
   BottomSheetModalWrapper: ({ isVisible, children, onClose }: any) => {
     if (!isVisible) return null;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, TouchableOpacity } = require('react-native');
     return (
       <View>
@@ -21,7 +20,6 @@ jest.mock('~/shared/ui/BottomSheetModalWrapper', () => ({
 // mockPanStubs에 쌓아 두어, 테스트에서 onStart/onUpdate/onEnd 콜백을 직접 호출할 수 있게 한다.
 const mockPanStubs: any[] = [];
 jest.mock('react-native-gesture-handler', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   const createPanStub = () => {
     const stub: any = {};

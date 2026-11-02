@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, type ReactNode, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -106,7 +106,7 @@ export function MessageActionOverlay({
 }: MessageActionOverlayProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const progress = useRef(new Animated.Value(0)).current;
+  const progress = useState(() => new Animated.Value(0))[0];
 
   useEffect(() => {
     if (!visible) {

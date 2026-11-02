@@ -27,7 +27,6 @@ jest.mock('@expo/vector-icons/MaterialIcons', () => {
 jest.mock('~/shared/ui/AlertModal', () => ({
   AlertModal: ({ isVisible, message, confirmText, cancelText, onCancel, onConfirm }: any) => {
     if (!isVisible) return null;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View>

@@ -26,12 +26,12 @@ const SHOW_DURATION = 150; // 모달이 닫히고 푸터가 다시 올라오는 
 const FALLBACK_HIDE_OFFSET = 90; // 레이아웃 측정 전에 숨김이 트리거될 때의 대체 이동 거리
 
 function useFooterHideAnimation(isHidden: boolean, footerHeight: number) {
-  const translateY = useRef(
-    new Animated.Value(isHidden ? footerHeight || FALLBACK_HIDE_OFFSET : 0)
-  ).current;
+  const translateY = useState(
+    () => new Animated.Value(isHidden ? footerHeight || FALLBACK_HIDE_OFFSET : 0)
+  )[0];
   // 1 = 완전히 펼쳐짐, 0 = 완전히 접힘. 탭바가 사라지는 동안 차지하던
   // 레이아웃 공간도 함께 접혀야 모달 아래에 빈 공간이 남지 않는다.
-  const collapse = useRef(new Animated.Value(isHidden ? 0 : 1)).current;
+  const collapse = useState(() => new Animated.Value(isHidden ? 0 : 1))[0];
   const isMounted = useRef(false);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ function useFooterHideAnimation(isHidden: boolean, footerHeight: number) {
 }
 
 function useIconPressScale() {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(
     (_e: GestureResponderEvent) => {
