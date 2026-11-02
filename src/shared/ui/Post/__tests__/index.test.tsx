@@ -49,6 +49,23 @@ describe('Post', () => {
     expect(getByText('3 광산')).toBeTruthy();
   });
 
+  it('긴 제목과 판매자·구매자 정보는 한 줄로 잘라 카드 높이를 고정한다', () => {
+    const title = '아주 긴 제목'.repeat(20);
+    const { getByText, getByTestId } = render(
+      <Post
+        {...makePost({
+          title,
+          seller: { memberId: 1, nickname: '판매자' },
+          buyer: { memberId: 2, nickname: '구매자' },
+        })}
+      />
+    );
+
+    expect(getByText(title).props.numberOfLines).toBe(1);
+    expect(getByTestId('post-seller').props.numberOfLines).toBe(1);
+    expect(getByTestId('post-buyer').props.numberOfLines).toBe(1);
+  });
+
   it('누르면 /post/:id 경로로 이동한다', () => {
     const { getByText } = render(<Post {...makePost({ id: 5 })} />);
 
