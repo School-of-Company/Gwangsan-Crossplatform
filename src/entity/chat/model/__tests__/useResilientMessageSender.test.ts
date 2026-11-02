@@ -1,6 +1,10 @@
 import { act, renderHook } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
-import { useResilientMessageSender } from '../useResilientMessageSender';
+import {
+  useResilientMessageSender,
+  getAutoRetryDelay,
+  MAX_AUTO_RETRY_COUNT,
+} from '../useResilientMessageSender';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import { logger } from '~/shared/lib/logger';
 
@@ -182,24 +186,80 @@ describe('useResilientMessageSender', () => {
     });
 
     expect(logger.error).toHaveBeenCalledWith('Message send failed', expect.any(Error));
-    const messages = useChatQueueStore.getState().pendingMessages;
-    expect(messages[0].status).toBe(MESSAGE_STATUS.FAILED);
+    expect(useChatQueueStore.getState().pendingMessages[0].status).toBe(MESSAGE_STATUS.FAILED);
+    // 서버에 닿지 않은 실패라 바로 토스트를 띄우지 않고 자동 재시도를 먼저 한다
+    expect(Toast.show).not.toHaveBeenCalled();
+  });
+
+  it('emit 실패는 2초·4초·8초 간격으로 세 번 자동 재시도하고, 그래도 실패하면 토스트를 띄운다', () => {
+    const socketSendMessage = jest.fn(() => {
+      throw new Error('send failed');
+    });
+    const { result } = renderHook(() =>
+      useResilientMessageSender({ roomId: 1, isSocketConnected: true, socketSendMessage })
+    );
+
+    act(() => {
+      result.current.sendMessage('hello', 'TEXT');
+    });
+    expect(socketSendMessage).toHaveBeenCalledTimes(1);
+
+    [2000, 4000, 8000].forEach((delay, index) => {
+      act(() => {
+        jest.advanceTimersByTime(delay - 1);
+      });
+      expect(socketSendMessage).toHaveBeenCalledTimes(index + 1);
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(socketSendMessage).toHaveBeenCalledTimes(index + 2);
+    });
+
+    const message = useChatQueueStore.getState().pendingMessages[0];
+    expect(message.retryCount).toBe(MAX_AUTO_RETRY_COUNT);
+    expect(message.status).toBe(MESSAGE_STATUS.FAILED);
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text1: '메시지 전송 실패' })
     );
 
-    const tempId = messages[0].tempId;
-    const toastCall = (Toast.show as jest.Mock).mock.calls[0][0];
+    // 더는 자동으로 다시 보내지 않고, 토스트를 눌러야 다시 시도한다
     act(() => {
-      toastCall.onPress();
+      jest.advanceTimersByTime(60_000);
+    });
+    expect(socketSendMessage).toHaveBeenCalledTimes(MAX_AUTO_RETRY_COUNT + 1);
+
+    act(() => {
+      (Toast.show as jest.Mock).mock.calls[0][0].onPress();
+    });
+    expect(socketSendMessage).toHaveBeenCalledTimes(MAX_AUTO_RETRY_COUNT + 2);
+  });
+
+  it('자동 재시도 전에 사용자가 지우거나 다른 경로로 전송되면 다시 보내지 않는다', () => {
+    let shouldThrow = true;
+    const socketSendMessage = jest.fn(() => {
+      if (shouldThrow) throw new Error('send failed');
+    });
+    const { result } = renderHook(() =>
+      useResilientMessageSender({ roomId: 1, isSocketConnected: true, socketSendMessage })
+    );
+
+    act(() => {
+      result.current.sendMessage('hello', 'TEXT');
+    });
+    shouldThrow = false;
+    act(() => {
+      useChatQueueStore.getState().reset();
+      jest.advanceTimersByTime(2000);
     });
 
-    // retry()가 재전송을 시도하지만 socketSendMessage가 다시 동기 예외를 던져 FAILED로 남는다
-    const retried = useChatQueueStore.getState().pendingMessages[0];
-    expect(retried.tempId).toBe(tempId);
-    expect(retried.retryCount).toBe(1);
-    expect(retried.status).toBe(MESSAGE_STATUS.FAILED);
-    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(socketSendMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('getAutoRetryDelay는 지수적으로 늘고 30초를 넘지 않는다', () => {
+    expect(getAutoRetryDelay(0)).toBe(2000);
+    expect(getAutoRetryDelay(1)).toBe(4000);
+    expect(getAutoRetryDelay(2)).toBe(8000);
+    expect(getAutoRetryDelay(10)).toBe(30_000);
   });
 
   it('재연결되면(false→true) 재시도 가능한 메시지를 모두 retry하고 안내 토스트를 띄운다', () => {
