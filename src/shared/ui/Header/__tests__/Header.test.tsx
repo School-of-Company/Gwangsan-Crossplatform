@@ -67,6 +67,26 @@ describe('Header', () => {
     expect(onTitlePress).toHaveBeenCalledTimes(1);
   });
 
+  it('연결되지 않은 동안에는 색 점과 함께 상태 문구를 보여준다', () => {
+    const { getByText, rerender, queryByText } = render(
+      <Header headerTitle="채팅방" connectionState="disconnected" />
+    );
+    expect(getByText('연결 끊김')).toBeTruthy();
+
+    rerender(<Header headerTitle="채팅방" connectionState="connecting" />);
+    expect(getByText('연결 중')).toBeTruthy();
+
+    rerender(<Header headerTitle="채팅방" connectionState="connected" />);
+    expect(queryByText('연결 중')).toBeNull();
+    expect(queryByText('연결 끊김')).toBeNull();
+  });
+
+  it('연결 상태를 스크린리더용 라벨로도 제공한다', () => {
+    const { getByTestId } = render(<Header headerTitle="채팅방" connectionState="connected" />);
+
+    expect(getByTestId('header-connection-indicator').props.accessibilityLabel).toBe('연결됨');
+  });
+
   it('스냅샷 - 기본 상태', () => {
     const { toJSON } = render(<Header headerTitle="광산구" />);
     expect(toJSON()).toMatchSnapshot();
