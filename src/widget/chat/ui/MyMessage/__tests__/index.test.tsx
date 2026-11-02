@@ -7,9 +7,7 @@ import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueSt
 import type { EnhancedChatMessage } from '~/entity/chat/model/useChatMessages';
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   return function MockIcon(props: any) {
     return React.createElement(View, { testID: `icon-${props.name}` });

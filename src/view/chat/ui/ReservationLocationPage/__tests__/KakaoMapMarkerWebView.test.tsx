@@ -1,16 +1,8 @@
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
 import { ActivityIndicator } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { KakaoMapMarkerWebView } from '../KakaoMapMarkerWebView';
 
-// EXPO_PUBLIC_KAKAO_JS_KEY is inlined at babel-transform time by
-// react-native-dotenv from the repo's committed .env file (see the identical
-// note in ReservationMapPage/__tests__/KakaoMapWebView.test.tsx).
-const rootEnvPath = path.resolve(__dirname, '../../../../../../.env');
-const parsedEnv = dotenv.parse(fs.readFileSync(rootEnvPath));
-const KAKAO_JS_KEY = parsedEnv.EXPO_PUBLIC_KAKAO_JS_KEY;
+const KAKAO_JS_KEY = process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
 
 let lastWebViewProps: any = null;
 
@@ -30,10 +22,6 @@ describe('KakaoMapMarkerWebView', () => {
 
   beforeEach(() => {
     lastWebViewProps = null;
-  });
-
-  it('sanity check: .env defines a non-empty EXPO_PUBLIC_KAKAO_JS_KEY (precondition for the tests below)', () => {
-    expect(KAKAO_JS_KEY).toBeTruthy();
   });
 
   it('카카오 JS 키가 있으면 appKey와 중심 좌표가 담긴 HTML source로 WebView를 렌더링한다', () => {

@@ -1,27 +1,7 @@
-import fs from 'fs';
-import path from 'path';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { searchPlaces, searchNearbyPlaces, getAddressName, kakaoClient } from '../kakaoLocalSearch';
 
-// NOTE on the "no API key" branch (`getKakaoApiKey` throwing when the key is falsy):
-// babel.config.js runs `module:react-native-dotenv` unconditionally (not gated by
-// `isTest`), and that plugin inlines every static `process.env.<KEY>` read as a
-// compile-time string literal taken straight from the repo's `.env` file - it does
-// NOT read `process.env` at runtime. Verified directly: transforming
-// kakaoLocalSearch.ts with the project's exact babel config produces
-// `var apiKey = "<the .env value>";` (the literal `.env` value, redacted here)
-// baked into the compiled `getKakaoApiKey` body. So mutating `process.env` from a
-// test (`delete process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY`, etc.) has zero effect
-// on the already-compiled module - the `if (!apiKey) throw` branch is unreachable
-// through this repo's tooling as long as `.env` defines the key, which it always
-// does in this repo. This mirrors the exact same limitation documented in
-// jest.setup.js for `EXPO_PUBLIC_SENTRY_DSN`. We therefore don't assert that branch
-// here; instead we read the real inlined value out of `.env` so the "happy path"
-// assertions don't hardcode a value that could drift from the repo's actual key.
-const ENV_FILE_CONTENT = fs.readFileSync(path.join(process.cwd(), '.env'), 'utf8');
-const INLINED_KAKAO_API_KEY = (
-  ENV_FILE_CONTENT.match(/^EXPO_PUBLIC_KAKAO_REST_API_KEY=(.*)$/m)?.[1] ?? ''
-).trim();
+const KAKAO_API_KEY = process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
 
 // 성공 응답은 { data }로 resolve하고, 실패 응답은 axios처럼 AxiosError로 reject한다
 const makeResponse = (ok: boolean, body: unknown, status = 200) =>
@@ -54,8 +34,14 @@ const requestUrl = (callIndex = 0) => {
 };
 
 describe('searchPlaces', () => {
-  it('전제조건: 테스트가 참조하는 카카오 API 키가 .env에 실제로 설정되어 있다', () => {
-    expect(INLINED_KAKAO_API_KEY.length).toBeGreaterThan(0);
+  it('카카오 API 키가 없으면 요청하지 않고 에러를 던진다', async () => {
+    delete process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
+    try {
+      await expect(searchPlaces('상무역')).rejects.toThrow('카카오 API 키가 설정되지 않았습니다.');
+      expect(mockGet).not.toHaveBeenCalled();
+    } finally {
+      process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY = KAKAO_API_KEY;
+    }
   });
 
   it('성공 시 documents를 반환하고 Authorization 헤더를 포함해 요청한다', async () => {
@@ -80,7 +66,7 @@ describe('searchPlaces', () => {
     const [, options] = mockGet.mock.calls[0];
     expect(url).toContain('https://dapi.kakao.com/v2/local/search/keyword.json');
     expect(url).toContain('query=%EC%83%81%EB%AC%B4%EC%97%AD');
-    expect(options.headers.Authorization).toBe(`KakaoAK ${INLINED_KAKAO_API_KEY}`);
+    expect(options.headers.Authorization).toBe(`KakaoAK ${KAKAO_API_KEY}`);
   });
 
   it('응답이 ok가 아니면 상태 코드를 포함한 에러를 던진다', async () => {

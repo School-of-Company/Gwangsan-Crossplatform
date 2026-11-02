@@ -1,6 +1,6 @@
 {
-  "name": "my-expo-app",
-  "version": "1.0.0",
+  "name": "gwangsan-crossplatform",
+  "version": "1.3.0",
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -10,7 +10,7 @@
     "test": "jest --watchAll=false",
     "test:watch": "jest --watchAll",
     "test:coverage": "jest --coverage",
-    "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
+    "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --max-warnings 62 && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "web": "expo start --web",
     "e2e:build:ios": "detox build --configuration ios.sim.debug",
@@ -38,7 +38,6 @@
     "@tanstack/react-query": "^5.104.0",
     "@tanstack/react-query-devtools": "^5.104.3",
     "axios": "^1.20.0",
-    "clsx": "^2.1.1",
     "expo": "~56.0.24",
     "expo-application": "~56.0.3",
     "expo-asset": "~56.0.25",
@@ -64,13 +63,11 @@
     "expo-status-bar": "~56.0.4",
     "expo-system-ui": "~56.0.5",
     "expo-task-manager": "~56.0.27",
-    "immer": "^11.1.18",
-    "nativewind": "latest",
+    "nativewind": "4.2.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
     "react-native-css-interop": "^0.2.1",
-    "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.31.1",
     "react-native-keyboard-controller": "1.22.4",
     "react-native-keychain": "^10.0.0",
@@ -96,6 +93,7 @@
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "~56.0.0",
     "detox": "^20.51.4",
+    "dotenv": "^16.6.1",
     "eslint": "^9.25.1",
     "eslint-config-expo": "~56.0.4",
     "eslint-config-prettier": "^10.1.2",
@@ -110,7 +108,7 @@
     "patch-package": "^8.0.1",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "react-test-renderer": "^19.1.0",
+    "react-test-renderer": "19.2.3",
     "tailwindcss": "^3.4.0",
     "ts-jest": "^29.4.15",
     "typescript": "~6.0.3",
@@ -145,5 +143,8 @@
       }
     }
   },
-  "overrides": {}
+  "overrides": {},
+  "engines": {
+    "node": ">=22.13.0"
+  }
 }

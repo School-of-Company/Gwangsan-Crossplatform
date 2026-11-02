@@ -52,7 +52,6 @@ jest.mock('~/shared/store/useReservationLocationStore', () => ({
 // stub them here so this file only exercises ReservationPage's own logic.
 jest.mock('~/view/chat/ui/ReservationCalendarSheet', () => ({
   ReservationCalendarSheet: ({ isVisible, onClose, onSelect }: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, Text, TouchableOpacity } = require('react-native');
     const today = new Date();
     const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -78,7 +77,6 @@ jest.mock('~/view/chat/ui/ReservationCalendarSheet', () => ({
 
 jest.mock('~/view/chat/ui/ReservationTimeSheet', () => ({
   ReservationTimeSheet: ({ isVisible, onClose, onSelect }: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="time-sheet">

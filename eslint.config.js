@@ -35,12 +35,21 @@ module.exports = defineConfig([
     rules: {
       'react/display-name': 'off',
       'react-hooks/refs': 'warn',
-      'import/no-unresolved': [
-        'error',
-        {
-          ignore: ['^@env$'],
-        },
-      ],
+      'import/no-unresolved': 'error',
+    },
+  },
+  // jest.mock 팩토리·isolateModules 안에서는 호이스팅 때문에 require만 쓸 수 있다.
+  {
+    files: [
+      '**/__tests__/**',
+      '**/*.test.{js,jsx,ts,tsx}',
+      '__mocks__/**',
+      'jest.setup.js',
+      'e2e/**',
+      'src/test-utils/**',
+    ],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ]);

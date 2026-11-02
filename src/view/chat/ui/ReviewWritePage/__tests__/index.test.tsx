@@ -57,7 +57,6 @@ jest.mock('~/entity/post/api/createReview', () => ({
 
 jest.mock('~/widget/chat/ui/ChatRoomProductInfo', () => ({
   ChatRoomProductInfo: ({ title, gwangsan }: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, Text } = require('react-native');
     return (
       <View testID="chat-room-product-info">
