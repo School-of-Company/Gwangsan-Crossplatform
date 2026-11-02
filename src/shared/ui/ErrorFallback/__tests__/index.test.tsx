@@ -25,6 +25,18 @@ describe('ErrorFallback', () => {
     expect(() => fireEvent.press(getByText('다시 시도'))).not.toThrow();
   });
 
+  it('title과 message를 넘기면 기본 문구 대신 보여준다', () => {
+    const { getByText, queryByText } = render(
+      <ErrorFallback
+        title="게시글을 불러오는데 실패했습니다."
+        message="네트워크를 확인해 주세요."
+      />
+    );
+    expect(getByText('게시글을 불러오는데 실패했습니다.')).toBeTruthy();
+    expect(getByText('네트워크를 확인해 주세요.')).toBeTruthy();
+    expect(queryByText('오류가 발생했습니다')).toBeNull();
+  });
+
   it('스냅샷', () => {
     const { toJSON } = render(<ErrorFallback onRetry={jest.fn()} />);
     expect(toJSON()).toMatchSnapshot();

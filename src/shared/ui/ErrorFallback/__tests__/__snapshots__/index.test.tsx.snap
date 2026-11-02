@@ -15,6 +15,7 @@ exports[`ErrorFallback 스냅샷 1`] = `
     잠시 후 다시 시도해 주세요.
   </Text>
   <View
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -47,6 +48,7 @@ exports[`ErrorFallback 스냅샷 1`] = `
         "opacity": 1,
       }
     }
+    testID="error-fallback-retry"
   >
     <Text
       className="font-semibold text-white"
