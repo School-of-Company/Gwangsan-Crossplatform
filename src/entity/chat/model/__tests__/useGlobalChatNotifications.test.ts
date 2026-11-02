@@ -2,8 +2,11 @@ import { waitFor } from '@testing-library/react-native';
 import { usePathname } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { AppState, AppStateStatus } from 'react-native';
-import { renderHookWithProviders as renderHook } from '~/test-utils';
-import { useGlobalChatNotifications } from '../useGlobalChatNotifications';
+import { createQueryClient, renderHookWithProviders as renderHook } from '~/test-utils';
+import {
+  useGlobalChatNotifications,
+  ROOM_LIST_REFRESH_INTERVAL_MS,
+} from '../useGlobalChatNotifications';
 import { chatSocket } from '~/shared/lib/socket';
 import { getData } from '~/shared/lib/getData';
 import { getChatRooms } from '../../api/getChatRooms';
@@ -190,6 +193,58 @@ describe('useGlobalChatNotifications', () => {
     await handler(baseMessage);
 
     expect(mockScheduleNotificationAsync).toHaveBeenCalled();
+  });
+
+  describe('채팅 목록 재조회 빈도 제한', () => {
+    it('다른 방 메시지가 연달아 와도 간격 안에서는 목록을 한 번만 받는다', async () => {
+      renderHook(() => useGlobalChatNotifications());
+      const handler = mockChatSocket.on.mock.calls[0][1];
+
+      await handler(baseMessage);
+      await handler({ ...baseMessage, messageId: 2 });
+      await handler({ ...baseMessage, messageId: 3 });
+
+      expect(mockGetChatRooms).toHaveBeenCalledTimes(1);
+      expect(mockScheduleNotificationAsync).toHaveBeenCalledTimes(3);
+    });
+
+    it('간격 안에 받은 메시지가 있으면 간격이 끝난 뒤 목록을 한 번 더 갱신한다(뱃지 보정)', async () => {
+      jest.useFakeTimers();
+      try {
+        const queryClient = createQueryClient();
+        const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+        renderHook(() => useGlobalChatNotifications(), { queryClient });
+        const handler = mockChatSocket.on.mock.calls[0][1];
+
+        await handler(baseMessage);
+        await handler({ ...baseMessage, messageId: 2 });
+        await handler({ ...baseMessage, messageId: 3 });
+        expect(invalidateSpy).not.toHaveBeenCalled();
+
+        jest.advanceTimersByTime(ROOM_LIST_REFRESH_INTERVAL_MS);
+
+        expect(invalidateSpy).toHaveBeenCalledTimes(1);
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chatRooms', 'list'] });
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('방금 받은 목록에 없는 방이면 새로 생긴 방일 수 있어 최신 목록으로 다시 확인한다', async () => {
+      mockGetChatRooms
+        .mockResolvedValueOnce([{ roomId: 5 }])
+        .mockResolvedValue([{ roomId: 5 }, { roomId: 7 }]);
+      renderHook(() => useGlobalChatNotifications());
+      const handler = mockChatSocket.on.mock.calls[0][1];
+
+      await handler(baseMessage);
+      await handler({ ...baseMessage, messageId: 2, roomId: 7 });
+
+      expect(mockGetChatRooms).toHaveBeenCalledTimes(2);
+      expect(mockScheduleNotificationAsync).toHaveBeenLastCalledWith(
+        expect.objectContaining({ content: expect.objectContaining({ data: { roomId: 7 } }) })
+      );
+    });
   });
 
   describe('AppState 연동', () => {
