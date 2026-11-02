@@ -8,9 +8,16 @@ import { getItem } from '~/entity/post/api/getItem';
 import { editPost } from '~/entity/post/api/editPost';
 import ItemFormPage from '../index';
 
+const mockNavigation = {
+  setOptions: jest.fn(),
+  dispatch: jest.fn(),
+  addListener: jest.fn(() => jest.fn()),
+};
+
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: jest.fn(),
+  useNavigation: () => mockNavigation,
 }));
 
 // ItemFormPage also wires up useGetItem/useEditPost (for the edit flow), which
@@ -174,6 +181,81 @@ describe('ItemFormPage', () => {
       );
     });
 
+    it('필수 값이 비어 있으면 버튼 위에 첫 번째로 부족한 항목을 알려준다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText, getByTestId, queryByTestId } = renderWithProviders(
+        <ItemFormPage />
+      );
+
+      expect(getByTestId('item-form-disabled-reason').props.children).toBe('주제를 입력해 주세요.');
+
+      fireEvent.changeText(getByPlaceholderText('주제를 작성해주세요'), '제목');
+      expect(getByTestId('item-form-disabled-reason').props.children).toBe('내용을 입력해 주세요.');
+
+      fillRequiredFields(getByPlaceholderText);
+      expect(queryByTestId('item-form-disabled-reason')).toBeNull();
+    });
+
+    it('물건 나눔에서 사진이 없으면 사진이 필요하다고 알려준다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'OBJECT', mode: 'GIVER' });
+      const { getByPlaceholderText, getByTestId } = renderWithProviders(<ItemFormPage />);
+
+      fillRequiredFields(getByPlaceholderText);
+
+      expect(getByTestId('item-form-disabled-reason').props.children).toBe(
+        '물건 나눔 글에는 사진을 1장 이상 올려 주세요.'
+      );
+    });
+
+    it('광산이 음수여도 제출된다', async () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText, getByText, queryByTestId } = renderWithProviders(
+        <ItemFormPage />
+      );
+
+      fillRequiredFields(getByPlaceholderText);
+      fireEvent.changeText(getByPlaceholderText('광산을 입력해주세요'), '-500');
+      fireEvent.press(getByText('등록하기'));
+
+      expect(queryByTestId('gwangsan-error')).toBeNull();
+      await waitFor(() => expect(mockCreateItem).toHaveBeenCalledTimes(1));
+      expect(mockCreateItem).toHaveBeenCalledWith(expect.objectContaining({ gwangsan: -500 }));
+    });
+
+    it('광산에 "-"만 입력하면 오류 문구를 보여주고 제출되지 않는다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText, getByTestId, getByText } = renderWithProviders(
+        <ItemFormPage />
+      );
+
+      fillRequiredFields(getByPlaceholderText);
+      fireEvent.changeText(getByPlaceholderText('광산을 입력해주세요'), '-');
+      fireEvent.press(getByText('등록하기'));
+
+      expect(getByTestId('gwangsan-error').props.children).toBe('광산을 숫자로 입력해 주세요.');
+      expect(mockCreateItem).not.toHaveBeenCalled();
+    });
+
+    it('광산이 서버 최댓값(2,147,483,647)을 넘으면 제출되지 않는다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText, getByTestId, getByText } = renderWithProviders(
+        <ItemFormPage />
+      );
+
+      fillRequiredFields(getByPlaceholderText);
+      fireEvent.changeText(getByPlaceholderText('광산을 입력해주세요'), '2147483648');
+      fireEvent.press(getByText('등록하기'));
+
+      expect(getByTestId('gwangsan-error')).toBeTruthy();
+      expect(mockCreateItem).not.toHaveBeenCalled();
+    });
+
+    it('주제 입력은 서버 제한인 20자로 제한된다', () => {
+      const { getByPlaceholderText } = renderWithProviders(<ItemFormPage />);
+
+      expect(getByPlaceholderText('주제를 작성해주세요').props.maxLength).toBe(20);
+    });
+
     it('광산 입력 시 숫자가 아닌 문자는 제거된다', () => {
       mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
       const { getByPlaceholderText } = renderWithProviders(<ItemFormPage />);
@@ -184,6 +266,16 @@ describe('ItemFormPage', () => {
       expect(gwangsanInput.props.value).toBe('123');
     });
 
+    it('광산 입력은 맨 앞의 "-" 하나만 남긴다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText } = renderWithProviders(<ItemFormPage />);
+
+      const gwangsanInput = getByPlaceholderText('광산을 입력해주세요');
+      fireEvent.changeText(gwangsanInput, '--1-2');
+
+      expect(gwangsanInput.props.value).toBe('-12');
+    });
+
     it('광산 입력에 포커스가 가면 스크롤을 맨 아래로 이동시킨다', () => {
       mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
       const { getByPlaceholderText } = renderWithProviders(<ItemFormPage />);
@@ -191,6 +283,61 @@ describe('ItemFormPage', () => {
       const gwangsanInput = getByPlaceholderText('광산을 입력해주세요');
 
       expect(() => fireEvent(gwangsanInput, 'focus')).not.toThrow();
+    });
+  });
+
+  describe('작성 중 이탈 확인', () => {
+    const getBeforeRemoveListener = () => {
+      const calls = mockNavigation.addListener.mock.calls as unknown as [
+        string,
+        (event: unknown) => void,
+      ][];
+      return calls.filter(([name]) => name === 'beforeRemove').at(-1)?.[1];
+    };
+
+    it('입력한 내용이 있으면 뒤로가기를 막고 확인 모달을 띄운다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText, getByText } = renderWithProviders(<ItemFormPage />);
+
+      fireEvent.changeText(getByPlaceholderText('주제를 작성해주세요'), '제목');
+
+      const preventDefault = jest.fn();
+      act(() => {
+        getBeforeRemoveListener()?.({ preventDefault, data: { action: { type: 'GO_BACK' } } });
+      });
+
+      expect(preventDefault).toHaveBeenCalled();
+      expect(getByText('나가기')).toBeTruthy();
+
+      fireEvent.press(getByText('나가기'));
+      expect(mockNavigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' });
+    });
+
+    it('아무것도 입력하지 않았으면 확인 없이 나간다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      renderWithProviders(<ItemFormPage />);
+
+      const preventDefault = jest.fn();
+      act(() => {
+        getBeforeRemoveListener()?.({ preventDefault, data: { action: { type: 'GO_BACK' } } });
+      });
+
+      expect(preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('수정 모드에서 기존 값 그대로면 확인 없이 나간다', async () => {
+      mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+      mockGetItem.mockResolvedValue(makePostDetail());
+      const { findByDisplayValue } = renderWithProviders(<ItemFormPage />);
+
+      await findByDisplayValue('기존 제목');
+
+      const preventDefault = jest.fn();
+      act(() => {
+        getBeforeRemoveListener()?.({ preventDefault, data: { action: { type: 'GO_BACK' } } });
+      });
+
+      expect(preventDefault).not.toHaveBeenCalled();
     });
   });
 

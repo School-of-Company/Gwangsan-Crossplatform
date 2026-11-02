@@ -1,4 +1,4 @@
-import { FlatList, ActivityIndicator, View, RefreshControl } from 'react-native';
+import { FlatList, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { useGetAlertList } from '~/entity/notification';
 import NotificationItem from '~/widget/notification/ui/NotificationItem';
 import { Header } from '~/shared/ui';
@@ -63,6 +63,11 @@ const NotificationPage = () => {
             raw={item}
           />
         )}
+        ListEmptyComponent={
+          <Text testID="notification-empty" className="pt-20 text-center text-gray-500">
+            새로운 알림이 없습니다.
+          </Text>
+        }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
     </SafeAreaView>

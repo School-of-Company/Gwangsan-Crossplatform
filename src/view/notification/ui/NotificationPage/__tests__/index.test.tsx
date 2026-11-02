@@ -124,9 +124,10 @@ describe('NotificationPage', () => {
       refetch: mockRefetch,
     });
 
-    const { queryByTestId } = render(<NotificationPage />);
+    const { queryByTestId, getByText } = render(<NotificationPage />);
 
     expect(queryByTestId('notification-item-1')).toBeNull();
+    expect(getByText('새로운 알림이 없습니다.')).toBeTruthy();
   });
 
   it('헤더에 "알림" 타이틀을 표시한다', () => {
