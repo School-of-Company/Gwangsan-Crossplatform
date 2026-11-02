@@ -15,8 +15,8 @@
 
 | 항목                         | 값                                                                  |
 | ---------------------------- | ------------------------------------------------------------------- |
-| 단위 테스트                  | 281개 스위트 / 2,948개 테스트 (Jest + React Native Testing Library) |
-| 커버리지                     | Lines 97.0% · Statements 96.0% · Functions 94.9% · Branches 90.4%   |
+| 단위 테스트                  | 295개 스위트 / 3,144개 테스트 (Jest + React Native Testing Library) |
+| 커버리지                     | Lines 98.5% · Statements 97.6% · Functions 96.5% · Branches 92.6%   |
 | 커버리지 하한 (CI 실패 기준) | Lines 95 · Statements 95 · Functions 93 · Branches 88               |
 | 레이어 경계                  | FSD 5계층, 로컬 ESLint 규칙으로 `error` 강제                        |
 | E2E                          | Detox(iOS 시뮬레이터) 인프라 구축 단계 — 시나리오 확장 중           |
