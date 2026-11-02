@@ -126,8 +126,9 @@ const ItemFormPage = () => {
     [images, imageIds]
   );
 
+  // 숫자와 맨 앞의 '-' 하나만 남긴다 (광산은 음수도 허용)
   const handleGwangsanChange = useCallback(
-    (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
+    (v: string) => setGwangsan(v.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '')),
     []
   );
   const handleImagesChange = useCallback((v: string[]) => setImages(v), []);
@@ -259,7 +260,8 @@ const ItemFormPage = () => {
               value={gwangsan}
               onChangeText={handleGwangsanChange}
               onFocus={handleGwangsanFocus}
-              keyboardType="numeric"
+              // iOS 숫자 키패드에는 '-'가 없다
+              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'numeric'}
             />
             {gwangsanError && (
               <Text testID="gwangsan-error" className="-mt-4 text-sm text-error-500">

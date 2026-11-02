@@ -207,17 +207,32 @@ describe('ItemFormPage', () => {
       );
     });
 
-    it('광산이 0이면 오류 문구를 보여주고 제출되지 않는다', () => {
+    it('광산이 음수여도 제출된다', async () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText, getByText, queryByTestId } = renderWithProviders(
+        <ItemFormPage />
+      );
+
+      fillRequiredFields(getByPlaceholderText);
+      fireEvent.changeText(getByPlaceholderText('광산을 입력해주세요'), '-500');
+      fireEvent.press(getByText('등록하기'));
+
+      expect(queryByTestId('gwangsan-error')).toBeNull();
+      await waitFor(() => expect(mockCreateItem).toHaveBeenCalledTimes(1));
+      expect(mockCreateItem).toHaveBeenCalledWith(expect.objectContaining({ gwangsan: -500 }));
+    });
+
+    it('광산에 "-"만 입력하면 오류 문구를 보여주고 제출되지 않는다', () => {
       mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
       const { getByPlaceholderText, getByTestId, getByText } = renderWithProviders(
         <ItemFormPage />
       );
 
       fillRequiredFields(getByPlaceholderText);
-      fireEvent.changeText(getByPlaceholderText('광산을 입력해주세요'), '0');
+      fireEvent.changeText(getByPlaceholderText('광산을 입력해주세요'), '-');
       fireEvent.press(getByText('등록하기'));
 
-      expect(getByTestId('gwangsan-error').props.children).toBe('광산은 1 이상으로 입력해 주세요.');
+      expect(getByTestId('gwangsan-error').props.children).toBe('광산을 숫자로 입력해 주세요.');
       expect(mockCreateItem).not.toHaveBeenCalled();
     });
 
@@ -249,6 +264,16 @@ describe('ItemFormPage', () => {
       fireEvent.changeText(gwangsanInput, 'a1b2c3');
 
       expect(gwangsanInput.props.value).toBe('123');
+    });
+
+    it('광산 입력은 맨 앞의 "-" 하나만 남긴다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByPlaceholderText } = renderWithProviders(<ItemFormPage />);
+
+      const gwangsanInput = getByPlaceholderText('광산을 입력해주세요');
+      fireEvent.changeText(gwangsanInput, '--1-2');
+
+      expect(gwangsanInput.props.value).toBe('-12');
     });
 
     it('광산 입력에 포커스가 가면 스크롤을 맨 아래로 이동시킨다', () => {
