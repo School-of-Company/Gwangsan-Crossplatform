@@ -130,10 +130,14 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
     renderHeader,
     onScrollToEnd,
     onMyMessageLongPress,
+    onProfilePress,
   }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
       <View testID="chat-room-content">
+        <TouchableOpacity testID="content-other-avatar" onPress={() => onProfilePress(42)}>
+          <Text>avatar</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           testID="content-my-message-long-press"
           onPress={() => onMyMessageLongPress?.({ messageId: 3, isMine: true })}>
@@ -400,6 +404,19 @@ describe('ChatRoomPage', () => {
     expect(mockToastShow).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'info', text1: '더 이상 존재하지 않는 채팅방입니다.' })
     );
+  });
+
+  it('상대방 아바타를 누르면 해당 사용자 id로 goToProfile을 호출한다', () => {
+    const goToProfile = jest.fn();
+    mockUseChatAction.mockReturnValue({
+      navigationHandlers: { goToProfile, goToOtherUserProfile: jest.fn() },
+      formatLastMessageDate: jest.fn(() => '방금 전'),
+    });
+
+    const { getByTestId } = render(<ChatRoomPage />);
+    fireEvent.press(getByTestId('content-other-avatar'));
+
+    expect(goToProfile).toHaveBeenCalledWith(42);
   });
 
   it('헤더에 componentState.headerTitle을 표시한다', () => {

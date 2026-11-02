@@ -1,5 +1,6 @@
 import { act } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
+import type { ChatMessageResponse } from '~/entity/chat';
 import { useChatAction } from '../useChatActions';
 
 const mockPush = jest.fn();
@@ -13,12 +14,13 @@ describe('useChatAction', () => {
   const otherUserInfo = { nickname: '광산주민', id: 42 };
 
   describe('navigationHandlers', () => {
-    it('goToProfile을 호출하면 /profile로 이동한다', () => {
+    it('goToProfile을 호출하면 전달한 사용자 id의 프로필로 이동한다', () => {
       const { result } = renderHookWithProviders(() => useChatAction({ otherUserInfo }));
 
-      act(() => result.current.navigationHandlers.goToProfile(1));
+      act(() => result.current.navigationHandlers.goToProfile(7));
 
-      expect(mockPush).toHaveBeenCalledWith('/profile');
+      expect(mockPush).toHaveBeenCalledWith('/profile?id=7');
+      expect(mockPush).not.toHaveBeenCalledWith('/profile');
     });
 
     it('goToOtherUserProfile을 호출하면 /profile?id=:id로 이동한다', () => {
@@ -55,7 +57,9 @@ describe('useChatAction', () => {
         { createdAt: '2026-01-02T15:30:00Z' },
       ];
 
-      const formatted = result.current.formatLastMessageDate(messages as any[]);
+      const formatted = result.current.formatLastMessageDate(
+        messages as unknown as ChatMessageResponse[]
+      );
 
       expect(typeof formatted).toBe('string');
       expect(formatted.length).toBeGreaterThan(0);
