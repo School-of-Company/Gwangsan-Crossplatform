@@ -187,6 +187,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
           "opacity": 1,
         }
       }
+      testID="Footer-chat-button"
     >
       <View
         className="relative"
@@ -302,6 +303,7 @@ exports[`Footer 스냅샷 - 기본 상태 1`] = `
           "opacity": 1,
         }
       }
+      testID="Footer-write-button"
     >
       <View
         collapsable={false}
@@ -821,6 +823,7 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
           "opacity": 1,
         }
       }
+      testID="Footer-chat-button"
     >
       <View
         className="relative"
@@ -939,6 +942,7 @@ exports[`Footer 스냅샷 - 읽지 않은 채팅 있음 1`] = `
           "opacity": 1,
         }
       }
+      testID="Footer-write-button"
     >
       <View
         collapsable={false}
