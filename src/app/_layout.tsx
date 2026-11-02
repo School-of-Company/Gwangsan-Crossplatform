@@ -21,6 +21,7 @@ import * as Notifications from 'expo-notifications';
 import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/entity/chat/model/useChatEntry';
 import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
+import { useChatQueueRecovery } from '@/entity/chat/model/useChatQueueRecovery';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
 import { VersionUpdateModal } from '@/widget/appVersion';
 import {
@@ -57,6 +58,7 @@ function ChatNotificationHandler() {
   const navigateToRoomRef = useRef(navigateToRoom);
   const routerRef = useRef(router);
   useGlobalChatNotifications();
+  useChatQueueRecovery();
 
   useEffect(() => {
     navigateToChatRef.current = navigateToChat;
