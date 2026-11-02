@@ -65,10 +65,11 @@ export default function ChatRoomPage() {
     otherUserInfo,
   });
 
-  // 소켓이 연결된 동안에는 새 메시지와 거래 상태가 실시간으로 들어오므로 폴링하지 않는다(#731)
+  // 소켓이 연결된 동안에는 새 메시지와 거래 상태가 실시간으로 들어오므로 폴링하지 않는다(#731).
+  // 같은 쿼리를 구독하는 다른 곳은 폴링을 지정하지 않으므로 이 화면의 설정만 적용된다
   const { data: roomData, error: roomDataError } = useChatRoomData({
     roomId,
-    pausePolling: connectionState === 'connected',
+    polling: connectionState !== 'connected',
   });
   const { data: myInfo } = useGetMyInformation();
   const { data: blockList } = useGetBlockList();
