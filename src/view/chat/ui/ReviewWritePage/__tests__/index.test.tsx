@@ -3,7 +3,7 @@ import { fireEvent, waitFor, act } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
 import { useGetItem } from '~/entity/post';
 import { createReview } from '~/entity/post/api/createReview';
 import { logger } from '~/shared/lib/logger';
@@ -43,8 +43,8 @@ jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
 
-jest.mock('~/widget/chat/model/useChatMessages', () => ({
-  useChatMessages: jest.fn(),
+jest.mock('~/entity/chat/model/useChatOtherUser', () => ({
+  useChatOtherUser: jest.fn(),
 }));
 
 jest.mock('~/entity/post', () => ({
@@ -71,7 +71,7 @@ jest.mock('~/widget/chat/ui/ChatRoomProductInfo', () => ({
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
-const mockUseChatMessages = useChatMessages as jest.Mock;
+const mockUseChatOtherUser = useChatOtherUser as jest.Mock;
 const mockUseGetItem = useGetItem as jest.Mock;
 const mockCreateReview = createReview as jest.Mock;
 const mockToastShow = Toast.show as jest.Mock;
@@ -86,7 +86,7 @@ beforeEach(() => {
   mockUseChatRoomData.mockReturnValue({
     data: { product: { id: 1, title: '상품', images: [{ imageId: 1, imageUrl: 'a.png' }] } },
   });
-  mockUseChatMessages.mockReturnValue({ otherUserInfo: { nickname: '상대방', id: 7 } });
+  mockUseChatOtherUser.mockReturnValue({ nickname: '상대방', id: 7 });
   mockUseGetItem.mockReturnValue({ data: undefined });
   mockCreateReview.mockResolvedValue(true);
 });

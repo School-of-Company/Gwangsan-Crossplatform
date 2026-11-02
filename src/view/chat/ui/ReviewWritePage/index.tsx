@@ -9,7 +9,7 @@ import { Button, Header, ProgressBar } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import { ChatRoomProductInfo } from '~/widget/chat/ui/ChatRoomProductInfo';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
 import { useGetItem } from '~/entity/post';
 import { createReview } from '~/entity/post/api/createReview';
 import { logger } from '~/shared/lib/logger';
@@ -24,7 +24,7 @@ export default function ReviewWritePage() {
   const insets = useSafeAreaInsets();
 
   const { data: roomData } = useChatRoomData({ roomId });
-  const { otherUserInfo } = useChatMessages({ roomId });
+  const otherUserInfo = useChatOtherUser(roomId, roomData?.messages);
   const productId = roomData?.product?.id;
   const { data: productDetail } = useGetItem(productId?.toString());
 

@@ -5,7 +5,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import { Button, Header } from '~/shared/ui';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { ReservationCalendarSheet } from '~/view/chat/ui/ReservationCalendarSheet';
 import { ReservationTimeSheet } from '~/view/chat/ui/ReservationTimeSheet';
@@ -33,7 +33,7 @@ export default function ReservationPage() {
   const colors = useThemeColors();
 
   const { data: roomData } = useChatRoomData({ roomId });
-  const { otherUserInfo } = useChatMessages({ roomId });
+  const otherUserInfo = useChatOtherUser(roomId, roomData?.messages);
   const { handleReservation } = useTradeHandlers({
     roomId,
     roomData: roomData || null,
