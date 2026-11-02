@@ -20,6 +20,7 @@ import { TradeRequestModal } from '@/widget/chat/ui/TradeRequestModal';
 import { ReservationConfirmModal } from '@/widget/chat/ui/ReservationConfirmModal';
 import { Header } from '@/shared/ui/Header';
 import { ChatInput, MyMessage } from '@/widget/chat';
+import { ChatConnectionBanner } from '@/widget/chat/ui/ChatConnectionBanner';
 import { MessageActionOverlay } from '@/widget/chat/ui/MessageActionOverlay';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
@@ -197,9 +198,10 @@ export default function ChatRoomPage() {
     () => ({
       ...componentState,
       hasMessages: visibleMessages.length > 0,
-      canSendMessage: connectionState === 'connected' && !isChatBlocked,
+      // 소켓이 끊겨도 입력은 허용한다. 보낸 메시지는 대기열에 들어갔다가 재연결되면 전송된다
+      canSendMessage: !isChatBlocked,
     }),
-    [componentState, visibleMessages.length, connectionState, isChatBlocked]
+    [componentState, visibleMessages.length, isChatBlocked]
   );
 
   useEffect(() => {
@@ -359,6 +361,7 @@ export default function ChatRoomPage() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle={updatedComponentState.headerTitle} connectionState={connectionState} />
+      <ChatConnectionBanner connectionState={connectionState} />
 
       {(productInfoConfig.shouldShow || isTradeCompleted) && (
         <View className="bg-surface-muted">
