@@ -1,7 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { createFeedback, type FeedbackType } from '../api/createFeedback';
 import { getFeedbackEnvironment } from './getFeedbackEnvironment';
+import { feedbackQueryKeys } from './feedbackQueryKeys';
 
 interface CreateFeedbackParams {
   type: FeedbackType;
@@ -10,10 +11,12 @@ interface CreateFeedbackParams {
 }
 
 export const useCreateFeedback = (onSuccess?: () => void) => {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (params: CreateFeedbackParams) =>
       createFeedback({ ...params, ...getFeedbackEnvironment() }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: feedbackQueryKeys.myList() });
       Toast.show({
         type: 'success',
         text1: '의견 접수 완료',

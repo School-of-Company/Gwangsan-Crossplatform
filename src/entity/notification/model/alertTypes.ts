@@ -10,6 +10,7 @@ export enum AlertType {
   TRADE_CANCEL_REJECT = 'TRADE_CANCEL_REJECT',
   REPORT = 'REPORT',
   REPORT_REJECT = 'REPORT_REJECT',
+  FEEDBACK_ANSWER = 'FEEDBACK_ANSWER',
 }
 export interface AlertImage {
   imageId: number;

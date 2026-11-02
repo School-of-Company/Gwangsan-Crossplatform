@@ -36,6 +36,7 @@ const notificationDataSchema = z.object({
   alertType: z.nativeEnum(AlertType).optional(),
   sourceId: z.coerce.number().int().positive().optional(),
   roomId: z.coerce.number().int().positive().optional(),
+  feedbackId: z.coerce.number().int().positive().optional(),
 });
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
