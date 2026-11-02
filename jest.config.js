@@ -16,6 +16,9 @@ module.exports = {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
     '^react-native-keyboard-controller$': '<rootDir>/__mocks__/react-native-keyboard-controller.js',
     '^expo-linear-gradient$': '<rootDir>/__mocks__/expo-linear-gradient.js',
+    // 네이티브 모듈이 없는 Jest에서 import만으로 throw하지 않도록 라이브러리 공식 mock을 쓴다
+    '^@react-native-async-storage/async-storage$':
+      '<rootDir>/node_modules/@react-native-async-storage/async-storage/jest/async-storage-mock.js',
     '^@expo/vector-icons(/.*)?$': '<rootDir>/__mocks__/vector-icons.js',
     '^~/test-utils$': '<rootDir>/src/test-utils/index.ts',
     '^@env$': '<rootDir>/src/mocks/env.ts',
