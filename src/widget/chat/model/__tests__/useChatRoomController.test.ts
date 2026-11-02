@@ -327,5 +327,22 @@ describe('useChatRoomController', () => {
 
       expect(result.current.isError).toBe(true);
     });
+
+    it('엔티티 쿼리의 refetch를 그대로 반환한다', () => {
+      const refetch = jest.fn();
+      mockUseChatMessagesEntity.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: true,
+        refetch,
+      });
+
+      const { result } = renderHookWithProviders(() =>
+        useChatRoomController({ roomId: 'room-1' as any })
+      );
+
+      result.current.refetch();
+      expect(refetch).toHaveBeenCalledTimes(1);
+    });
   });
 });

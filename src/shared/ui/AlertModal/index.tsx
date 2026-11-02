@@ -32,8 +32,8 @@ export function AlertModal({
   isLoading = false,
 }: AlertModalProps) {
   const [show, setShow] = useState(isVisible);
-  const scale = useRef(new Animated.Value(ALERT_ENTER_SCALE)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useState(() => new Animated.Value(ALERT_ENTER_SCALE))[0];
+  const opacity = useState(() => new Animated.Value(0))[0];
   // 취소 버튼은 애니메이션 없이 즉시 닫혀야 해서, 다음 닫힘이 취소로 인한 것인지 표시해둔다
   const skipCloseAnimationRef = useRef(false);
   const dismiss = onCancel ?? onConfirm;

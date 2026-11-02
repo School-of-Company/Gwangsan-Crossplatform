@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export interface AppVersionResponse {
   latestVersion: string;
@@ -17,6 +17,6 @@ export const getAppVersion = async (
     });
     return data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };

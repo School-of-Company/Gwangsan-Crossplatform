@@ -5,6 +5,9 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -25,6 +28,7 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -77,6 +81,9 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -97,6 +104,7 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -154,6 +162,9 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -174,6 +185,7 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -231,6 +243,9 @@ exports[`Header 스냅샷 - 기본 상태 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -251,6 +266,7 @@ exports[`Header 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -288,6 +304,9 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -308,6 +327,7 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -335,6 +355,8 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
     </Text>
   </View>
   <View
+    accessibilityLabel="메뉴 더보기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,

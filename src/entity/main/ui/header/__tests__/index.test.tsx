@@ -14,19 +14,18 @@ describe('Header', () => {
   it('로고 이미지를 렌더링한다', () => {
     mockUseRouter.mockReturnValue({ push: jest.fn() });
 
-    const { UNSAFE_getByType } = render(<Header />);
-    const Image = require('react-native').Image;
+    const { getByLabelText } = render(<Header />);
 
-    expect(UNSAFE_getByType(Image)).toBeTruthy();
+    expect(getByLabelText('시민화폐 광산')).toBeTruthy();
   });
 
   it('알림 아이콘을 누르면 /notification으로 이동한다', () => {
     const mockPush = jest.fn();
     mockUseRouter.mockReturnValue({ push: mockPush });
 
-    const { UNSAFE_getByProps } = render(<Header />);
+    const { getByRole } = render(<Header />);
 
-    fireEvent(UNSAFE_getByProps({ name: 'notifications-outline' }), 'onPress');
+    fireEvent.press(getByRole('button', { name: '알림' }));
 
     expect(mockPush).toHaveBeenCalledWith('/notification');
   });
