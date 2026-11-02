@@ -6,7 +6,7 @@
 
 ```ts
 import { instance } from '~/shared/lib/axios';
-import { getErrorMessage } from '~/shared/lib/errorHandler';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 export interface XxxResponse { /* fields */ }
 
@@ -15,15 +15,31 @@ export const getXxx = async (id: string): Promise<XxxResponse> => {
     const { data } = await instance.get<XxxResponse>(`/xxx/${id}`);
     return data;
   } catch (error) {
-    throw new Error(getErrorMessage(error));
+    throw toAppError(error);
   }
 };
 ```
 
 Rules:
 - Always use `instance` from `~/shared/lib/axios`, never raw `fetch` or `axios`
-- Wrap catch with `getErrorMessage`, never swallow errors silently
+- Catch with `throw toAppError(error)`, never swallow errors silently
+  - `toAppError` sets the user-facing message (`getErrorMessage`) **on the original error** and keeps the `AxiosError`,
+    so `QueryProvider`'s `shouldRetryQuery` (no retry on 4xx) and `throwOnError` (5xx → ErrorBoundary) can read `response.status`
+  - ✗ `throw new Error(getErrorMessage(error))` — drops the `AxiosError`; 4xx gets retried and 5xx never reaches ErrorBoundary
+  - ✗ `throw error` — keeps the status but shows axios's raw English message in toasts
+  - Logging is fine before rethrowing: `logger.error('xxx failed', error); throw toAppError(error);`
 - Return typed response, no `any`
+
+### `axios.create` exceptions
+
+Only these two files create their own axios instance; everything else uses `instance`:
+
+| File | Why | Notes |
+| --- | --- | --- |
+| `src/shared/lib/publicInstance.ts` | Requests before login (SMS, sign-in, password reset) — no token, no 401 refresh | 10s timeout. Callers still `throw toAppError(error)` |
+| `src/shared/api/kakaoLocalSearch.ts` (`kakaoClient`) | Third-party Kakao Local API (`dapi.kakao.com`), not our server | 10s timeout, `KakaoAK` header. Must not go through `instance` (would attach our Bearer token). Kakao error bodies differ from ours, so it uses its own `toKakaoError` instead of `toAppError` |
+
+Do not add another `axios.create` without a reason of the same kind.
 
 ## React Query Hook
 

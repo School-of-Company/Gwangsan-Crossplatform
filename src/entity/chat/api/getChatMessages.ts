@@ -49,13 +49,10 @@ export const getChatRoomData = async (
       product = serverProduct && isTradeProduct(serverProduct) ? serverProduct : null;
     }
 
-    // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
-    // (getCurrentUserId)와 senderId를 다시 비교해 재계산하지 않는다 — 그 재계산 과정의
-    // 캐시 타이밍 경합이 본인 메시지를 상대방 메시지로 뒤집어 보이게 하는 원인이었다(#619).
+    // isMine은 서버가 발신자 기준으로 계산한 값을 그대로 쓴다(로컬 세션으로 재계산하면 캐시 타이밍에 따라 뒤집힌다)
     return { product, messages };
   } catch (e) {
-    // 사용자 안내(토스트)는 호출한 쪽(UI 계층)에서 한다. API 안에서 띄우면 훅의 onError 토스트와
-    // 겹치거나, 백그라운드 호출(읽음 처리 등)에서도 토스트가 떠 중복된다(#739)
+    // 토스트는 호출한 UI 쪽에서 띄운다(백그라운드 호출에서도 뜨거나 중복되지 않게)
     throw toAppError(e as ChatApiError);
   }
 };

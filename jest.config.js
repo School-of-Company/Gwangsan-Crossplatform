@@ -10,7 +10,7 @@ module.exports = {
     '^.+\\.mjs$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind|@sentry/react-native|react-native-toast-message|react-native-keychain|react-native-reanimated|msw|@mswjs|until-async|immer|rettime|@open-draft|is-node-process|outvariant|strict-event-emitter|@bundled-es-modules|statuses)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind|@sentry/react-native|react-native-toast-message|react-native-keychain|react-native-reanimated|msw|@mswjs|until-async|rettime|@open-draft|is-node-process|outvariant|strict-event-emitter|@bundled-es-modules|statuses)',
   ],
   moduleNameMapper: {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
@@ -21,7 +21,6 @@ module.exports = {
       '<rootDir>/node_modules/@react-native-async-storage/async-storage/jest/async-storage-mock.js',
     '^@expo/vector-icons(/.*)?$': '<rootDir>/__mocks__/vector-icons.js',
     '^~/test-utils$': '<rootDir>/src/test-utils/index.ts',
-    '^@env$': '<rootDir>/src/mocks/env.ts',
     '^msw/node$': '<rootDir>/node_modules/msw/lib/node/index.js',
     '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
     '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',

@@ -24,6 +24,7 @@ interface UseChatRoomControllerReturn {
   readonly otherUserInfo: { nickname: string; id?: number };
   readonly isLoading: boolean;
   readonly isError: boolean;
+  readonly refetch: () => void;
   readonly connectionState: 'connected' | 'connecting' | 'disconnected';
   readonly isBlockedByOtherUser: boolean;
   readonly messageHandlers: {
@@ -53,6 +54,7 @@ export const useChatRoomController = ({
     data: messages,
     isLoading,
     isError,
+    refetch,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -122,6 +124,7 @@ export const useChatRoomController = ({
     otherUserInfo,
     isLoading,
     isError,
+    refetch,
     connectionState,
     isBlockedByOtherUser,
     messageHandlers,

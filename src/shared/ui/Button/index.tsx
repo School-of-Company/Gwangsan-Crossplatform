@@ -5,7 +5,7 @@ import {
   Animated,
   GestureResponderEvent,
 } from 'react-native';
-import { useRef, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 interface ButtonProps extends TouchableOpacityProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ export const Button = ({
   onPressOut,
   ...props
 }: ButtonProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(
     (e: GestureResponderEvent) => {

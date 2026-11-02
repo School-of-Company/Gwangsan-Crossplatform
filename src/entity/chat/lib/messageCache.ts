@@ -164,7 +164,7 @@ export const keepNewestPage = (data: ChatMessagePages | undefined) =>
     : data;
 
 // 배열 정렬 방향에 기대지 않고 실제 최신 시각을 구한다 — REST/소켓 배열의 정렬 방향이
-// 다를 수 있다(#610). 파싱 불가능한 값은 최신 판정에 끼어들지 않도록 무시한다.
+// 다를 수 있다. 파싱 불가능한 값은 최신 판정에 끼어들지 않도록 무시한다.
 export const getLatestMessageTime = (messages: readonly ChatMessageResponse[]): number =>
   messages.reduce((max, message) => {
     const time = new Date(message.createdAt).getTime();
@@ -174,7 +174,7 @@ export const getLatestMessageTime = (messages: readonly ChatMessageResponse[]): 
 // 채팅방 진입 전에 받은 REST snapshot(최신 페이지)으로 메시지 캐시를 채운다.
 // 서버는 Redis Stream 발행 후 DB에 비동기로 저장하므로, 이 snapshot에는 방금 보낸 메시지가 아직
 // 없을 수 있다. 무조건 덮어쓰면 소켓 echo로 이미 반영된 최신 메시지가 재입장 시 일시적으로
-// 사라진다(#610) — 기존 캐시와 snapshot 중 최대 createdAt이 더 큰 쪽을 그대로 쓴다.
+// 사라진다 — 기존 캐시와 snapshot 중 최대 createdAt이 더 큰 쪽을 그대로 쓴다.
 // 메시지 병합/ID union은 하지 않는다(소켓·REST 간 ID 표현 차이로 중복이 생길 수 있다).
 export const seedMessagePagesFromSnapshot = (
   current: ChatMessagePages | undefined,

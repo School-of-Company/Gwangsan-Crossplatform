@@ -50,9 +50,7 @@ export const useMessageSync = ({
   const processMessage = useCallback(
     (message: ChatMessageResponse) => {
       try {
-        // 서버(REST·소켓)가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션
-        // 캐시(getCurrentUserId)와 senderId를 다시 비교해 재계산하지 않는다 — 그 재계산 과정의
-        // 캐시 타이밍 경합이 본인 메시지를 상대방 메시지로 뒤집어 보이게 하는 원인이었다(#619).
+        // isMine은 서버가 발신자 기준으로 계산한 값을 그대로 쓴다(로컬 세션으로 재계산하면 캐시 타이밍에 따라 뒤집힌다)
         const isCurrentRoomMessage = currentRoomId && message.roomId === currentRoomId;
 
         if (isCurrentRoomMessage && !message.isMine) {
@@ -62,7 +60,7 @@ export const useMessageSync = ({
           });
         }
 
-        // 이 방을 지금 보고 있지 않아도 echo가 오면 pending 큐 확정·캐시 반영은 항상 해야 한다(#626)
+        // 이 방을 지금 보고 있지 않아도 echo가 오면 pending 큐 확정·캐시 반영은 항상 해야 한다
         {
           const targetMessageQueryKey = chatMessageKeys.room(message.roomId);
           const queueState = useChatQueueStore.getState();
@@ -204,13 +202,13 @@ export const useMessageSync = ({
       // 이 방에 처음 생기는 거래 요청이면 payload만으로는 title/images 등을 채울 수 없어 위에서 patch가
       // 스킵된다 — 상대방이 방을 이미 열어둔 상태라면 30초 폴링을 기다리지 않고 바로 다시 받아온다.
       // 예약 상태가 바뀐 경우도 payload에는 예약 일시·장소·reservedAt이 없어, 그대로 두면 상대방 화면의
-      // 예약 카드가 내용 없이 그려진다(#787) — 방 데이터를 다시 받아와 채운다.
+      // 예약 카드가 내용 없이 그려진다 — 방 데이터를 다시 받아와 채운다.
       if (!patchedExistingProduct || reservationChanged) {
         queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(data.roomId) });
       }
 
       // 상대가 거래를 확정해도 내 광산이 바뀌므로, 5분 캐시된 내 프로필과 홈 화면 광산 배너
-      // (myInformation)를 바로 다시 받아온다(#785)
+      // (myInformation)를 바로 다시 받아온다
       if (data.isCompleted) {
         queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
         queryClient.invalidateQueries({ queryKey: ['myInformation'] });

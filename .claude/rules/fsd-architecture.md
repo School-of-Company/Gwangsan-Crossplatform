@@ -21,7 +21,7 @@ import { useNotice } from '~/entity/notice/model/useNotice'; // ✗ cross-layer
 
 ```
 src/entity/<domain>/
-  api/<action>.ts            # axios call, throws Error(getErrorMessage(e))
+  api/<action>.ts            # axios call (`instance`), catch → `throw toAppError(error)`
   model/use<Name>.ts         # React Query hook (useQuery / useMutation)
   model/<name>QueryKeys.ts   # queryKey constants when >2 hooks share keys
   ui/<Component>/index.tsx   # Pure display component
