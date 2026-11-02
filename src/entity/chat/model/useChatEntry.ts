@@ -7,7 +7,10 @@ import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { findChatRoom } from '../api/findChatRoom';
 import { createChatRoom } from '../api/createChatRoom';
 import { getChatRooms } from '../api/getChatRooms';
+import { getChatRoomData, CHAT_MESSAGE_PAGE_SIZE } from '../api/getChatMessages';
+import { seedMessagePagesFromSnapshot, type ChatMessagePages } from '../lib/messageCache';
 import { chatRoomKeys } from './useChatRooms';
+import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import type { RoomId, ProductId } from '@/shared/types/chatType';
 
 const isNotFoundError = (error: unknown) =>
@@ -17,6 +20,27 @@ export const useChatEntry = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+
+  // 채팅 목록에서 방을 누른 직후 호출해, 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이
+  // 바로 보이게 한다. 실패해도 채팅방 화면이 다시 받아오므로 조용히 무시한다
+  const prefetchRoom = useCallback(
+    (roomId: RoomId) => {
+      queryClient
+        .fetchQuery({
+          queryKey: chatRoomDataKeys.room(roomId),
+          queryFn: () => getChatRoomData(roomId),
+          staleTime: 30 * 1000,
+        })
+        .then((data) => {
+          // 방금 보낸 메시지가 snapshot에 아직 없을 수 있어 더 최신인 쪽을 남긴다(#610)
+          queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(roomId), (oldData) =>
+            seedMessagePagesFromSnapshot(oldData, data.messages, CHAT_MESSAGE_PAGE_SIZE)
+          );
+        })
+        .catch(() => {});
+    },
+    [queryClient]
+  );
 
   const navigateToRoom = useCallback(
     async (roomId: RoomId) => {
@@ -91,6 +115,7 @@ export const useChatEntry = () => {
   return {
     navigateToChat,
     navigateToRoom,
+    prefetchRoom,
     rejoinChat,
     isLoading,
   };
