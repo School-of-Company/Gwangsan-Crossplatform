@@ -6,11 +6,19 @@ interface SelectionCardProps {
   label: string;
   onPress: () => void;
   className?: string;
+  testID?: string;
 }
 
-export function SelectionCard({ icon, label, onPress, className = '' }: SelectionCardProps) {
+export function SelectionCard({
+  icon,
+  label,
+  onPress,
+  className = '',
+  testID,
+}: SelectionCardProps) {
   return (
     <TouchableOpacity
+      testID={testID}
       onPress={onPress}
       activeOpacity={0.7}
       className={`flex-1 items-center justify-center gap-3 rounded-2xl bg-gray-50 px-4 py-7 ${className}`}>

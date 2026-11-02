@@ -36,7 +36,7 @@ interface ReportApiPayload {
 
 export const report = async (data: ReportRequest): Promise<void> => {
   try {
-    // sourceId 하나만으로는 상품 ID와 회원 ID를 서버가 구분할 수 없어(#624),
+    // sourceId 하나만으로는 상품 ID와 회원 ID를 서버가 구분할 수 없어,
     // targetType을 함께 보내 서버가 어떤 테이블에서 조회할지 분기할 수 있게 한다.
     const payload: ReportApiPayload = {
       sourceId: data.targetType === 'PRODUCT' ? data.productId : data.memberId,

@@ -53,7 +53,7 @@ export default function ProfileEditPageView() {
     const previousPlaceId = placeId;
     setPlaceId(selectedPlaceIdStr);
     // 실패하면 드롭다운을 이전 지점으로 되돌린다. 안 그러면 서버엔 반영되지 않았는데
-    // 화면엔 바뀐 지점이 남아 바뀐 것처럼 보였다(Gwangsan-Server#448)
+    // 화면엔 바뀐 지점이 남아 바뀐 것처럼 보인다
     updateBranchMutation.mutate(
       { placeId: parseInt(selectedPlaceIdStr, 10) },
       { onError: () => setPlaceId(previousPlaceId) }
@@ -63,7 +63,7 @@ export default function ProfileEditPageView() {
   const handleSubmit = () => {
     // 별칭을 바꾸지 않았으면 서버에 저장된 원본을 그대로 보낸다. 서버는 본인 별칭을 문자열 비교로
     // 걸러내지만 중복 검사는 공백·대소문자를 무시하는 DB 비교라, 앞뒤 공백이 붙어 저장된 별칭을
-    // trim해서 보내면 자기 자신과 충돌해 409가 났다(#780). 기존 별칭은 정규식 검사도 건너뛴다.
+    // trim해서 보내면 자기 자신과 충돌해 409가 난다. 기존 별칭은 정규식 검사도 건너뛴다.
     const originalNickname = profileData?.nickname ?? '';
     const isNicknameUnchanged = !!originalNickname && nickname.trim() === originalNickname.trim();
     const schema = isNicknameUnchanged
