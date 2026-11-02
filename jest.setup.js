@@ -1,13 +1,9 @@
-// sentry.ts reads process.env.EXPO_PUBLIC_SENTRY_DSN directly at module-load time.
-// Expo normally inlines this via Metro's .env loading, which Jest never runs, so the
-// CI step that writes a `.env` file has no effect here — set a placeholder directly.
-// The key is read through a variable (not a static `process.env.X` member expression)
-// because babel-plugin react-native-dotenv rewrites any static `process.env.<KEY>`
-// access it can resolve — including on the left side of an assignment, which babel
-// then rejects since a string literal can't be an assignment target.
-const SENTRY_DSN_ENV_KEY = 'EXPO_PUBLIC_SENTRY_DSN';
-process.env[SENTRY_DSN_ENV_KEY] =
-  process.env[SENTRY_DSN_ENV_KEY] || 'https://test-placeholder@sentry.io/0';
+// EXPO_PUBLIC_* 값은 앱 번들에서는 Metro(babel-preset-expo)가 인라인하지만 Jest에서는 런타임에
+// process.env를 그대로 읽는다. 로컬 .env 유무·값에 테스트가 흔들리지 않도록 고정 placeholder를 둔다.
+// Sentry DSN은 sentry.ts의 isValidDsn이 'test-placeholder'를 걸러 테스트에서 Sentry.init을 막는다.
+process.env.EXPO_PUBLIC_SENTRY_DSN = 'https://test-placeholder@sentry.io/0';
+process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY = 'test-kakao-rest-api-key';
+process.env.EXPO_PUBLIC_KAKAO_JS_KEY = 'test-kakao-js-key';
 
 // axios 1.15.0 calls body.cancel() at module load time to detect fetch support.
 // Expo's ReadableStream polyfill returns a rejected Promise when cancel() is called
