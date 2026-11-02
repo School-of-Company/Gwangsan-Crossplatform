@@ -22,11 +22,9 @@ export const useCreateItem = () => {
         queryKey: postKeys.list(newItem.mode, newItem.type),
       });
 
-      const previousPosts = queryClient.getQueryData<PostType[]>([
-        'posts',
-        newItem.mode,
-        newItem.type,
-      ]);
+      const previousPosts = queryClient.getQueryData<PostType[]>(
+        postKeys.list(newItem.mode, newItem.type)
+      );
 
       if (previousPosts) {
         const tempId = -Date.now();
