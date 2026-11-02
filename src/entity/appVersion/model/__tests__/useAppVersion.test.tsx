@@ -1,7 +1,10 @@
-import { waitFor } from '@testing-library/react-native';
+import React from 'react';
+import { render, waitFor } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { instance } from '~/shared/lib/axios';
+import { shouldThrowQueryError } from '~/shared/lib/QueryProvider';
 import { renderHookWithProviders } from '~/test-utils';
 import { appVersionHandlers, makeAppVersion } from '~/mocks/handlers/appVersion';
 import { useAppVersion } from '../useAppVersion';
@@ -61,5 +64,49 @@ describe('useAppVersion', () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toContain('500');
     expect(calls).toBe(1);
+  });
+
+  // 앱 전역 QueryClient는 캐시 없는 5xx를 ErrorBoundary로 보낸다. 버전 확인은 루트 레이아웃에서
+  // 돌기 때문에 여기서 던지면 앱 전체가 오류 화면이 되므로, 실패해도 던지지 않아야 한다.
+  it('앱 전역 throwOnError 정책에서도 5xx를 ErrorBoundary로 던지지 않는다', async () => {
+    server.use(http.get(`${BASE}/app/version`, () => new HttpResponse(null, { status: 503 })));
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          throwOnError: (error, query) =>
+            shouldThrowQueryError(error, query.state.data !== undefined),
+        },
+      },
+    });
+    const caught: unknown[] = [];
+    class Boundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {
+      state = { failed: false };
+      static getDerivedStateFromError() {
+        return { failed: true };
+      }
+      componentDidCatch(error: unknown) {
+        caught.push(error);
+      }
+      render() {
+        return this.state.failed ? null : this.props.children;
+      }
+    }
+    let status = '';
+    const Probe = () => {
+      status = useAppVersion().status;
+      return null;
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Boundary>
+          <Probe />
+        </Boundary>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => expect(status === 'error' || caught.length > 0).toBe(true));
+    expect(caught).toHaveLength(0);
+    expect(status).toBe('error');
   });
 });
