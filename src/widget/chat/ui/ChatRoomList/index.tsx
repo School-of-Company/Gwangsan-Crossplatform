@@ -7,7 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,6 +24,7 @@ import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '@/shared/ui/ErrorFallback';
+import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 
@@ -43,7 +44,7 @@ const ActionSheetRow = ({
   disabled = false,
   onPress,
 }: ActionSheetRowProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(() => {
     Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
@@ -92,6 +93,7 @@ export function ChatRoomList() {
     nickname: string;
     memberId: number;
   } | null>(null);
+  const [leaveTargetRoomId, setLeaveTargetRoomId] = useState<RoomId | null>(null);
   const hasRooms = (chatRooms?.length ?? 0) > 0;
 
   // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
@@ -133,7 +135,7 @@ export function ChatRoomList() {
 
   // 상품의 '채팅하기'로 재참여하면 같은 roomId가 서버 목록에 다시 나타난다. hiddenRoomIds는
   // 나가기 애니메이션용 임시 캐시라 자동으로 정리되지 않으므로, 재참여로 복원된 방을 그대로
-  // 두면 계속 숨겨진 채로 남는다(#609). useChatSocket의 blockStateRoomId와 같은 방식으로,
+  // 두면 계속 숨겨진 채로 남는다. useChatSocket의 blockStateRoomId와 같은 방식으로,
   // effect 대신 렌더링 중 chatRooms 변화를 감지해 즉시 걷어낸다. 단, 그 방에 대한 나가기
   // 요청이 아직 진행 중이면(삭제 완료 전에 폴링 응답이 먼저 도착한 경우) 되살리지 않는다.
   const [prevChatRooms, setPrevChatRooms] = useState(chatRooms);
@@ -155,6 +157,8 @@ export function ChatRoomList() {
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
+      if (!acquireNavigationLock()) return;
+
       // 채팅방에 들어가기 전에 데이터를 미리 받아오고 소켓 방에 미리 join해
       // 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이 바로 보이게 한다.
       prefetchRoom(roomId);
@@ -164,8 +168,15 @@ export function ChatRoomList() {
     [router, prefetchRoom, joinRoom]
   );
 
-  const handleRefresh = useCallback(() => {
-    refetch();
+  // 30초 폴링에도 isRefetching이 켜지므로, 사용자가 당겨서 새로고침한 동안만 스피너를 유지한다
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsPullRefreshing(false);
+    }
   }, [refetch]);
 
   const handleChatRoomLongPress = useCallback((roomId: RoomId) => {
@@ -176,14 +187,24 @@ export function ChatRoomList() {
     setActionTargetRoomId(null);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleLeavePress = useCallback(() => {
     if (actionTargetRoomId === null) return;
+    setLeaveTargetRoomId(actionTargetRoomId);
+    setActionTargetRoomId(null);
+  }, [actionTargetRoomId]);
+
+  const handleCloseLeaveAlert = useCallback(() => {
+    setLeaveTargetRoomId(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (leaveTargetRoomId === null) return;
 
     // 슬라이드 아웃 애니메이션은 API 응답과 무관하게 먼저 재생한다 — 낙관적 업데이트.
     // 실제 삭제 요청은 애니메이션이 끝나 목록에서 제거된 뒤 handleChatRoomExited에서 보낸다.
-    setExitingRoomId(actionTargetRoomId);
-    setActionTargetRoomId(null);
-  }, [actionTargetRoomId]);
+    setExitingRoomId(leaveTargetRoomId);
+    setLeaveTargetRoomId(null);
+  }, [leaveTargetRoomId]);
 
   const handleBlockPress = useCallback(() => {
     if (actionTargetRoom === null || actionTargetMemberId === undefined) return;
@@ -286,7 +307,7 @@ export function ChatRoomList() {
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
-      <Text className="text-base text-gray-500">아직 채팅방 없습니다</Text>
+      <Text className="text-base text-gray-500">아직 채팅방이 없습니다</Text>
     </View>
   );
 
@@ -302,7 +323,7 @@ export function ChatRoomList() {
         data={visibleChatRooms}
         renderItem={renderChatRoomItem}
         keyExtractor={(item) => item.roomId.toString()}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+        refreshControl={<RefreshControl refreshing={isPullRefreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={isLoading ? renderLoadingState : renderEmptyState}
         showsVerticalScrollIndicator={false}
         className="flex-1"
@@ -330,7 +351,7 @@ export function ChatRoomList() {
               label={deleteChatRoomMutation.isPending ? '나가는 중...' : '채팅방 나가기'}
               labelClassName="text-error-500"
               disabled={deleteChatRoomMutation.isPending}
-              onPress={handleConfirmDelete}
+              onPress={handleLeavePress}
             />
           </View>
           <View className="mb-3">
@@ -353,6 +374,15 @@ export function ChatRoomList() {
         isLoading={block.isPending}
         onCancel={handleCloseBlockAlert}
         onConfirm={handleConfirmBlock}
+      />
+
+      <AlertModal
+        isVisible={leaveTargetRoomId !== null}
+        message="채팅방을 나가시겠습니까?"
+        confirmText="나가기"
+        destructive
+        onCancel={handleCloseLeaveAlert}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

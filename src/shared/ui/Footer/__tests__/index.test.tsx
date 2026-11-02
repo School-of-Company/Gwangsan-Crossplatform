@@ -102,6 +102,28 @@ describe('Footer', () => {
     ).toBeTruthy();
   });
 
+  it('탭 버튼은 tab 역할과 선택 상태를 스크린리더에 알린다', () => {
+    const { getByRole, getAllByRole, getByLabelText, UNSAFE_getByProps } = render(
+      <Footer {...createProps('notice')} />
+    );
+
+    expect(UNSAFE_getByProps({ accessibilityRole: 'tablist' })).toBeTruthy();
+    expect(getAllByRole('tab')).toHaveLength(4);
+    expect(getByLabelText('공지').props.accessibilityState).toEqual({ selected: true });
+    expect(getByLabelText('홈').props.accessibilityState).toEqual({ selected: false });
+    expect(getByRole('button', { name: '글쓰기' })).toBeTruthy();
+  });
+
+  it('읽지 않은 채팅이 있으면 채팅 탭 라벨에 개수를 포함한다', () => {
+    const { getByLabelText } = render(<Footer {...createProps('main')} totalUnreadCount={3} />);
+    expect(getByLabelText('채팅, 읽지 않은 메시지 3개')).toBeTruthy();
+  });
+
+  it('읽지 않은 채팅이 없으면 채팅 탭 라벨은 "채팅"이다', () => {
+    const { getByLabelText } = render(<Footer {...createProps('main')} />);
+    expect(getByLabelText('채팅')).toBeTruthy();
+  });
+
   it('읽지 않은 채팅이 없으면 배지를 렌더링하지 않는다', () => {
     const { UNSAFE_queryAllByProps } = render(<Footer {...createProps('main')} />);
     expect(

@@ -4,6 +4,7 @@ import { FlatList } from 'react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import Toast from 'react-native-toast-message';
 import { ChatRoomList } from '../index';
+import { resetNavigationLock } from '~/shared/lib/navigationGuard';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
@@ -50,7 +51,6 @@ jest.mock('@/entity/chat', () => ({
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
   ChatRoomItem: ({ room, onPress, onLongPress, isExiting, onExited }: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { TouchableOpacity, View, Text } = require('react-native');
     return (
       <View>
@@ -91,6 +91,7 @@ const makeChatRoomsReturn = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  resetNavigationLock();
   mockUseChatRooms.mockReturnValue(makeChatRoomsReturn());
   mockUseChatSocket.mockReturnValue({ joinRoom: mockJoinRoom });
   mockUseDeleteChatRoom.mockReturnValue({ mutate: mockDeleteMutate, isPending: false });
@@ -138,7 +139,7 @@ describe('ChatRoomList', () => {
 
     const { queryByText } = render(<ChatRoomList />);
 
-    expect(queryByText('아직 채팅방 없습니다')).toBeNull();
+    expect(queryByText('아직 채팅방이 없습니다')).toBeNull();
   });
 
   it('캐시된 목록 없이 로딩 중이면 가운데에 로딩 표시를 보여준다', () => {
@@ -184,7 +185,7 @@ describe('ChatRoomList', () => {
   it('채팅방이 없으면 빈 상태를 표시한다', () => {
     const { getByText } = render(<ChatRoomList />);
 
-    expect(getByText('아직 채팅방 없습니다')).toBeTruthy();
+    expect(getByText('아직 채팅방이 없습니다')).toBeTruthy();
   });
 
   it('채팅방 목록을 렌더링한다', () => {
@@ -227,6 +228,21 @@ describe('ChatRoomList', () => {
     expect(mockJoinRoom).toHaveBeenCalledWith(7);
     expect(mockGetChatRoomData).toHaveBeenCalledWith(7);
     await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
+  });
+
+  it('채팅방을 빠르게 두 번 누르면 한 번만 이동한다', () => {
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ data: [{ roomId: 7, nickname: '방장' }] })
+    );
+
+    const { getByTestId } = render(<ChatRoomList />);
+
+    fireEvent.press(getByTestId('room-7'));
+    fireEvent.press(getByTestId('room-7'));
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockJoinRoom).toHaveBeenCalledTimes(1);
+    expect(mockGetChatRoomData).toHaveBeenCalledTimes(1);
   });
 
   it('미리 받아오기가 실패해도 조용히 무시하고 화면 이동은 그대로 진행한다', async () => {
@@ -365,7 +381,7 @@ describe('ChatRoomList', () => {
     });
   });
 
-  it('isLoading=true이면 RefreshControl의 refreshing이 true이다', () => {
+  it('폴링·첫 로드 중에는 당겨서 새로고침 스피너를 띄우지 않는다', () => {
     mockUseChatRooms.mockReturnValue(
       makeChatRoomsReturn({ data: [{ roomId: 1, nickname: '방장' }], isLoading: true })
     );
@@ -373,7 +389,32 @@ describe('ChatRoomList', () => {
     const { UNSAFE_getByType } = render(<ChatRoomList />);
 
     const refreshControl = UNSAFE_getByType(FlatList).props.refreshControl;
-    expect(refreshControl.props.refreshing).toBe(true);
+    expect(refreshControl.props.refreshing).toBe(false);
+  });
+
+  it('당겨서 새로고침하면 refetch가 끝날 때까지 스피너를 유지한다', async () => {
+    let resolveRefetch: () => void = () => {};
+    const refetch = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRefetch = resolve;
+        })
+    );
+    mockUseChatRooms.mockReturnValue(
+      makeChatRoomsReturn({ data: [{ roomId: 1, nickname: '방장' }], refetch })
+    );
+
+    const { UNSAFE_getByType } = render(<ChatRoomList />);
+
+    act(() => {
+      UNSAFE_getByType(FlatList).props.refreshControl.props.onRefresh();
+    });
+    expect(UNSAFE_getByType(FlatList).props.refreshControl.props.refreshing).toBe(true);
+
+    await act(async () => {
+      resolveRefetch();
+    });
+    expect(UNSAFE_getByType(FlatList).props.refreshControl.props.refreshing).toBe(false);
   });
 
   it('당겨서 새로고침 시 refetch가 호출된다', () => {
@@ -437,6 +478,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
 
       // 애니메이션이 API 응답과 무관하게 먼저 재생되어야 하므로, 이 시점에는 아직 mutation이 호출되지 않는다.
       expect(mockDeleteMutate).not.toHaveBeenCalled();
@@ -473,6 +515,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
 
       expect(queryByTestId('room-7')).toBeTruthy();
       expect(queryByTestId('exit-complete-7')).toBeTruthy();
@@ -488,6 +531,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
       fireEvent.press(getByTestId('exit-complete-7'));
 
       expect(queryByTestId('room-7')).toBeNull();
@@ -503,6 +547,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
       fireEvent.press(getByTestId('exit-complete-7'));
       expect(queryByTestId('room-7')).toBeNull();
 
@@ -530,6 +575,26 @@ describe('ChatRoomList', () => {
       expect(queryByText('채팅방 나가기')).toBeNull();
     });
 
+    it('채팅방 나가기를 누르면 확인 모달을 띄우고, 취소하면 나가지 않는다', () => {
+      const { getByTestId, getByText, queryByTestId } = render(
+        <>
+          <ChatRoomList />
+          <BottomSheetPortalOutlet />
+        </>
+      );
+
+      fireEvent(getByTestId('room-7'), 'longPress');
+      fireEvent.press(getByText('채팅방 나가기'));
+
+      expect(getByText('채팅방을 나가시겠습니까?')).toBeTruthy();
+      expect(queryByTestId('exit-complete-7')).toBeNull();
+
+      fireEvent.press(getByText('취소'));
+
+      expect(queryByTestId('exit-complete-7')).toBeNull();
+      expect(mockDeleteMutate).not.toHaveBeenCalled();
+    });
+
     it('이미 취소되어 삭제 대상이 없는 상태에서 확인을 다시 눌러도 아무 일도 일어나지 않는다', () => {
       const { getByTestId, getByText } = render(
         <>
@@ -543,6 +608,7 @@ describe('ChatRoomList', () => {
       // 두 번째 클릭 시점에는 이미 deleteTargetRoomId가 null이므로 조기 반환되어야 한다.
       fireEvent.press(getByText('채팅방 나가기'));
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
 
       expect(mockDeleteMutate).not.toHaveBeenCalled();
       // exitingRoomId가 최초 클릭 값 그대로 유지되어 여전히 슬라이드 아웃 중이어야 한다.
@@ -559,6 +625,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
       fireEvent.press(getByTestId('exit-complete-7'));
       expect(queryByTestId('room-7')).toBeNull();
 
@@ -594,6 +661,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
       fireEvent.press(getByTestId('exit-complete-7'));
       expect(queryByTestId('room-7')).toBeNull();
 
@@ -627,6 +695,7 @@ describe('ChatRoomList', () => {
 
       fireEvent(getByTestId('room-7'), 'longPress');
       fireEvent.press(getByText('채팅방 나가기'));
+      fireEvent.press(getByText('나가기'));
       fireEvent.press(getByTestId('exit-complete-7'));
       expect(queryByTestId('room-7')).toBeNull();
 

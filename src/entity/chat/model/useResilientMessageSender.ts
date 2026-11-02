@@ -89,9 +89,8 @@ export const useResilientMessageSender = ({
 
         setStatus(tempId, MESSAGE_STATUS.SENDING);
 
-        // IMAGE 타입은 서버가 content 없이도 허용한다(TEXT만 필수). 과거에는 캡션이 없을 때
-        // 공백 문자(' ')를 채워 보냈는데, 이 값이 그대로 저장·echo되어 사진 밑에 빈 말풍선이
-        // 매번 뜨는 원인이 되었다 — 빈 문자열은 falsy라 캡션 UI가 렌더링되지 않는다.
+        // IMAGE는 content 없이도 서버가 받는다. 공백(' ')을 채우면 그대로 저장돼 사진 밑에 빈 말풍선이
+        // 생기므로 빈 문자열로 보낸다
         await socketSendMessage(roomId, content ?? '', messageType, imageIds);
 
         setTimeout(() => {

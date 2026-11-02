@@ -102,6 +102,8 @@ export const SellingPostCard = ({
           {!isTemporary && !isCompleted && (
             <TouchableOpacity
               onPress={handleMenuPress}
+              accessibilityRole="button"
+              accessibilityLabel="게시글 메뉴"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               className="p-1"
               testID={`selling-card-menu-${id}`}>

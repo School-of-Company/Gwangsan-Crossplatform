@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { View, Text, PanResponder, LayoutChangeEvent, GestureResponderEvent } from 'react-native';
 
 interface ProgressBarProps {
@@ -28,7 +28,9 @@ const ProgressBar = ({ value, onChange, min = 0, max = 100, step = 1 }: Progress
   const sliderLeftRef = useRef(0);
   const sliderWidthRef = useRef(0);
 
-  onChangeRef.current = onChange;
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
