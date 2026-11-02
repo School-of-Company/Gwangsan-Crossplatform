@@ -5,7 +5,6 @@ import { AppState, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useMemo, useRef } from 'react';
-import { z } from 'zod';
 import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
 import '../../global.css';
 import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
@@ -18,26 +17,16 @@ import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
 import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
 import { RootErrorBoundary } from '@/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
-import { AlertType } from '@/entity/notification';
 import { useChatEntry } from '@/entity/chat/model/useChatEntry';
 import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
 import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
 import { VersionUpdateModal } from '@/widget/appVersion';
 import {
   createNotificationDedupeGuard,
+  parseNotificationData,
   resolveNotificationAction,
 } from '@/shared/lib/notificationRouting';
 import { useThemeColors } from '@/shared/lib/theme';
-
-// 알림 페이로드는 푸시 서버/OS를 거쳐 들어오는 신뢰할 수 없는 외부 입력이므로, 라우팅에
-// 쓰기 전에 형태와 범위를 검증한다. 잘못되거나 조작된 sourceId/roomId가 그대로
-// router.push의 경로 세그먼트로 흘러들어가지 않도록 막는다.
-const notificationDataSchema = z.object({
-  alertType: z.nativeEnum(AlertType).optional(),
-  sourceId: z.coerce.number().int().positive().optional(),
-  roomId: z.coerce.number().int().positive().optional(),
-  feedbackId: z.coerce.number().int().positive().optional(),
-});
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -83,12 +72,10 @@ function ChatNotificationHandler() {
       const id = response.notification.request.identifier;
       if (!dedupeGuardRef.current.shouldProcess(id)) return;
 
-      const parsedData = notificationDataSchema.safeParse(
-        response.notification.request.content.data
-      );
-      if (!parsedData.success) return;
+      const data = parseNotificationData(response.notification.request.content.data);
+      if (!data) return;
 
-      const action = resolveNotificationAction(parsedData.data);
+      const action = resolveNotificationAction(data);
       switch (action.type) {
         case 'chatEntry':
           navigateToChatRef.current(action.productId);
