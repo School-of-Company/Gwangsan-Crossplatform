@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Keyboard } from 'react-native';
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import { useChatRoomController } from '~/widget/chat/model/useChatRoomController';
@@ -14,13 +14,12 @@ import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import type { RoomId } from '@/shared/types/chatType';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
-import { getMyReceivedReview, getTossReview } from '~/entity/reviews/api/getReviews';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
 import type { ChatApiError } from '~/entity/chat';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import { isValidId } from '~/shared/lib/validateId';
 import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
-import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
 
 // 채팅방 화면의 상태·핸들러(메시지·소켓, 거래·예약, 차단, 후기, 바텀시트 열기)를 한곳에 모은다.
 // ChatRoomPage는 이 값으로 그리기만 한다
@@ -82,17 +81,14 @@ export const useChatRoomPage = () => {
   const productId = roomData?.product?.id;
 
   // 이 거래(물품)로 받은 후기 상세로 보내기 위해, 받은 후기 목록에서 productId가 일치하는 항목을 찾는다
-  const { data: myReceivedReviews } = useQuery({
-    queryKey: reviewKeys.received('current'),
-    queryFn: () => getMyReceivedReview(),
+  const { data: myReceivedReviews } = useGetReviews('receive', String(myInfo?.memberId), {
     enabled: isTradeCompleted && !!myInfo,
+    myMemberId: myInfo?.memberId,
   });
   const tradeReview = myReceivedReviews?.find((review) => review.productId === productId);
 
   // 리뷰 버튼을 "작성하러 가기" ↔ "확인하기"로 나누기 위해, 내가 쓴 후기 목록에서 productId가 일치하는 항목을 찾는다
-  const { data: myWrittenReviews } = useQuery({
-    queryKey: reviewKeys.toss(),
-    queryFn: getTossReview,
+  const { data: myWrittenReviews } = useGetReviews('toss', undefined, {
     enabled: isTradeCompleted && !!myInfo,
   });
   const myTradeReview = myWrittenReviews?.find((review) => review.productId === productId);
