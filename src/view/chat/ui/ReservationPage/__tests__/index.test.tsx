@@ -3,7 +3,7 @@ import { fireEvent, waitFor, act } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useReservationLocationStore } from '~/shared/store/useReservationLocationStore';
 import { logger } from '~/shared/lib/logger';
@@ -36,8 +36,8 @@ jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
 
-jest.mock('~/widget/chat/model/useChatMessages', () => ({
-  useChatMessages: jest.fn(),
+jest.mock('~/entity/chat/model/useChatOtherUser', () => ({
+  useChatOtherUser: jest.fn(),
 }));
 
 jest.mock('~/widget/chat/model/useTradeHandlers', () => ({
@@ -95,7 +95,7 @@ jest.mock('~/view/chat/ui/ReservationTimeSheet', () => ({
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseChatRoomData = useChatRoomData as jest.Mock;
-const mockUseChatMessages = useChatMessages as jest.Mock;
+const mockUseChatOtherUser = useChatOtherUser as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseReservationLocationStore = useReservationLocationStore as unknown as jest.Mock;
 const mockLoggerError = logger.error as jest.Mock;
@@ -113,7 +113,6 @@ const NOT_TODAY_SCHEDULED_AT = `${notTodayDate.getFullYear()}-${pad2(notTodayDat
 
 const mockRouterPush = jest.fn();
 const mockRouterBack = jest.fn();
-const mockSendMessage = jest.fn();
 const mockHandleReservation = jest.fn();
 const mockResetLocation = jest.fn();
 
@@ -147,10 +146,7 @@ beforeEach(() => {
   mockUseLocalSearchParams.mockReturnValue({ id: '10' });
   mockUseRouter.mockReturnValue({ push: mockRouterPush, back: mockRouterBack });
   mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1 } } });
-  mockUseChatMessages.mockReturnValue({
-    otherUserInfo: { nickname: '상대방', id: 7 },
-    messageHandlers: { sendMessage: mockSendMessage },
-  });
+  mockUseChatOtherUser.mockReturnValue({ nickname: '상대방', id: 7 });
   mockHandleReservation.mockResolvedValue(undefined);
   mockUseTradeHandlers.mockReturnValue({ handleReservation: mockHandleReservation });
   mockUseReservationLocationStore.mockReturnValue(makeLocationStoreReturn());
@@ -165,6 +161,15 @@ describe('ReservationPage', () => {
     expect(mockUseTradeHandlers).toHaveBeenCalledWith(expect.objectContaining({ roomData: null }));
   });
 
+  it('채팅방 훅을 다시 구동하지 않고 roomData의 메시지로 상대 정보만 읽는다', () => {
+    const messages = [{ messageId: 1, isMine: false, senderId: 7, senderNickname: '상대방' }];
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1 }, messages } });
+
+    render(<ReservationPage />);
+
+    expect(mockUseChatOtherUser).toHaveBeenCalledWith(10, messages);
+  });
+
   it('상대방 닉네임이 있으면 거래 약속 문구를 표시한다', () => {
     const { getByText } = render(<ReservationPage />);
 
@@ -172,10 +177,7 @@ describe('ReservationPage', () => {
   });
 
   it('상대방 닉네임이 없으면 거래 약속 문구를 표시하지 않는다', () => {
-    mockUseChatMessages.mockReturnValue({
-      otherUserInfo: { nickname: '', id: 7 },
-      messageHandlers: { sendMessage: mockSendMessage },
-    });
+    mockUseChatOtherUser.mockReturnValue({ nickname: '', id: 7 });
 
     const { queryByText } = render(<ReservationPage />);
 
@@ -370,10 +372,6 @@ describe('ReservationPage', () => {
           longitude: 126.9876,
         })
       );
-
-      // 예약 상태는 TradeEmbed 카드가 캐시(patchProduct/transactionStateChanged)로부터
-      // 직접 반영하므로, 더 이상 별도의 요약 텍스트 메시지를 보내지 않는다.
-      expect(mockSendMessage).not.toHaveBeenCalled();
 
       await waitFor(() => expect(mockResetLocation).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(mockRouterBack).toHaveBeenCalledTimes(1));

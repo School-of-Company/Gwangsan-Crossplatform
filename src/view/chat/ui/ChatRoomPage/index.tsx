@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatRoomController } from '~/widget/chat/model/useChatRoomController';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
@@ -57,7 +57,7 @@ export default function ChatRoomPage() {
     messageHandlers,
     scrollToEnd,
     markRoomAsRead,
-  } = useChatMessages({ roomId });
+  } = useChatRoomController({ roomId });
 
   const messageActions = useMessageActions(roomId);
 

@@ -5,12 +5,9 @@ import { markChatAsRead } from '../api/markChatAsRead';
 import type { ChatRoomListItem, ChatApiError, ChatMessageResponse } from './chatTypes';
 import { logger } from '~/shared/lib/logger';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
-import { chatMessageKeys } from './chatQueryKeys';
+import { chatMessageKeys, chatRoomKeys } from './chatQueryKeys';
 
-export const chatRoomKeys = {
-  all: ['chatRooms'] as const,
-  list: () => [...chatRoomKeys.all, 'list'] as const,
-} as const;
+export { chatRoomKeys };
 
 // 값이 없거나 파싱 불가능한 날짜 문자열이면 0(가장 오래됨)으로 취급해 정렬이 NaN으로 깨지지 않게 한다
 const toSortableTime = (value: string | null | undefined): number => {

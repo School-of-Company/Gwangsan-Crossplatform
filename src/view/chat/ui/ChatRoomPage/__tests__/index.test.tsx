@@ -3,7 +3,7 @@ import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
-import { useChatMessages } from '~/widget/chat/model/useChatMessages';
+import { useChatRoomController } from '~/widget/chat/model/useChatRoomController';
 import { useChatAction } from '~/widget/chat/model/useChatActions';
 import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
@@ -40,8 +40,8 @@ jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn() },
 }));
 
-jest.mock('~/widget/chat/model/useChatMessages', () => ({
-  useChatMessages: jest.fn(),
+jest.mock('~/widget/chat/model/useChatRoomController', () => ({
+  useChatRoomController: jest.fn(),
 }));
 
 jest.mock('~/widget/chat/model/useChatActions', () => ({
@@ -270,7 +270,7 @@ const mockUseRouter = useRouter as jest.Mock;
 const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
-const mockUseChatMessages = useChatMessages as jest.Mock;
+const mockUseChatRoomController = useChatRoomController as jest.Mock;
 const mockUseChatAction = useChatAction as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseChatUIState = useChatUIState as jest.Mock;
@@ -348,7 +348,7 @@ beforeEach(() => {
   mockUseLocalSearchParams.mockReturnValue({ id: '10' });
   mockUseRouter.mockReturnValue({ push: mockRouterPush, replace: mockRouterReplace });
   mockUseGetMyInformation.mockReturnValue({ data: { memberId: 5 } });
-  mockUseChatMessages.mockReturnValue(makeChatMessagesReturn());
+  mockUseChatRoomController.mockReturnValue(makeChatMessagesReturn());
   mockUseChatAction.mockReturnValue({
     navigationHandlers: { goToProfile: jest.fn(), goToOtherUserProfile: jest.fn() },
     formatLastMessageDate: jest.fn(() => '방금 전'),
@@ -373,7 +373,7 @@ beforeEach(() => {
 
 describe('ChatRoomPage', () => {
   it('로딩 중일 때 ActivityIndicator를 표시한다', () => {
-    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ isLoading: true }));
+    mockUseChatRoomController.mockReturnValue(makeChatMessagesReturn({ isLoading: true }));
 
     const { UNSAFE_getAllByType } = render(<ChatRoomPage />);
 
@@ -383,7 +383,7 @@ describe('ChatRoomPage', () => {
 
   it('에러 상태일 때 한국어 오류 문구와 다시 시도 버튼을 표시하고, 누르면 다시 조회한다', () => {
     const refetch = jest.fn();
-    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ isError: true, refetch }));
+    mockUseChatRoomController.mockReturnValue(makeChatMessagesReturn({ isError: true, refetch }));
 
     const { getByText } = render(<ChatRoomPage />);
 
@@ -799,7 +799,7 @@ describe('ChatRoomPage', () => {
   });
 
   it('ChatInput의 disabled는 connectionState가 connected가 아니면 true이다', () => {
-    mockUseChatMessages.mockReturnValue(
+    mockUseChatRoomController.mockReturnValue(
       makeChatMessagesReturn({ connectionState: 'disconnected' })
     );
 
@@ -809,7 +809,9 @@ describe('ChatRoomPage', () => {
   });
 
   it('ChatInput의 disabled는 connectionState가 connected이면 false이다', () => {
-    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ connectionState: 'connected' }));
+    mockUseChatRoomController.mockReturnValue(
+      makeChatMessagesReturn({ connectionState: 'connected' })
+    );
 
     const { getByTestId } = render(<ChatRoomPage />);
 
@@ -869,7 +871,7 @@ describe('ChatRoomPage', () => {
   });
 
   it('메시지가 있으면 마운트 후 스크롤을 맨 아래로 이동시킨다', async () => {
-    mockUseChatMessages.mockReturnValue(
+    mockUseChatRoomController.mockReturnValue(
       makeChatMessagesReturn({ messages: [{ id: 1, content: 'hi' }] })
     );
 
@@ -951,7 +953,7 @@ describe('ChatRoomPage', () => {
 
   it('상대방을 차단하면 상대방이 보낸 메시지는 화면에 표시하지 않는다', () => {
     mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 7, nickname: '상대방' }] });
-    mockUseChatMessages.mockReturnValue(
+    mockUseChatRoomController.mockReturnValue(
       makeChatMessagesReturn({
         messages: [
           { messageId: 1, senderId: 7, isMine: false, content: '상대방 메시지' },
@@ -966,7 +968,9 @@ describe('ChatRoomPage', () => {
   });
 
   it('상대방이 나를 차단했으면 채팅 입력창 대신 안내 배너를 표시하고 차단 풀기 버튼은 없다', () => {
-    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ isBlockedByOtherUser: true }));
+    mockUseChatRoomController.mockReturnValue(
+      makeChatMessagesReturn({ isBlockedByOtherUser: true })
+    );
 
     const { getByText, queryByTestId } = render(<ChatRoomPage />);
 
@@ -977,7 +981,9 @@ describe('ChatRoomPage', () => {
 
   it('내가 차단하고 상대방도 나를 차단했으면 내가 차단한 배너(차단 풀기 포함)를 우선 표시한다', () => {
     mockUseGetBlockList.mockReturnValue({ data: [{ memberId: 7, nickname: '상대방' }] });
-    mockUseChatMessages.mockReturnValue(makeChatMessagesReturn({ isBlockedByOtherUser: true }));
+    mockUseChatRoomController.mockReturnValue(
+      makeChatMessagesReturn({ isBlockedByOtherUser: true })
+    );
 
     const { getByText, queryByTestId } = render(<ChatRoomPage />);
 
@@ -987,7 +993,7 @@ describe('ChatRoomPage', () => {
   });
 
   it('차단하지 않았으면 상대방 메시지도 그대로 표시한다', () => {
-    mockUseChatMessages.mockReturnValue(
+    mockUseChatRoomController.mockReturnValue(
       makeChatMessagesReturn({
         messages: [
           { messageId: 1, senderId: 7, isMine: false, content: '상대방 메시지' },
@@ -1011,7 +1017,7 @@ describe('ChatRoomPage', () => {
     });
 
     it('소켓이 끊겨 있으면 폴링으로 보완한다', () => {
-      mockUseChatMessages.mockReturnValue(
+      mockUseChatRoomController.mockReturnValue(
         makeChatMessagesReturn({ connectionState: 'disconnected' })
       );
 

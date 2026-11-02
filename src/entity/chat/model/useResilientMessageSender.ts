@@ -10,8 +10,8 @@ import { logger } from '~/shared/lib/logger';
 
 const SEND_TIMEOUT_MS = 10000;
 
-// Expo Router 스택은 이전 화면을 언마운트하지 않으므로, 같은 roomId에 대해 채팅방/예약/후기
-// 화면이 동시에 useChatMessages를 마운트해 이 훅도 여러 개 살아있을 수 있다. 재연결·재시도
+// Expo Router 스택은 이전 화면을 언마운트하지 않으므로, 같은 방의 채팅방 화면이 스택에 두 번
+// 쌓이면(채팅방 → 프로필 → 게시글 → 같은 채팅방) 이 훅도 여러 개 살아있을 수 있다. 재연결·재시도
 // 트리거는 store 전체를 구독하는 전역 효과라 인스턴스 수만큼 중복 실행되면 같은 메시지가
 // 여러 소켓 emit으로 중복 전송된다. roomId당 정확히 하나의 인스턴스만 이 트리거를 맡도록 한다.
 const activeAutoRetryOwners = new Set<RoomId>();
