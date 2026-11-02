@@ -10,7 +10,7 @@ import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { useCallback, useMemo, useState } from 'react';
-import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useGetPosts } from '~/entity/post/model/useGetPosts';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { returnValue } from '~/entity/post/model/handleCategory';
 import { Category } from '~/entity/post/model/category';

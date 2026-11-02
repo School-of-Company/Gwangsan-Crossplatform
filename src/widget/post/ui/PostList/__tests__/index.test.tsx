@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, act, fireEvent } from '@testing-library/react-native';
 import PostList from '../index';
-import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useGetPosts } from '~/entity/post/model/useGetPosts';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 
-jest.mock('~/shared/model/useGetPosts', () => ({
+jest.mock('~/entity/post/model/useGetPosts', () => ({
   useGetPosts: jest.fn(),
 }));
 
