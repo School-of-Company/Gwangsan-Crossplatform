@@ -281,9 +281,7 @@ describe('ReviewsPageView', () => {
 
       expect(refetch).toHaveBeenCalledTimes(1);
       expect(tossRefetch).not.toHaveBeenCalled();
-      expect(getByTestId('receive-reviews-list').props.refreshControl.props.refreshing).toBe(
-        false
-      );
+      expect(getByTestId('receive-reviews-list').props.refreshControl.props.refreshing).toBe(false);
     });
 
     it('작성한 후기 탭에서 당기면 작성한 후기만 다시 조회한다', async () => {
