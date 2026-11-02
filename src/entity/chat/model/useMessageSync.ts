@@ -10,9 +10,13 @@ import { logger } from '~/shared/lib/logger';
 import { isSystemMessage } from '../lib/messagePolicy';
 import type { TransactionStateChangedPayload } from '../lib/socketService';
 import {
+  addMessageToPages,
   applyMessageUpdate,
+  getNewestMessage,
   isSameMessageId,
+  mapMessagePages,
   removeMessageById,
+  type ChatMessagePages,
   type MessageDeletedPayload,
   type MessageUpdatedPayload,
 } from '../lib/messageCache';
@@ -36,6 +40,9 @@ export const useMessageSync = ({
     }
     if (currentRoomId !== undefined) {
       queryClient.invalidateQueries({ queryKey: chatRoomDataKeys.room(currentRoomId) });
+      // 끊긴 동안 놓친 메시지를 채운다. 무한 쿼리 재조회는 최신 페이지부터 새 커서로 이어 받으므로
+      // 놓친 메시지가 한 페이지보다 많아도 중간이 비지 않는다
+      queryClient.invalidateQueries({ queryKey: chatMessageKeys.room(currentRoomId) });
     }
   }, [queryClient, chatRoomQueryKey, currentRoomId]);
 
@@ -97,18 +104,8 @@ export const useMessageSync = ({
               ? { ...message, images: matchingTemp.images }
               : message;
 
-          queryClient.setQueryData(
-            targetMessageQueryKey,
-            (oldData: ChatMessageResponse[] | undefined) => {
-              if (!oldData) return [messageToCache];
-
-              const exists = oldData.some((msg) => msg.messageId === messageToCache.messageId);
-              if (exists) return oldData;
-
-              return [...oldData, messageToCache].sort(
-                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-              );
-            }
+          queryClient.setQueryData<ChatMessagePages>(targetMessageQueryKey, (oldData) =>
+            addMessageToPages(oldData, messageToCache)
           );
 
           if (matchingTemp) {
@@ -283,8 +280,8 @@ export const useMessageSync = ({
     (data: MessageUpdatedPayload) => {
       if (data?.roomId == null || data.messageId == null) return;
 
-      queryClient.setQueryData<ChatMessageResponse[]>(chatMessageKeys.room(data.roomId), (old) =>
-        applyMessageUpdate(old, data)
+      queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(data.roomId), (old) =>
+        mapMessagePages(old, (messages) => applyMessageUpdate(messages, data))
       );
 
       if (!chatRoomQueryKey) return;
@@ -304,8 +301,8 @@ export const useMessageSync = ({
     (data: MessageDeletedPayload) => {
       if (data?.roomId == null || data.messageId == null) return;
 
-      queryClient.setQueryData<ChatMessageResponse[]>(chatMessageKeys.room(data.roomId), (old) =>
-        removeMessageById(old, data.messageId)
+      queryClient.setQueryData<ChatMessagePages>(chatMessageKeys.room(data.roomId), (old) =>
+        mapMessagePages(old, (messages) => removeMessageById(messages, data.messageId))
       );
 
       if (!chatRoomQueryKey) return;
@@ -339,10 +336,11 @@ export const useMessageSync = ({
         });
       };
 
-      const messages = queryClient.getQueryData(
-        chatMessageQueryKey ?? chatMessageKeys.room(roomId)
-      ) as ChatMessageResponse[] | undefined;
-      const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+      const lastMessage = getNewestMessage(
+        queryClient.getQueryData<ChatMessagePages>(
+          chatMessageQueryKey ?? chatMessageKeys.room(roomId)
+        )
+      );
 
       if (!lastMessage) {
         resetUnreadCount();

@@ -6,6 +6,15 @@ import { getChatRooms } from '../../api/getChatRooms';
 import { markChatAsRead } from '../../api/markChatAsRead';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import type { ChatRoomListItem } from '../chatTypes';
+import {
+  createMessagePages,
+  type ChatMessagePage,
+  type ChatMessagePages,
+} from '../../lib/messageCache';
+
+// 메시지 캐시는 페이지 단위(무한 쿼리)라 한 페이지짜리 캐시로 감싸 넣는다
+const asPages = (messages: readonly unknown[]): ChatMessagePages =>
+  createMessagePages({ messages: messages as ChatMessagePage['messages'], nextCursor: null });
 
 jest.mock('../../api/getChatRooms', () => ({
   getChatRooms: jest.fn(),
@@ -277,7 +286,10 @@ describe('useChatRooms', () => {
       const { result, queryClient } = renderHookWithProviders(() => useChatRooms());
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      queryClient.setQueryData(['chatMessages', 1], [{ messageId: 10 }, { messageId: 20 }]);
+      queryClient.setQueryData(
+        ['chatMessages', 1],
+        asPages([{ messageId: 10 }, { messageId: 20 }])
+      );
 
       await act(async () => {
         await result.current.markRoomAsRead(1);
@@ -311,7 +323,7 @@ describe('useChatRooms', () => {
       const { result, queryClient } = renderHookWithProviders(() => useChatRooms());
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      queryClient.setQueryData(['chatMessages', 1], [{ messageId: 10 }]);
+      queryClient.setQueryData(['chatMessages', 1], asPages([{ messageId: 10 }]));
 
       await act(async () => {
         await result.current.markRoomAsRead(1);

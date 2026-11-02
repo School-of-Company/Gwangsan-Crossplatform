@@ -7,6 +7,7 @@ import { logger } from '~/shared/lib/logger';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import { chatMessageKeys, chatRoomKeys } from './chatQueryKeys';
 import { useChatSocketConnected } from './useChatSocketConnected';
+import { getNewestMessage, type ChatMessagePages } from '../lib/messageCache';
 
 export { chatRoomKeys };
 
@@ -101,9 +102,9 @@ export const useChatRooms = (options: UseChatRoomsOptions = {}) => {
         });
       };
 
-      const messages = queryClient.getQueryData(chatMessageKeys.room(roomId)) as
-        ChatMessageResponse[] | undefined;
-      const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null;
+      const lastMessage = getNewestMessage(
+        queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(roomId))
+      );
 
       if (!lastMessage) {
         resetUnreadCount();

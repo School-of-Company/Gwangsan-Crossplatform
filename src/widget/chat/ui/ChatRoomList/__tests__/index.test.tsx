@@ -41,6 +41,9 @@ jest.mock('@/entity/chat', () => ({
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
+  CHAT_MESSAGE_PAGE_SIZE: 30,
+  seedMessagePagesFromSnapshot: jest.requireActual('~/entity/chat/lib/messageCache')
+    .seedMessagePagesFromSnapshot,
   ChatRoomItem: ({ room, onPress, onLongPress, isExiting, onExited }: any) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { TouchableOpacity, View, Text } = require('react-native');
@@ -244,6 +247,12 @@ describe('ChatRoomList', () => {
       );
     });
 
+    // 메시지 캐시는 페이지 단위(무한 쿼리)라, 한 페이지짜리 캐시로 감싸 비교한다
+    const asPages = (messages: unknown[]) => ({
+      pages: [{ messages, nextCursor: null }],
+      pageParams: [null],
+    });
+
     const makeMessage = (overrides: Record<string, unknown> = {}) => ({
       messageId: 1,
       roomId,
@@ -271,13 +280,13 @@ describe('ChatRoomList', () => {
       mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: staleSnapshot });
 
       const { getByTestId, queryClient } = render(<ChatRoomList />);
-      queryClient.setQueryData(chatMessageKeys.room(roomId), freshCache);
+      queryClient.setQueryData(chatMessageKeys.room(roomId), asPages(freshCache));
 
       fireEvent.press(getByTestId(`room-${roomId}`));
 
       await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
 
-      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(freshCache);
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(asPages(freshCache));
     });
 
     it('서버 snapshot이 기존 캐시보다 최신이면 서버 값으로 갱신한다', async () => {
@@ -288,13 +297,15 @@ describe('ChatRoomList', () => {
       mockGetChatRoomData.mockResolvedValueOnce({ product: null, messages: freshSnapshot });
 
       const { getByTestId, queryClient } = render(<ChatRoomList />);
-      queryClient.setQueryData(chatMessageKeys.room(roomId), staleCache);
+      queryClient.setQueryData(chatMessageKeys.room(roomId), asPages(staleCache));
 
       fireEvent.press(getByTestId(`room-${roomId}`));
 
       await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
 
-      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(freshSnapshot);
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(
+        asPages(freshSnapshot)
+      );
     });
 
     it('기존 캐시가 없으면 서버 조회 결과를 그대로 저장한다', async () => {
@@ -307,11 +318,11 @@ describe('ChatRoomList', () => {
 
       await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
 
-      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(snapshot);
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(asPages(snapshot));
     });
 
     it('최신 시각이 같으면 기존 캐시를 그대로 유지한다(불필요한 교체 방지)', async () => {
-      const cache = [makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })];
+      const cache = asPages([makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })]);
       const snapshot = [
         makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z', content: '다른 참조값' }),
       ];
@@ -328,7 +339,7 @@ describe('ChatRoomList', () => {
     });
 
     it('REST 배열이 최신순(내림차순)으로 와도 최댓값 기준으로 최신 여부를 판단한다', async () => {
-      const cache = [makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })];
+      const cache = asPages([makeMessage({ messageId: 1, createdAt: '2026-01-01T00:00:00Z' })]);
       const descendingSnapshot = [
         makeMessage({ messageId: 3, createdAt: '2026-01-01T00:10:00Z' }),
         makeMessage({ messageId: 2, createdAt: '2026-01-01T00:05:00Z' }),
@@ -342,7 +353,10 @@ describe('ChatRoomList', () => {
 
       await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledTimes(1));
 
-      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(descendingSnapshot);
+      // 페이지 안에서는 오래된 → 최신 순으로 정렬해 둔다
+      expect(queryClient.getQueryData(chatMessageKeys.room(roomId))).toEqual(
+        asPages([...descendingSnapshot].reverse())
+      );
     });
   });
 
