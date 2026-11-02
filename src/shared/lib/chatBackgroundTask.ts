@@ -18,7 +18,7 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
     if (!accessToken) return BackgroundFetch.BackgroundFetchResult.NoData;
 
     // 백그라운드에서는 토큰 재발급·강제 로그아웃(화면 이동)이 일어나면 안 되므로 인터셉터가 없는
-    // 공용 인스턴스에 토큰만 직접 붙인다. raw fetch와 달리 타임아웃이 있어 멈춘 채 남지 않는다(#739)
+    // 공용 인스턴스에 토큰만 직접 붙인다. raw fetch와 달리 타임아웃이 있어 멈춘 채 남지 않는다
     let rooms: ChatRoomListItem[];
     try {
       const { data } = await publicInstance.get<ChatRoomListItem[]>('/chat/rooms', {

@@ -25,8 +25,7 @@ const ReactQueryDevtools: typeof ReactQueryDevtoolsType | null =
       require('@tanstack/react-query-devtools').ReactQueryDevtools
     : null;
 
-// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다. 예전에는
-// 전부 한 번 더 요청해 에러 처리가 늦어지고 토스트가 두 번 뜨기도 했다(#739)
+// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다
 export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
   if (failureCount >= MAX_QUERY_RETRY) return false;
   const status = error instanceof AxiosError ? error.response?.status : undefined;
