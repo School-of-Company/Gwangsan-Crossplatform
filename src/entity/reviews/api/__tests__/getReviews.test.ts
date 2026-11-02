@@ -1,12 +1,11 @@
+import { AxiosError } from 'axios';
 import { instance } from '~/shared/lib/axios';
+import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvider';
+import { createAxiosError } from '~/test-utils/axiosError';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../getReviews';
 
 jest.mock('~/shared/lib/axios', () => ({
   instance: { get: jest.fn() },
-}));
-
-jest.mock('~/shared/lib/errorHandler', () => ({
-  getErrorMessage: jest.fn((e: unknown) => (e instanceof Error ? e.message : '알 수 없는 오류')),
 }));
 
 const mockGet = instance.get as jest.Mock;
@@ -89,5 +88,34 @@ describe('getTossReview', () => {
     mockGet.mockRejectedValue(new Error('Network error'));
 
     await expect(getTossReview()).rejects.toThrow('Network error');
+  });
+});
+
+describe('에러 정책', () => {
+  const cases = [
+    ['getReceiveReview', () => getReceiveReview('3')],
+    ['getMyReceivedReview', () => getMyReceivedReview()],
+    ['getTossReview', () => getTossReview()],
+  ] as const;
+
+  it.each(cases)('%s: 4xx는 상태 코드를 유지한 채 던져 재시도하지 않는다', async (_, call) => {
+    mockGet.mockRejectedValue(createAxiosError(404, { message: '후기를 찾을 수 없습니다.' }));
+
+    const error = await call().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(404);
+    expect((error as Error).message).toBe('후기를 찾을 수 없습니다.');
+    expect(shouldRetryQuery(0, error)).toBe(false);
+    expect(shouldThrowQueryError(error, false)).toBe(false);
+  });
+
+  it.each(cases)('%s: 5xx는 재시도하고 캐시가 없으면 ErrorBoundary로 보낸다', async (_, call) => {
+    mockGet.mockRejectedValue(createAxiosError(500));
+
+    const error = await call().catch((e: unknown) => e);
+
+    expect(shouldRetryQuery(0, error)).toBe(true);
+    expect(shouldThrowQueryError(error, false)).toBe(true);
   });
 });

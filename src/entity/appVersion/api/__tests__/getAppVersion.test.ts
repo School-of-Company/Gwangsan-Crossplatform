@@ -1,6 +1,8 @@
+import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { instance } from '~/shared/lib/axios';
+import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvider';
 import { appVersionHandlers, makeAppVersion } from '~/mocks/handlers/appVersion';
 import { getAppVersion } from '../getAppVersion';
 
@@ -67,5 +69,29 @@ describe('getAppVersion', () => {
     );
 
     await expect(getAppVersion('ios')).rejects.toThrow('버전 정보를 찾을 수 없습니다.');
+  });
+
+  it('4xx는 상태 코드를 유지한 채 던져 재시도하지 않고 ErrorBoundary로 보내지 않는다', async () => {
+    server.use(
+      http.get(`${BASE}/app/version`, () =>
+        HttpResponse.json({ message: '지원하지 않는 플랫폼입니다.' }, { status: 400 })
+      )
+    );
+
+    const error = await getAppVersion('ios').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(400);
+    expect(shouldRetryQuery(0, error)).toBe(false);
+    expect(shouldThrowQueryError(error, false)).toBe(false);
+  });
+
+  it('5xx는 캐시가 없으면 ErrorBoundary로 보낸다', async () => {
+    server.use(http.get(`${BASE}/app/version`, () => new HttpResponse(null, { status: 500 })));
+
+    const error = await getAppVersion('ios').catch((e: unknown) => e);
+
+    expect((error as AxiosError).response?.status).toBe(500);
+    expect(shouldThrowQueryError(error, false)).toBe(true);
   });
 });
