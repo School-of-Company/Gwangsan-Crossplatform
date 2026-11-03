@@ -96,8 +96,7 @@ const ItemFormPage = () => {
   // 이미지 업로드 중·실패는 버튼 문구로 이미 보여준다.
   const disabledReason = (() => {
     if (isFormValid || isSubmitting || !imagesReady) return null;
-    if (mustHaveImage && !hasAtLeastOneImage)
-      return '물건 나눔 글에는 사진을 1장 이상 올려 주세요.';
+    if (mustHaveImage && !hasAtLeastOneImage) return '팔아요 글에는 사진을 1장 이상 올려 주세요.';
     if (title.trim().length === 0) return '주제를 입력해 주세요.';
     if (content.trim().length === 0) return '내용을 입력해 주세요.';
     if (gwangsan.trim().length === 0) return '광산을 입력해 주세요.';
