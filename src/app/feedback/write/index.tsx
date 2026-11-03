@@ -1,4 +1,4 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
 import { FeedbackWritePage } from '~/view/feedback';
 
 export default function FeedbackWrite() {

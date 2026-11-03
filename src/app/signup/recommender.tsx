@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import { RecommenderStep } from '@/widget/signup';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { RecommenderStep } from '~/widget/signup';
 
 export default function SignupRecommender() {
   return (

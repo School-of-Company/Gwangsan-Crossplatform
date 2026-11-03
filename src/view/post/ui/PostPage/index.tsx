@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePostAction } from '@/widget/post/model/usePostAction';
-import { PostPageContent } from '@/widget/post/ui/PostPageContent';
+import { usePostAction } from '~/widget/post/model/usePostAction';
+import { PostPageContent } from '~/widget/post/ui/PostPageContent';
 import ReviewsModal from '~/entity/post/ui/ReviewsModal';
 import { AlertModal, Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';

@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { renderWithProviders } from '~/test-utils';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
-import { useSignupStore } from '@/shared/store/useSignupStore';
+import { useSignupStore } from '~/shared/store/useSignupStore';
 import { signup } from '~/entity/auth/api/signup';
 import RecommenderStep from '../index';
 

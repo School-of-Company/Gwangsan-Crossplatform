@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
-import { PasswordInput } from '@/shared/ui/PasswordInput';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { PasswordInput } from '~/shared/ui/PasswordInput';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';

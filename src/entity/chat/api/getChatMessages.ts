@@ -1,4 +1,4 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import type {
   ChatMessageResponse,
   ChatApiError,
@@ -6,7 +6,7 @@ import type {
   TradeProduct,
 } from '../model/chatTypes';
 import { isTradeProduct } from '../model/chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { toAppError } from '~/shared/lib/errorHandler';
 import type { ChatMessagePageCursor } from '../lib/messageCache';
 

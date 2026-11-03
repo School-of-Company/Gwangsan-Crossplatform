@@ -7,7 +7,7 @@ import {
   CHAT_SOCKET_SERVER_EVENTS,
   type ISocketManager,
   type SocketConnectionConfig,
-} from '@/shared/types/chatType';
+} from '~/shared/types/chatType';
 import { logger } from './logger';
 import { isNetworkOrTimeoutError } from './errorHandler';
 

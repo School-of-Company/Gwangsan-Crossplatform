@@ -22,11 +22,6 @@ module.exports = function (api) {
           extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
           alias: {
             '~': './src',
-            '@/app': './src/app',
-            '@/shared': './src/shared',
-            '@/entity': './src/entity',
-            '@/view': './src/view',
-            '@/widget': './src/widget',
           },
         },
       ],

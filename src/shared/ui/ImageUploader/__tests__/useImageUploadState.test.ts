@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
-import { useUploadImage } from '@/shared/model/useUploadImage';
+import { useUploadImage } from '~/shared/model/useUploadImage';
 import { useImageUploadState } from '../useImageUploadState';
 
-jest.mock('@/shared/model/useUploadImage', () => ({ useUploadImage: jest.fn() }));
+jest.mock('~/shared/model/useUploadImage', () => ({ useUploadImage: jest.fn() }));
 jest.mock('react-native-toast-message', () => ({ show: jest.fn() }));
-jest.mock('@/shared/lib/logger', () => ({ logger: { error: jest.fn(), warn: jest.fn() } }));
+jest.mock('~/shared/lib/logger', () => ({ logger: { error: jest.fn(), warn: jest.fn() } }));
 
 const mockMutateAsync = jest.fn();
 

@@ -1,11 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { setData } from '@/shared/lib/setData';
-import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
+import { setData } from '~/shared/lib/setData';
+import { getDeviceInfo } from '~/shared/model/getDeviceInfo';
 import { signinWithDeviceInfo } from '../signin';
 
 jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'http://test-api.com' }));
-jest.mock('@/shared/lib/axios', () => ({
+jest.mock('~/shared/lib/axios', () => ({
   instance: {
     defaults: { baseURL: 'http://test-api.com' },
     interceptors: {
@@ -16,10 +16,10 @@ jest.mock('@/shared/lib/axios', () => ({
   baseURL: 'http://test-api.com',
   setQueryClientInstance: jest.fn(),
 }));
-jest.mock('@/shared/lib/setData', () => ({
+jest.mock('~/shared/lib/setData', () => ({
   setData: jest.fn(),
 }));
-jest.mock('@/shared/model/getDeviceInfo', () => ({
+jest.mock('~/shared/model/getDeviceInfo', () => ({
   getDeviceInfo: jest.fn(),
 }));
 jest.mock('~/shared/lib/biometricCredentials', () => ({}));

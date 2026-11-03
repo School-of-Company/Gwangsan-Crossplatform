@@ -10,9 +10,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { formatDate } from '@/shared/lib/formatDate';
+import { formatDate } from '~/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { CachedImage } from '~/shared/ui/CachedImage';
 import { useThemeColors } from '~/shared/lib/theme';
 
@@ -133,7 +133,7 @@ const ChatRoomItemComponent = ({
         activeOpacity={0.7}>
         <CachedImage
           source={
-            productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')
+            productImage ? { uri: productImage } : require('~/shared/assets/png/defaultProfile.png')
           }
           className="mr-3 h-14 w-14 rounded-lg"
         />

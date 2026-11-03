@@ -3,10 +3,10 @@ import {
   type ISocketManager,
   type BaseSocketMessage,
   type RoomId,
-} from '@/shared/types/chatType';
+} from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import type { MessageDeletedPayload, MessageUpdatedPayload } from './messageCache';
-import { logger } from '@/shared/lib/logger';
+import { logger } from '~/shared/lib/logger';
 
 export interface TransactionStateChangedPayload {
   roomId: number;

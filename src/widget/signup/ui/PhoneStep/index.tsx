@@ -1,6 +1,6 @@
-import { Input } from '@/shared/ui/Input';
-import { Button } from '@/shared/ui/Button';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { Input } from '~/shared/ui/Input';
+import { Button } from '~/shared/ui/Button';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { Platform, View } from 'react-native';

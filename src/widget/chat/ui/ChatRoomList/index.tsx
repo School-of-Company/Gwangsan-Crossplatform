@@ -17,13 +17,13 @@ import {
   useChatSocket,
   useDeleteChatRoom,
   chatRoomKeys,
-} from '@/entity/chat';
-import type { ChatRoomListItem } from '@/entity/chat';
-import type { RoomId } from '@/shared/types/chatType';
+} from '~/entity/chat';
+import type { ChatRoomListItem } from '~/entity/chat';
+import type { RoomId } from '~/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
-import { ErrorFallback } from '@/shared/ui/ErrorFallback';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';

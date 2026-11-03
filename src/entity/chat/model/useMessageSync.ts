@@ -4,7 +4,7 @@ import { markChatAsRead } from '../api/markChatAsRead';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from './chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
 import { profileQueryKeys } from '~/shared/model/profileQueryKeys';

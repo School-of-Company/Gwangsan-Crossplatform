@@ -1,9 +1,9 @@
-import { instance } from '../lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { ImageType } from '../types/imageType';
-import { logger } from '../lib/logger';
-import { toAppError } from '../lib/errorHandler';
+import { ImageType } from '~/shared/types/imageType';
+import { logger } from '~/shared/lib/logger';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 

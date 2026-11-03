@@ -5,12 +5,7 @@
     "jsx": "react-jsx",
     "types": ["jest", "node"],
     "paths": {
-      "~/*": ["./src/*"],
-      "@/app/*": ["./src/app/*"],
-      "@/shared/*": ["./src/shared/*"],
-      "@/entity/*": ["./src/entity/*"],
-      "@/view/*": ["./src/view/*"],
-      "@/widget/*": ["./src/widget/*"]
+      "~/*": ["./src/*"]
     }
   }
 }

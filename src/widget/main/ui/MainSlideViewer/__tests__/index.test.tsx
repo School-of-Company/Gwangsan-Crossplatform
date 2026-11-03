@@ -3,12 +3,12 @@ import { render, act } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import MainSlideViewer from '../index';
 
-jest.mock('@/shared/assets/png/mainSlides/slide1.png', () => 1);
-jest.mock('@/shared/assets/png/mainSlides/slide2.png', () => 2);
-jest.mock('@/shared/assets/png/mainSlides/slide3.png', () => 3);
-jest.mock('@/shared/assets/png/mainSlides/slide4.png', () => 4);
-jest.mock('@/shared/assets/png/mainSlides/slide5.png', () => 5);
-jest.mock('@/shared/assets/png/mainSlides/slide6.png', () => 6);
+jest.mock('~/shared/assets/png/mainSlides/slide1.png', () => 1);
+jest.mock('~/shared/assets/png/mainSlides/slide2.png', () => 2);
+jest.mock('~/shared/assets/png/mainSlides/slide3.png', () => 3);
+jest.mock('~/shared/assets/png/mainSlides/slide4.png', () => 4);
+jest.mock('~/shared/assets/png/mainSlides/slide5.png', () => 5);
+jest.mock('~/shared/assets/png/mainSlides/slide6.png', () => 6);
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 

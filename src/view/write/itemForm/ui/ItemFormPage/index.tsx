@@ -7,13 +7,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import { logger } from '@/shared/lib/logger';
-import { Button, Header, Input } from '@/shared/ui';
+import { logger } from '~/shared/lib/logger';
+import { Button, Header, Input } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { AlertModal } from '~/shared/ui/AlertModal';
-import { TextField } from '@/shared/ui/TextField';
-import ImageUploader from '@/shared/ui/ImageUploader';
-import type { ImageUploadState } from '@/shared/ui/ImageUploader';
+import { TextField } from '~/shared/ui/TextField';
+import ImageUploader from '~/shared/ui/ImageUploader';
+import type { ImageUploadState } from '~/shared/ui/ImageUploader';
 import {
   createItemFormRequestBody,
   getGwangsanError,

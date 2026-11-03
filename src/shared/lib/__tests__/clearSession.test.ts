@@ -5,8 +5,8 @@ import { clearAuthTokens } from '../auth';
 import { removeData } from '../removeData';
 import { clearCurrentUserId } from '../getCurrentUserId';
 import { cleanupNotificationSession } from '../sessionCleanup';
-import { useChatQueueStore } from '../../store/useChatQueueStore';
-import { useReadRoomsStore } from '../../store/useReadRoomsStore';
+import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
+import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 
 jest.mock('../auth', () => ({ clearAuthTokens: jest.fn() }));
 jest.mock('../removeData', () => ({ removeData: jest.fn() }));

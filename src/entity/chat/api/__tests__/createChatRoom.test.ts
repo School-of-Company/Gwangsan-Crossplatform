@@ -1,9 +1,9 @@
 import { createChatRoom } from '../createChatRoom';
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import Toast from 'react-native-toast-message';
 import { toAppError } from '~/shared/lib/errorHandler';
 
-jest.mock('@/shared/lib/axios', () => ({
+jest.mock('~/shared/lib/axios', () => ({
   instance: { post: jest.fn() },
 }));
 

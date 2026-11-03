@@ -5,7 +5,7 @@
  * - 위 레이어를 import하면 안 된다. 예: entity가 widget/view를, shared가 entity를 import
  * - view·widget·entity는 같은 레이어의 다른 슬라이스를 import하면 안 된다. 예: widget/chat → widget/write
  *
- * `~/`, `@/` 별칭과 상대경로를 모두 실제 경로로 풀어서 판단한다.
+ * `~/` 별칭과 상대경로를 모두 실제 경로로 풀어서 판단한다.
  */
 const path = require('path');
 
@@ -25,7 +25,7 @@ const describe = (segments) => {
 };
 
 const resolveTarget = (source, filename) => {
-  if (source.startsWith('~/') || source.startsWith('@/')) {
+  if (source.startsWith('~/')) {
     return describe(source.slice(2).split('/'));
   }
   if (source.startsWith('.')) {

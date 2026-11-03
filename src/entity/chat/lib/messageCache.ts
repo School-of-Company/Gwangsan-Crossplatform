@@ -1,4 +1,4 @@
-import type { MessageId, RoomId } from '@/shared/types/chatType';
+import type { MessageId, RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 
 export interface MessageUpdatedPayload {

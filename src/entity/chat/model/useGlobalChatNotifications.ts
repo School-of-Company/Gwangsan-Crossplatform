@@ -8,7 +8,7 @@ import { getData } from '~/shared/lib/getData';
 import { getChatRooms } from '../api/getChatRooms';
 import { chatRoomKeys } from './useChatRooms';
 import { isSystemMessage } from '../lib/messagePolicy';
-import type { ChatMessageResponse, RoomId } from '@/shared/types/chatType';
+import type { ChatMessageResponse, RoomId } from '~/shared/types/chatType';
 
 // 다른 방 메시지가 연달아 와도 채팅 목록(GET /chat/rooms)은 이 간격에 한 번만 다시 받는다
 export const ROOM_LIST_REFRESH_INTERVAL_MS = 5 * 1000;

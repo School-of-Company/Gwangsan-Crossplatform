@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import { DongStep } from '@/widget/signup';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { DongStep } from '~/widget/signup';
 
 export default function SignupDongName() {
   return (

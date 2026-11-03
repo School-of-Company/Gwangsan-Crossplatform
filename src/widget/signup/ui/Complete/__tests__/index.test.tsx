@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { useSignupStore } from '@/shared/store/useSignupStore';
+import { useSignupStore } from '~/shared/store/useSignupStore';
 import Complete from '../index';
 
 jest.mock('expo-router', () => ({

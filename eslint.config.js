@@ -9,12 +9,19 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
-  // FSD 레이어 경계(app → view → widget → entity → shared)를 lint로 강제한다(#741).
-  // 문서(.claude/rules/fsd-architecture.md)로만 있던 규칙이라 위반이 18건까지 쌓였었다.
+  // FSD 레이어 경계(app → view → widget → entity → shared). 규칙: .claude/rules/fsd-architecture.md
   {
     files: ['src/**/*.{ts,tsx}'],
     plugins: { fsd: { rules: { 'layer-imports': fsdLayers } } },
-    rules: { 'fsd/layer-imports': 'error' },
+    rules: {
+      'fsd/layer-imports': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [{ group: ['@/*'], message: "src 경로 별칭은 '~/'만 사용합니다." }],
+        },
+      ],
+    },
   },
   {
     settings: {
@@ -23,11 +30,6 @@ module.exports = defineConfig([
           root: ['./src'],
           alias: {
             '~': ['./src'],
-            '@/app': ['./src/app'],
-            '@/shared': ['./src/shared'],
-            '@/entity': ['./src/entity'],
-            '@/view': ['./src/view'],
-            '@/widget': ['./src/widget'],
           },
         },
       },

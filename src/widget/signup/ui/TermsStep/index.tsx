@@ -5,7 +5,7 @@ import Icon from '@expo/vector-icons/Ionicons';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { router } from 'expo-router';
-import { Checkbox } from '@/shared/ui/Checkbox';
+import { Checkbox } from '~/shared/ui/Checkbox';
 import { TERMS_CONTENT } from '../../const/TERMS_CONTENT';
 import { PRIVACY_CONTENT } from '../../const/PRIVACY_CONTENT';
 import { useThemeColors } from '~/shared/lib/theme';

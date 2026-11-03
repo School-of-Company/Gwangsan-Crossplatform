@@ -10,7 +10,7 @@ import {
 import { chatMessageKeys } from './chatQueryKeys';
 import { chatRoomKeys } from './useChatRooms';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
-import type { MessageId, RoomId } from '@/shared/types/chatType';
+import type { MessageId, RoomId } from '~/shared/types/chatType';
 
 interface UpdateChatMessageVariables {
   readonly messageId: MessageId;

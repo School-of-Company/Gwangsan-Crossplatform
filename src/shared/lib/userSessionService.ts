@@ -1,6 +1,6 @@
-import { getData } from '@/shared/lib/getData';
-import { instance } from '@/shared/lib/axios';
-import { logger } from '@/shared/lib/logger';
+import { getData } from '~/shared/lib/getData';
+import { instance } from '~/shared/lib/axios';
+import { logger } from '~/shared/lib/logger';
 
 export interface UserSession {
   readonly memberId: number;

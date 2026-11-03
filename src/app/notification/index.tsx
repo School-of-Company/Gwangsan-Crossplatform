@@ -1,4 +1,4 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
 import { NotificationPage } from '~/view/notification';
 
 export default function Notification() {

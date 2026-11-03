@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
-import { AlertModal } from '@/shared/ui/AlertModal';
-import { Input } from '@/shared/ui/Input';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { AlertModal } from '~/shared/ui/AlertModal';
+import { Input } from '~/shared/ui/Input';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
 import {
   useResetPasswordFormField,

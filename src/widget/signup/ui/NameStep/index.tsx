@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
-import { Input } from '@/shared/ui/Input';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { Input } from '~/shared/ui/Input';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField, useSignupResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { nameSchema } from '~/entity/auth/model/authSchema';

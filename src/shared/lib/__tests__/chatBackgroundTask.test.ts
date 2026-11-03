@@ -39,7 +39,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-jest.mock('@/shared/lib/publicInstance', () => ({ publicInstance: { get: jest.fn() } }));
+jest.mock('~/shared/lib/publicInstance', () => ({ publicInstance: { get: jest.fn() } }));
 
 const mockDefineTask = TaskManager.defineTask as jest.Mock;
 const mockIsTaskRegisteredAsync = TaskManager.isTaskRegisteredAsync as jest.Mock;
@@ -58,7 +58,7 @@ const mockAsyncRemoveItem = AsyncStorage.removeItem as jest.Mock;
 const defineTaskCall = mockDefineTask.mock.calls[0];
 const taskHandler = defineTaskCall[1] as () => Promise<unknown>;
 
-const { publicInstance } = jest.requireMock('@/shared/lib/publicInstance');
+const { publicInstance } = jest.requireMock('~/shared/lib/publicInstance');
 const mockGet = publicInstance.get as jest.Mock;
 
 beforeEach(() => {

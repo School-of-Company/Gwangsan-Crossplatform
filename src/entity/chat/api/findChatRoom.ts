@@ -1,6 +1,6 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import type { FindChatRoomResponse, ChatApiError } from '../model/chatTypes';
-import type { ProductId } from '@/shared/types/chatType';
+import type { ProductId } from '~/shared/types/chatType';
 import { toAppError } from '~/shared/lib/errorHandler';
 
 export const findChatRoom = async (productId: ProductId): Promise<FindChatRoomResponse> => {

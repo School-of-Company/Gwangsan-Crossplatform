@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Toast from 'react-native-toast-message';
-import { useUploadImage } from '@/shared/model/useUploadImage';
-import { ImageType } from '@/shared/types/imageType';
-import { logger } from '@/shared/lib/logger';
+import { useUploadImage } from '~/shared/model/useUploadImage';
+import { ImageType } from '~/shared/types/imageType';
+import { logger } from '~/shared/lib/logger';
 
 export interface ImageUploadState {
   readonly totalImages: number;

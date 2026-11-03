@@ -1,6 +1,6 @@
 import { Modal, Text, View } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { Button } from '@/shared/ui/Button';
+import { Button } from '~/shared/ui/Button';
 
 interface NoNetworkOverlayProps {
   visible: boolean;

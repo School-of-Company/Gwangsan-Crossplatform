@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { TextField } from '@/shared/ui/TextField';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { TextField } from '~/shared/ui/TextField';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import SignupForm from '~/entity/auth/ui/SignupForm';
 import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { descriptionSchema } from '~/entity/auth/model/authSchema';

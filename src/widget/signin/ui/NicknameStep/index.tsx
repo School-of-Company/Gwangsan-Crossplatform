@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Input } from '@/shared/ui/Input';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { Input } from '~/shared/ui/Input';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import SigninForm from '~/entity/auth/ui/SigninForm';
 import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { nicknameSchema } from '~/entity/auth/model/authSchema';

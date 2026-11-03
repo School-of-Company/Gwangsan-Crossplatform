@@ -3,10 +3,10 @@ import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatInput } from '../useChatInput';
 
-import { useUploadImage } from '@/shared/model/useUploadImage';
+import { useUploadImage } from '~/shared/model/useUploadImage';
 import * as ImagePicker from 'expo-image-picker';
 
-jest.mock('@/shared/model/useUploadImage', () => ({
+jest.mock('~/shared/model/useUploadImage', () => ({
   useUploadImage: jest.fn(),
 }));
 

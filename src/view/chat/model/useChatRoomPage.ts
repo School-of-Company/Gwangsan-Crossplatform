@@ -11,7 +11,7 @@ import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
 import { useChatUIState } from '~/widget/chat/model/useChatUIState';
 import { useMessageActions } from '~/widget/chat/model/useMessageActions';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
 import { useGetReviews } from '~/entity/reviews/model/useGetReviews';

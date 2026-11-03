@@ -6,7 +6,7 @@ import {
   renderMessageContent,
   type MessageRenderConfig,
   type ChatMessageResponse,
-} from '@/entity/chat';
+} from '~/entity/chat';
 import Icon from '@expo/vector-icons/Ionicons';
 import { useThemeColors } from '~/shared/lib/theme';
 

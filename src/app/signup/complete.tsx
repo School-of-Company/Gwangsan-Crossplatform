@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import { Complete } from '@/widget/signup';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { Complete } from '~/widget/signup';
 
 export default function SignupComplete() {
   return (

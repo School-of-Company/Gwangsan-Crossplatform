@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { ChatRoomItem } from '../index';
 import type { ChatRoomListItem } from '../../../model/chatTypes';
 
-jest.mock('@/shared/lib/formatDate', () => ({
+jest.mock('~/shared/lib/formatDate', () => ({
   formatDate: jest.fn(() => '방금 전'),
 }));
 

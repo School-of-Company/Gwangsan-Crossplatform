@@ -1,6 +1,6 @@
-import { Input } from '@/shared/ui/Input';
-import { Button } from '@/shared/ui/Button';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
+import { Input } from '~/shared/ui/Input';
+import { Button } from '~/shared/ui/Button';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
 import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
 import {
   useResetPasswordFormField,

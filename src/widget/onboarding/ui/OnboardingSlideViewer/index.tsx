@@ -10,7 +10,7 @@ import {
 import onboardingSlide1 from '~/shared/assets/png/startSlide/onboardingSlide1.png';
 import onboardingSlide2 from '~/shared/assets/png/startSlide/onboardingSlide2.png';
 import onboardingSlide3 from '~/shared/assets/png/startSlide/onboardingSlide3.png';
-import { SlideIndicator } from '@/shared/ui';
+import { SlideIndicator } from '~/shared/ui';
 
 const images = [onboardingSlide1, onboardingSlide2, onboardingSlide3];
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');

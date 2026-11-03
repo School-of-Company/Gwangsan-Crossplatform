@@ -1,4 +1,4 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
 import PurchasedPageView from '~/view/profile/ui/PurchasedPage';
 
 export default function ProfilePurchasedPage() {
