@@ -5,6 +5,7 @@ import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { NoticeDetailSlideViewer } from '~/widget/notice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetNoticeDetail } from '~/entity/notice';
+import { formatDateTime } from '~/shared/lib/formatDateTime';
 
 const NoticeDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -43,7 +44,7 @@ const NoticeDetailPage = () => {
 
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-base text-foreground">{notice.place || ''}</Text>
-            <Text className="text-sm text-foreground">{notice.createdAt || ''}</Text>
+            <Text className="text-sm text-foreground">{formatDateTime(notice.createdAt)}</Text>
           </View>
 
           <Text className="text-base leading-6 text-foreground">{notice.content}</Text>

@@ -103,7 +103,7 @@ describe('NoticeDetailPage', () => {
         title: '테스트 공지',
         content: '공지 내용입니다.',
         place: '광산구청',
-        createdAt: '2025-01-15',
+        createdAt: '2025-01-15T09:05:00',
         role: 'ROLE_PLACE_ADMIN',
         images: [],
       },
@@ -111,12 +111,13 @@ describe('NoticeDetailPage', () => {
       error: null,
     });
 
-    const { getByText } = renderWithProviders(<NoticeDetailPage />);
+    const { getByText, queryByText } = renderWithProviders(<NoticeDetailPage />);
 
     expect(getByText('테스트 공지')).toBeTruthy();
     expect(getByText('공지 내용입니다.')).toBeTruthy();
     expect(getByText('광산구청')).toBeTruthy();
-    expect(getByText('2025-01-15')).toBeTruthy();
+    expect(getByText('2025.01.15 09:05')).toBeTruthy();
+    expect(queryByText('2025-01-15T09:05:00')).toBeNull();
   });
 
   it('이미지가 있으면 SlideViewer를 렌더링한다', () => {
