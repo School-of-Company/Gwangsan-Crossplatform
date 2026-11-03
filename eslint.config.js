@@ -3,6 +3,8 @@ const expoConfig = require('eslint-config-expo/flat');
 const security = require('eslint-plugin-security');
 const fsdLayers = require('./scripts/eslint/fsd-layers');
 
+const aliasPattern = { group: ['@/*'], message: "src 경로 별칭은 '~/'만 사용합니다." };
+
 module.exports = defineConfig([
   expoConfig,
   security.configs.recommended,
@@ -15,12 +17,7 @@ module.exports = defineConfig([
     plugins: { fsd: { rules: { 'layer-imports': fsdLayers } } },
     rules: {
       'fsd/layer-imports': 'error',
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [{ group: ['@/*'], message: "src 경로 별칭은 '~/'만 사용합니다." }],
-        },
-      ],
+      'no-restricted-imports': ['error', { patterns: [aliasPattern] }],
     },
   },
   {
@@ -43,7 +40,22 @@ module.exports = defineConfig([
   {
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['**/__tests__/**', '**/*.test.{ts,tsx}', 'src/test-utils/**'],
-    rules: { '@typescript-eslint/no-explicit-any': 'error' },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-native',
+              importNames: ['StyleSheet'],
+              message: 'NativeWind className으로 스타일을 지정합니다.',
+            },
+          ],
+          patterns: [aliasPattern],
+        },
+      ],
+    },
   },
   // jest.mock 팩토리·isolateModules 안에서는 호이스팅 때문에 require만 쓸 수 있다.
   {
