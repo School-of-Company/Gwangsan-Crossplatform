@@ -43,4 +43,12 @@ describe('Light', () => {
 
     expect(getByText('밝기')).toBeTruthy();
   });
+
+  it('채움 막대에 색을 칠하고 lightLevel만큼 너비를 채운다', () => {
+    const { getByTestId } = render(<Light lightLevel={50} />);
+    const fill = getByTestId('light-fill');
+
+    expect(fill.props.className).toContain('bg-main-500');
+    expect(fill.props.style).toEqual(expect.objectContaining({ width: '50%' }));
+  });
 });

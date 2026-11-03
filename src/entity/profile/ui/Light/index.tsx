@@ -12,7 +12,8 @@ export default function Light({ lightLevel = 1 }: LightProps) {
       <View className="relative flex h-5 w-full justify-center rounded-xl bg-gray-200">
         <View className="absolute left-1 right-1 h-3 overflow-hidden rounded-xl">
           <View
-            className="h-full rounded-xl"
+            testID="light-fill"
+            className="h-full rounded-xl bg-main-500"
             style={{ width: `${Math.min(Math.max(lightLevel, 0), 100)}%` }}
           />
         </View>
