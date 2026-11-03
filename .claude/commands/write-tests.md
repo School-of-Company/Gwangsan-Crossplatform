@@ -4,8 +4,8 @@ Write unit tests for the specified file or feature: $ARGUMENTS
 
 - **Framework**: Jest + React Testing Library
 - **API mocking**: MSW (mocks in `src/mocks/`)
-- **Test helpers**: `src/test-utils/` — import via `@/test-utils` (`renderWithProviders`, `renderHookWithProviders`, `createQueryWrapper`)
-- **Path alias**: `@/` maps to `src/`
+- **Test helpers**: `src/test-utils/` — import via `~/test-utils` (`renderWithProviders`, `renderHookWithProviders`, `createQueryWrapper`)
+- **Path alias**: `~/` maps to `src/`
 - **Run tests**: `npx jest src/path/to/file.test.ts --no-coverage`
 
 ## Instructions
@@ -17,7 +17,7 @@ Write unit tests for the specified file or feature: $ARGUMENTS
 3. **Test structure**:
    - Place test file next to the source file: `foo.ts` → `foo.test.ts`
    - Group with `describe`, name cases with `it` or `test`
-   - Use `@/test-utils` render helpers for components
+   - Use `~/test-utils` render helpers for components
 
 4. **API calls**: Mock with MSW handlers. Add handlers to `src/mocks/handlers/` if they don't exist yet.
 

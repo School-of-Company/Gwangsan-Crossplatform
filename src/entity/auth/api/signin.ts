@@ -1,5 +1,5 @@
-import { setData } from '@/shared/lib/setData';
-import { getDeviceInfo } from '@/shared/model/getDeviceInfo';
+import { setData } from '~/shared/lib/setData';
+import { getDeviceInfo } from '~/shared/model/getDeviceInfo';
 import { SigninFormData, AuthResponse } from '~/shared/types/authState';
 import { publicInstance } from '~/shared/lib/publicInstance';
 import { toAppError } from '~/shared/lib/errorHandler';

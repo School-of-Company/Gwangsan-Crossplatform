@@ -1,10 +1,10 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useUploadImage } from '../useUploadImage';
-import { uploadImage } from '../../api/uploadImage';
+import { uploadImage } from '~/shared/api/uploadImage';
 import Toast from 'react-native-toast-message';
 
-jest.mock('../../api/uploadImage', () => ({
+jest.mock('~/shared/api/uploadImage', () => ({
   uploadImage: jest.fn(),
 }));
 

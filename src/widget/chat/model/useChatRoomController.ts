@@ -5,10 +5,10 @@ import {
   useChatMessages as useChatMessagesEntity,
   chatMessageKeys,
   chatRoomKeys,
+  useChatSocket,
+  useResilientMessageSender,
+  useChatOtherUser,
 } from '~/entity/chat';
-import { useChatSocket } from '~/entity/chat/model/useChatSocket';
-import { useResilientMessageSender } from '~/entity/chat/model/useResilientMessageSender';
-import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
 import { ensureMessagesArray } from '~/shared/lib/userUtils';
 import type { RoomId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '~/entity/chat';

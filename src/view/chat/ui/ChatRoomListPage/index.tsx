@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Header } from '@/shared/ui/Header';
-import { ChatRoomList } from '@/widget/chat';
+import { Header } from '~/shared/ui/Header';
+import { ChatRoomList } from '~/widget/chat';
 
 export default function ChatRoomListPage() {
   return (

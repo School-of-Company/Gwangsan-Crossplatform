@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
-import { useSignupStore } from '@/shared/store/useSignupStore';
-import { useSigninStore } from '@/shared/store/useSigninStore';
-import { useResetPasswordStore } from '@/shared/store/useResetPasswordStore';
+import { useSignupStore } from '~/shared/store/useSignupStore';
+import { useSigninStore } from '~/shared/store/useSigninStore';
+import { useResetPasswordStore } from '~/shared/store/useResetPasswordStore';
 import {
   useCurrentStep,
   useStepNavigation,
@@ -16,13 +16,13 @@ import {
 } from '../useAuthSelectors';
 import type { SignupState, SigninState, ResetPasswordState } from '~/shared/types/authState';
 
-jest.mock('@/shared/store/useSignupStore', () => ({
+jest.mock('~/shared/store/useSignupStore', () => ({
   useSignupStore: jest.fn(),
 }));
-jest.mock('@/shared/store/useSigninStore', () => ({
+jest.mock('~/shared/store/useSigninStore', () => ({
   useSigninStore: jest.fn(),
 }));
-jest.mock('@/shared/store/useResetPasswordStore', () => ({
+jest.mock('~/shared/store/useResetPasswordStore', () => ({
   useResetPasswordStore: jest.fn(),
 }));
 

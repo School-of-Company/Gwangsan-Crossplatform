@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import ReviewWritePage from '@/view/chat/ui/ReviewWritePage';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { ReviewWritePage } from '~/view/chat';
 
 export default function Review() {
   return (

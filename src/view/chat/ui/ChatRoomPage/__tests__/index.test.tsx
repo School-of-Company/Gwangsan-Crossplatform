@@ -60,7 +60,7 @@ jest.mock('~/widget/chat/model/useMessageActions', () => ({
   useMessageActions: jest.fn(),
 }));
 
-jest.mock('@/shared/ui/AlertModal', () => ({
+jest.mock('~/shared/ui/AlertModal', () => ({
   AlertModal: ({ isVisible, message, confirmText, onConfirm, onCancel }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     if (!isVisible) return null;
@@ -99,14 +99,14 @@ jest.mock('~/entity/profile/model/useBlockUser', () => ({
   useBlockUser: jest.fn(),
 }));
 
-jest.mock('@/widget/chat/ui/ChatRoomHeader', () => ({
+jest.mock('~/widget/chat/ui/ChatRoomHeader', () => ({
   ChatRoomHeader: () => {
     const { View } = require('react-native');
     return <View testID="chat-room-header" />;
   },
 }));
 
-jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
+jest.mock('~/widget/chat/ui/ChatRoomProductInfo', () => ({
   ChatRoomProductInfo: ({ title, gwangsan, trailing, onPress }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
@@ -121,7 +121,7 @@ jest.mock('@/widget/chat/ui/ChatRoomProductInfo', () => ({
   },
 }));
 
-jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
+jest.mock('~/widget/chat/ui/ChatRoomContent', () => ({
   ChatRoomContent: ({
     messages,
     onReviewButtonPress,
@@ -158,7 +158,7 @@ jest.mock('@/widget/chat/ui/ChatRoomContent', () => ({
   },
 }));
 
-jest.mock('@/widget/chat/ui/TradeRequestModal', () => ({
+jest.mock('~/widget/chat/ui/TradeRequestModal', () => ({
   TradeRequestModal: ({ isVisible, onClose, onTradeRequest, isLoading }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
@@ -176,7 +176,7 @@ jest.mock('@/widget/chat/ui/TradeRequestModal', () => ({
   },
 }));
 
-jest.mock('@/widget/chat/ui/ReservationConfirmModal', () => ({
+jest.mock('~/widget/chat/ui/ReservationConfirmModal', () => ({
   ReservationConfirmModal: ({ isVisible, onClose, onConfirm }: any) => {
     const { View, Text, TouchableOpacity } = require('react-native');
     return (
@@ -193,7 +193,7 @@ jest.mock('@/widget/chat/ui/ReservationConfirmModal', () => ({
   },
 }));
 
-jest.mock('@/shared/ui/Header', () => ({
+jest.mock('~/shared/ui/Header', () => ({
   Header: ({ headerTitle, connectionState }: any) => {
     const { View, Text } = require('react-native');
     return (
@@ -205,7 +205,7 @@ jest.mock('@/shared/ui/Header', () => ({
   },
 }));
 
-jest.mock('@/widget/chat/ui/MessageActionOverlay', () => ({
+jest.mock('~/widget/chat/ui/MessageActionOverlay', () => ({
   MessageActionOverlay: ({
     visible,
     anchor,
@@ -230,7 +230,9 @@ jest.mock('@/widget/chat/ui/MessageActionOverlay', () => ({
   },
 }));
 
-jest.mock('@/widget/chat', () => ({
+// 나머지 export는 위의 개별 모듈 mock을 그대로 다시 내보낸다
+jest.mock('~/widget/chat', () => ({
+  ...jest.requireActual('~/widget/chat'),
   MyMessage: ({ message }: any) => {
     const { Text } = require('react-native');
     return <Text testID="overlay-focused-message">{message.content}</Text>;

@@ -5,21 +5,20 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
-import { useChatRoomController } from '~/widget/chat/model/useChatRoomController';
-import { useChatAction } from '~/widget/chat/model/useChatActions';
-import { useTradeHandlers } from '~/widget/chat/model/useTradeHandlers';
-import { useChatUIState } from '~/widget/chat/model/useChatUIState';
-import { useMessageActions } from '~/widget/chat/model/useMessageActions';
-import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import type { RoomId } from '@/shared/types/chatType';
-import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
-import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
-import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
+import {
+  useChatRoomController,
+  useChatAction,
+  useTradeHandlers,
+  useChatUIState,
+  useMessageActions,
+} from '~/widget/chat';
+import { useChatRoomData, chatRoomDataKeys } from '~/entity/chat';
+import type { RoomId } from '~/shared/types/chatType';
+import { useTradeRequest } from '~/widget/post';
+import { useGetMyInformation, useGetBlockList, useBlockUser } from '~/entity/profile';
+import { useGetReviews } from '~/entity/reviews';
 import type { ChatApiError } from '~/entity/chat';
-import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
-import { useBlockUser } from '~/entity/profile/model/useBlockUser';
 import { isValidId } from '~/shared/lib/validateId';
-import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
 // 채팅방 화면의 상태·핸들러(메시지·소켓, 거래·예약, 차단, 후기, 바텀시트 열기)를 한곳에 모은다.
 // ChatRoomPage는 이 값으로 그리기만 한다

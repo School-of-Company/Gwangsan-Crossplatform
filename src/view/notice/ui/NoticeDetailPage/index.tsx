@@ -4,7 +4,7 @@ import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { NoticeDetailSlideViewer } from '~/widget/notice';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetNoticeDetail } from '~/entity/notice/model/useGetNoticeDetail';
+import { useGetNoticeDetail } from '~/entity/notice';
 
 const NoticeDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();

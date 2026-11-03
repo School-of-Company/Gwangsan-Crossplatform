@@ -1,6 +1,6 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { toAppError } from '~/shared/lib/errorHandler';
-import type { MessageId } from '@/shared/types/chatType';
+import type { MessageId } from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 
 export interface UpdateChatMessageRequest {

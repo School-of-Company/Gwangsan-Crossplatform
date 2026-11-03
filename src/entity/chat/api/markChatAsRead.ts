@@ -1,5 +1,5 @@
-import { instance } from '@/shared/lib/axios';
-import type { RoomId, MessageId } from '@/shared/types/chatType';
+import { instance } from '~/shared/lib/axios';
+import type { RoomId, MessageId } from '~/shared/types/chatType';
 import type { ChatApiError } from '../model/chatTypes';
 import { toAppError } from '~/shared/lib/errorHandler';
 

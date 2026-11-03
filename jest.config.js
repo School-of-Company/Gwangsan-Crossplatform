@@ -10,7 +10,7 @@ module.exports = {
     '^.+\\.mjs$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind|@sentry/react-native|react-native-toast-message|react-native-keychain|react-native-reanimated|msw|@mswjs|until-async|rettime|@open-draft|is-node-process|outvariant|strict-event-emitter|@bundled-es-modules|statuses)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind|@sentry/react-native|react-native-toast-message|react-native-keychain|react-native-reanimated|msw|@mswjs|until-async|rettime|@open-draft|is-node-process|outvariant|strict-event-emitter|@bundled-es-modules|statuses|standard-navigation)',
   ],
   moduleNameMapper: {
     '^react-native-reanimated$': '<rootDir>/__mocks__/react-native-reanimated.js',
@@ -25,11 +25,6 @@ module.exports = {
     '^msw$': '<rootDir>/node_modules/msw/lib/core/index.js',
     '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
     '^~/(.*)$': '<rootDir>/src/$1',
-    '^@/app/(.*)$': '<rootDir>/src/app/$1',
-    '^@/shared/(.*)$': '<rootDir>/src/shared/$1',
-    '^@/entity/(.*)$': '<rootDir>/src/entity/$1',
-    '^@/view/(.*)$': '<rootDir>/src/view/$1',
-    '^@/widget/(.*)$': '<rootDir>/src/widget/$1',
   },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
   // src/app/**는 대부분 Expo Router 라우트 파일(로직 없는 화면 매핑)이라 전부 제외했으나,

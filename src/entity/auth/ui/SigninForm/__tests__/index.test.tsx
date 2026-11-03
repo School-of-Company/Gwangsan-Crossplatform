@@ -12,7 +12,7 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), replace: jest.fn(), back: jest.fn() },
 }));
-jest.mock('@/shared/assets/svg/BackArrow', () => {
+jest.mock('~/shared/assets/svg/BackArrow', () => {
   const React = require('react');
   return { __esModule: true, default: () => React.createElement('View', null) };
 });

@@ -3,10 +3,10 @@ import {
   type ISocketManager,
   type BaseSocketMessage,
   type RoomId,
-} from '@/shared/types/chatType';
+} from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import type { MessageDeletedPayload, MessageUpdatedPayload } from './messageCache';
-import { logger } from '@/shared/lib/logger';
+import { logger } from '~/shared/lib/logger';
 
 export interface TransactionStateChangedPayload {
   roomId: number;
@@ -65,7 +65,7 @@ export interface IChatSocketService {
 export const createChatSocketService = (socketManager: ISocketManager): IChatSocketService => {
   const eventHandlers = new Map<string, Set<Function>>();
 
-  const emit = (event: string, ...args: any[]): void => {
+  const emit = (event: string, ...args: unknown[]): void => {
     const handlers = eventHandlers.get(event);
     if (handlers) {
       handlers.forEach((handler) => {
@@ -81,7 +81,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
   const forwardedEvents: readonly (keyof ChatSocketEvents)[] = CHAT_SOCKET_EVENTS;
 
   const stopForwarding = forwardedEvents.map((event) => {
-    const handler = (...args: any[]) => emit(event, ...args);
+    const handler = (...args: unknown[]) => emit(event, ...args);
     socketManager.on(event, handler);
     return () => socketManager.off(event, handler);
   });

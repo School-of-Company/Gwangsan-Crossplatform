@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
-import { getChatSocketManager } from '@/shared/lib/socket';
+import { getChatSocketManager } from '~/shared/lib/socket';
 import { createChatSocketService, type SocketErrorPayload } from '../lib/socketService';
 import { isBlockedSocketError } from '../lib/blockError';
 import { useSocketConnection } from './useSocketConnection';
 import { useMessageSync } from './useMessageSync';
 import { useSocketEventHandlers } from './useSocketEventHandlers';
-import { useChatQueueStore, MESSAGE_STATUS } from '@/shared/store/useChatQueueStore';
-import type { RoomId } from '@/shared/types/chatType';
+import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
+import type { RoomId } from '~/shared/types/chatType';
 
 interface useChatSocketProps {
   autoConnect?: boolean;

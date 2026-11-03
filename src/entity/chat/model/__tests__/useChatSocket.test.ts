@@ -2,14 +2,14 @@ import { act, renderHook } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import { useChatSocket } from '../useChatSocket';
 import { createChatSocketService } from '../../lib/socketService';
-import { getChatSocketManager } from '@/shared/lib/socket';
+import { getChatSocketManager } from '~/shared/lib/socket';
 import { useSocketConnection } from '../useSocketConnection';
 import { useMessageSync } from '../useMessageSync';
 import { useSocketEventHandlers } from '../useSocketEventHandlers';
-import { useChatQueueStore, MESSAGE_STATUS } from '@/shared/store/useChatQueueStore';
-import type { RoomId } from '@/shared/types/chatType';
+import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
+import type { RoomId } from '~/shared/types/chatType';
 
-jest.mock('@/shared/lib/socket', () => ({
+jest.mock('~/shared/lib/socket', () => ({
   getChatSocketManager: jest.fn(() => ({})),
 }));
 

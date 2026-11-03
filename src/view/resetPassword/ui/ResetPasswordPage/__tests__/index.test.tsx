@@ -7,7 +7,7 @@ jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useResetPasswordCurrentStep: jest.fn(),
 }));
 
-jest.mock('@/widget/resetPassword', () => ({
+jest.mock('~/widget/resetPassword', () => ({
   PhoneStep: () => {
     const { Text } = require('react-native');
     return <Text testID="phone-step">phone</Text>;

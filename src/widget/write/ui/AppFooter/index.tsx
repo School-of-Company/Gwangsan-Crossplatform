@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Footer } from '~/shared/ui/Footer';
+import { Footer } from '../Footer';
 import { useChatRooms } from '~/entity/chat';
 import { WriteEntryModal } from '../WriteEntryModal';
 

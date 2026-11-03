@@ -2,15 +2,7 @@
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 <View
-  style={
-    {
-      "bottom": 0,
-      "left": 0,
-      "position": "absolute",
-      "right": 0,
-      "top": 0,
-    }
-  }
+  className="absolute inset-0"
 >
   <View
     className="flex-1"
@@ -144,15 +136,7 @@ exports[`BottomSheetModalWrapper 스냅샷 - hasHeader false 1`] = `
 
 exports[`BottomSheetModalWrapper 스냅샷 - hasHeader true (기본값) 1`] = `
 <View
-  style={
-    {
-      "bottom": 0,
-      "left": 0,
-      "position": "absolute",
-      "right": 0,
-      "top": 0,
-    }
-  }
+  className="absolute inset-0"
 >
   <View
     className="flex-1"

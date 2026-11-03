@@ -19,9 +19,7 @@ import { Header, PillTabs } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { MODE } from '~/shared/types/mode';
 import { PostType } from '~/shared/types/postType';
-import { useGetProfile } from '~/entity/profile/model/useGetProfile';
-import { useGetMyPosts } from '~/entity/profile/model/useGetMyPosts';
-import { useGetMemberPosts } from '~/entity/profile/model/useGetMemberPosts';
+import { useGetProfile, useGetMyPosts, useGetMemberPosts } from '~/entity/profile';
 
 type TradeTab = 'purchased' | 'sold';
 type CounterpartRole = 'seller' | 'buyer';

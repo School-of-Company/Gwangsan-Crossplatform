@@ -2,9 +2,9 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import NoticeDetailSlideViewer from '../index';
-import { NoticeData } from '@/entity/notice/model/noticeData';
+import { NoticeData } from '~/entity/notice/model/noticeData';
 
-jest.mock('@/shared/ui', () => ({
+jest.mock('~/shared/ui', () => ({
   SlideIndicator: ({
     total,
     current,

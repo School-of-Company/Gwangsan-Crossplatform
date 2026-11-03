@@ -1,8 +1,8 @@
 import { createChatSocketService } from '../socketService';
-import type { ISocketManager } from '@/shared/types/chatType';
-import { logger } from '@/shared/lib/logger';
+import type { ISocketManager } from '~/shared/types/chatType';
+import { logger } from '~/shared/lib/logger';
 
-jest.mock('@/shared/lib/logger', () => ({
+jest.mock('~/shared/lib/logger', () => ({
   logger: {
     error: jest.fn(),
     warn: jest.fn(),

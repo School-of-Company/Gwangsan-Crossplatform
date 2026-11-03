@@ -4,7 +4,7 @@ import Toast from 'react-native-toast-message';
 import { createChatRoom } from '../api/createChatRoom';
 import { chatRoomKeys } from './useChatRooms';
 import type { CreateChatRoomResponse, ChatApiError } from './chatTypes';
-import type { ProductId } from '@/shared/types/chatType';
+import type { ProductId } from '~/shared/types/chatType';
 
 interface UseCreateChatRoomParams {
   onSuccess?: (data: CreateChatRoomResponse) => void;

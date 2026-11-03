@@ -1,8 +1,8 @@
 import { markChatAsRead } from '../markChatAsRead';
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import Toast from 'react-native-toast-message';
 
-jest.mock('@/shared/lib/axios', () => ({
+jest.mock('~/shared/lib/axios', () => ({
   instance: { patch: jest.fn() },
 }));
 

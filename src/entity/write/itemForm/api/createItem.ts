@@ -1,4 +1,4 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { ItemFormRequestBody } from '../model/itemFormSchema';
 import { toAppError } from '~/shared/lib/errorHandler';
 import { logger } from '~/shared/lib/logger';

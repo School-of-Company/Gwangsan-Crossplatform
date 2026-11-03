@@ -19,7 +19,7 @@ ruleTester.run('fsd-layers', rule, {
       code: "import { useChatRooms } from '~/entity/chat';",
       filename: file('widget/chat/ui/a.tsx'),
     },
-    { code: "import { ChatInput } from '@/widget/chat';", filename: file('view/chat/ui/a.tsx') },
+    { code: "import { ChatInput } from '~/widget/chat';", filename: file('view/chat/ui/a.tsx') },
     {
       code: "import Page from '~/view/chat/ui/ChatRoomPage';",
       filename: file('app/chatting/[id].tsx'),
@@ -42,7 +42,7 @@ ruleTester.run('fsd-layers', rule, {
   ],
   invalid: [
     {
-      code: "import { getChatRooms } from '@/entity/chat';",
+      code: "import { getChatRooms } from '~/entity/chat';",
       filename: file('shared/lib/a.ts'),
       errors: [{ messageId: 'upward' }],
     },

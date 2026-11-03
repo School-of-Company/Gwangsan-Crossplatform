@@ -6,7 +6,7 @@ export const useCustomFonts = () => {
 
   useEffect(() => {
     Font.loadAsync({
-      Cafe24SsurroundOTF: require('@/shared/assets/fonts/Cafe24Ssurround-v2.0/Cafe24Ssurround-v2.0.otf'),
+      Cafe24SsurroundOTF: require('~/shared/assets/fonts/Cafe24Ssurround-v2.0/Cafe24Ssurround-v2.0.otf'),
     }).then(() => setLoaded(true));
   }, []);
 

@@ -4,9 +4,9 @@ import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
-import { publicInstance } from '@/shared/lib/publicInstance';
-import { logger } from '@/shared/lib/logger';
-import { MESSAGE_TYPE, type ChatRoomListItem } from '@/shared/types/chatType';
+import { publicInstance } from '~/shared/lib/publicInstance';
+import { logger } from '~/shared/lib/logger';
+import { MESSAGE_TYPE, type ChatRoomListItem } from '~/shared/types/chatType';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
 const LAST_UNREAD_KEY = 'chatLastUnreadState';

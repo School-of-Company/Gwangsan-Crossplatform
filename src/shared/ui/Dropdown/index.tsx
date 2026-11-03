@@ -1,7 +1,7 @@
 import Icon from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
-import { brandColors, useThemeColors } from '@/shared/lib/theme';
+import { brandColors, useThemeColors } from '~/shared/lib/theme';
 
 interface DropdownProps<T extends string> {
   label?: string;

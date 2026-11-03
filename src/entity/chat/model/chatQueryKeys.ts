@@ -1,4 +1,4 @@
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 
 export const chatRoomKeys = {
   all: ['chatRooms'] as const,

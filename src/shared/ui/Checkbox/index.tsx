@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import { useThemeColors } from '@/shared/lib/theme';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface CheckboxProps {
   checked: boolean;

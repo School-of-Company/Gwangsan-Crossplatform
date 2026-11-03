@@ -21,7 +21,7 @@ jest.mock('~/entity/auth/model/usePasswordResetPhoneVerification', () => ({
   usePasswordResetPhoneVerification: jest.fn(),
 }));
 
-jest.mock('@/shared/ui/Input', () => {
+jest.mock('~/shared/ui/Input', () => {
   const React = require('react');
   const { TextInput } = require('react-native');
   return {
@@ -38,7 +38,7 @@ jest.mock('@/shared/ui/Input', () => {
   };
 });
 
-jest.mock('@/shared/ui/Button', () => {
+jest.mock('~/shared/ui/Button', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
   return {
@@ -56,7 +56,7 @@ jest.mock('@/shared/ui/Button', () => {
   };
 });
 
-jest.mock('@/shared/ui/ErrorMessage', () => {
+jest.mock('~/shared/ui/ErrorMessage', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {

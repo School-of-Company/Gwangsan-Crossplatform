@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import { ReservationLocationPage } from '@/view/chat/ui/ReservationLocationPage';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { ReservationLocationPage } from '~/view/chat';
 
 export default function ReservationLocation() {
   return (

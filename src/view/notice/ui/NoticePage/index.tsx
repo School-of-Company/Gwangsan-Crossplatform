@@ -2,7 +2,7 @@ import { FlatList, ScrollView, ActivityIndicator, Text, View, RefreshControl } f
 import { NoticeItem } from '~/widget/notice';
 import { Header } from '~/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetNoticeList } from '~/entity/notice/model/useGetNoticeList';
+import { useGetNoticeList } from '~/entity/notice';
 import { useCallback, useState } from 'react';
 
 const NoticePage = () => {

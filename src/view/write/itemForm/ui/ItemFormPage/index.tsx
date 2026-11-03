@@ -7,27 +7,26 @@ import {
   Text,
   View,
 } from 'react-native';
-import { logger } from '@/shared/lib/logger';
-import { Button, Header, Input } from '@/shared/ui';
+import { logger } from '~/shared/lib/logger';
+import { Button, Header, Input } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { AlertModal } from '~/shared/ui/AlertModal';
-import { TextField } from '@/shared/ui/TextField';
-import ImageUploader from '@/shared/ui/ImageUploader';
-import type { ImageUploadState } from '@/shared/ui/ImageUploader';
+import { TextField } from '~/shared/ui/TextField';
+import ImageUploader from '~/shared/ui/ImageUploader';
+import type { ImageUploadState } from '~/shared/ui/ImageUploader';
 import {
   createItemFormRequestBody,
   getGwangsanError,
   ITEM_TITLE_MAX_LENGTH,
   useCreateItem,
-} from '~/entity/write/itemForm';
-import { getModeLabel, getTypeLabel } from '~/widget/write/model/options';
+} from '~/entity/write';
+import { getModeLabel, getTypeLabel } from '~/widget/write';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
-import { useEditPost } from '~/entity/post/model/useEditPost';
-import { useGetItem } from '~/entity/post';
+import { useEditPost, useGetItem } from '~/entity/post';
 import { useLeaveConfirm } from '../../model/useLeaveConfirm';
 
 const ItemFormPage = () => {

@@ -4,8 +4,7 @@ import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
-import { useGetItem } from '~/entity/post';
-import { createReview } from '~/entity/post/api/createReview';
+import { useGetItem, createReview } from '~/entity/post';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import ReviewWritePage from '../index';
@@ -49,9 +48,6 @@ jest.mock('~/entity/chat/model/useChatOtherUser', () => ({
 
 jest.mock('~/entity/post', () => ({
   useGetItem: jest.fn(),
-}));
-
-jest.mock('~/entity/post/api/createReview', () => ({
   createReview: jest.fn(),
 }));
 

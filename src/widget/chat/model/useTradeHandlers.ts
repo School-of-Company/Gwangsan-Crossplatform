@@ -1,15 +1,11 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
-import { requestTrade } from '~/entity/post/api/requestTrade';
-import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
-import { makeReservation } from '~/entity/post/api/makeReservation';
-import { cancelReservation } from '~/entity/post/api/cancelReservation';
-import { getChatRoomData } from '~/entity/chat/api/getChatMessages';
+import { requestTrade, withdrawTrade, makeReservation, cancelReservation } from '~/entity/post';
+import { getChatRoomData, chatRoomDataKeys } from '~/entity/chat';
 import type { RoomId } from '~/shared/types/chatType';
 import { logger } from '~/shared/lib/logger';
 import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
-import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
 
 interface UseTradeHandlersParams {
   readonly roomId: RoomId;

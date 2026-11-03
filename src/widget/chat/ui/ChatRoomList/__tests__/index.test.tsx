@@ -15,7 +15,7 @@ import {
   chatRoomKeys,
   chatMessageKeys,
   getChatRoomData,
-} from '@/entity/chat';
+} from '~/entity/chat';
 
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
@@ -40,16 +40,17 @@ jest.mock('~/entity/profile/model/useBlockUser', () => ({
 jest.mock('~/entity/chat/api/getChatMessages', () => ({
   CHAT_MESSAGE_PAGE_SIZE: 30,
   getChatRoomData: (...args: unknown[]) =>
-    jest.requireMock('@/entity/chat').getChatRoomData(...args),
+    jest.requireMock('~/entity/chat').getChatRoomData(...args),
 }));
 
-jest.mock('@/entity/chat', () => ({
+jest.mock('~/entity/chat', () => ({
   useChatRooms: jest.fn(),
   useChatSocket: jest.fn(),
   useDeleteChatRoom: jest.fn(),
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
+  useChatEntry: jest.requireActual('~/entity/chat/model/useChatEntry').useChatEntry,
   ChatRoomItem: ({ room, onPress, onLongPress, isExiting, onExited }: any) => {
     const { TouchableOpacity, View, Text } = require('react-native');
     return (

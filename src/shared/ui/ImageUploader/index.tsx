@@ -11,15 +11,15 @@ import {
 import Icon from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { memo, useCallback, useMemo } from 'react';
-import { ImageType } from '@/shared/types/imageType';
+import { ImageType } from '~/shared/types/imageType';
 import {
   useImageUploadState,
   type ImageUploadState,
   type SelectedAsset,
 } from './useImageUploadState';
 import Toast from 'react-native-toast-message';
-import { logger } from '@/shared/lib/logger';
-import { useThemeColors } from '@/shared/lib/theme';
+import { logger } from '~/shared/lib/logger';
+import { useThemeColors } from '~/shared/lib/theme';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 

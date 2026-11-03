@@ -3,9 +3,8 @@ import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { AlertModal, Header } from '~/shared/ui';
-import { useBlockUser } from '~/entity/profile/model/useBlockUser';
-import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
-import type { BlockedMember } from '~/entity/profile/api/getBlockList';
+import { useBlockUser, useGetBlockList } from '~/entity/profile';
+import type { BlockedMember } from '~/entity/profile';
 
 interface BlockedUserRowProps {
   member: BlockedMember;

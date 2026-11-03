@@ -1,4 +1,4 @@
-import { MESSAGE_TYPE } from '@/shared/types/chatType';
+import { MESSAGE_TYPE } from '~/shared/types/chatType';
 import { MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { EnhancedChatMessage } from '../model/useChatMessages';
 

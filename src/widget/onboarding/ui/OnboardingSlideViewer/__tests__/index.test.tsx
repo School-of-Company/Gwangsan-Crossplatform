@@ -7,7 +7,7 @@ jest.mock('~/shared/assets/png/startSlide/onboardingSlide1.png', () => 1);
 jest.mock('~/shared/assets/png/startSlide/onboardingSlide2.png', () => 2);
 jest.mock('~/shared/assets/png/startSlide/onboardingSlide3.png', () => 3);
 
-jest.mock('@/shared/ui', () => ({
+jest.mock('~/shared/ui', () => ({
   SlideIndicator: ({
     total,
     current,

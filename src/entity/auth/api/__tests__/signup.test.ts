@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { instance } from '~/shared/lib/axios';
-import { clearAuthTokens } from '@/shared/lib/auth';
+import { clearAuthTokens } from '~/shared/lib/auth';
 import { signup } from '../signup';
 
 jest.mock('~/shared/lib/axios', () => ({
@@ -10,7 +10,7 @@ jest.mock('~/shared/lib/axios', () => ({
     get: jest.fn(),
   },
 }));
-jest.mock('@/shared/lib/auth', () => ({
+jest.mock('~/shared/lib/auth', () => ({
   clearAuthTokens: jest.fn(),
 }));
 

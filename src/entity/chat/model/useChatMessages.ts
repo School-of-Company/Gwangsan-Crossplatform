@@ -14,7 +14,7 @@ import {
 } from '../lib/messageCache';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
 import type { ChatMessageResponse } from './chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 
 export { chatMessageKeys };

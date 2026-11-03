@@ -1,19 +1,19 @@
 import React from 'react';
 import { act, render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useGetReviews } from '../../../../../entity/reviews/model/useGetReviews';
-import { useGetReceivedReviewsInfinite } from '../../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
+import { useGetReceivedReviewsInfinite } from '~/entity/reviews/model/useGetReceivedReviewsInfinite';
 import ReviewsPageView from '../index';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
 }));
 
-jest.mock('../../../../../entity/reviews/model/useGetReviews', () => ({
+jest.mock('~/entity/reviews/model/useGetReviews', () => ({
   useGetReviews: jest.fn(),
 }));
 
-jest.mock('../../../../../entity/reviews/model/useGetReceivedReviewsInfinite', () => ({
+jest.mock('~/entity/reviews/model/useGetReceivedReviewsInfinite', () => ({
   useGetReceivedReviewsInfinite: jest.fn(),
 }));
 

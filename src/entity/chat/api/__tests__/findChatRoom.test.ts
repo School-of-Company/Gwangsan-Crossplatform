@@ -1,8 +1,8 @@
 import { findChatRoom } from '../findChatRoom';
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { toAppError } from '~/shared/lib/errorHandler';
 
-jest.mock('@/shared/lib/axios', () => ({
+jest.mock('~/shared/lib/axios', () => ({
   instance: { get: jest.fn() },
 }));
 

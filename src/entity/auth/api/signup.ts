@@ -1,6 +1,6 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { SignupFormData } from '~/shared/types/authState';
-import { clearAuthTokens } from '@/shared/lib/auth';
+import { clearAuthTokens } from '~/shared/lib/auth';
 import { toAppError } from '~/shared/lib/errorHandler';
 
 export const signup = async (formData: SignupFormData) => {

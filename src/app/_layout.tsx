@@ -5,29 +5,27 @@ import { AppState, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useMemo, useRef } from 'react';
-import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
+import { saveE2ECoverage } from '~/shared/lib/e2eCoverage';
 import '../../global.css';
-import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
-import { ToastStack } from '@/shared/ui/Toast/ToastStack';
-import QueryProvider from '../shared/lib/QueryProvider';
-import '@/shared/lib/sentry';
+import { useCustomFonts } from '~/shared/assets/fonts/fontLoader';
+import { ToastStack } from '~/shared/ui/Toast/ToastStack';
+import QueryProvider from '~/shared/lib/QueryProvider';
+import '~/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
-import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
-import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
-import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
-import { RootErrorBoundary } from '@/shared/ui/RootErrorBoundary';
+import { useNetworkStatus } from '~/shared/lib/useNetworkStatus';
+import { NoNetworkOverlay } from '~/shared/ui/NoNetworkOverlay';
+import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
+import { RootErrorBoundary } from '~/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
-import { useChatEntry } from '@/entity/chat/model/useChatEntry';
-import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
-import { useChatQueueRecovery } from '@/entity/chat/model/useChatQueueRecovery';
-import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
-import { VersionUpdateModal } from '@/widget/appVersion';
+import { useChatEntry, useGlobalChatNotifications, useChatQueueRecovery } from '~/entity/chat';
+import { registerChatBackgroundTask } from '~/shared/lib/chatBackgroundTask';
+import { VersionUpdateModal } from '~/widget/appVersion';
 import {
   createNotificationDedupeGuard,
   parseNotificationData,
   resolveNotificationAction,
-} from '@/shared/lib/notificationRouting';
-import { useThemeColors } from '@/shared/lib/theme';
+} from '~/shared/lib/notificationRouting';
+import { useThemeColors } from '~/shared/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

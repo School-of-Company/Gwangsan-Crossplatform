@@ -1,4 +1,4 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
 import { OnboardingPage } from '~/view/onboarding';
 
 export default function Onboarding() {

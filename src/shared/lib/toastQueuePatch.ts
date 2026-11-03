@@ -1,6 +1,6 @@
 import Toast from 'react-native-toast-message';
 import type { ToastShowParams } from 'react-native-toast-message';
-import { useToastQueueStore } from './toastQueue';
+import { useToastQueueStore } from '~/shared/store/useToastQueueStore';
 
 const DEFAULT_VISIBILITY_TIME = 4000;
 

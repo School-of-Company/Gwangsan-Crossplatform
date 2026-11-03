@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import BlockedUsersPageView from '~/view/profile/ui/BlockedUsersPage';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { BlockedUsersPageView } from '~/view/profile';
 
 export default function ProfileBlockedPage() {
   return (

@@ -1,5 +1,5 @@
 import { HeadValue } from '~/shared/consts/place';
-import { Dong } from '../consts/dong';
+import { Dong } from '~/shared/consts/dong';
 
 export interface ProfileType {
   memberId: number;

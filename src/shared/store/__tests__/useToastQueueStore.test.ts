@@ -1,4 +1,4 @@
-import { useToastQueueStore } from '../toastQueue';
+import { useToastQueueStore } from '../useToastQueueStore';
 
 beforeEach(() => {
   useToastQueueStore.setState({ toasts: [] });

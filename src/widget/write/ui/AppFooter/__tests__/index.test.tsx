@@ -5,7 +5,7 @@ jest.mock('~/entity/chat', () => ({
   useChatRooms: jest.fn(() => ({ totalUnreadCount: 0 })),
 }));
 
-jest.mock('~/shared/ui/Footer', () => ({
+jest.mock('../../Footer', () => ({
   Footer: ({ onWritePress }: any) => {
     const { TouchableOpacity, Text } = require('react-native');
     return (

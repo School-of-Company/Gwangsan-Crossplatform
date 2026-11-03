@@ -96,14 +96,6 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: jest.fn(() => ({ top: 0, bottom: 0, left: 0, right: 0 })),
 }));
 
-// The real '~/shared/ui' barrel also re-exports Footer, which pulls in the
-// chat entity -> axios -> AsyncStorage chain (native module, unavailable under
-// Jest). Re-export the real, self-contained Header directly to sidestep that
-// chain while keeping real Header behavior.
-jest.mock('~/shared/ui', () => ({
-  Header: require('~/shared/ui/Header').Header,
-}));
-
 const mockGetCurrentLocation = getCurrentLocation as jest.Mock;
 const mockSearchNearbyPlaces = searchNearbyPlaces as jest.Mock;
 const mockGetAddressName = getAddressName as jest.Mock;

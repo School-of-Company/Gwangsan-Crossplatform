@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useUploadImage } from '@/shared/model/useUploadImage';
-import { logger } from '@/shared/lib/logger';
+import { useUploadImage } from '~/shared/model/useUploadImage';
+import { logger } from '~/shared/lib/logger';
 
 export interface ImagePreview {
   imageId: number;

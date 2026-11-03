@@ -1,9 +1,9 @@
-import { instance } from '../lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { ImageType } from '../types/imageType';
-import { logger } from '../lib/logger';
-import { toAppError } from '../lib/errorHandler';
+import { ImageType } from '~/shared/types/imageType';
+import { logger } from '~/shared/lib/logger';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -27,11 +27,8 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
     const type = `image/${fileType || 'jpeg'}`;
 
     const formData = new FormData();
-    formData.append('file', {
-      uri,
-      name: filename,
-      type,
-    } as any);
+    // RN의 FormData는 Blob 대신 { uri, name, type } 파일 객체를 받는다
+    formData.append('file', { uri, name: filename, type } as unknown as Blob);
 
     const config = {
       headers: {

@@ -11,7 +11,7 @@ import { getChatRoomData, CHAT_MESSAGE_PAGE_SIZE } from '../api/getChatMessages'
 import { seedMessagePagesFromSnapshot, type ChatMessagePages } from '../lib/messageCache';
 import { chatRoomKeys } from './useChatRooms';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
-import type { RoomId, ProductId } from '@/shared/types/chatType';
+import type { RoomId, ProductId } from '~/shared/types/chatType';
 
 const isNotFoundError = (error: unknown) =>
   error instanceof AxiosError && error.response?.status === 404;

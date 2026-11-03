@@ -6,14 +6,14 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-jest.mock('@/shared/ui/Header', () => ({
+jest.mock('~/shared/ui/Header', () => ({
   Header: ({ headerTitle, showBackButton }: { headerTitle: string; showBackButton?: boolean }) => {
     const { Text } = require('react-native');
     return <Text testID="header">{`${headerTitle}:${String(showBackButton)}`}</Text>;
   },
 }));
 
-jest.mock('@/widget/chat', () => ({
+jest.mock('~/widget/chat', () => ({
   ChatRoomList: () => {
     const { View } = require('react-native');
     return <View testID="chat-room-list" />;

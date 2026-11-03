@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
-import { getData } from '../lib/getData';
-import { setData } from '../lib/setData';
+import { getData } from '~/shared/lib/getData';
+import { setData } from '~/shared/lib/setData';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
-import { logger } from '../lib/logger';
+import { logger } from '~/shared/lib/logger';
 
 const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   if (!Device.isDevice) {

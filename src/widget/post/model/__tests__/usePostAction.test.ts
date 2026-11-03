@@ -1,20 +1,20 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { usePostAction } from '../usePostAction';
-import { useGetItem } from '~/entity/post/model/useGetItem';
-import { useDeletePost } from '~/entity/post';
+import { useGetItem, useDeletePost, createReview } from '~/entity/post';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
-import { createReview } from '~/entity/post/api/createReview';
 import Toast from 'react-native-toast-message';
 
-jest.mock('~/entity/post/model/useGetItem', () => ({ useGetItem: jest.fn() }));
-jest.mock('~/entity/post', () => ({ useDeletePost: jest.fn() }));
+jest.mock('~/entity/post', () => ({
+  useGetItem: jest.fn(),
+  useDeletePost: jest.fn(),
+  createReview: jest.fn(),
+}));
 jest.mock('~/widget/post/model/useTradeRequest', () => ({ useTradeRequest: jest.fn() }));
 jest.mock('~/entity/chat/model/useChatEntry', () => ({ useChatEntry: jest.fn() }));
 jest.mock('~/shared/lib/userUtils', () => ({ checkIsMyPost: jest.fn() }));
-jest.mock('~/entity/post/api/createReview', () => ({ createReview: jest.fn() }));
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('react-native-toast-message', () => ({

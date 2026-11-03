@@ -10,10 +10,8 @@ import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { useCallback, useMemo, useState } from 'react';
-import { useGetPosts } from '~/entity/post/model/useGetPosts';
-import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
-import { returnValue } from '~/entity/post/model/handleCategory';
-import { Category } from '~/entity/post/model/category';
+import { useGetPosts, returnValue, Category } from '~/entity/post';
+import { useGetBlockList } from '~/entity/profile';
 import { VirtualList } from 'scrolloop/native';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 

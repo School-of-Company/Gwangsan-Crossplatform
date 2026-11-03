@@ -1,8 +1,8 @@
 import { forwardRef, useState } from 'react';
 import { TextInput, TextInputProps, TouchableOpacity } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import { Input } from '@/shared/ui/Input';
-import { useThemeColors } from '@/shared/lib/theme';
+import { Input } from '~/shared/ui/Input';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface PasswordInputProps extends Omit<TextInputProps, 'secureTextEntry'> {
   label: string;

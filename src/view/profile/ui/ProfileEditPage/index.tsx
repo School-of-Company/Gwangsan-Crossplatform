@@ -4,14 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header, Input, Button } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
-import { Dropdown } from '@/shared/ui/Dropdown';
-import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
+import { Dropdown } from '~/shared/ui/Dropdown';
+import { SpecialtiesDropdown, profileEditSchema } from '~/entity/auth';
 import { SPECIALTIES } from '~/shared/consts/specialties';
-import { PLACE_ITEMS, findPlaceItem } from '@/shared/consts/place';
-import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
-import { useUpdateProfile } from '~/entity/profile/model/useUpdateProfile';
-import { useUpdateBranch } from '~/entity/profile/model/useUpdateBranch';
-import { profileEditSchema } from '~/entity/auth/model/authSchema';
+import { PLACE_ITEMS, findPlaceItem } from '~/shared/consts/place';
+import { useGetMyProfile, useUpdateProfile, useUpdateBranch } from '~/entity/profile';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
 
@@ -78,8 +75,8 @@ export default function ProfileEditPageView() {
       });
 
       updateProfileMutation.mutate(validatedData);
-    } catch (error: any) {
-      if (error.issues && error.issues.length > 0) {
+    } catch (error) {
+      if (error instanceof z.ZodError && error.issues.length > 0) {
         Toast.show({
           type: 'error',
           text1: '입력 오류',

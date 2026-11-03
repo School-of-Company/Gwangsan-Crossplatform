@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import { PlaceStep } from '@/widget/signup';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { PlaceStep } from '~/widget/signup';
 
 export default function SignupPlaceName() {
   return (

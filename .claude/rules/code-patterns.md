@@ -106,9 +106,10 @@ Custom text: `titleLarge/Medium/Small` · `bodyLarge/Medium/Small` · `caption`
 ## Import Alias
 
 ```ts
-import { instance } from '~/shared/lib/axios';   // ✓ preferred
-import { Button } from '@/shared/ui/Button';      // ✓ also OK
-import { Button } from '../../../shared/ui/Button'; // ✗
+import { instance } from '~/shared/lib/axios';      // ✓
+import { useChatRooms } from '~/entity/chat';        // ✓ other slices through their index.ts
+import { Button } from '@/shared/ui/Button';         // ✗ @/ is banned by lint
+import { Button } from '../../../shared/ui/Button'; // ✗ relative path leaving the slice
 ```
 
 ## Comments

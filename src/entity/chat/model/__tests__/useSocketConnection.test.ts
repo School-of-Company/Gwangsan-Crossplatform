@@ -2,10 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSocketConnection } from '../useSocketConnection';
-import { logger } from '@/shared/lib/logger';
+import { logger } from '~/shared/lib/logger';
 import type { IChatSocketService } from '../../lib/socketService';
 
-jest.mock('@/shared/lib/logger', () => ({
+jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));
 

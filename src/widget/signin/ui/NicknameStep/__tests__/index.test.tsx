@@ -40,7 +40,7 @@ jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
   useSigninResetStore: jest.fn(),
 }));
 
-jest.mock('@/shared/ui/Input', () => {
+jest.mock('~/shared/ui/Input', () => {
   const React = require('react');
   const { TextInput } = require('react-native');
   return {
@@ -49,7 +49,7 @@ jest.mock('@/shared/ui/Input', () => {
   };
 });
 
-jest.mock('@/shared/ui/ErrorMessage', () => {
+jest.mock('~/shared/ui/ErrorMessage', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
