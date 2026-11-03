@@ -15,6 +15,7 @@ import * as SentryRN from '@sentry/react-native';
 import { useNetworkStatus } from '~/shared/lib/useNetworkStatus';
 import { NoNetworkOverlay } from '~/shared/ui/NoNetworkOverlay';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
+import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 import { RootErrorBoundary } from '~/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
 import { useChatEntry, useGlobalChatNotifications, useChatQueueRecovery } from '~/entity/chat';
@@ -109,6 +110,12 @@ export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
   const pathname = usePathname();
+  const closeAllSheets = useBottomSheetPortalStore((s) => s.closeAll);
+
+  // 바텀시트는 루트 포털에 그려지므로, 화면을 옮기면 이전 화면에서 열어 둔 시트를 닫는다
+  useEffect(() => {
+    closeAllSheets();
+  }, [pathname, closeAllSheets]);
   const themeColors = useThemeColors();
 
   // 네비게이션 화면(Stack/Tabs)의 기본 배경도 시스템 테마를 따르게 해서, 화면 전환 중에
