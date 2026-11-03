@@ -29,12 +29,13 @@ describe('게시글 작성', () => {
   });
 
   it('주제·내용·광산을 입력할 수 있고 광산에는 숫자만 남는다', async () => {
+    // 화면이 작은 기기에서는 키보드가 올라오면 맨 아래 광산 입력이 가려지므로 광산부터 입력한다
+    await element(by.id('ItemForm-gwangsan-input')).tap();
+    await element(by.id('ItemForm-gwangsan-input')).typeText('1a2');
     await element(by.id('ItemForm-title-input')).tap();
     await element(by.id('ItemForm-title-input')).replaceText('E2E 테스트 글');
     await element(by.id('ItemForm-content-input')).tap();
     await element(by.id('ItemForm-content-input')).replaceText('E2E 시나리오 입력 확인');
-    await element(by.id('ItemForm-gwangsan-input')).tap();
-    await element(by.id('ItemForm-gwangsan-input')).typeText('1a2');
 
     await expect(element(by.id('ItemForm-title-input'))).toHaveText('E2E 테스트 글');
     await expect(element(by.id('ItemForm-gwangsan-input'))).toHaveText('12');

@@ -269,8 +269,11 @@ jobs:
             sleep 2
           done
           curl -s localhost:8081/status
-          curl -sf -o /dev/null --max-time 900 \
-            "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=src%2Fapp"
+          # 앱(dev-client)이 실제로 요청하는 번들 URL과 같아야 캐시가 재사용된다. 매니페스트에서 읽는다
+          BUNDLE_URL=$(curl -s -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' localhost:8081 \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).launchAsset.url))")
+          echo "Prewarming $BUNDLE_URL"
+          curl -sf -o /dev/null --max-time 900 "$BUNDLE_URL"
           echo "Metro bundle ready"
 
       - name: Run Detox E2E tests
