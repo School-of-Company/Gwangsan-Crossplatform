@@ -52,17 +52,6 @@ jest.mock('~/entity/post/api/editPost', () => ({
   editPost: jest.fn(),
 }));
 
-// The real '~/shared/ui' barrel also re-exports Footer, which pulls in the
-// chat entity -> axios -> AsyncStorage chain (native module, unavailable in
-// this test environment). Re-export the real, self-contained Header/Input/
-// Button implementations directly to sidestep that chain while keeping
-// real component behavior (placeholders, disabled handling, etc.).
-jest.mock('~/shared/ui', () => ({
-  Header: require('~/shared/ui/Header').Header,
-  Input: require('~/shared/ui/Input').Input,
-  Button: require('~/shared/ui/Button').Button,
-}));
-
 jest.mock('~/shared/ui/ImageUploader', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
   return {

@@ -23,15 +23,6 @@ jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn() },
 }));
 
-// The real '~/shared/ui' barrel also re-exports Footer, which pulls in the chat
-// entity -> axios -> AsyncStorage chain (native module, unavailable in this test
-// environment). Re-export the real, self-contained Header/Button implementations
-// directly to sidestep that chain while keeping real component behavior.
-jest.mock('~/shared/ui', () => ({
-  Header: require('~/shared/ui/Header').Header,
-  Button: require('~/shared/ui/Button').Button,
-}));
-
 jest.mock('~/entity/chat/model/useChatRoomData', () => ({
   useChatRoomData: jest.fn(),
 }));
