@@ -1,5 +1,5 @@
 /**
- * FSD 레이어 경계를 강제하는 로컬 ESLint 규칙(#741).
+ * FSD 레이어 경계를 강제하는 로컬 ESLint 규칙.
  *
  * 레이어: app → view → widget → entity → shared (위에서 아래로만 import할 수 있다)
  * - 위 레이어를 import하면 안 된다. 예: entity가 widget/view를, shared가 entity를 import
@@ -8,31 +8,13 @@
  * `~/` 별칭과 상대경로를 모두 실제 경로로 풀어서 판단한다.
  */
 const path = require('path');
-
-const LAYER_RANK = { shared: 1, entity: 2, widget: 3, view: 4, app: 5 };
-const SLICED_LAYERS = new Set(['entity', 'widget', 'view']);
-
-const toSrcSegments = (absolutePath) => {
-  const normalized = absolutePath.split(path.sep).join('/');
-  const index = normalized.lastIndexOf('/src/');
-  if (index === -1) return null;
-  return normalized.slice(index + '/src/'.length).split('/');
-};
-
-const describe = (segments) => {
-  if (!segments || !(segments[0] in LAYER_RANK)) return null;
-  return { layer: segments[0], slice: segments[1] ?? '' };
-};
-
-const resolveTarget = (source, filename) => {
-  if (source.startsWith('~/')) {
-    return describe(source.slice(2).split('/'));
-  }
-  if (source.startsWith('.')) {
-    return describe(toSrcSegments(path.resolve(path.dirname(filename), source)));
-  }
-  return null;
-};
+const {
+  LAYER_RANK,
+  SLICED_LAYERS,
+  toSrcSegments,
+  resolveImportSegments,
+  describe,
+} = require('./srcPath');
 
 module.exports = {
   meta: {
@@ -56,7 +38,7 @@ module.exports = {
     const check = (node) => {
       if (!node.source || typeof node.source.value !== 'string') return;
       const source = node.source.value;
-      const target = resolveTarget(source, filename);
+      const target = describe(resolveImportSegments(source, filename));
       if (!target) return;
 
       if (LAYER_RANK[target.layer] > LAYER_RANK[current.layer]) {
