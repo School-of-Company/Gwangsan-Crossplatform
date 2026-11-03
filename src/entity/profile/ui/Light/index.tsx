@@ -4,6 +4,10 @@ interface LightProps {
   lightLevel?: number;
 }
 
+// 서버는 밝기(0~100)를 게시글 작성자 정보 등에서 Math.max(1, light / 10)(정수 나눗셈)으로 단계로 바꿔 내려준다.
+// 같은 회원이 화면마다 다른 단계로 보이지 않도록 같은 계산을 쓴다.
+const toLightStep = (lightLevel: number) => Math.max(1, Math.floor(lightLevel / 10));
+
 export default function Light({ lightLevel = 1 }: LightProps) {
   return (
     <View className="px-6 py-10">
@@ -19,7 +23,7 @@ export default function Light({ lightLevel = 1 }: LightProps) {
         </View>
       </View>
 
-      <Text className="ml-auto text-foreground">{Math.ceil(lightLevel / 10)}단계</Text>
+      <Text className="ml-auto text-foreground">{toLightStep(lightLevel)}단계</Text>
     </View>
   );
 }

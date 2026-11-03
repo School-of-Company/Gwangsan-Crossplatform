@@ -14,7 +14,7 @@ describe('Light', () => {
     expect(getByText('5단계')).toBeTruthy();
   });
 
-  it('lightLevel이 1이면 1단계를 표시한다 (ceil 적용)', () => {
+  it('lightLevel이 1이면 1단계를 표시한다 (최소 1단계)', () => {
     const { getByText } = render(<Light lightLevel={1} />);
 
     expect(getByText('1단계')).toBeTruthy();
@@ -50,5 +50,13 @@ describe('Light', () => {
 
     expect(fill.props.className).toContain('bg-main-500');
     expect(fill.props.style).toEqual(expect.objectContaining({ width: '50%' }));
+  });
+
+  it('서버와 같이 10 단위로 내림해 단계를 계산한다 (15 -> 1단계, 0 -> 1단계)', () => {
+    const { getByText, rerender } = render(<Light lightLevel={15} />);
+    expect(getByText('1단계')).toBeTruthy();
+
+    rerender(<Light lightLevel={0} />);
+    expect(getByText('1단계')).toBeTruthy();
   });
 });
