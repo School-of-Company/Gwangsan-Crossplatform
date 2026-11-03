@@ -63,6 +63,8 @@ export function BottomSheetModalWrapper({
   const id = useId();
   const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
   const removeSheet = useBottomSheetPortalStore((s) => s.removeSheet);
+  const setCloser = useBottomSheetPortalStore((s) => s.setCloser);
+  const onCloseRef = useRef(onClose);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const screenHeight = Dimensions.get('window').height;
@@ -311,6 +313,16 @@ export function BottomSheetModalWrapper({
 
     setSheet(id, sheetNode);
   }, [show, id, setSheet, removeSheet, sheetNode]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // 탭 화면은 다른 화면으로 가도 언마운트되지 않아, 열린 시트가 이동한 화면 위에 남는다.
+  // 열려 있는 동안 닫기 콜백을 등록해 두고 루트 레이아웃이 경로가 바뀔 때 닫는다.
+  useEffect(() => {
+    setCloser(id, isVisible ? () => onCloseRef.current() : null);
+  }, [id, isVisible, setCloser]);
 
   // 포털에서 빼는 건 언마운트 때만 한다. 내용이 바뀔 때마다 remove → set을 반복하면
   // 시트 트리 전체가 잠깐 사라졌다 다시 붙으면서, 입력 중이던 TextInput이 포커스를
