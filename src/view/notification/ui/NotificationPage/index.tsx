@@ -1,6 +1,6 @@
 import { FlatList, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { useGetAlertList } from '~/entity/notification';
-import NotificationItem from '~/widget/notification/ui/NotificationItem';
+import { NotificationItem } from '~/widget/notification';
 import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { SafeAreaView } from 'react-native-safe-area-context';

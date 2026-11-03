@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { useResetPasswordCurrentStep } from '~/entity/auth/model/useAuthSelectors';
+import { useResetPasswordCurrentStep } from '~/entity/auth';
 import { PhoneStep, NewPasswordStep } from '~/widget/resetPassword';
 import type { ResetPasswordState } from '~/shared/types/authState';
 

@@ -2,17 +2,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { AlertModal } from '~/shared/ui/AlertModal';
-import { ChatRoomHeader } from '~/widget/chat/ui/ChatRoomHeader';
-import { ChatRoomProductInfo } from '~/widget/chat/ui/ChatRoomProductInfo';
-import { ChatRoomContent } from '~/widget/chat/ui/ChatRoomContent';
-import { TradeRequestModal } from '~/widget/chat/ui/TradeRequestModal';
-import { ReservationConfirmModal } from '~/widget/chat/ui/ReservationConfirmModal';
+import {
+  ChatRoomHeader,
+  ChatRoomProductInfo,
+  ChatRoomContent,
+  TradeRequestModal,
+  ReservationConfirmModal,
+  ChatInput,
+  MyMessage,
+  ChatConnectionBanner,
+  MessageActionOverlay,
+} from '~/widget/chat';
 import { Header } from '~/shared/ui/Header';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
-import { ChatInput, MyMessage } from '~/widget/chat';
-import { ChatConnectionBanner } from '~/widget/chat/ui/ChatConnectionBanner';
-import { MessageActionOverlay } from '~/widget/chat/ui/MessageActionOverlay';
-import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat/lib/messageRenderer';
+import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat';
 import { useChatRoomPage } from '~/view/chat/model/useChatRoomPage';
 
 export default function ChatRoomPage() {

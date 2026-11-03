@@ -1,5 +1,5 @@
 import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
-import ReportPage from '~/view/report/ui/ReportPage';
+import { ReportPage } from '~/view/report';
 
 export default function Report() {
   return (

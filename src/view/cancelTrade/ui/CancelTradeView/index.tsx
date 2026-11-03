@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Header, LightBar } from '~/shared/ui';
-import { useGetReview } from '~/entity/reviews/model/useGetReview';
+import { useGetReview } from '~/entity/reviews';
 import { useCallback, useEffect } from 'react';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { logger } from '~/shared/lib/logger';

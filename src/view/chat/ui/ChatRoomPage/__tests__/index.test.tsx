@@ -230,7 +230,9 @@ jest.mock('~/widget/chat/ui/MessageActionOverlay', () => ({
   },
 }));
 
+// 나머지 export는 위의 개별 모듈 mock을 그대로 다시 내보낸다
 jest.mock('~/widget/chat', () => ({
+  ...jest.requireActual('~/widget/chat'),
   MyMessage: ({ message }: any) => {
     const { Text } = require('react-native');
     return <Text testID="overlay-focused-message">{message.content}</Text>;

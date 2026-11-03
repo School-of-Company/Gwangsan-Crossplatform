@@ -7,8 +7,7 @@ import { Button, Header } from '~/shared/ui';
 import { Dropdown } from '~/shared/ui/Dropdown';
 import { TextField } from '~/shared/ui/TextField';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
-import { REPORT_TYPES, type ReportType } from '~/entity/post/model/reportType';
-import { useReport } from '~/entity/post/model/useReport';
+import { REPORT_TYPES, type ReportType, useReport } from '~/entity/post';
 
 export default function ReportPage() {
   const { productId, memberId } = useLocalSearchParams<{

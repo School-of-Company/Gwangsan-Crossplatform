@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Dropdown } from '~/shared/ui/Dropdown';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
+import { SignupForm, useSignupFormField } from '~/entity/auth';
 import { PLACE_ITEMS } from '~/shared/consts/place';
 import { View } from 'react-native';
 import { router } from 'expo-router';

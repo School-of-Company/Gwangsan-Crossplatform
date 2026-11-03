@@ -1,13 +1,13 @@
 import { Input } from '~/shared/ui/Input';
 import { Button } from '~/shared/ui/Button';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
 import {
+  ResetPasswordForm,
   useResetPasswordFormField,
   useResetPasswordStepNavigation,
-} from '~/entity/auth/model/useAuthSelectors';
+  usePasswordResetPhoneVerification,
+} from '~/entity/auth';
 import { Platform, View } from 'react-native';
-import { usePasswordResetPhoneVerification } from '~/entity/auth/model/usePasswordResetPhoneVerification';
 import { router } from 'expo-router';
 
 export default function PhoneStep() {

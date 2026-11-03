@@ -1,5 +1,5 @@
 import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
-import ChatRoomPage from '~/view/chat/ui/ChatRoomPage';
+import { ChatRoomPage } from '~/view/chat';
 
 export default function Chatting() {
   return (

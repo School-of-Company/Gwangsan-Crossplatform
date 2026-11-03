@@ -6,7 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { MODE, ModeType } from '~/shared/types/mode';
 import { PostType } from '~/shared/types/postType';
 import { ProductType, TYPE } from '~/shared/types/type';
-import type { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
+import type { ReviewPostType } from '~/entity/reviews';
 import { useThemeColors } from '~/shared/lib/theme';
 
 const STATUS_LABEL: Record<ProductType, Record<ModeType, string>> = {

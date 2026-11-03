@@ -7,14 +7,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { Button, Header, ProgressBar } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
-import { ChatRoomProductInfo } from '~/widget/chat/ui/ChatRoomProductInfo';
-import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
-import { useGetItem } from '~/entity/post';
-import { createReview } from '~/entity/post/api/createReview';
+import { ChatRoomProductInfo } from '~/widget/chat';
+import { useChatRoomData, useChatOtherUser } from '~/entity/chat';
+import { useGetItem, createReview } from '~/entity/post';
 import { logger } from '~/shared/lib/logger';
 import type { RoomId } from '~/shared/types/chatType';
-import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
+import { reviewKeys } from '~/entity/reviews';
 
 export default function ReviewWritePage() {
   const { id } = useLocalSearchParams<{ id: string }>();

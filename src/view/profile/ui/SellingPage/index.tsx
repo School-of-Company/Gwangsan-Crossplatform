@@ -11,16 +11,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Header, PillTabs, BottomSheetModalWrapper, Button, AlertModal } from '~/shared/ui';
-import { ActionSheetRow, SellingPanel } from '~/widget/profile/ui';
+import { ActionSheetRow, SellingPanel } from '~/widget/profile';
 import { PostType } from '~/shared/types/postType';
-import { useDeletePost } from '~/entity/post/model/useDeletePost';
-import { useGetProfile } from '~/entity/profile/model/useGetProfile';
-import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
-import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
-import { useGetSellingPosts } from '~/entity/profile/model/useGetSellingPosts';
-import { sellingPostsQueryKeys } from '~/entity/profile/model/sellingPostsQueryKeys';
+import { useDeletePost } from '~/entity/post';
+import {
+  useGetProfile,
+  useGetMyProfile,
+  useGetMyInformation,
+  useGetSellingPosts,
+  sellingPostsQueryKeys,
+} from '~/entity/profile';
 import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
-import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
+import { useGetReviews } from '~/entity/reviews';
 
 type SellingTab = 'onSale' | 'sold';
 

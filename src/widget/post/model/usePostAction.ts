@@ -2,13 +2,11 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { useQueryClient } from '@tanstack/react-query';
-import { createReview } from '~/entity/post/api/createReview';
-import { useGetItem } from '~/entity/post/model/useGetItem';
-import { useDeletePost } from '~/entity/post';
+import { createReview, useGetItem, useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
-import { useChatEntry } from '~/entity/chat/model/useChatEntry';
+import { useChatEntry } from '~/entity/chat';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
-import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
+import { reviewKeys } from '~/entity/reviews';
 
 interface UsePostPageLogicParams {
   readonly id: string;

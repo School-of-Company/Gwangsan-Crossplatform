@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { PostType } from '~/shared/types/postType';
-import type { ReviewPostType } from '~/entity/reviews/model/reviewPostType';
+import type { ReviewPostType } from '~/entity/reviews';
 import { SellingPostCard } from '../SellingPostCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

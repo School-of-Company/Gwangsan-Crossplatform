@@ -5,13 +5,10 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Header, Input, Button } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import { Dropdown } from '~/shared/ui/Dropdown';
-import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
+import { SpecialtiesDropdown, profileEditSchema } from '~/entity/auth';
 import { SPECIALTIES } from '~/shared/consts/specialties';
 import { PLACE_ITEMS, findPlaceItem } from '~/shared/consts/place';
-import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
-import { useUpdateProfile } from '~/entity/profile/model/useUpdateProfile';
-import { useUpdateBranch } from '~/entity/profile/model/useUpdateBranch';
-import { profileEditSchema } from '~/entity/auth/model/authSchema';
+import { useGetMyProfile, useUpdateProfile, useUpdateBranch } from '~/entity/profile';
 import Toast from 'react-native-toast-message';
 import { z } from 'zod';
 

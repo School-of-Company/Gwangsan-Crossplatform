@@ -1,5 +1,5 @@
 import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
-import CancelTradeReasonPage from '~/view/cancelTrade/ui/CancelTradeReasonPage';
+import { CancelTradeReasonPage } from '~/view/cancelTrade';
 
 export default function CancelTradeReason() {
   return (

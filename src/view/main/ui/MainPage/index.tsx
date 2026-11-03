@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '~/entity/main/ui/header';
+import { Header } from '~/entity/main';
 import { GwangsanBanner, Inform, MainSlideViewer } from '~/widget/main';
-import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
+import { useGetMyInformation } from '~/entity/profile';
 import Toast from 'react-native-toast-message';
 
 export default function MainPageView() {

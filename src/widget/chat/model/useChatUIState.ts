@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useGetItem } from '~/entity/post/model/useGetItem';
+import { useChatRoomData } from '~/entity/chat';
+import { useGetItem } from '~/entity/post';
 import { MODE } from '~/shared/types/mode';
 import type { RoomId } from '~/shared/types/chatType';
 import type { TradeProduct } from '~/entity/chat';

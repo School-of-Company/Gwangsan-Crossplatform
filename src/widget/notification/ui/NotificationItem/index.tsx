@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { CachedImage } from '~/shared/ui/CachedImage';
-import { AlertType } from '~/entity/notification/model/alertTypes';
-import { useChatEntry } from '~/entity/chat/model/useChatEntry';
+import { AlertType } from '~/entity/notification';
+import { useChatEntry } from '~/entity/chat';
 import { formatDate } from '~/shared/lib/formatDate';
 import { resolveNotificationAction } from '~/shared/lib/notificationRouting';
 import { useRouter } from 'expo-router';

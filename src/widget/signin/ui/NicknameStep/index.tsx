@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Input } from '~/shared/ui/Input';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import SigninForm from '~/entity/auth/ui/SigninForm';
-import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
-import { nicknameSchema } from '~/entity/auth/model/authSchema';
+import {
+  SigninForm,
+  useSigninFormField,
+  useSigninResetStore,
+  nicknameSchema,
+  getCredentialsForBiometric,
+} from '~/entity/auth';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
-import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
 import { setData } from '~/shared/lib/setData';
 import { chatSocket } from '~/shared/lib/socket';
 import { logger } from '~/shared/lib/logger';

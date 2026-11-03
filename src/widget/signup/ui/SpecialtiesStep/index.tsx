@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import SpecialtiesDropdown from '~/entity/auth/ui/SpecialtiesDropdown';
+import { SpecialtiesDropdown, SignupForm, useSignupFormField } from '~/entity/auth';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { SPECIALTIES } from '~/shared/consts/specialties';

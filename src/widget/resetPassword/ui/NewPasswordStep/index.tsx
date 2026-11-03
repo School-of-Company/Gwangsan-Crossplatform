@@ -2,15 +2,16 @@ import { useState, useRef, useCallback } from 'react';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { Input } from '~/shared/ui/Input';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import ResetPasswordForm from '~/entity/auth/ui/ResetPasswordForm';
 import {
+  ResetPasswordForm,
   useResetPasswordFormField,
   useResetPasswordStepNavigation,
-} from '~/entity/auth/model/useAuthSelectors';
-import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
+  passwordSchema,
+  passwordConfirmSchema,
+  resetPassword,
+} from '~/entity/auth';
 import { View, TextInput } from 'react-native';
 import { ZodError } from 'zod';
-import { resetPassword } from '~/entity/auth/api/resetPassword';
 import { router } from 'expo-router';
 
 export default function NewPasswordStep() {

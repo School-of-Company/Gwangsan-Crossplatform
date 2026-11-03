@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Input } from '~/shared/ui/Input';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
+import { SignupForm, useSignupFormField } from '~/entity/auth';
 import { SearchIcon } from '~/shared/assets/svg/SearchIcon';
 import { Text, View, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { router } from 'expo-router';

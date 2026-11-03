@@ -6,9 +6,9 @@ import {
   formatMessageTime,
   renderMessageContent,
   type MessageRenderConfig,
+  type EnhancedChatMessage,
 } from '~/entity/chat';
 import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
-import type { EnhancedChatMessage } from '~/entity/chat/model/useChatMessages';
 import type { MessageAnchor } from '../../model/useMessageActions';
 import { measureAnchor } from '../../model/measureAnchor';
 

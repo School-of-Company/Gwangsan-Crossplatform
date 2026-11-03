@@ -50,6 +50,7 @@ jest.mock('~/entity/chat', () => ({
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
   getChatRoomData: jest.fn(),
+  useChatEntry: jest.requireActual('~/entity/chat/model/useChatEntry').useChatEntry,
   ChatRoomItem: ({ room, onPress, onLongPress, isExiting, onExited }: any) => {
     const { TouchableOpacity, View, Text } = require('react-native');
     return (

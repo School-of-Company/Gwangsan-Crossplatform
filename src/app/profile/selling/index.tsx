@@ -1,5 +1,5 @@
 import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
-import SellingPageView from '~/view/profile/ui/SellingPage';
+import { SellingPageView } from '~/view/profile';
 
 export default function ProfileSellingPage() {
   return (

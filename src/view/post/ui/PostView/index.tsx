@@ -1,12 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Header, PillTabs } from '~/shared/ui';
-import { handleCategory } from '~/entity/post/model/handleCategory';
-import { Category } from '~/entity/post/model/category';
+import { handleCategory, Category } from '~/entity/post';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModeType } from '~/shared/types/mode';
 import { ProductType } from '~/shared/types/type';
-import PostList from '~/widget/post/ui/PostList';
+import { PostList } from '~/widget/post';
 
 export default function PostView() {
   const { type, mode } = useLocalSearchParams<{ type: ProductType; mode?: ModeType }>();

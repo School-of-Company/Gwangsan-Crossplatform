@@ -1,23 +1,20 @@
 import { renderHookWithProviders, createQueryClient } from '~/test-utils';
 import { useChatRoomController } from '../useChatRoomController';
 
-import { useChatMessages as useChatMessagesEntity } from '~/entity/chat';
-import { useChatSocket } from '~/entity/chat/model/useChatSocket';
-import { useResilientMessageSender } from '~/entity/chat/model/useResilientMessageSender';
+import {
+  useChatMessages as useChatMessagesEntity,
+  useChatSocket,
+  useResilientMessageSender,
+} from '~/entity/chat';
 import { extractOtherUserInfo, ensureMessagesArray } from '~/shared/lib/userUtils';
 
 jest.mock('~/entity/chat', () => ({
   useChatMessages: jest.fn(),
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
   chatMessageKeys: { all: ['chatMessages'], room: (roomId: unknown) => ['chatMessages', roomId] },
-}));
-
-jest.mock('~/entity/chat/model/useChatSocket', () => ({
   useChatSocket: jest.fn(),
-}));
-
-jest.mock('~/entity/chat/model/useResilientMessageSender', () => ({
   useResilientMessageSender: jest.fn(),
+  useChatOtherUser: jest.requireActual('~/entity/chat/model/useChatOtherUser').useChatOtherUser,
 }));
 
 jest.mock('~/shared/lib/userUtils', () => ({

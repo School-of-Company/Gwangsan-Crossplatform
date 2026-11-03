@@ -1,9 +1,12 @@
 import { useState, useRef } from 'react';
 import { PasswordInput } from '~/shared/ui/PasswordInput';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
-import { passwordSchema, passwordConfirmSchema } from '~/entity/auth/model/authSchema';
+import {
+  SignupForm,
+  useSignupFormField,
+  passwordSchema,
+  passwordConfirmSchema,
+} from '~/entity/auth';
 import { View, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { ZodError } from 'zod';

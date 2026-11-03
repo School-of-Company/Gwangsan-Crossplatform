@@ -17,9 +17,7 @@ import { NoNetworkOverlay } from '~/shared/ui/NoNetworkOverlay';
 import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
 import { RootErrorBoundary } from '~/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
-import { useChatEntry } from '~/entity/chat/model/useChatEntry';
-import { useGlobalChatNotifications } from '~/entity/chat/model/useGlobalChatNotifications';
-import { useChatQueueRecovery } from '~/entity/chat/model/useChatQueueRecovery';
+import { useChatEntry, useGlobalChatNotifications, useChatQueueRecovery } from '~/entity/chat';
 import { registerChatBackgroundTask } from '~/shared/lib/chatBackgroundTask';
 import { VersionUpdateModal } from '~/widget/appVersion';
 import {

@@ -9,9 +9,9 @@ import {
   NativeScrollEvent,
   useWindowDimensions,
 } from 'react-native';
-import MiniProfile from '~/entity/post/ui/miniProfile';
+import { MiniProfile } from '~/entity/post';
 import { Button, SlideIndicator } from '~/shared/ui';
-import type { PostDetailResponse } from '~/entity/post/api/getItem';
+import type { PostDetailResponse } from '~/entity/post';
 import { CachedImage } from '~/shared/ui/CachedImage';
 
 interface PostPageContentProps {
