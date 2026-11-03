@@ -25,7 +25,8 @@ async function isVisible(matcher: Detox.NativeMatcher): Promise<boolean> {
 }
 
 // 새로 설치한 앱의 첫 실행에서 dev-launcher의 매니페스트 요청이 CI Metro 응답을 10초 넘게 기다리다
-// 시간 초과되면 앱 대신 런처 홈에 머문다. 앱 첫 화면(로그인·홈)이 뜰 때까지 보고, 런처 홈이면 재실행한다
+// 시간 초과되면 앱 대신 런처 홈에 머문다. 앱 첫 화면(로그인·홈)이 뜰 때까지 보고, 런처 홈이면 재실행한다.
+// 런처 본문은 SwiftUI라 Detox 뷰 계층에 텍스트가 없으므로 UIKit 탭 버튼('Updates')으로 판별한다
 async function assertConnectedToDevServer(): Promise<void> {
   if (!process.env.E2E_METRO_URL) return;
   // Detox가 RN 0.85 Fabric의 mount-item dispatcher를 리플렉션으로 조회하다 실패해
@@ -34,7 +35,7 @@ async function assertConnectedToDevServer(): Promise<void> {
 
   const deadline = Date.now() + FIRST_SCREEN_TIMEOUT_MS;
   while (Date.now() < deadline) {
-    if (await isVisible(by.text('Enter URL manually'))) {
+    if (await isVisible(by.text('Updates'))) {
       throw new Error('dev-launcher가 Metro에 연결하지 못하고 런처 홈에 머물렀습니다.');
     }
     const onAppScreen =
@@ -53,6 +54,8 @@ export async function launchAppResilient(config: Detox.DeviceLaunchAppConfig): P
     try {
       await device.launchApp({
         ...config,
+        // 재시도까지 재설치하면 다시 '새로 설치한 첫 실행'이 되어 같은 연결 실패를 반복한다
+        delete: attempt === 1 ? config.delete : false,
         launchArgs: {
           ...config.launchArgs,
           // debug 빌드에서 개발자 메뉴가 화면을 가리지 않도록 한다 (release 빌드에는 영향 없음)
