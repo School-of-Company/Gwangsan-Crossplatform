@@ -1,6 +1,6 @@
 import { device, element, by, waitFor } from 'detox';
 import { collectCoverage } from './coverage';
-import { launchAppResilient } from './launchApp';
+import { FIRST_SCREEN_TIMEOUT_MS, launchAppResilient } from './launchApp';
 
 describe('앱 실행', () => {
   afterAll(collectCoverage);
@@ -21,6 +21,6 @@ describe('앱 실행', () => {
   it('앱이 실행되고 초기 화면이 표시된다', async () => {
     await waitFor(element(by.text('로그인')))
       .toBeVisible()
-      .withTimeout(15000);
+      .withTimeout(FIRST_SCREEN_TIMEOUT_MS);
   });
 });

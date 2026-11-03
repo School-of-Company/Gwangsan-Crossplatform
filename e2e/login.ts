@@ -1,12 +1,12 @@
 import { device, element, by, expect, waitFor } from 'detox';
-import { launchAppResilient } from './launchApp';
+import { FIRST_SCREEN_TIMEOUT_MS, launchAppResilient } from './launchApp';
 
 // E2E 전용 테스트 계정. 운영 서버에 그대로 로그인하므로 쓰기 시나리오에서는 데이터를 남기지 않도록 주의한다
 export const E2E_NICKNAME = process.env.E2E_NICKNAME ?? '테스트';
 export const E2E_PASSWORD = process.env.E2E_PASSWORD ?? '12345678';
 
 async function isSignedIn(): Promise<boolean> {
-  const deadline = Date.now() + 20000;
+  const deadline = Date.now() + FIRST_SCREEN_TIMEOUT_MS;
   while (Date.now() < deadline) {
     try {
       await expect(element(by.id('Footer-profile-button'))).toBeVisible();
@@ -22,7 +22,9 @@ async function isSignedIn(): Promise<boolean> {
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  throw new Error('홈 화면과 로그인 화면 모두 20초 안에 나타나지 않았습니다.');
+  throw new Error(
+    `홈 화면과 로그인 화면 모두 ${FIRST_SCREEN_TIMEOUT_MS / 1000}초 안에 나타나지 않았습니다.`
+  );
 }
 
 export async function launchAndSignIn(): Promise<void> {
