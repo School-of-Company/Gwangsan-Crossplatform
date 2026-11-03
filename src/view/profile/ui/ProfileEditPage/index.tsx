@@ -78,8 +78,8 @@ export default function ProfileEditPageView() {
       });
 
       updateProfileMutation.mutate(validatedData);
-    } catch (error: any) {
-      if (error.issues && error.issues.length > 0) {
+    } catch (error) {
+      if (error instanceof z.ZodError && error.issues.length > 0) {
         Toast.show({
           type: 'error',
           text1: '입력 오류',

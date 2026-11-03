@@ -40,6 +40,11 @@ module.exports = defineConfig([
       'import/no-unresolved': 'error',
     },
   },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**', '**/*.test.{ts,tsx}', 'src/test-utils/**'],
+    rules: { '@typescript-eslint/no-explicit-any': 'error' },
+  },
   // jest.mock 팩토리·isolateModules 안에서는 호이스팅 때문에 require만 쓸 수 있다.
   {
     files: [

@@ -46,8 +46,8 @@ export default function CancelTradeView() {
   }
 
   const imageUris = (data?.imageUrls ?? [])
-    .map((u: any) => (typeof u === 'string' ? u : (u?.url ?? u?.uri)))
-    .filter((u: unknown): u is string => typeof u === 'string' && u.length > 0);
+    .map((image) => image.imageUrl)
+    .filter((uri) => uri.length > 0);
 
   return (
     <SafeAreaView className="flex-1 bg-background">

@@ -57,7 +57,7 @@ class SocketManager implements ISocketManager {
           const latestToken = await getData('accessToken').catch(() => null);
           cb({ token: `Bearer ${latestToken ?? accessToken}` });
         },
-        transports: this.config.transports as any,
+        transports: [...this.config.transports],
         timeout: this.config.timeout,
         forceNew: true,
         reconnection: this.config.reconnection,
@@ -105,7 +105,7 @@ class SocketManager implements ISocketManager {
     if (!socket) return;
 
     CHAT_SOCKET_SERVER_EVENTS.forEach((event) => {
-      socket.on(event, (...args: any[]) => {
+      socket.on(event, (...args: unknown[]) => {
         this.emit(event, ...args);
       });
     });
@@ -147,7 +147,7 @@ class SocketManager implements ISocketManager {
 
   private static readonly RESERVED_EVENTS = new Set<string>(CHAT_SOCKET_EVENTS);
 
-  emit(event: string, ...args: any[]): void {
+  emit(event: string, ...args: unknown[]): void {
     if (this.socket?.connected && !SocketManager.RESERVED_EVENTS.has(event)) {
       this.socket.emit(event, ...args);
     }
@@ -164,14 +164,14 @@ class SocketManager implements ISocketManager {
     }
   }
 
-  on<T = any>(event: string, handler: (data: T) => void): void {
+  on<T = unknown>(event: string, handler: (data: T) => void): void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set());
     }
     this.eventHandlers.get(event)!.add(handler);
   }
 
-  off<T = any>(event: string, handler: (data: T) => void): void {
+  off<T = unknown>(event: string, handler: (data: T) => void): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.delete(handler);

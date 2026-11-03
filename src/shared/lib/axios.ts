@@ -52,6 +52,8 @@ const readToken = async (read: () => Promise<string | null>) => {
   }
 };
 
+type TimedRequestConfig = InternalAxiosRequestConfig & { __sentryStartTime?: number };
+
 export const instance = axios.create({
   baseURL,
   timeout: 5000,
@@ -62,7 +64,7 @@ export const instance = axios.create({
 
 instance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    (config as any).__sentryStartTime = Date.now();
+    (config as TimedRequestConfig).__sentryStartTime = Date.now();
     const accessToken = await getAccessToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -82,7 +84,7 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   (response) => {
-    const startTime = (response.config as any).__sentryStartTime;
+    const startTime = (response.config as TimedRequestConfig).__sentryStartTime;
     const duration = startTime ? Date.now() - startTime : undefined;
     Sentry.addBreadcrumb({
       category: 'http',
@@ -96,9 +98,8 @@ instance.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as
-      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    const startTime = (originalRequest as any)?.__sentryStartTime;
+    const originalRequest = error.config as (TimedRequestConfig & { _retry?: boolean }) | undefined;
+    const startTime = originalRequest?.__sentryStartTime;
     const duration = startTime ? Date.now() - startTime : undefined;
 
     Sentry.addBreadcrumb({

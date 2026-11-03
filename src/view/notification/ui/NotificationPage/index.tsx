@@ -60,7 +60,6 @@ const NotificationPage = () => {
             createdAt={item.createdAt}
             sourceId={item.sourceId}
             images={item.images}
-            raw={item}
           />
         )}
         ListEmptyComponent={
