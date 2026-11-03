@@ -1,5 +1,6 @@
 export const PLACE_ITEMS = [
-  // 신창·고실마을 지점만 노출한다. 다른 지점을 열 때 여기 항목을 늘린다.
+  // 앱에서 운영하는 지점만 노출한다. id는 관리자 웹(Gwangsan-Client-V2 place 상수)과 같은 값이다.
+  { id: 1, name: '수완지점' },
   { id: 2, name: '고실마을지점' },
   { id: 4, name: '신창지점' },
 ] as const;
@@ -10,9 +11,23 @@ export type Place = (typeof PLACES)[number];
 
 export type PlaceItem = (typeof PLACE_ITEMS)[number];
 
-// 서버·DB 지점명이 '신창'과 '신창지점'으로 섞여 있을 수 있어 어느 쪽이 와도 같은 지점으로 본다.
-// 웹 목록에는 '신창동'으로 나오기도 해 '동' 접미사도 무시한다.
-const normalizePlaceName = (name: string) => name.replace(/\s/g, '').replace(/(지점|동)$/, '');
+// 서버·DB 지점명이 '수완마을'·'신창동'·'신창지점'처럼 섞여 있어, 관리자 웹과 같이
+// 공백과 '지점'·'마을'·'동' 접미사를 반복해서 떼고 비교한다.
+const PLACE_NAME_SUFFIXES = ['지점', '마을', '동'];
+const normalizePlaceName = (name: string) => {
+  let normalized = name.replace(/\s/g, '');
+  let stripped = true;
+  while (stripped) {
+    stripped = false;
+    for (const suffix of PLACE_NAME_SUFFIXES) {
+      if (normalized.length > suffix.length && normalized.endsWith(suffix)) {
+        normalized = normalized.slice(0, -suffix.length);
+        stripped = true;
+      }
+    }
+  }
+  return normalized;
+};
 
 export const findPlaceItem = ({
   placeId,
