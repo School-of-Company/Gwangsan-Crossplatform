@@ -61,6 +61,49 @@ function getSheetHandlers(container: ReturnType<typeof render>) {
   };
 }
 
+describe('BottomSheetModalWrapper 화면 이동 시 닫기', () => {
+  it('열려 있는 동안 closeAll을 부르면 onClose가 호출된다', () => {
+    const onClose = jest.fn();
+    renderSheet(
+      <BottomSheetModalWrapper title="시트" isVisible onClose={onClose}>
+        <Text>내용</Text>
+      </BottomSheetModalWrapper>
+    );
+
+    act(() => useBottomSheetPortalStore.getState().closeAll());
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('닫혀 있으면 closeAll을 불러도 onClose가 호출되지 않는다', () => {
+    const onClose = jest.fn();
+    renderSheet(
+      <BottomSheetModalWrapper title="시트" isVisible={false} onClose={onClose}>
+        <Text>내용</Text>
+      </BottomSheetModalWrapper>
+    );
+
+    act(() => useBottomSheetPortalStore.getState().closeAll());
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('언마운트되면 닫기 콜백도 지운다', () => {
+    const onClose = jest.fn();
+    const { unmount } = renderSheet(
+      <BottomSheetModalWrapper title="시트" isVisible onClose={onClose}>
+        <Text>내용</Text>
+      </BottomSheetModalWrapper>
+    );
+
+    unmount();
+    act(() => useBottomSheetPortalStore.getState().closeAll());
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(useBottomSheetPortalStore.getState().closers).toEqual({});
+  });
+});
+
 describe('BottomSheetModalWrapper', () => {
   it('isVisible이 false이면 아무것도 렌더링하지 않는다', () => {
     const { queryByText } = renderSheet(
