@@ -1,5 +1,8 @@
 import { device } from 'detox';
 
+// 앱 실행 후 첫 화면(온보딩·홈)을 기다리는 시간. Debug 빌드는 첫 실행에 Metro 번들 로딩이 포함된다
+export const FIRST_SCREEN_TIMEOUT_MS = 40000;
+
 const LAUNCH_RETRY_COUNT = 3;
 const RETRY_DELAY_MS = 3000;
 
