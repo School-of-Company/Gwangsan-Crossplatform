@@ -192,7 +192,7 @@ describe('ItemFormPage', () => {
       fillRequiredFields(getByPlaceholderText);
 
       expect(getByTestId('item-form-disabled-reason').props.children).toBe(
-        '물건 나눔 글에는 사진을 1장 이상 올려 주세요.'
+        '팔아요 글에는 사진을 1장 이상 올려 주세요.'
       );
     });
 
