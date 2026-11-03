@@ -1,4 +1,4 @@
-import { device } from 'detox';
+import { device, element, by, expect } from 'detox';
 
 // 앱 실행 후 첫 화면(온보딩·홈)을 기다리는 시간. Debug 빌드는 첫 실행에 Metro 번들 로딩이 포함된다
 export const FIRST_SCREEN_TIMEOUT_MS = 40000;
@@ -14,6 +14,35 @@ const devServerLaunchArgs = (): Record<string, string> => {
   // Detox는 실행 인자 키 앞에 '-'를 붙이므로 '-initialUrl'이 '--initialUrl'이 된다
   return metroUrl ? { '-initialUrl': metroUrl } : {};
 };
+
+async function isVisible(matcher: Detox.NativeMatcher): Promise<boolean> {
+  try {
+    await expect(element(matcher)).toBeVisible();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 새로 설치한 앱의 첫 실행에서 dev-launcher의 매니페스트 요청이 CI Metro 응답을 10초 넘게 기다리다
+// 시간 초과되면 앱 대신 런처 홈에 머문다. 앱 첫 화면(로그인·홈)이 뜰 때까지 보고, 런처 홈이면 재실행한다
+async function assertConnectedToDevServer(): Promise<void> {
+  if (!process.env.E2E_METRO_URL) return;
+  // Detox가 RN 0.85 Fabric의 mount-item dispatcher를 리플렉션으로 조회하다 실패해
+  // 첫 element 매칭에서 연결이 끊기는 문제 우회 (https://github.com/wix/Detox/issues/4963)
+  await device.disableSynchronization();
+
+  const deadline = Date.now() + FIRST_SCREEN_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    if (await isVisible(by.text('Enter URL manually'))) {
+      throw new Error('dev-launcher가 Metro에 연결하지 못하고 런처 홈에 머물렀습니다.');
+    }
+    const onAppScreen =
+      (await isVisible(by.text('로그인'))) || (await isVisible(by.id('Footer-profile-button')));
+    if (onAppScreen) return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+}
 
 // CI의 iOS 시뮬레이터에서 SpringBoard가 간헐적으로 크래시하며 launchApp이 실패하는 경우가 있어
 // (FBSOpenApplicationServiceErrorDomain code=5) 재시도로 완화한다.
@@ -33,6 +62,7 @@ export async function launchAppResilient(config: Detox.DeviceLaunchAppConfig): P
           ...devServerLaunchArgs(),
         },
       });
+      await assertConnectedToDevServer();
       return;
     } catch (error) {
       lastError = error;
