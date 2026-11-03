@@ -3,10 +3,10 @@ import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { useChatInput } from '../useChatInput';
 
-import { useUploadImage } from '@/shared/model/useUploadImage';
+import { useUploadImage } from '~/shared/model/useUploadImage';
 import * as ImagePicker from 'expo-image-picker';
 
-jest.mock('@/shared/model/useUploadImage', () => ({
+jest.mock('~/shared/model/useUploadImage', () => ({
   useUploadImage: jest.fn(),
 }));
 
@@ -201,7 +201,8 @@ describe('useChatInput', () => {
       expect(onSendMessage).toHaveBeenCalledWith(
         null,
         [5],
-        [{ imageId: 5, imageUrl: 'file://5.jpg' }]
+        // 로컬 파일로 바로 미리보기를 그리고, 재시작 후 파일이 사라지면 쓸 서버 URL도 함께 넘긴다
+        [{ imageId: 5, imageUrl: 'file://5.jpg', remoteUrl: 'https://example.com/5.jpg' }]
       );
       expect(result.current.selectedImages).toEqual([]);
     });

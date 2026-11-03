@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import { uploadImage } from '../api/uploadImage';
-import { ImageType } from '../types/imageType';
+import { uploadImage } from '~/shared/api/uploadImage';
+import { ImageType } from '~/shared/types/imageType';
 import Toast from 'react-native-toast-message';
 
 interface UseUploadImageOptions {

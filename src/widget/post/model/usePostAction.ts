@@ -1,14 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { useQueryClient } from '@tanstack/react-query';
-import { createReview } from '~/entity/post/api/createReview';
-import { useGetItem } from '~/entity/post/model/useGetItem';
-import { useDeletePost } from '~/entity/post';
+import { createReview, useGetItem, useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
-import { useChatEntry } from '~/entity/chat/model/useChatEntry';
+import { useChatEntry } from '~/entity/chat';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
-import { reviewKeys } from '~/entity/reviews/model/reviewQueryKeys';
+import { reviewKeys } from '~/entity/reviews';
 
 interface UsePostPageLogicParams {
   readonly id: string;
@@ -27,6 +25,10 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
 
   const [reviewLight, setReviewLight] = useState<number>(60);
   const [reviewContents, setReviewContents] = useState('');
+  // 연타하면 같은 후기가 두 번 만들어진다. state는 렌더 전까지 반영되지 않아
+  // 같은 프레임의 연속 탭을 못 막으므로 ref로 잠그고, state는 버튼 표시에만 쓴다.
+  const isSubmittingReviewRef = useRef(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const [isMyPost, setIsMyPost] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,8 +53,10 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     }, []),
     onSubmit: useCallback(
       async (light: number, contents: string) => {
-        if (!id || !data) return;
+        if (!id || !data || isSubmittingReviewRef.current) return;
 
+        isSubmittingReviewRef.current = true;
+        setIsSubmittingReview(true);
         try {
           await createReview({
             productId: data.id,
@@ -74,6 +78,9 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
             text1: '리뷰 작성 실패',
             text2: error instanceof Error ? error.message : '리뷰 작성 중 오류가 발생했습니다.',
           });
+        } finally {
+          isSubmittingReviewRef.current = false;
+          setIsSubmittingReview(false);
         }
       },
       [id, data, queryClient]
@@ -175,6 +182,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     isDeleteAlertVisible,
     reviewLight,
     reviewContents,
+    isSubmittingReview,
     isChatLoading,
     isTradeRequestLoading: tradeRequest.isLoading,
     modalHandlers,

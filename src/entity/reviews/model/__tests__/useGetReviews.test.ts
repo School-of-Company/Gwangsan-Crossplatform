@@ -1,7 +1,6 @@
 import { waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../../api/getReviews';
-import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { useGetReviews } from '../useGetReviews';
 
 jest.mock('../../api/getReviews', () => ({
@@ -10,14 +9,10 @@ jest.mock('../../api/getReviews', () => ({
   getTossReview: jest.fn(),
 }));
 
-jest.mock('~/shared/model/useGetMyInformation', () => ({
-  useGetMyInformation: jest.fn(),
-}));
-
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
 const mockGetReceiveReview = getReceiveReview as jest.Mock;
 const mockGetTossReview = getTossReview as jest.Mock;
-const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
+let myMemberId: number | undefined;
 
 const makeReview = (overrides: Record<string, unknown> = {}) => ({
   reviewerName: '홍길동',
@@ -31,7 +26,7 @@ const makeReview = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseGetMyInformation.mockReturnValue({ data: { memberId: 99 } });
+  myMemberId = 99;
 });
 
 describe('useGetReviews', () => {
@@ -40,7 +35,9 @@ describe('useGetReviews', () => {
       const reviews = [makeReview({ reviewId: '9' })];
       mockGetMyReceivedReview.mockResolvedValue(reviews);
 
-      const { result, queryClient } = renderHookWithProviders(() => useGetReviews('receive', '99'));
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useGetReviews('receive', '99', { myMemberId })
+      );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -51,9 +48,11 @@ describe('useGetReviews', () => {
     });
 
     it('내 정보가 아직 없으면 쿼리가 비활성화된다', () => {
-      mockUseGetMyInformation.mockReturnValue({ data: undefined });
+      myMemberId = undefined;
 
-      const { result } = renderHookWithProviders(() => useGetReviews('receive', '3'));
+      const { result } = renderHookWithProviders(() =>
+        useGetReviews('receive', '3', { myMemberId })
+      );
 
       expect(result.current.fetchStatus).toBe('idle');
       expect(mockGetReceiveReview).not.toHaveBeenCalled();
@@ -64,7 +63,9 @@ describe('useGetReviews', () => {
       const reviews = [makeReview()];
       mockGetReceiveReview.mockResolvedValue(reviews);
 
-      const { result } = renderHookWithProviders(() => useGetReviews('receive', '3'));
+      const { result } = renderHookWithProviders(() =>
+        useGetReviews('receive', '3', { myMemberId })
+      );
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -74,14 +75,18 @@ describe('useGetReviews', () => {
     });
 
     it('memberId가 없으면 쿼리가 비활성화된다', () => {
-      const { result } = renderHookWithProviders(() => useGetReviews('receive', undefined));
+      const { result } = renderHookWithProviders(() =>
+        useGetReviews('receive', undefined, { myMemberId })
+      );
 
       expect(result.current.fetchStatus).toBe('idle');
       expect(mockGetReceiveReview).not.toHaveBeenCalled();
     });
 
     it('memberId가 "undefined" 문자열이면 쿼리가 비활성화된다', () => {
-      const { result } = renderHookWithProviders(() => useGetReviews('receive', 'undefined'));
+      const { result } = renderHookWithProviders(() =>
+        useGetReviews('receive', 'undefined', { myMemberId })
+      );
 
       expect(result.current.fetchStatus).toBe('idle');
       expect(mockGetReceiveReview).not.toHaveBeenCalled();
@@ -90,7 +95,9 @@ describe('useGetReviews', () => {
     it('API 실패 시 error 상태가 된다', async () => {
       mockGetReceiveReview.mockRejectedValue(new Error('Server error'));
 
-      const { result } = renderHookWithProviders(() => useGetReviews('receive', '3'));
+      const { result } = renderHookWithProviders(() =>
+        useGetReviews('receive', '3', { myMemberId })
+      );
 
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(result.current.error).toBeTruthy();
@@ -99,7 +106,9 @@ describe('useGetReviews', () => {
     it('queryKey가 [reviews, receive, memberId]이다', async () => {
       mockGetReceiveReview.mockResolvedValue([makeReview()]);
 
-      const { queryClient } = renderHookWithProviders(() => useGetReviews('receive', '7'));
+      const { queryClient } = renderHookWithProviders(() =>
+        useGetReviews('receive', '7', { myMemberId })
+      );
 
       await waitFor(() =>
         expect(queryClient.getQueryState(['reviews', 'receive', '7'])).toBeDefined()

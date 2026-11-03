@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, act, fireEvent } from '@testing-library/react-native';
 import PostList from '../index';
-import { useGetPosts } from '~/shared/model/useGetPosts';
+import { useGetPosts } from '~/entity/post/model/useGetPosts';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 
-jest.mock('~/shared/model/useGetPosts', () => ({
+jest.mock('~/entity/post/model/useGetPosts', () => ({
   useGetPosts: jest.fn(),
 }));
 
@@ -12,12 +12,16 @@ jest.mock('~/entity/profile/model/useGetBlockList', () => ({
   useGetBlockList: jest.fn(),
 }));
 
+const mockVirtualListProps = jest.fn();
+
 jest.mock('scrolloop/native', () => ({
-  VirtualList: ({ count, renderItem, refreshControl }: any) => {
+  VirtualList: (props: any) => {
+    const { count, renderItem, refreshControl, itemSize } = props;
+    mockVirtualListProps(props);
     const { View } = require('react-native');
     const { cloneElement } = require('react');
     const items = Array.from({ length: count }, (_, i) => {
-      const el = renderItem(i);
+      const el = renderItem(i, { position: 'absolute', top: i * itemSize, height: itemSize });
       return el ? cloneElement(el, { key: i }) : null;
     });
     return (
@@ -120,6 +124,48 @@ describe('PostList', () => {
     const { getByText } = render(<PostList category="팔아요" type="OBJECT" />);
 
     expect(getByText('게시물이 없습니다.')).toBeTruthy();
+  });
+
+  describe('목록 높이와 스크롤', () => {
+    const lastListProps = () => mockVirtualListProps.mock.calls.at(-1)?.[0];
+
+    it('목록 영역의 실제 높이를 재서 VirtualList height로 넘긴다', () => {
+      mockUseGetPosts.mockReturnValue({ data: makePosts(), refetch: jest.fn() });
+      const { getByTestId } = render(<PostList category="팔아요" type="OBJECT" />);
+
+      fireEvent(getByTestId('post-list'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 712 } },
+      });
+
+      expect(lastListProps().height).toBe(712);
+    });
+
+    it('높이를 재기 전에도 목록을 그린다', () => {
+      mockUseGetPosts.mockReturnValue({ data: makePosts(), refetch: jest.fn() });
+      const { getByText } = render(<PostList category="팔아요" type="OBJECT" />);
+
+      expect(getByText('게시글 1')).toBeTruthy();
+      expect(lastListProps().height).toBeGreaterThan(0);
+    });
+
+    it('관성 스크롤을 막지 않는다', () => {
+      mockUseGetPosts.mockReturnValue({ data: makePosts(), refetch: jest.fn() });
+      render(<PostList category="팔아요" type="OBJECT" />);
+
+      expect(lastListProps().decelerationRate).toBeUndefined();
+    });
+
+    it('VirtualList가 넘긴 위치·높이 style로 카드를 배치한다', () => {
+      mockUseGetPosts.mockReturnValue({ data: makePosts(2), refetch: jest.fn() });
+      const { getByTestId } = render(<PostList category="팔아요" type="OBJECT" />);
+
+      const itemSize = lastListProps().itemSize;
+      expect(getByTestId('post-list-item-1').props.style).toEqual({
+        position: 'absolute',
+        top: itemSize,
+        height: itemSize,
+      });
+    });
   });
 
   it('data 배열에 항목이 없는 인덱스가 있으면 renderItem이 null을 반환한다', () => {

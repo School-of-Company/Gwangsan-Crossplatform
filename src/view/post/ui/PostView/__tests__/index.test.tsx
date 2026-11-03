@@ -138,4 +138,28 @@ describe('PostView', () => {
       expect(getByTestId('post-list-category').props.children).toBe('할 수 있어요');
     });
   });
+
+  describe('같은 화면에서 파라미터가 바뀔 때', () => {
+    it('type이 바뀌면 새 type의 첫 탭으로 맞춘다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'OBJECT', mode: 'GIVER' });
+      const { getByTestId, rerender } = render(<PostView />);
+      expect(getByTestId('post-list-category').props.children).toBe('팔아요');
+
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      rerender(<PostView />);
+
+      expect(getByTestId('header-title').props.children).toBe('서비스');
+      expect(getByTestId('post-list-category').props.children).toBe('할 수 있어요');
+    });
+
+    it('mode가 바뀌면 해당 탭으로 맞춘다', () => {
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'GIVER' });
+      const { getByTestId, rerender } = render(<PostView />);
+
+      mockUseLocalSearchParams.mockReturnValue({ type: 'SERVICE', mode: 'RECEIVER' });
+      rerender(<PostView />);
+
+      expect(getByTestId('post-list-category').props.children).toBe('해주세요');
+    });
+  });
 });

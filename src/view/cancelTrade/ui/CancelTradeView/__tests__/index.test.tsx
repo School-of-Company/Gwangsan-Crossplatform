@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useGetReview } from '../../../model/useGetReview';
+import { useGetReview } from '~/entity/reviews/model/useGetReview';
 import { logger } from '~/shared/lib/logger';
 import CancelTradeView from '../index';
 
@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
 }));
 
-jest.mock('../../../model/useGetReview', () => ({
+jest.mock('~/entity/reviews/model/useGetReview', () => ({
   useGetReview: jest.fn(),
 }));
 
@@ -78,28 +78,38 @@ describe('CancelTradeView', () => {
     expect(getByText('거래 취소')).toBeTruthy();
   });
 
-  it('imageUrls가 문자열 배열이면 각 이미지를 렌더링한다', () => {
-    mockUseGetReview.mockReturnValue({
-      data: makeReviewData({ imageUrls: ['https://a.com/1.png', 'https://a.com/2.png'] }),
-    });
-
-    const { UNSAFE_getAllByType } = render(<CancelTradeView />);
-    const { Image } = require('expo-image');
-
-    expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
-  });
-
-  it('imageUrls가 {url} 또는 {uri} 객체 배열이어도 정상 렌더링한다', () => {
+  it('서버 응답의 imageUrls({ imageId, imageUrl }) 각각을 이미지로 렌더링한다', () => {
     mockUseGetReview.mockReturnValue({
       data: makeReviewData({
-        imageUrls: [{ url: 'https://a.com/1.png' }, { uri: 'https://a.com/2.png' }],
+        imageUrls: [
+          { imageId: 1, imageUrl: 'https://a.com/1.png' },
+          { imageId: 2, imageUrl: 'https://a.com/2.png' },
+        ],
       }),
     });
 
     const { UNSAFE_getAllByType } = render(<CancelTradeView />);
     const { Image } = require('expo-image');
 
-    expect(UNSAFE_getAllByType(Image)).toHaveLength(2);
+    const images = UNSAFE_getAllByType(Image);
+    expect(images).toHaveLength(2);
+    expect(images[0].props.source).toEqual({ uri: 'https://a.com/1.png' });
+  });
+
+  it('imageUrl이 빈 문자열인 이미지는 건너뛴다', () => {
+    mockUseGetReview.mockReturnValue({
+      data: makeReviewData({
+        imageUrls: [
+          { imageId: 1, imageUrl: '' },
+          { imageId: 2, imageUrl: 'https://a.com/2.png' },
+        ],
+      }),
+    });
+
+    const { UNSAFE_getAllByType } = render(<CancelTradeView />);
+    const { Image } = require('expo-image');
+
+    expect(UNSAFE_getAllByType(Image)).toHaveLength(1);
   });
 
   it('imageUrls가 비어있으면 기본 로고 하나만 렌더링한다', () => {

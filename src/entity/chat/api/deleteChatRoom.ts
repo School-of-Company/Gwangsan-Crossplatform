@@ -1,6 +1,6 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import type { ChatApiError } from '../model/chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { toAppError } from '~/shared/lib/errorHandler';
 
 export const deleteChatRoom = async (roomId: RoomId): Promise<void> => {

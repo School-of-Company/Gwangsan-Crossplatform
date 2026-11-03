@@ -1,14 +1,18 @@
 import { ScrollView, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Gwangsan, Information, Light } from '~/entity/profile/ui';
-import { Introduce, ProfileMenu } from '~/widget/profile/ui';
+import {
+  Gwangsan,
+  Information,
+  Light,
+  useGetProfile,
+  useGetMyProfile,
+  useGetBlockList,
+} from '~/entity/profile';
+import { Introduce, ProfileMenu } from '~/widget/profile';
 import Toast from 'react-native-toast-message';
-import { useGetProfile } from '../../model/useGetProfile';
 import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
-import { useGetMyProfile } from '../../model/useGetMyProfile';
-import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
 export default function ProfilePageView() {

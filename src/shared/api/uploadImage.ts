@@ -1,12 +1,13 @@
-import { instance } from '../lib/axios';
+import { instance } from '~/shared/lib/axios';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { ImageType } from '../types/imageType';
-import { logger } from '../lib/logger';
+import { ImageType } from '~/shared/types/imageType';
+import { logger } from '~/shared/lib/logger';
+import { toAppError } from '~/shared/lib/errorHandler';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// 전역 타임아웃(5초)은 최대 10MB 업로드에는 짧아 셀룰러 환경에서 업로드가 자주 실패했다(#739)
+// 전역 타임아웃(5초)은 최대 10MB 업로드에는 짧아 셀룰러 환경에서 실패하므로 따로 길게 잡는다
 export const UPLOAD_TIMEOUT_MS = 60_000;
 
 export const uploadImage = async (uri: string): Promise<ImageType> => {
@@ -26,11 +27,8 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
     const type = `image/${fileType || 'jpeg'}`;
 
     const formData = new FormData();
-    formData.append('file', {
-      uri,
-      name: filename,
-      type,
-    } as any);
+    // RN의 FormData는 Blob 대신 { uri, name, type } 파일 객체를 받는다
+    formData.append('file', { uri, name: filename, type } as unknown as Blob);
 
     const config = {
       headers: {
@@ -44,6 +42,6 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
     return response.data;
   } catch (error) {
     logger.error('uploadImage failed', error);
-    throw error;
+    throw toAppError(error);
   }
 };

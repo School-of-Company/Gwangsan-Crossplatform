@@ -50,7 +50,7 @@ export interface BaseSocketEvents {
 
 export interface SocketConnectionConfig {
   readonly url: string;
-  readonly transports: readonly string[];
+  readonly transports: readonly ('websocket' | 'polling')[];
   readonly timeout: number;
   readonly reconnection: boolean;
   readonly autoConnect: boolean;
@@ -62,12 +62,12 @@ export interface ISocketManager {
 
   connect(): Promise<void>;
   disconnect(): void;
-  emit(event: string, ...args: any[]): void;
-  on<T = any>(event: string, handler: (data: T) => void): void;
-  off<T = any>(event: string, handler: (data: T) => void): void;
+  emit(event: string, ...args: unknown[]): void;
+  on<T = unknown>(event: string, handler: (data: T) => void): void;
+  off<T = unknown>(event: string, handler: (data: T) => void): void;
 }
 
-// 채팅 서버 응답 타입. entity/chat/model/chatTypes에서 다시 내보낸다(#741)
+// 채팅 서버 응답 타입. entity/chat/model/chatTypes에서 다시 내보낸다
 export interface ProductImage {
   readonly imageId: number;
   readonly imageUrl: string;

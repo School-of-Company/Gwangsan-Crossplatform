@@ -1,7 +1,8 @@
 import { FlatList, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
 import { useGetAlertList } from '~/entity/notification';
-import NotificationItem from '~/widget/notification/ui/NotificationItem';
+import { NotificationItem } from '~/widget/notification';
 import { Header } from '~/shared/ui';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 
@@ -35,9 +36,7 @@ const NotificationPage = () => {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="알림" />
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-foreground">알림을 불러오는데 실패했습니다.</Text>
-        </View>
+        <ErrorFallback title="알림을 불러오는데 실패했습니다." onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
@@ -61,9 +60,13 @@ const NotificationPage = () => {
             createdAt={item.createdAt}
             sourceId={item.sourceId}
             images={item.images}
-            raw={item}
           />
         )}
+        ListEmptyComponent={
+          <Text testID="notification-empty" className="pt-20 text-center text-gray-500">
+            새로운 알림이 없습니다.
+          </Text>
+        }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
     </SafeAreaView>

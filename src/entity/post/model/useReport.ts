@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState, useMemo } from 'react';
 import Toast from 'react-native-toast-message';
 import { report, type ReportRequest, type ReportReason } from '../api/report';
-import type { ImageUploadState } from '@/shared/ui/ImageUploader';
+import type { ImageUploadState } from '~/shared/ui/ImageUploader';
 
 interface UseReportParams {
   productId?: number;

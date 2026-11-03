@@ -1,4 +1,4 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import type { ChatRoomListItem, ChatApiError } from '../model/chatTypes';
 import { toAppError } from '~/shared/lib/errorHandler';
 

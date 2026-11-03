@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useUploadImage } from '@/shared/model/useUploadImage';
-import { logger } from '@/shared/lib/logger';
+import { useUploadImage } from '~/shared/model/useUploadImage';
+import { logger } from '~/shared/lib/logger';
 
 export interface ImagePreview {
   imageId: number;
@@ -66,7 +66,8 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
           { imageId: uploadedImage.imageId, imageUrl: uploadedImage.imageUrl, localUri: asset.uri },
         ]);
       } catch (error) {
-        console.error(error);
+        // 업로드 실패는 uploadImage에서 이미 error로 기록하므로 여기서는 경고로만 남긴다
+        logger.warn('chat image pick failed', error);
       } finally {
         setIsUploading(false);
       }
@@ -147,6 +148,7 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       const images = selectedImages.map((img) => ({
         imageId: img.imageId,
         imageUrl: img.localUri,
+        remoteUrl: img.imageUrl,
       }));
 
       onSendMessage(content, imageIds, images);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders } from '~/test-utils';
 import NoticeDetailPage from '../index';
 
@@ -68,6 +69,21 @@ describe('NoticeDetailPage', () => {
     expect(getByText('공지사항을 불러오는데 실패했습니다.')).toBeTruthy();
   });
 
+  it('에러 화면에서 다시 시도를 누르면 refetch를 호출한다', () => {
+    const refetch = jest.fn();
+    mockUseGetNoticeDetail.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('Not found'),
+      refetch,
+    });
+
+    const { getByText } = renderWithProviders(<NoticeDetailPage />);
+
+    fireEvent.press(getByText('다시 시도'));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
   it('data가 null이면 에러 UI를 표시한다', () => {
     mockUseGetNoticeDetail.mockReturnValue({
       data: null,
@@ -87,7 +103,7 @@ describe('NoticeDetailPage', () => {
         title: '테스트 공지',
         content: '공지 내용입니다.',
         place: '광산구청',
-        createdAt: '2025-01-15',
+        createdAt: '2025-01-15T09:05:00',
         role: 'ROLE_PLACE_ADMIN',
         images: [],
       },
@@ -95,12 +111,13 @@ describe('NoticeDetailPage', () => {
       error: null,
     });
 
-    const { getByText } = renderWithProviders(<NoticeDetailPage />);
+    const { getByText, queryByText } = renderWithProviders(<NoticeDetailPage />);
 
     expect(getByText('테스트 공지')).toBeTruthy();
     expect(getByText('공지 내용입니다.')).toBeTruthy();
     expect(getByText('광산구청')).toBeTruthy();
-    expect(getByText('2025-01-15')).toBeTruthy();
+    expect(getByText('2025.01.15 09:05')).toBeTruthy();
+    expect(queryByText('2025-01-15T09:05:00')).toBeNull();
   });
 
   it('이미지가 있으면 SlideViewer를 렌더링한다', () => {

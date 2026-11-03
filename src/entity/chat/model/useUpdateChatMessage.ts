@@ -1,11 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { updateChatMessage } from '../api/updateChatMessage';
-import { applyMessageUpdate, isSameMessageId } from '../lib/messageCache';
+import {
+  applyMessageUpdate,
+  isSameMessageId,
+  mapMessagePages,
+  type ChatMessagePages,
+} from '../lib/messageCache';
 import { chatMessageKeys } from './chatQueryKeys';
 import { chatRoomKeys } from './useChatRooms';
 import type { ChatMessageResponse, ChatRoomListItem } from './chatTypes';
-import type { MessageId, RoomId } from '@/shared/types/chatType';
+import type { MessageId, RoomId } from '~/shared/types/chatType';
 
 interface UpdateChatMessageVariables {
   readonly messageId: MessageId;
@@ -13,7 +18,7 @@ interface UpdateChatMessageVariables {
 }
 
 interface UpdateChatMessageContext {
-  readonly previousMessages?: ChatMessageResponse[];
+  readonly previousMessages?: ChatMessagePages;
 }
 
 export const useUpdateChatMessage = (roomId: RoomId) => {
@@ -30,22 +35,26 @@ export const useUpdateChatMessage = (roomId: RoomId) => {
     // 수정한 내용을 바로 보여주고, 실패하면 이전 상태로 되돌린다
     onMutate: async ({ messageId, content }) => {
       await queryClient.cancelQueries({ queryKey: messageKey });
-      const previousMessages = queryClient.getQueryData<ChatMessageResponse[]>(messageKey);
+      const previousMessages = queryClient.getQueryData<ChatMessagePages>(messageKey);
 
-      queryClient.setQueryData<ChatMessageResponse[]>(messageKey, (old) =>
-        applyMessageUpdate(old, { messageId, content, editedAt: new Date().toISOString() })
+      queryClient.setQueryData<ChatMessagePages>(messageKey, (old) =>
+        mapMessagePages(old, (messages) =>
+          applyMessageUpdate(messages, { messageId, content, editedAt: new Date().toISOString() })
+        )
       );
 
       return { previousMessages };
     },
     onSuccess: (updated, { messageId, content }) => {
       if (updated?.editedAt) {
-        queryClient.setQueryData<ChatMessageResponse[]>(messageKey, (old) =>
-          applyMessageUpdate(old, {
-            messageId,
-            content: updated.content ?? content,
-            editedAt: updated.editedAt as string,
-          })
+        queryClient.setQueryData<ChatMessagePages>(messageKey, (old) =>
+          mapMessagePages(old, (messages) =>
+            applyMessageUpdate(messages, {
+              messageId,
+              content: updated.content ?? content,
+              editedAt: updated.editedAt as string,
+            })
+          )
         );
       }
 

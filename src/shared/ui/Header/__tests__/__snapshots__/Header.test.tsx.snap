@@ -5,6 +5,9 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -25,6 +28,7 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -51,13 +55,20 @@ exports[`Header 스냅샷 - connectionState connected 1`] = `
       채팅방
     </Text>
     <View
-      className="size-2 rounded-full"
-      style={
-        {
-          "backgroundColor": "#22C55E",
+      accessibilityLabel="연결됨"
+      accessible={true}
+      className="flex-row items-center gap-1"
+      testID="header-connection-indicator"
+    >
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#22C55E",
+          }
         }
-      }
-    />
+      />
+    </View>
   </View>
   <View
     className="w-10"
@@ -70,6 +81,9 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -90,6 +104,7 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -116,13 +131,25 @@ exports[`Header 스냅샷 - connectionState connecting 1`] = `
       채팅방
     </Text>
     <View
-      className="size-2 rounded-full"
-      style={
-        {
-          "backgroundColor": "#F59E0B",
+      accessibilityLabel="연결 중"
+      accessible={true}
+      className="flex-row items-center gap-1"
+      testID="header-connection-indicator"
+    >
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#F59E0B",
+          }
         }
-      }
-    />
+      />
+      <Text
+        className="text-caption text-gray-500"
+      >
+        연결 중
+      </Text>
+    </View>
   </View>
   <View
     className="w-10"
@@ -135,6 +162,9 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -155,6 +185,7 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -181,13 +212,25 @@ exports[`Header 스냅샷 - connectionState disconnected 1`] = `
       채팅방
     </Text>
     <View
-      className="size-2 rounded-full"
-      style={
-        {
-          "backgroundColor": "#EF4444",
+      accessibilityLabel="연결 끊김"
+      accessible={true}
+      className="flex-row items-center gap-1"
+      testID="header-connection-indicator"
+    >
+      <View
+        className="size-2 rounded-full"
+        style={
+          {
+            "backgroundColor": "#EF4444",
+          }
         }
-      }
-    />
+      />
+      <Text
+        className="text-caption text-gray-500"
+      >
+        연결 끊김
+      </Text>
+    </View>
   </View>
   <View
     className="w-10"
@@ -200,6 +243,9 @@ exports[`Header 스냅샷 - 기본 상태 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -220,6 +266,7 @@ exports[`Header 스냅샷 - 기본 상태 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -257,6 +304,9 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
   className="flex-row items-center justify-between px-3 py-6"
 >
   <View
+    accessibilityElementsHidden={false}
+    accessibilityLabel="뒤로 가기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,
@@ -277,6 +327,7 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
     accessible={true}
     collapsable={false}
     focusable={true}
+    importantForAccessibility="auto"
     onClick={[Function]}
     onResponderGrant={[Function]}
     onResponderMove={[Function]}
@@ -304,6 +355,8 @@ exports[`Header 스냅샷 - 메뉴 버튼 있음 1`] = `
     </Text>
   </View>
   <View
+    accessibilityLabel="메뉴 더보기"
+    accessibilityRole="button"
     accessibilityState={
       {
         "busy": undefined,

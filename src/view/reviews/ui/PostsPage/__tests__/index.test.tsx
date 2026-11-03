@@ -1,20 +1,24 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useGetReviews } from '../../../../../entity/reviews/model/useGetReviews';
-import { useGetReceivedReviewsInfinite } from '../../../../../entity/reviews/model/useGetReceivedReviewsInfinite';
+import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
+import { useGetReceivedReviewsInfinite } from '~/entity/reviews/model/useGetReceivedReviewsInfinite';
 import ReviewsPageView from '../index';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
 }));
 
-jest.mock('../../../../../entity/reviews/model/useGetReviews', () => ({
+jest.mock('~/entity/reviews/model/useGetReviews', () => ({
   useGetReviews: jest.fn(),
 }));
 
-jest.mock('../../../../../entity/reviews/model/useGetReceivedReviewsInfinite', () => ({
+jest.mock('~/entity/reviews/model/useGetReceivedReviewsInfinite', () => ({
   useGetReceivedReviewsInfinite: jest.fn(),
+}));
+
+jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
+  useGetMyInformation: () => ({ data: { memberId: 1 } }),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -64,10 +68,11 @@ const makeReview = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const mockToss = (options: { data?: unknown[]; isError?: boolean } = {}) => {
+const mockToss = (options: { data?: unknown[]; isError?: boolean; refetch?: jest.Mock } = {}) => {
   mockUseGetReviews.mockImplementation(() => ({
     data: options.data ?? [],
     isError: options.isError ?? false,
+    refetch: options.refetch ?? jest.fn(),
   }));
 };
 
@@ -80,6 +85,7 @@ const mockReceiveInfinite = (
     isFetchingNextPage?: boolean;
     isFetchNextPageError?: boolean;
     fetchNextPage?: jest.Mock;
+    refetch?: jest.Mock;
   } = {}
 ) => {
   mockUseGetReceivedReviewsInfinite.mockReturnValue({
@@ -90,6 +96,7 @@ const mockReceiveInfinite = (
     isFetchingNextPage: options.isFetchingNextPage ?? false,
     isFetchNextPageError: options.isFetchNextPageError ?? false,
     fetchNextPage: options.fetchNextPage ?? jest.fn(),
+    refetch: options.refetch ?? jest.fn(),
   });
 };
 
@@ -113,14 +120,14 @@ describe('ReviewsPageView', () => {
     it('마운트 시 활성 탭(받은 후기)만 조회하도록 활성화되고, 비활성 탭(작성한 후기)은 비활성 상태로 호출된다', () => {
       render(<ReviewsPageView mode="receive" />);
 
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', true);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', true, 1);
       expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '1', { enabled: false });
     });
 
     it('작성한 후기 페이지로 마운트하면 반대로 작성한 후기만 활성화된다', () => {
       render(<ReviewsPageView mode="toss" />);
 
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', false);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('1', false, 1);
       expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '1', { enabled: true });
     });
 
@@ -130,7 +137,7 @@ describe('ReviewsPageView', () => {
       fireEvent.press(getByTestId('reviews-tab-toss'));
 
       expect(getByText('작성한 후기(active)')).toBeTruthy();
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', false);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', false, 1);
       expect(mockUseGetReviews).toHaveBeenLastCalledWith('toss', '1', { enabled: true });
     });
 
@@ -140,7 +147,7 @@ describe('ReviewsPageView', () => {
       fireEvent.press(getByTestId('reviews-tab-receive'));
 
       expect(getByText('받은 후기(active)')).toBeTruthy();
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', true);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenLastCalledWith('1', true, 1);
     });
   });
 
@@ -184,12 +191,15 @@ describe('ReviewsPageView', () => {
       expect(getByText('받은 후기가 없습니다.')).toBeTruthy();
     });
 
-    it('isError가 true이면 에러 메시지를 표시한다', () => {
-      mockReceiveInfinite({ isError: true });
+    it('isError가 true이면 다시 시도 화면을 보여주고, 누르면 refetch를 호출한다', () => {
+      const refetch = jest.fn();
+      mockReceiveInfinite({ isError: true, refetch });
 
       const { getByText } = render(<ReviewsPageView mode="receive" />);
 
-      expect(getByText('후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')).toBeTruthy();
+      expect(getByText('후기를 불러오지 못했습니다.')).toBeTruthy();
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalledTimes(1);
     });
 
     it('배열 형태의 id 파라미터는 첫 번째 값을 사용한다', () => {
@@ -197,7 +207,7 @@ describe('ReviewsPageView', () => {
 
       render(<ReviewsPageView mode="receive" />);
 
-      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('9', true);
+      expect(mockUseGetReceivedReviewsInfinite).toHaveBeenCalledWith('9', true, 1);
       expect(mockUseGetReviews).toHaveBeenCalledWith('toss', '9', { enabled: false });
     });
 
@@ -260,6 +270,41 @@ describe('ReviewsPageView', () => {
     });
   });
 
+  describe('당겨서 새로고침', () => {
+    it('받은 후기 탭에서 당기면 받은 후기만 다시 조회한다', async () => {
+      const refetch = jest.fn().mockResolvedValue(undefined);
+      const tossRefetch = jest.fn().mockResolvedValue(undefined);
+      mockReceiveInfinite({ refetch });
+      mockToss({ refetch: tossRefetch });
+
+      const { getByTestId } = render(<ReviewsPageView mode="receive" />);
+
+      await act(async () => {
+        await getByTestId('receive-reviews-list').props.refreshControl.props.onRefresh();
+      });
+
+      expect(refetch).toHaveBeenCalledTimes(1);
+      expect(tossRefetch).not.toHaveBeenCalled();
+      expect(getByTestId('receive-reviews-list').props.refreshControl.props.refreshing).toBe(false);
+    });
+
+    it('작성한 후기 탭에서 당기면 작성한 후기만 다시 조회한다', async () => {
+      const refetch = jest.fn().mockResolvedValue(undefined);
+      const tossRefetch = jest.fn().mockResolvedValue(undefined);
+      mockReceiveInfinite({ refetch });
+      mockToss({ refetch: tossRefetch });
+
+      const { getByTestId } = render(<ReviewsPageView mode="toss" />);
+
+      await act(async () => {
+        await getByTestId('toss-reviews-list').props.refreshControl.props.onRefresh();
+      });
+
+      expect(tossRefetch).toHaveBeenCalledTimes(1);
+      expect(refetch).not.toHaveBeenCalled();
+    });
+  });
+
   describe('toss 패널', () => {
     it('posts가 있으면 각 리뷰를 렌더링한다', () => {
       mockToss({ data: [makeReview({ reviewId: '3' })] });
@@ -273,6 +318,17 @@ describe('ReviewsPageView', () => {
       const { getByText } = render(<ReviewsPageView mode="toss" />);
 
       expect(getByText('작성한 후기가 없습니다.')).toBeTruthy();
+    });
+
+    it('조회에 실패하면 다시 시도 화면을 보여주고, 누르면 refetch를 호출한다', () => {
+      const refetch = jest.fn();
+      mockToss({ isError: true, refetch });
+
+      const { getByText } = render(<ReviewsPageView mode="toss" />);
+
+      expect(getByText('후기를 불러오지 못했습니다.')).toBeTruthy();
+      fireEvent.press(getByText('다시 시도'));
+      expect(refetch).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -2,15 +2,12 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { AxiosError } from 'axios';
-import { Button } from '@/shared/ui/Button';
-import { Input } from '@/shared/ui/Input';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import gwangsanLogo from '@/shared/assets/png/gwangsanLogo.png';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
-import { useSignupStore } from '@/shared/store/useSignupStore';
-import { nicknameSchema } from '~/entity/auth/model/authSchema';
-import { signup } from '~/entity/auth/api/signup';
+import { Button } from '~/shared/ui/Button';
+import { Input } from '~/shared/ui/Input';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
+import gwangsanLogo from '~/shared/assets/png/gwangsanLogo.png';
+import { SignupForm, useSignupFormField, nicknameSchema, signup } from '~/entity/auth';
+import { useSignupStore } from '~/shared/store/useSignupStore';
 import { Image, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ZodError } from 'zod';
@@ -18,7 +15,7 @@ import { ZodError } from 'zod';
 const SMS_AUTH_EXPIRED_MESSAGE = '전화번호 인증 시간이 지났습니다.\n전화번호를 다시 인증해주세요.';
 
 // 서버는 인증 완료 상태를 10분만 보관한다. 인증 뒤 남은 단계를 채우다 시간이 지나면
-// 가입 요청이 "SMS 인증 정보를 찾을 수 없습니다"(404)로 실패한다(#784)
+// 가입 요청이 "SMS 인증 정보를 찾을 수 없습니다"(404)로 실패한다
 const isSmsAuthExpiredError = (err: unknown) =>
   err instanceof AxiosError && err.response?.status === 404 && /SMS/.test(err.message);
 

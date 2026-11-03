@@ -57,7 +57,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
 
       - name: Cache node_modules
         id: cache-node-modules
@@ -194,7 +194,6 @@ jobs:
         if: steps.cache-detox-framework.outputs.cache-hit != 'true'
         run: ./node_modules/.bin/detox clean-framework-cache && ./node_modules/.bin/detox build-framework-cache
 
-
       - name: Resolve coverage flag
         id: coverage-flag
         run: |
@@ -242,7 +241,9 @@ jobs:
           if [ "${{ steps.coverage-flag.outputs.enabled }}" = "true" ]; then
             E2E_COVERAGE=true npm run e2e:build:ios:coverage 2>&1 | tee /tmp/detox-build.log; exit ${PIPESTATUS[0]}
           else
-            npm run e2e:build:ios:release 2>&1 | tee /tmp/detox-build.log; exit ${PIPESTATUS[0]}
+            # Release 빌드는 Detox 아래에서 네트워크 응답이 JS로 전달되지 않아(로그인 요청이 200을
+            # 받고도 끝나지 않음) 로그인이 필요한 시나리오가 멈춘다. Debug 빌드 + Metro로 실행한다.
+            npm run e2e:build:ios 2>&1 | tee /tmp/detox-build.log; exit ${PIPESTATUS[0]}
           fi
 
       - name: Show build log on failure
@@ -256,13 +257,59 @@ jobs:
       - name: Wait for iOS Simulator boot
         run: xcrun simctl bootstatus "$SIM_ID" -b
 
+      # Debug 빌드(expo-dev-client)는 JS 번들을 Metro에서 받는다. 첫 실행이 번들 빌드를 기다리다
+      # 시간 초과되지 않도록 Metro를 띄운 뒤 iOS 번들을 미리 한 번 만들어 둔다.
+      - name: Start Metro
+        env:
+          E2E_COVERAGE: ${{ steps.coverage-flag.outputs.enabled }}
+        run: |
+          # --offline: Expo 서버 조회(로그인·매니페스트 서명) 없이 로컬에서만 매니페스트를 만든다
+          nohup npx expo start --port 8081 --offline > /tmp/metro.log 2>&1 &
+          for i in $(seq 1 90); do
+            curl -s localhost:8081/status | grep -q packager-status:running && break
+            sleep 2
+          done
+          curl -s localhost:8081/status
+          # 앱(dev-client)이 실제로 요청하는 번들 URL과 같아야 캐시가 재사용된다. 매니페스트에서 읽는다
+          BUNDLE_URL=$(curl -s -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' localhost:8081 \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).launchAsset.url))")
+          echo "Prewarming $BUNDLE_URL"
+          curl -sf -o /dev/null --max-time 900 "$BUNDLE_URL"
+          echo "Metro bundle ready"
+
+      # 갓 부팅한 CI 시뮬레이터에서는 세션의 첫 앱 실행만 불안정하다(dev-launcher 매니페스트 시간 초과,
+      # SpringBoard 재시작 직후 simctl launch 멈춤). 테스트 전에 권한 설정(SpringBoard 재시작)과
+      # dev-client → Metro 연결을 한 번 거쳐 둔다. 예열이 실패해도 테스트는 그대로 진행한다
+      - name: Warm up simulator and dev-client
+        continue-on-error: true
+        timeout-minutes: 6
+        run: |
+          APP=ios/build/Build/Products/Debug-iphonesimulator/app.app
+          BUNDLE_ID=kr.hs.gsm.gwangsan
+          xcrun simctl install "$SIM_ID" "$APP"
+          applesimutils --byId "$SIM_ID" --bundle "$BUNDLE_ID" --restartSB --setPermissions notifications=YES
+          BEFORE=$(grep -c "iOS Bundled" /tmp/metro.log || true)
+          xcrun simctl launch "$SIM_ID" "$BUNDLE_ID" --initialUrl http://localhost:8081
+          for i in $(seq 1 60); do
+            [ "$(grep -c "iOS Bundled" /tmp/metro.log || true)" -gt "$BEFORE" ] && echo "dev-client loaded the bundle" && break
+            sleep 2
+          done
+          sleep 5
+          xcrun simctl terminate "$SIM_ID" "$BUNDLE_ID" || true
+
       - name: Run Detox E2E tests
+        env:
+          E2E_METRO_URL: http://localhost:8081
         run: |
           if [ "${{ steps.coverage-flag.outputs.enabled }}" = "true" ]; then
             npm run e2e:test:ios:coverage
           else
-            npm run e2e:test:ios:release
+            npm run e2e:test:ios -- --cleanup
           fi
+
+      - name: Show Metro log on failure
+        if: failure()
+        run: tail -200 /tmp/metro.log 2>/dev/null || echo "No Metro log found"
 
       - name: Generate E2E coverage report
         if: steps.coverage-flag.outputs.enabled == 'true'

@@ -3,10 +3,10 @@ import {
   type ISocketManager,
   type BaseSocketMessage,
   type RoomId,
-} from '@/shared/types/chatType';
+} from '~/shared/types/chatType';
 import type { ChatMessageResponse } from '../model/chatTypes';
 import type { MessageDeletedPayload, MessageUpdatedPayload } from './messageCache';
-import { logger } from '@/shared/lib/logger';
+import { logger } from '~/shared/lib/logger';
 
 export interface TransactionStateChangedPayload {
   roomId: number;
@@ -57,7 +57,6 @@ export interface IChatSocketService {
   destroy(): void;
   sendMessage(payload: ChatSendMessagePayload): void;
   joinRoom(roomId: RoomId): void;
-  leaveRoom(roomId: RoomId): void;
 
   on<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
   off<K extends keyof ChatSocketEvents>(event: K, handler: ChatSocketEvents[K]): void;
@@ -66,7 +65,7 @@ export interface IChatSocketService {
 export const createChatSocketService = (socketManager: ISocketManager): IChatSocketService => {
   const eventHandlers = new Map<string, Set<Function>>();
 
-  const emit = (event: string, ...args: any[]): void => {
+  const emit = (event: string, ...args: unknown[]): void => {
     const handlers = eventHandlers.get(event);
     if (handlers) {
       handlers.forEach((handler) => {
@@ -82,7 +81,7 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
   const forwardedEvents: readonly (keyof ChatSocketEvents)[] = CHAT_SOCKET_EVENTS;
 
   const stopForwarding = forwardedEvents.map((event) => {
-    const handler = (...args: any[]) => emit(event, ...args);
+    const handler = (...args: unknown[]) => emit(event, ...args);
     socketManager.on(event, handler);
     return () => socketManager.off(event, handler);
   });
@@ -137,11 +136,6 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     socketManager.emit('joinRoom', roomId);
   };
 
-  const leaveRoom = (roomId: RoomId): void => {
-    if (!socketManager.isConnected) return;
-    socketManager.emit('leaveRoom', roomId);
-  };
-
   return {
     get isConnected() {
       return socketManager.isConnected;
@@ -154,7 +148,6 @@ export const createChatSocketService = (socketManager: ISocketManager): IChatSoc
     destroy,
     sendMessage,
     joinRoom,
-    leaveRoom,
     on,
     off,
   };

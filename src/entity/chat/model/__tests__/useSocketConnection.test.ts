@@ -2,10 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { AppState, AppStateStatus } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSocketConnection } from '../useSocketConnection';
-import { logger } from '@/shared/lib/logger';
+import { logger } from '~/shared/lib/logger';
 import type { IChatSocketService } from '../../lib/socketService';
 
-jest.mock('@/shared/lib/logger', () => ({
+jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));
 
@@ -30,7 +30,6 @@ const createMockSocketService = (
     destroy: jest.fn(),
     sendMessage: jest.fn(),
     joinRoom: jest.fn(),
-    leaveRoom: jest.fn(),
     on: jest.fn((event: string, handler: Handler) => {
       if (!registered.has(event)) registered.set(event, new Set());
       registered.get(event)!.add(handler);

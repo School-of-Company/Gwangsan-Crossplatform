@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Header, LightBar } from '~/shared/ui';
-import { useGetReview } from '../../model/useGetReview';
+import { useGetReview } from '~/entity/reviews';
 import { useCallback, useEffect } from 'react';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { logger } from '~/shared/lib/logger';
@@ -29,7 +29,7 @@ export default function CancelTradeView() {
     }
   }, [data]);
 
-  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화된 채로 남거나 빈 화면만 보였다(#740)
+  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화되지 않도록 오류 화면을 보여준다
   if (!data && (isReviewLoading || isReviewError)) {
     return (
       <SafeAreaView className="flex-1 bg-background">
@@ -46,8 +46,8 @@ export default function CancelTradeView() {
   }
 
   const imageUris = (data?.imageUrls ?? [])
-    .map((u: any) => (typeof u === 'string' ? u : (u?.url ?? u?.uri)))
-    .filter((u: unknown): u is string => typeof u === 'string' && u.length > 0);
+    .map((image) => image.imageUrl)
+    .filter((uri) => uri.length > 0);
 
   return (
     <SafeAreaView className="flex-1 bg-background">

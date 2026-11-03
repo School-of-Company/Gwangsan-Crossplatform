@@ -1,4 +1,4 @@
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 import type {
   ChatMessageResponse,
   ChatApiError,
@@ -6,17 +6,36 @@ import type {
   TradeProduct,
 } from '../model/chatTypes';
 import { isTradeProduct } from '../model/chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { toAppError } from '~/shared/lib/errorHandler';
+import type { ChatMessagePageCursor } from '../lib/messageCache';
+
+// 서버(Gwangsan-Server ChatController) 기본값이 20이고 최댓값 제한은 없다. 페이지마다 같은 크기를
+// 명시해 보내야 "받은 개수 < limit"으로 마지막 페이지를 판단할 수 있다
+export const CHAT_MESSAGE_PAGE_SIZE = 30;
+
+interface GetChatRoomDataOptions {
+  // 서버는 (createdAt, messageId) 기준 내림차순으로 이 커서보다 오래된 메시지를 돌려준다.
+  // createdAt은 REST가 내려준 문자열(LocalDateTime, 시간대 없음)을 그대로 돌려줘야 한다
+  readonly cursor?: ChatMessagePageCursor | null;
+  readonly limit?: number;
+}
 
 interface ChatRoomApiResponse {
   readonly product?: TradeProduct;
   readonly messages?: readonly ChatMessageResponse[];
 }
 
-export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProduct> => {
+export const getChatRoomData = async (
+  roomId: RoomId,
+  { cursor = null, limit = CHAT_MESSAGE_PAGE_SIZE }: GetChatRoomDataOptions = {}
+): Promise<ChatRoomWithProduct> => {
   try {
-    const response = await instance.get(`/chat/${roomId}`);
+    const response = await instance.get(`/chat/${roomId}`, {
+      params: cursor
+        ? { lastCreatedAt: cursor.lastCreatedAt, lastMessageId: cursor.lastMessageId, limit }
+        : { limit },
+    });
 
     let messages: readonly ChatMessageResponse[] = [];
     let product: TradeProduct | null = null;
@@ -30,13 +49,10 @@ export const getChatRoomData = async (roomId: RoomId): Promise<ChatRoomWithProdu
       product = serverProduct && isTradeProduct(serverProduct) ? serverProduct : null;
     }
 
-    // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
-    // (getCurrentUserId)와 senderId를 다시 비교해 재계산하지 않는다 — 그 재계산 과정의
-    // 캐시 타이밍 경합이 본인 메시지를 상대방 메시지로 뒤집어 보이게 하는 원인이었다(#619).
+    // isMine은 서버가 발신자 기준으로 계산한 값을 그대로 쓴다(로컬 세션으로 재계산하면 캐시 타이밍에 따라 뒤집힌다)
     return { product, messages };
   } catch (e) {
-    // 사용자 안내(토스트)는 호출한 쪽(UI 계층)에서 한다. API 안에서 띄우면 훅의 onError 토스트와
-    // 겹치거나, 백그라운드 호출(읽음 처리 등)에서도 토스트가 떠 중복된다(#739)
+    // 토스트는 호출한 UI 쪽에서 띄운다(백그라운드 호출에서도 뜨거나 중복되지 않게)
     throw toAppError(e as ChatApiError);
   }
 };

@@ -10,9 +10,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { formatDate } from '@/shared/lib/formatDate';
+import { formatDate } from '~/shared/lib/formatDate';
 import type { ChatRoomListItem } from '../../model/chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 import { CachedImage } from '~/shared/ui/CachedImage';
 import { useThemeColors } from '~/shared/lib/theme';
 
@@ -125,6 +125,7 @@ const ChatRoomItemComponent = ({
         .reduceMotion(ReduceMotion.Never)}
       style={exitStyle}>
       <TouchableOpacity
+        testID="chat-room-item"
         onPress={handlePress}
         onLongPress={handleLongPress}
         disabled={isExiting}
@@ -132,7 +133,7 @@ const ChatRoomItemComponent = ({
         activeOpacity={0.7}>
         <CachedImage
           source={
-            productImage ? { uri: productImage } : require('@/shared/assets/png/defaultProfile.png')
+            productImage ? { uri: productImage } : require('~/shared/assets/png/defaultProfile.png')
           }
           className="mr-3 h-14 w-14 rounded-lg"
         />
@@ -159,6 +160,8 @@ const ChatRoomItemComponent = ({
           {renderUnreadBadge()}
           <TouchableOpacity
             onPress={handleMenuPress}
+            accessibilityRole="button"
+            accessibilityLabel="채팅방 메뉴"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="-mr-1 p-1">
             <Ionicons name="ellipsis-vertical" size={16} color={colors['gray-400']} />

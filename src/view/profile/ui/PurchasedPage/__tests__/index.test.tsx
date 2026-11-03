@@ -1,11 +1,11 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import PurchasedPageView from '../index';
-import { useGetProfile } from '~/view/profile/model/useGetProfile';
-import { useGetMyPosts } from '~/view/profile/model/useGetMyPosts';
-import { useGetPosts } from '~/view/profile/model/useGetPosts';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
+import { useGetMyPosts } from '~/entity/profile/model/useGetMyPosts';
+import { useGetMemberPosts } from '~/entity/profile/model/useGetMemberPosts';
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
@@ -21,9 +21,9 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
-jest.mock('~/view/profile/model/useGetPosts', () => ({ useGetPosts: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMemberPosts', () => ({ useGetMemberPosts: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle, showBackButton }: any) => {
@@ -52,7 +52,7 @@ const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;
 const mockUseRouter = useRouter as jest.Mock;
 const mockUseGetProfile = useGetProfile as jest.Mock;
 const mockUseGetMyPosts = useGetMyPosts as jest.Mock;
-const mockUseGetPosts = useGetPosts as jest.Mock;
+const mockUseGetMemberPosts = useGetMemberPosts as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -60,7 +60,7 @@ beforeEach(() => {
   mockUseRouter.mockReturnValue({ push });
   mockUseGetProfile.mockReturnValue({ data: undefined, error: null, isError: false });
   mockUseGetMyPosts.mockReturnValue({ data: [], error: null, isError: false });
-  mockUseGetPosts.mockReturnValue({ data: [], error: null, isError: false });
+  mockUseGetMemberPosts.mockReturnValue({ data: [], error: null, isError: false });
 });
 
 describe('PurchasedPageView', () => {
@@ -68,7 +68,7 @@ describe('PurchasedPageView', () => {
     const { getByTestId } = render(<PurchasedPageView />);
 
     expect(mockUseGetMyPosts).toHaveBeenCalledWith(true);
-    expect(mockUseGetPosts).toHaveBeenCalledWith(undefined);
+    expect(mockUseGetMemberPosts).toHaveBeenCalledWith(undefined);
 
     const header = JSON.parse(getByTestId('header').props.children);
     expect(header.headerTitle).toBe('거래내역');
@@ -85,7 +85,7 @@ describe('PurchasedPageView', () => {
     const { getByTestId } = render(<PurchasedPageView />);
 
     expect(mockUseGetMyPosts).toHaveBeenCalledWith(false);
-    expect(mockUseGetPosts).toHaveBeenCalledWith('5');
+    expect(mockUseGetMemberPosts).toHaveBeenCalledWith('5');
 
     const header = JSON.parse(getByTestId('header').props.children);
     expect(header.headerTitle).toBe('상대방님의 거래 내역');
@@ -185,17 +185,62 @@ describe('PurchasedPageView', () => {
     expect(push).toHaveBeenCalledWith('/post/2');
   });
 
-  it('게시물 조회 실패 시 에러 Toast를 표시한다', () => {
+  it('첫 조회 중에는 빈 상태 문구 대신 로딩을 표시한다', () => {
+    mockUseGetMyPosts.mockReturnValue({ data: undefined, isError: false, isLoading: true });
+
+    const { getByTestId, queryByText } = render(<PurchasedPageView />);
+
+    expect(getByTestId('trade-history-loading')).toBeTruthy();
+    expect(queryByText('구매 내역이 없습니다.')).toBeNull();
+  });
+
+  it('받아둔 목록 없이 조회에 실패하면 다시 시도 화면을 보여주고 토스트는 띄우지 않는다', () => {
+    const refetch = jest.fn();
     mockUseGetMyPosts.mockReturnValue({
       data: undefined,
       error: new Error('게시물 오류'),
       isError: true,
+      refetch,
     });
 
-    render(<PurchasedPageView />);
+    const { getByText, queryByText } = render(<PurchasedPageView />);
 
-    expect(Toast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', text1: '글을 불러오는데 실패했습니다.' })
-    );
+    expect(getByText('거래내역을 불러오지 못했습니다.')).toBeTruthy();
+    expect(queryByText('구매 내역이 없습니다.')).toBeNull();
+    expect(Toast.show).not.toHaveBeenCalled();
+
+    fireEvent.press(getByText('다시 시도'));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('받아둔 목록이 있는 상태에서 조회가 실패하면 목록을 유지하고 서버 메시지 없이 토스트로 알린다', () => {
+    mockUseGetMyPosts.mockReturnValue({
+      data: [],
+      error: new Error('Internal Server Error'),
+      isError: true,
+    });
+
+    const { getByText } = render(<PurchasedPageView />);
+
+    expect(getByText('구매 내역이 없습니다.')).toBeTruthy();
+    expect(Toast.show).toHaveBeenCalledWith({
+      type: 'error',
+      text1: '글을 불러오는데 실패했습니다.',
+      text2: '잠시 후 다시 시도해 주세요.',
+    });
+  });
+
+  it('당겨서 새로고침하면 거래내역을 다시 조회한다', async () => {
+    const refetch = jest.fn().mockResolvedValue(undefined);
+    mockUseGetMyPosts.mockReturnValue({ data: [], isError: false, refetch });
+
+    const { getByTestId } = render(<PurchasedPageView />);
+
+    await act(async () => {
+      await getByTestId('purchased-list').props.refreshControl.props.onRefresh();
+    });
+
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(getByTestId('purchased-list').props.refreshControl.props.refreshing).toBe(false);
   });
 });

@@ -1,6 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getMyReceivedReview, getReceiveReview } from '../api/getReviews';
-import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import { ReviewPostType } from './reviewPostType';
 import { reviewKeys } from './reviewQueryKeys';
 
@@ -9,9 +8,13 @@ export const RECEIVED_REVIEWS_PAGE_SIZE = 20;
 // 판매 목록(SellingPage)에서 쓰는 전체 받은 후기 쿼리(useGetReviews)와 캐시가 섞이면
 // 배열 응답과 { pages, pageParams } 응답 모양이 달라 그 화면이 깨진다. 그래서 이 훅은
 // 별도의 쿼리키('infinite' 분리)와 별도의 캐시 경로를 사용한다.
-export const useGetReceivedReviewsInfinite = (memberId?: string, enabled = true) => {
-  const { data: myInfo } = useGetMyInformation();
-  const isMyReceived = !!myInfo && String(myInfo.memberId) === memberId;
+// myMemberId: 내 목록(/review/current)인지 판별할 내 memberId. 아직 모르면 undefined로 두면 조회를 미룬다.
+export const useGetReceivedReviewsInfinite = (
+  memberId?: string,
+  enabled = true,
+  myMemberId?: number
+) => {
+  const isMyReceived = myMemberId !== undefined && String(myMemberId) === memberId;
 
   return useInfiniteQuery({
     queryKey: reviewKeys.receivedInfinite(
@@ -36,7 +39,7 @@ export const useGetReceivedReviewsInfinite = (memberId?: string, enabled = true)
       return lastReview ? Number(lastReview.reviewId) : undefined;
     },
     // 프로필 로딩 전 "undefined" 문자열 id로 이동한 경우를 막고, 내 id인지 판별하는
-    // myInfo가 도착한 뒤에만 실행한다. 화면에서 비활성 탭일 때는 enabled로 끌 수 있다.
-    enabled: enabled && !!memberId && memberId !== 'undefined' && !!myInfo,
+    // myMemberId가 들어온 뒤에만 실행한다. 화면에서 비활성 탭일 때는 enabled로 끌 수 있다.
+    enabled: enabled && !!memberId && memberId !== 'undefined' && myMemberId !== undefined,
   });
 };

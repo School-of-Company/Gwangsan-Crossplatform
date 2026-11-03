@@ -7,7 +7,7 @@ import {
   CHAT_SOCKET_SERVER_EVENTS,
   type ISocketManager,
   type SocketConnectionConfig,
-} from '@/shared/types/chatType';
+} from '~/shared/types/chatType';
 import { logger } from './logger';
 import { isNetworkOrTimeoutError } from './errorHandler';
 
@@ -57,7 +57,7 @@ class SocketManager implements ISocketManager {
           const latestToken = await getData('accessToken').catch(() => null);
           cb({ token: `Bearer ${latestToken ?? accessToken}` });
         },
-        transports: this.config.transports as any,
+        transports: [...this.config.transports],
         timeout: this.config.timeout,
         forceNew: true,
         reconnection: this.config.reconnection,
@@ -105,7 +105,7 @@ class SocketManager implements ISocketManager {
     if (!socket) return;
 
     CHAT_SOCKET_SERVER_EVENTS.forEach((event) => {
-      socket.on(event, (...args: any[]) => {
+      socket.on(event, (...args: unknown[]) => {
         this.emit(event, ...args);
       });
     });
@@ -140,18 +140,14 @@ class SocketManager implements ISocketManager {
       logger.error('Socket connection error', error);
     }
 
-    // 채팅 소켓은 로그인 직후·화면 이동·앱 포그라운드 복귀 시마다 백그라운드로
-    // 자동 재연결을 시도한다(모든 호출부가 실패를 조용히 무시하거나 로깅만
-    // 함). 이 실패를 전역 Toast로 노출하면 로그인 등 소켓과 무관한 동작
-    // 직후에도 "오류" 토스트가 떠 사용자를 혼란시키므로(#585) 표시하지
-    // 않는다. 연결 상태는 채팅 화면의 connectionState 표시(Header dot)로
-    // 별도 전달된다.
+    // 소켓은 로그인 직후·포그라운드 복귀마다 백그라운드로 재연결하므로, 실패를 토스트로 띄우면
+    // 소켓과 무관한 동작 직후에도 오류가 뜬다. 연결 상태는 채팅 화면의 connectionState로 알린다.
     this.emit('connect_error', error);
   }
 
   private static readonly RESERVED_EVENTS = new Set<string>(CHAT_SOCKET_EVENTS);
 
-  emit(event: string, ...args: any[]): void {
+  emit(event: string, ...args: unknown[]): void {
     if (this.socket?.connected && !SocketManager.RESERVED_EVENTS.has(event)) {
       this.socket.emit(event, ...args);
     }
@@ -168,14 +164,14 @@ class SocketManager implements ISocketManager {
     }
   }
 
-  on<T = any>(event: string, handler: (data: T) => void): void {
+  on<T = unknown>(event: string, handler: (data: T) => void): void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set());
     }
     this.eventHandlers.get(event)!.add(handler);
   }
 
-  off<T = any>(event: string, handler: (data: T) => void): void {
+  off<T = unknown>(event: string, handler: (data: T) => void): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.delete(handler);
@@ -202,10 +198,12 @@ class SocketManager implements ISocketManager {
   }
 }
 
-export const createChatSocketManager = (): ISocketManager => {
+export const getChatSocketManager = (): ISocketManager => {
   const config: SocketConnectionConfig = {
     url: SOCKET_URL,
-    transports: ['polling', 'websocket'],
+    // 운영 프록시(nginx)가 WebSocket 업그레이드를 그대로 통과시키므로 HTTP long-polling 핸드셰이크를
+    // 거치지 않고 바로 WebSocket으로 연결한다. 채팅 서버는 단일 인스턴스라 polling용 sticky session도 필요 없다
+    transports: ['websocket'],
     timeout: 15000,
     reconnection: true,
     autoConnect: true,
@@ -214,4 +212,4 @@ export const createChatSocketManager = (): ISocketManager => {
   return SocketManager.getInstance(config);
 };
 
-export const chatSocket = createChatSocketManager();
+export const chatSocket = getChatSocketManager();

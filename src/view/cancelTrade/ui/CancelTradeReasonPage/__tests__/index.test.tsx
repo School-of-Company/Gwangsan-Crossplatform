@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCancelTrade } from '~/widget/cancelTrade/model/useCancelTrade';
-import { useGetReview } from '../../../model/useGetReview';
+import { useGetReview } from '~/entity/reviews/model/useGetReview';
 import CancelTradeReasonPage from '../index';
 
 jest.mock('expo-router', () => ({
@@ -19,7 +19,7 @@ jest.mock('~/widget/cancelTrade/model/useCancelTrade', () => ({
   useCancelTrade: jest.fn(),
 }));
 
-jest.mock('../../../model/useGetReview', () => ({
+jest.mock('~/entity/reviews/model/useGetReview', () => ({
   useGetReview: jest.fn(),
 }));
 

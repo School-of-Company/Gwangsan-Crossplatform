@@ -6,8 +6,8 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { SlideIndicator } from '@/shared/ui';
-import { NoticeData } from '@/entity/notice/model/noticeData';
+import { SlideIndicator } from '~/shared/ui';
+import { NoticeData } from '~/entity/notice';
 import { CachedImage } from '~/shared/ui/CachedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
-import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
+import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
 import MainPageView from '../index';
 
 jest.mock('react-native-toast-message', () => ({
@@ -9,7 +9,7 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/shared/model/useGetMyInformation', () => ({
+jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
   useGetMyInformation: jest.fn(),
 }));
 
@@ -100,11 +100,11 @@ describe('MainPageView', () => {
     expect(getByTestId('slide-viewer')).toBeTruthy();
   });
 
-  it('isError가 true이면 Toast로 에러 메시지를 보여준다', async () => {
+  it('isError가 true이면 서버 메시지 대신 고정 안내 문구로 Toast를 보여준다', async () => {
     mockUseGetMyInformation.mockReturnValue({
       data: undefined,
       isError: true,
-      error: new Error('요청 실패'),
+      error: new Error('Internal Server Error: NullPointerException'),
     });
 
     render(<MainPageView />);
@@ -113,27 +113,28 @@ describe('MainPageView', () => {
       expect(mockToastShow).toHaveBeenCalledWith({
         type: 'error',
         text1: '정보 조회 실패',
-        text2: '요청 실패',
+        text2: '잠시 후 다시 시도해 주세요.',
       })
     );
   });
 
-  it('error가 Error 인스턴스가 아니면 기본 메시지를 보여준다', async () => {
+  it('당겨서 새로고침하면 내 정보를 다시 조회한다', async () => {
+    const refetch = jest.fn().mockResolvedValue(undefined);
     mockUseGetMyInformation.mockReturnValue({
       data: undefined,
-      isError: true,
-      error: 'string error',
+      isError: false,
+      error: null,
+      refetch,
     });
 
-    render(<MainPageView />);
+    const { getByTestId } = render(<MainPageView />);
 
-    await waitFor(() =>
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: '정보 조회 실패',
-        text2: '알 수 없는 오류가 발생했습니다.',
-      })
-    );
+    await act(async () => {
+      await getByTestId('main-scroll').props.refreshControl.props.onRefresh();
+    });
+
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(getByTestId('main-scroll').props.refreshControl.props.refreshing).toBe(false);
   });
 
   it('isError가 false이면 Toast를 호출하지 않는다', () => {

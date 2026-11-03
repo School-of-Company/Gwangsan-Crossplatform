@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import { PasswordStep } from '@/widget/signup';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { PasswordStep } from '~/widget/signup';
 
 export default function SignupPassword() {
   return (

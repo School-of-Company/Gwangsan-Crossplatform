@@ -26,7 +26,7 @@ export const setQueryClientInstance = (client: QueryClient) => {
 let refreshPromise: Promise<string> | null = null;
 
 // 기기가 잠겨 SecureStore(Keychain)에서 토큰을 읽지 못한 경우. 토큰이 만료된 것이 아니므로
-// 로그아웃하지 않고 요청만 실패시킨다(#737)
+// 로그아웃하지 않고 요청만 실패시킨다
 export class TokenStorageError extends Error {
   constructor(cause: unknown) {
     super('토큰을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
@@ -52,6 +52,8 @@ const readToken = async (read: () => Promise<string | null>) => {
   }
 };
 
+type TimedRequestConfig = InternalAxiosRequestConfig & { __sentryStartTime?: number };
+
 export const instance = axios.create({
   baseURL,
   timeout: 5000,
@@ -62,7 +64,7 @@ export const instance = axios.create({
 
 instance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    (config as any).__sentryStartTime = Date.now();
+    (config as TimedRequestConfig).__sentryStartTime = Date.now();
     const accessToken = await getAccessToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -82,7 +84,7 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   (response) => {
-    const startTime = (response.config as any).__sentryStartTime;
+    const startTime = (response.config as TimedRequestConfig).__sentryStartTime;
     const duration = startTime ? Date.now() - startTime : undefined;
     Sentry.addBreadcrumb({
       category: 'http',
@@ -96,9 +98,8 @@ instance.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as
-      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    const startTime = (originalRequest as any)?.__sentryStartTime;
+    const originalRequest = error.config as (TimedRequestConfig & { _retry?: boolean }) | undefined;
+    const startTime = originalRequest?.__sentryStartTime;
     const duration = startTime ? Date.now() - startTime : undefined;
 
     Sentry.addBreadcrumb({
@@ -124,7 +125,7 @@ instance.interceptors.response.use(
       originalRequest._retry = true;
 
       // 이 요청이 나간 뒤 다른 요청이 이미 토큰을 재발급했다면(401이 늦게 도착한 경우) 다시
-      // 재발급하지 않고 새 토큰으로 재시도한다. 그렇지 않으면 재발급이 연달아 일어난다(#737)
+      // 재발급하지 않고 새 토큰으로 재시도한다. 그렇지 않으면 재발급이 연달아 일어난다
       if (!refreshPromise) {
         let latestAccessToken: string | null;
         try {
@@ -172,7 +173,7 @@ instance.interceptors.response.use(
 
         const { accessToken: newAccessToken, refreshToken: rotatedRefreshToken } = response.data;
         // 서버가 refresh token을 교체해 내려주면 함께 저장한다. 예전 값을 계속 쓰면 다음 재발급이
-        // 실패해 강제 로그아웃된다(#737)
+        // 실패해 강제 로그아웃된다
         await Promise.all([
           setData('accessToken', newAccessToken),
           rotatedRefreshToken ? setData('refreshToken', rotatedRefreshToken) : Promise.resolve(),

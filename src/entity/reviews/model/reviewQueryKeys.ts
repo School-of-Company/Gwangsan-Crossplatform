@@ -1,5 +1,4 @@
-// 후기 쿼리 키. 예전에는 화면마다 배열을 직접 적어, 같은 "내가 쓴 후기"를 ChatRoomPage는
-// ['reviews','toss'], useGetReviews는 ['reviews','toss',null]로 따로 캐시·조회했다(#741)
+// 후기 쿼리 키. 같은 후기를 화면마다 다른 키로 캐시하지 않도록 여기서만 만든다
 export const reviewKeys = {
   all: ['reviews'] as const,
   toss: () => [...reviewKeys.all, 'toss'] as const,
@@ -7,4 +6,6 @@ export const reviewKeys = {
   received: (target: string | undefined) => [...reviewKeys.all, 'receive', target] as const,
   receivedInfinite: (target: string | undefined, pageSize: number) =>
     [...reviewKeys.all, 'receive', 'infinite', target, pageSize] as const,
+  // 후기 단건(거래 취소 화면에서 조회)
+  detail: (id: string) => [...reviewKeys.all, 'detail', id] as const,
 } as const;

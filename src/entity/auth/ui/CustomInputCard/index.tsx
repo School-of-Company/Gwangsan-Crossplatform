@@ -29,11 +29,9 @@ interface CardBodyProps {
   opacity: Animated.Value;
 }
 
-// 입력창의 텍스트를 이 컴포넌트 안에서 로컬 상태로 들고 있어야 한다. 부모(SpecialtiesDropdown)
-// 쪽 상태로 올려서 관리하면, 타이핑할 때마다 CustomInputCard가 포털 스토어에 새로
-// 등록되면서 한 프레임 지연이 생기고, 그 지연 때문에 안드로이드에서 한글 입력 조합
-// 중인 TextInput이 리렌더되어 자소가 분리되어 보이는 문제가 있었다. 제출 시점의
-// 최종 텍스트만 onSubmit으로 부모에 전달한다.
+// 입력 텍스트는 이 컴포넌트의 로컬 상태로 둔다. 부모 상태로 올리면 타이핑마다 포털 스토어에
+// 다시 등록되며 생기는 한 프레임 지연으로 안드로이드 한글 조합 중 자소가 분리된다.
+// 제출 시점의 최종 텍스트만 onSubmit으로 넘긴다.
 function CardBody({
   placeholder,
   onSubmit,
@@ -105,8 +103,8 @@ export function CustomInputCard({
   const removeSheet = useBottomSheetPortalStore((s) => s.removeSheet);
   const insets = useSafeAreaInsets();
   const [show, setShow] = useState(isVisible);
-  const translateY = useRef(new Animated.Value(CARD_HIDDEN_OFFSET)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useState(() => new Animated.Value(CARD_HIDDEN_OFFSET))[0];
+  const opacity = useState(() => new Animated.Value(0))[0];
   // 카드가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
   const hasAnimatedOpenRef = useRef(false);
 

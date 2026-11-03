@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { ChatRoomItem } from '../index';
 import type { ChatRoomListItem } from '../../../model/chatTypes';
 
-jest.mock('@/shared/lib/formatDate', () => ({
+jest.mock('~/shared/lib/formatDate', () => ({
   formatDate: jest.fn(() => '방금 전'),
 }));
 
@@ -141,6 +141,16 @@ describe('ChatRoomItem', () => {
     const buttons = UNSAFE_getAllByType(TouchableOpacity);
     fireEvent.press(buttons[1]);
 
+    expect(onMenuPress).toHaveBeenCalledWith(1);
+  });
+
+  it('메뉴 버튼에 스크린리더용 라벨을 지정한다', () => {
+    const onMenuPress = jest.fn();
+    const { getByRole } = render(
+      <ChatRoomItem room={baseRoom} onPress={jest.fn()} onMenuPress={onMenuPress} />
+    );
+
+    fireEvent.press(getByRole('button', { name: '채팅방 메뉴' }));
     expect(onMenuPress).toHaveBeenCalledWith(1);
   });
 

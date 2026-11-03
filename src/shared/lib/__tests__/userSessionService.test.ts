@@ -1,11 +1,11 @@
-import { getData } from '@/shared/lib/getData';
-import { instance } from '@/shared/lib/axios';
+import { getData } from '~/shared/lib/getData';
+import { instance } from '~/shared/lib/axios';
 import { createUserSessionService } from '../userSessionService';
 
-jest.mock('@/shared/lib/getData', () => ({
+jest.mock('~/shared/lib/getData', () => ({
   getData: jest.fn(),
 }));
-jest.mock('@/shared/lib/axios', () => ({
+jest.mock('~/shared/lib/axios', () => ({
   instance: {
     get: jest.fn(),
     post: jest.fn(),

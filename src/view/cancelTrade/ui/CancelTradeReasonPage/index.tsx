@@ -6,8 +6,8 @@ import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { Button, Header } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader';
-import { useCancelTrade } from '~/widget/cancelTrade/model/useCancelTrade';
-import { useGetReview } from '../../model/useGetReview';
+import { useCancelTrade } from '~/widget/cancelTrade';
+import { useGetReview } from '~/entity/reviews';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
 export default function CancelTradeReasonPage() {
@@ -71,7 +71,7 @@ export default function CancelTradeReasonPage() {
     return '거래취소하기';
   }, [isLoading, imageUploadState]);
 
-  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화된 채로 남거나 빈 화면만 보였다(#740)
+  // 후기 조회가 실패하면 버튼이 이유 없이 비활성화되지 않도록 오류 화면을 보여준다
   if (!data && (isReviewLoading || isReviewError)) {
     return (
       <SafeAreaView className="flex-1 bg-background">

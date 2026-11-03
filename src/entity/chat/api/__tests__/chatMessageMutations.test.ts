@@ -1,8 +1,8 @@
 import { updateChatMessage } from '../updateChatMessage';
 import { deleteChatMessage } from '../deleteChatMessage';
-import { instance } from '@/shared/lib/axios';
+import { instance } from '~/shared/lib/axios';
 
-jest.mock('@/shared/lib/axios', () => ({
+jest.mock('~/shared/lib/axios', () => ({
   instance: { patch: jest.fn(), delete: jest.fn() },
 }));
 

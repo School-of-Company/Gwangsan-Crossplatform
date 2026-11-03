@@ -26,7 +26,7 @@ State: Zustand (UI) + React Query (server, 5 min cache) + AsyncStorage (tokens).
 API: `src/shared/lib/axios.ts` (Bearer token, 401 refresh, 5s timeout, Sentry).
 Realtime: `src/shared/lib/socket.ts` (Socket.io singleton).
 Styling: NativeWind — `className` prop, never `StyleSheet`.
-Alias: `~/` or `@/` → `src/`.
+Alias: `~/` → `src/` (`@/` is banned by lint). Other slices are imported only through their `index.ts`.
 
 ## Environment
 

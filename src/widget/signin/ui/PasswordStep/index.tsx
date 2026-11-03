@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { PasswordInput } from '@/shared/ui/PasswordInput';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SigninForm from '~/entity/auth/ui/SigninForm';
-import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
-import { passwordSchema } from '~/entity/auth/model/authSchema';
-import { signinWithDeviceInfo } from '~/entity/auth/api/signin';
+import { PasswordInput } from '~/shared/ui/PasswordInput';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
+import {
+  SigninForm,
+  useSigninFormField,
+  useSigninResetStore,
+  passwordSchema,
+  signinWithDeviceInfo,
+} from '~/entity/auth';
 import { offerBiometricLogin } from '../../model/offerBiometricLogin';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
@@ -37,7 +40,7 @@ export default function PasswordStep() {
         nickname: trimmedNickname,
         password: trimmedPassword,
       });
-      // 생체 인증 로그인은 사용자가 동의한 경우에만 켠다(#737)
+      // 생체 인증 로그인은 사용자가 동의한 경우에만 켠다
       offerBiometricLogin(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
         logger.error('offerBiometricLogin failed', e)
       );

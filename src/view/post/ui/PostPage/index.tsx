@@ -1,10 +1,10 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Text } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePostAction } from '@/widget/post/model/usePostAction';
-import { PostPageContent } from '@/widget/post/ui/PostPageContent';
-import ReviewsModal from '~/entity/post/ui/ReviewsModal';
+import { usePostAction, PostPageContent } from '~/widget/post';
+import { ReviewsModal } from '~/entity/post';
 import { AlertModal, Header } from '~/shared/ui';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
 export default function PostPageView() {
   const { id, review } = useLocalSearchParams<{ id: string; review?: string }>();
@@ -20,6 +20,7 @@ export default function PostPageView() {
     isDeleteAlertVisible,
     reviewLight,
     reviewContents,
+    isSubmittingReview,
     isChatLoading,
     isTradeRequestLoading,
     modalHandlers,
@@ -39,8 +40,12 @@ export default function PostPageView() {
 
   if (error || !data) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
+      <SafeAreaView className="flex-1 bg-background">
+        <Header headerTitle="게시글" />
+        <ErrorFallback
+          title="게시글을 불러오는데 실패했습니다."
+          onRetry={actionHandlers.onRefresh}
+        />
       </SafeAreaView>
     );
   }
@@ -76,6 +81,7 @@ export default function PostPageView() {
         contents={reviewContents}
         onContentsChange={reviewHandlers.onContentsChange}
         onAnimationComplete={reviewHandlers.onAnimationComplete}
+        isSubmitting={isSubmittingReview}
       />
 
       <AlertModal

@@ -8,24 +8,44 @@ import { getData } from '~/shared/lib/getData';
 import { getChatRooms } from '../api/getChatRooms';
 import { chatRoomKeys } from './useChatRooms';
 import { isSystemMessage } from '../lib/messagePolicy';
-import type { ChatMessageResponse, RoomId } from '@/shared/types/chatType';
+import type { ChatMessageResponse, RoomId } from '~/shared/types/chatType';
+
+// 다른 방 메시지가 연달아 와도 채팅 목록(GET /chat/rooms)은 이 간격에 한 번만 다시 받는다
+export const ROOM_LIST_REFRESH_INTERVAL_MS = 5 * 1000;
+
+type QueryClient = ReturnType<typeof useQueryClient>;
+
+const fetchRoomList = (queryClient: QueryClient, staleTime: number) =>
+  queryClient.fetchQuery({ queryKey: chatRoomKeys.list(), queryFn: getChatRooms, staleTime });
+
+const getListUpdatedAt = (queryClient: QueryClient) =>
+  queryClient.getQueryState(chatRoomKeys.list())?.dataUpdatedAt ?? 0;
 
 // 나간 방은 GET /chat/rooms 목록에서 제외되므로, 그 목록에 없다는 사실 자체가 "나감" 신호다.
-// staleTime을 0으로 둬 항상 최신 상태를 확인한다 — 비어있거나 오래된 캐시로 나감 여부를 판정하면
-// 안 되기 때문이다(#609). 조회에 실패하면 나감 여부를 알 수 없으니 알림은 그대로 띄운다(안전한 기본값).
-const isRoomHidden = async (
-  queryClient: ReturnType<typeof useQueryClient>,
+// 비어있거나 오래된 캐시로 나감 여부를 판정하면 안 되므로, 방금 받은 캐시에서 방을 못 찾으면
+// 새로 생긴 방일 수 있어 최신 목록을 한 번 더 받아 확인한다. 조회에 실패하면 나감 여부를 알 수
+// 없으니 알림은 그대로 띄운다(안전한 기본값).
+// 반환값의 servedFromCache는 간격 제한 때문에 새로 받지 않았다는 뜻으로, 호출부가 뒤늦게 한 번 더
+// 갱신해 탭바 뱃지(안 읽은 수)를 맞추는 데 쓴다.
+const checkRoomHidden = async (
+  queryClient: QueryClient,
   roomId: RoomId
-): Promise<boolean> => {
+): Promise<{ hidden: boolean; servedFromCache: boolean }> => {
   try {
-    const rooms = await queryClient.fetchQuery({
-      queryKey: chatRoomKeys.list(),
-      queryFn: getChatRooms,
-      staleTime: 0,
-    });
-    return !rooms.some((room) => room.roomId === roomId);
+    const updatedAtBefore = getListUpdatedAt(queryClient);
+    const rooms = await fetchRoomList(queryClient, ROOM_LIST_REFRESH_INTERVAL_MS);
+    const servedFromCache =
+      updatedAtBefore > 0 && getListUpdatedAt(queryClient) === updatedAtBefore;
+
+    if (rooms.some((room) => room.roomId === roomId)) {
+      return { hidden: false, servedFromCache };
+    }
+    if (!servedFromCache) return { hidden: true, servedFromCache };
+
+    const latestRooms = await fetchRoomList(queryClient, 0);
+    return { hidden: !latestRooms.some((room) => room.roomId === roomId), servedFromCache: false };
   } catch {
-    return false;
+    return { hidden: false, servedFromCache: false };
   }
 };
 
@@ -33,10 +53,18 @@ export const useGlobalChatNotifications = () => {
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
   const queryClient = useQueryClient();
+  const trailingRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
+
+  useEffect(
+    () => () => {
+      if (trailingRefreshRef.current) clearTimeout(trailingRefreshRef.current);
+    },
+    []
+  );
 
   // 앱 시작 시점에는 로그인 전이라 accessToken이 없어 연결이 실패하므로,
   // 화면 이동 시마다 재시도해야 로그인 이후에도 전역 알림이 동작한다.
@@ -76,7 +104,7 @@ export const useGlobalChatNotifications = () => {
   useEffect(() => {
     const handleReceiveMessage = async (message: ChatMessageResponse) => {
       // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
-      // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다(#619).
+      // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다.
       if (message.isMine) return;
 
       // 예약 취소 같은 SYSTEM 메시지는 서버가 따로 푸시를 보내므로(Gwangsan-Server#426) 로컬 알림을
@@ -85,7 +113,14 @@ export const useGlobalChatNotifications = () => {
 
       if (pathnameRef.current === `/chatting/${message.roomId}`) return;
 
-      if (await isRoomHidden(queryClient, message.roomId)) return;
+      const { hidden, servedFromCache } = await checkRoomHidden(queryClient, message.roomId);
+      if (servedFromCache && !trailingRefreshRef.current) {
+        trailingRefreshRef.current = setTimeout(() => {
+          trailingRefreshRef.current = null;
+          queryClient.invalidateQueries({ queryKey: chatRoomKeys.list() });
+        }, ROOM_LIST_REFRESH_INTERVAL_MS);
+      }
+      if (hidden) return;
 
       await Notifications.scheduleNotificationAsync({
         content: {

@@ -2,7 +2,7 @@ import { FlatList, ScrollView, ActivityIndicator, Text, View, RefreshControl } f
 import { NoticeItem } from '~/widget/notice';
 import { Header } from '~/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetNoticeList } from '~/entity/notice/model/useGetNoticeList';
+import { useGetNoticeList } from '~/entity/notice';
 import { useCallback, useState } from 'react';
 
 const NoticePage = () => {
@@ -53,6 +53,11 @@ const NoticePage = () => {
             images={notice.images}
           />
         )}
+        ListEmptyComponent={
+          <Text testID="notice-empty" className="pt-20 text-center text-gray-500">
+            등록된 공지사항이 없습니다.
+          </Text>
+        }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
     );

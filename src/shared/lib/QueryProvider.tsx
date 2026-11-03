@@ -7,7 +7,7 @@ import {
   onlineManager,
 } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import type { ReactQueryDevtools as ReactQueryDevtoolsType } from '@tanstack/react-query-devtools';
 import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
@@ -17,12 +17,30 @@ import * as Sentry from '@sentry/react-native';
 
 const MAX_QUERY_RETRY = 1;
 
-// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다. 예전에는
-// 전부 한 번 더 요청해 에러 처리가 늦어지고 토스트가 두 번 뜨기도 했다(#739)
+// devtools는 DOM 기반이라 웹 개발 빌드에서만 쓴다. 정적 import하면 네이티브·프로덕션 번들에도
+// 포함되므로, 조건이 상수로 접히는 프로덕션 빌드에서는 require 자체가 제거되도록 조건부로 불러온다.
+const ReactQueryDevtools: typeof ReactQueryDevtoolsType | null =
+  __DEV__ && Platform.OS === 'web'
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('@tanstack/react-query-devtools').ReactQueryDevtools
+    : null;
+
+// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다
 export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
   if (failureCount >= MAX_QUERY_RETRY) return false;
   const status = error instanceof AxiosError ? error.response?.status : undefined;
   return status === undefined || status >= 500;
+};
+
+// 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도
+// 화면 전체를 ErrorBoundary로 날리지 않고 기존 데이터를 유지한다.
+export const shouldThrowQueryError = (error: unknown, hasCachedData: boolean): boolean => {
+  if (hasCachedData) return false;
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    return status !== undefined && status >= 500;
+  }
+  return false;
 };
 
 const queryClient = new QueryClient({
@@ -71,16 +89,7 @@ const queryClient = new QueryClient({
       retry: shouldRetryQuery,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
-      // 이미 받아둔 데이터가 있으면 백그라운드 refetch가 5xx로 실패해도
-      // 화면 전체를 ErrorBoundary로 날리지 않고 기존 데이터를 유지한다.
-      throwOnError: (error, query) => {
-        if (query.state.data !== undefined) return false;
-        if (error instanceof AxiosError) {
-          const status = error.response?.status;
-          return status !== undefined && status >= 500;
-        }
-        return false;
-      },
+      throwOnError: (error, query) => shouldThrowQueryError(error, query.state.data !== undefined),
     },
   },
 });
@@ -120,7 +129,7 @@ export default function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {Platform.OS === 'web' && <ReactQueryDevtools initialIsOpen={false} />}
+      {ReactQueryDevtools && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }

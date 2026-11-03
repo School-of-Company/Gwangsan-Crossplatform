@@ -1,8 +1,8 @@
 import { forwardRef, useState } from 'react';
 import { TextInput, TextInputProps, TouchableOpacity } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
-import { Input } from '@/shared/ui/Input';
-import { useThemeColors } from '@/shared/lib/theme';
+import { Input } from '~/shared/ui/Input';
+import { useThemeColors } from '~/shared/lib/theme';
 
 interface PasswordInputProps extends Omit<TextInputProps, 'secureTextEntry'> {
   label: string;
@@ -19,7 +19,10 @@ export const PasswordInput = forwardRef<TextInput, PasswordInputProps>(
         label={label}
         secureTextEntry={!isVisible}
         icon={
-          <TouchableOpacity onPress={() => setIsVisible((prev) => !prev)}>
+          <TouchableOpacity
+            onPress={() => setIsVisible((prev) => !prev)}
+            accessibilityRole="button"
+            accessibilityLabel={isVisible ? '비밀번호 숨기기' : '비밀번호 보기'}>
             <Icon
               name={isVisible ? 'eye-outline' : 'eye-off-outline'}
               size={20}

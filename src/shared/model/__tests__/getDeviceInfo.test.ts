@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Sentry from '@sentry/react-native';
-import { getData } from '@/shared/lib/getData';
-import { setData } from '@/shared/lib/setData';
+import { getData } from '~/shared/lib/getData';
+import { setData } from '~/shared/lib/setData';
 import { getDeviceInfo } from '../getDeviceInfo';
 
 // babel-jest hoists variables starting with 'mock', so this is safe to use in jest.mock factories
@@ -44,11 +44,11 @@ jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
 }));
 
-jest.mock('@/shared/lib/getData', () => ({
+jest.mock('~/shared/lib/getData', () => ({
   getData: jest.fn(),
 }));
 
-jest.mock('@/shared/lib/setData', () => ({
+jest.mock('~/shared/lib/setData', () => ({
   setData: jest.fn(),
 }));
 

@@ -7,20 +7,27 @@ import {
   Text,
   View,
 } from 'react-native';
-import { logger } from '@/shared/lib/logger';
-import { Button, Header, Input } from '@/shared/ui';
-import { TextField } from '@/shared/ui/TextField';
-import ImageUploader from '@/shared/ui/ImageUploader';
-import type { ImageUploadState } from '@/shared/ui/ImageUploader';
-import { createItemFormRequestBody, useCreateItem } from '~/entity/write/itemForm';
-import { getModeLabel, getTypeLabel } from '~/widget/write/model/options';
+import { logger } from '~/shared/lib/logger';
+import { Button, Header, Input } from '~/shared/ui';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
+import { AlertModal } from '~/shared/ui/AlertModal';
+import { TextField } from '~/shared/ui/TextField';
+import ImageUploader from '~/shared/ui/ImageUploader';
+import type { ImageUploadState } from '~/shared/ui/ImageUploader';
+import {
+  createItemFormRequestBody,
+  getGwangsanError,
+  ITEM_TITLE_MAX_LENGTH,
+  useCreateItem,
+} from '~/entity/write';
+import { getModeLabel, getTypeLabel } from '~/widget/write';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
-import { useEditPost } from '~/entity/post/model/useEditPost';
-import { useGetItem } from '~/entity/post';
+import { useEditPost, useGetItem } from '~/entity/post';
+import { useLeaveConfirm } from '../../model/useLeaveConfirm';
 
 const ItemFormPage = () => {
   const [title, setTitle] = useState('');
@@ -32,6 +39,8 @@ const ItemFormPage = () => {
   const [imageIds, setImageIds] = useState<number[]>([]);
   const [imageUploadState, setImageUploadState] = useState<ImageUploadState | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // state는 렌더 전까지 반영되지 않아 같은 프레임의 연타로 글이 두 번 등록될 수 있어 ref로 잠근다
+  const isSubmittingRef = useRef(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const createItemMutation = useCreateItem();
@@ -40,7 +49,7 @@ const ItemFormPage = () => {
     type: typeParam,
     mode: modeParam,
   } = useLocalSearchParams<{ id?: string; type?: string; mode?: string }>();
-  const { data: postData, isLoading, error } = useGetItem(id);
+  const { data: postData, isLoading, error, refetch: refetchPost } = useGetItem(id);
   const editPostMutation = useEditPost();
 
   useEffect(() => {
@@ -72,13 +81,42 @@ const ItemFormPage = () => {
     (!imageUploadState.hasUploadingImages && !imageUploadState.hasFailedImages);
   const hasAtLeastOneImage = (images?.length ?? 0) > 0 || (imageIds?.length ?? 0) > 0;
 
+  const gwangsanError = getGwangsanError(gwangsan);
+
   const isFormValid =
     mode.trim().length > 0 &&
     type.trim().length > 0 &&
     title.trim().length > 0 &&
     content.trim().length > 0 &&
     gwangsan.trim().length > 0 &&
+    !gwangsanError &&
     (mustHaveImage ? imagesReady && hasAtLeastOneImage : imagesReady);
+
+  // 버튼이 왜 눌리지 않는지 알 수 있도록 첫 번째로 부족한 항목을 버튼 위에 알려준다.
+  // 이미지 업로드 중·실패는 버튼 문구로 이미 보여준다.
+  const disabledReason = (() => {
+    if (isFormValid || isSubmitting || !imagesReady) return null;
+    if (mustHaveImage && !hasAtLeastOneImage) return '팔아요 글에는 사진을 1장 이상 올려 주세요.';
+    if (title.trim().length === 0) return '주제를 입력해 주세요.';
+    if (content.trim().length === 0) return '내용을 입력해 주세요.';
+    if (gwangsan.trim().length === 0) return '광산을 입력해 주세요.';
+    return gwangsanError;
+  })();
+
+  const isDirty = postData
+    ? title !== postData.title ||
+      content !== postData.content ||
+      gwangsan !== postData.gwangsan.toString() ||
+      imageIds.join(',') !== (postData.images ?? []).map((img) => img.imageId).join(',')
+    : !id &&
+      (title.trim().length > 0 ||
+        content.trim().length > 0 ||
+        gwangsan.length > 0 ||
+        images.length > 0);
+
+  const { isConfirmVisible, confirmLeave, cancelLeave, allowLeave } = useLeaveConfirm(
+    isDirty && !isSubmitting
+  );
 
   const initialImages = useMemo(
     () =>
@@ -88,8 +126,9 @@ const ItemFormPage = () => {
     [images, imageIds]
   );
 
+  // 숫자와 맨 앞의 '-' 하나만 남긴다 (광산은 음수도 허용)
   const handleGwangsanChange = useCallback(
-    (v: string) => setGwangsan(v.replace(/[^0-9]/g, '')),
+    (v: string) => setGwangsan(v.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '')),
     []
   );
   const handleImagesChange = useCallback((v: string[]) => setImages(v), []);
@@ -109,9 +148,10 @@ const ItemFormPage = () => {
   };
 
   const handleSubmit = async () => {
-    try {
-      if (isSubmitting) return;
+    // try 안에서 return하면 finally가 진행 중인 첫 제출의 잠금까지 풀어버린다
+    if (isSubmittingRef.current) return;
 
+    try {
       if (imageUploadState?.hasUploadingImages) {
         Toast.show({
           type: 'error',
@@ -130,6 +170,7 @@ const ItemFormPage = () => {
         return;
       }
 
+      isSubmittingRef.current = true;
       setIsSubmitting(true);
 
       const requestBody = createItemFormRequestBody({
@@ -149,12 +190,14 @@ const ItemFormPage = () => {
         await createItemMutation.mutateAsync(requestBody);
       }
 
+      allowLeave();
       router.replace({
         pathname: '/main',
       });
     } catch (error) {
       logger.error('ItemForm submit failed', error);
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -169,8 +212,9 @@ const ItemFormPage = () => {
 
   if (id && (error || !postData)) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <Text className="text-error-500">게시글을 불러오는데 실패했습니다.</Text>
+      <SafeAreaView className="flex-1 bg-background">
+        <Header headerTitle="게시글" />
+        <ErrorFallback title="게시글을 불러오는데 실패했습니다." onRetry={() => refetchPost()} />
       </SafeAreaView>
     );
   }
@@ -202,33 +246,60 @@ const ItemFormPage = () => {
             />
             <Input
               label="주제"
+              testID="ItemForm-title-input"
               placeholder="주제를 작성해주세요"
               value={title}
               onChangeText={setTitle}
+              maxLength={ITEM_TITLE_MAX_LENGTH}
             />
             <TextField
               label="내용"
+              testID="ItemForm-content-input"
               placeholder="내용을 작성해주세요"
               value={content}
               onChangeText={setContent}
             />
             <Input
               label="광산"
+              testID="ItemForm-gwangsan-input"
               placeholder="광산을 입력해주세요"
               value={gwangsan}
               onChangeText={handleGwangsanChange}
               onFocus={handleGwangsanFocus}
-              keyboardType="numeric"
+              // iOS 숫자 키패드에는 '-'가 없다
+              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'numeric'}
             />
+            {gwangsanError && (
+              <Text testID="gwangsan-error" className="-mt-4 text-sm text-error-500">
+                {gwangsanError}
+              </Text>
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
       <View className="bg-background px-5 pt-5">
+        {disabledReason && (
+          <Text
+            testID="item-form-disabled-reason"
+            className="mb-2 text-center text-sm text-gray-500">
+            {disabledReason}
+          </Text>
+        )}
         <Button onPress={handleSubmit} disabled={!isFormValid || isSubmitting}>
           {getButtonText()}
         </Button>
       </View>
+
+      <AlertModal
+        isVisible={isConfirmVisible}
+        message={'작성 중인 내용이 있어요.\n저장하지 않고 나가시겠습니까?'}
+        cancelText="계속 작성"
+        confirmText="나가기"
+        destructive
+        onCancel={cancelLeave}
+        onConfirm={confirmLeave}
+      />
     </SafeAreaView>
   );
 };

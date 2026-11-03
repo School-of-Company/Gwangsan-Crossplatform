@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import type { ToastConfigParams } from 'react-native-toast-message';
-import { useToastQueueStore } from '~/shared/lib/toastQueue';
+import { useToastQueueStore } from '~/shared/store/useToastQueueStore';
 import '~/shared/lib/toastQueuePatch';
 import { toastConfig } from './index';
 

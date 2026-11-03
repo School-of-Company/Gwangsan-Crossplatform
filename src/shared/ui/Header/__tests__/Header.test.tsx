@@ -6,9 +6,7 @@ jest.mock('expo-router', () => ({
 }));
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   return function MockIcon(props: any) {
     return React.createElement(View, { testID: `icon-${props.name}` });
@@ -65,6 +63,41 @@ describe('Header', () => {
     const { getByText } = render(<Header headerTitle="채팅방" onTitlePress={onTitlePress} />);
     fireEvent.press(getByText('채팅방'));
     expect(onTitlePress).toHaveBeenCalledTimes(1);
+  });
+
+  it('연결되지 않은 동안에는 색 점과 함께 상태 문구를 보여준다', () => {
+    const { getByText, rerender, queryByText } = render(
+      <Header headerTitle="채팅방" connectionState="disconnected" />
+    );
+    expect(getByText('연결 끊김')).toBeTruthy();
+
+    rerender(<Header headerTitle="채팅방" connectionState="connecting" />);
+    expect(getByText('연결 중')).toBeTruthy();
+
+    rerender(<Header headerTitle="채팅방" connectionState="connected" />);
+    expect(queryByText('연결 중')).toBeNull();
+    expect(queryByText('연결 끊김')).toBeNull();
+  });
+
+  it('연결 상태를 스크린리더용 라벨로도 제공한다', () => {
+    const { getByTestId } = render(<Header headerTitle="채팅방" connectionState="connected" />);
+
+    expect(getByTestId('header-connection-indicator').props.accessibilityLabel).toBe('연결됨');
+  });
+
+  it('뒤로가기·메뉴 버튼에 스크린리더용 라벨과 버튼 역할을 지정한다', () => {
+    const { getByRole } = render(
+      <Header headerTitle="제목" showMenuButton onMenuPress={jest.fn()} />
+    );
+    expect(getByRole('button', { name: '뒤로 가기' })).toBeTruthy();
+    expect(getByRole('button', { name: '메뉴 더보기' })).toBeTruthy();
+  });
+
+  it('뒤로가기 버튼을 숨기면 스크린리더에서도 숨긴다', () => {
+    const { getByLabelText } = render(<Header headerTitle="제목" showBackButton={false} />);
+    const back = getByLabelText('뒤로 가기', { includeHiddenElements: true });
+    expect(back.props.accessibilityElementsHidden).toBe(true);
+    expect(back.props.importantForAccessibility).toBe('no-hide-descendants');
   });
 
   it('스냅샷 - 기본 상태', () => {

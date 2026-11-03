@@ -3,7 +3,7 @@ import Toast from 'react-native-toast-message';
 import { deleteChatRoom } from '../api/deleteChatRoom';
 import { chatRoomKeys } from './useChatRooms';
 import type { ChatRoomListItem } from './chatTypes';
-import type { RoomId } from '@/shared/types/chatType';
+import type { RoomId } from '~/shared/types/chatType';
 
 export const useDeleteChatRoom = () => {
   const queryClient = useQueryClient();

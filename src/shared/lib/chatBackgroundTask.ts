@@ -4,9 +4,9 @@ import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
-import { publicInstance } from '@/shared/lib/publicInstance';
-import { logger } from '@/shared/lib/logger';
-import { MESSAGE_TYPE, type ChatRoomListItem } from '@/shared/types/chatType';
+import { publicInstance } from '~/shared/lib/publicInstance';
+import { logger } from '~/shared/lib/logger';
+import { MESSAGE_TYPE, type ChatRoomListItem } from '~/shared/types/chatType';
 
 export const CHAT_BACKGROUND_TASK = 'chat-background-fetch';
 const LAST_UNREAD_KEY = 'chatLastUnreadState';
@@ -18,7 +18,7 @@ TaskManager.defineTask(CHAT_BACKGROUND_TASK, async () => {
     if (!accessToken) return BackgroundFetch.BackgroundFetchResult.NoData;
 
     // 백그라운드에서는 토큰 재발급·강제 로그아웃(화면 이동)이 일어나면 안 되므로 인터셉터가 없는
-    // 공용 인스턴스에 토큰만 직접 붙인다. raw fetch와 달리 타임아웃이 있어 멈춘 채 남지 않는다(#739)
+    // 공용 인스턴스에 토큰만 직접 붙인다. raw fetch와 달리 타임아웃이 있어 멈춘 채 남지 않는다
     let rooms: ChatRoomListItem[];
     try {
       const { data } = await publicInstance.get<ChatRoomListItem[]>('/chat/rooms', {

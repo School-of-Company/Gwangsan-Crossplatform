@@ -1,5 +1,5 @@
-import { FeatureErrorBoundary } from '@/shared/ui/FeatureErrorBoundary';
-import ReviewsPageView from '~/view/reviews/ui/PostsPage';
+import { FeatureErrorBoundary } from '~/shared/ui/FeatureErrorBoundary';
+import { ReviewsPageView } from '~/view/reviews';
 
 export default function PostPage() {
   return (

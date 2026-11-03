@@ -1,20 +1,20 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { usePostAction } from '../usePostAction';
-import { useGetItem } from '~/entity/post/model/useGetItem';
-import { useDeletePost } from '~/entity/post';
+import { useGetItem, useDeletePost, createReview } from '~/entity/post';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
-import { createReview } from '~/entity/post/api/createReview';
 import Toast from 'react-native-toast-message';
 
-jest.mock('~/entity/post/model/useGetItem', () => ({ useGetItem: jest.fn() }));
-jest.mock('~/entity/post', () => ({ useDeletePost: jest.fn() }));
+jest.mock('~/entity/post', () => ({
+  useGetItem: jest.fn(),
+  useDeletePost: jest.fn(),
+  createReview: jest.fn(),
+}));
 jest.mock('~/widget/post/model/useTradeRequest', () => ({ useTradeRequest: jest.fn() }));
 jest.mock('~/entity/chat/model/useChatEntry', () => ({ useChatEntry: jest.fn() }));
 jest.mock('~/shared/lib/userUtils', () => ({ checkIsMyPost: jest.fn() }));
-jest.mock('~/entity/post/api/createReview', () => ({ createReview: jest.fn() }));
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('react-native-toast-message', () => ({
@@ -272,6 +272,45 @@ describe('usePostAction', () => {
       });
       expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
       expect(result.current.isReviewModalVisible).toBe(false);
+    });
+
+    it('제출이 끝나기 전에 다시 호출하면 후기를 한 번만 만든다', async () => {
+      let resolveCreate: () => void = () => {};
+      mockCreateReview.mockReturnValue(new Promise<void>((resolve) => (resolveCreate = resolve)));
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      let first: Promise<void> = Promise.resolve();
+      let second: Promise<void> = Promise.resolve();
+      act(() => {
+        first = result.current.reviewHandlers.onSubmit(80, '좋았어요');
+        second = result.current.reviewHandlers.onSubmit(80, '좋았어요');
+      });
+
+      expect(result.current.isSubmittingReview).toBe(true);
+
+      await act(async () => {
+        resolveCreate();
+        await Promise.all([first, second]);
+      });
+
+      expect(mockCreateReview).toHaveBeenCalledTimes(1);
+      expect(result.current.isSubmittingReview).toBe(false);
+    });
+
+    it('제출이 실패하면 잠금을 풀어 다시 제출할 수 있다', async () => {
+      mockCreateReview.mockRejectedValueOnce(new Error('리뷰 실패')).mockResolvedValueOnce({});
+
+      const { result } = renderHookWithProviders(() => usePostAction({ id: '1' }));
+
+      await act(async () => {
+        await result.current.reviewHandlers.onSubmit(80, '좋았어요');
+      });
+      await act(async () => {
+        await result.current.reviewHandlers.onSubmit(80, '좋았어요');
+      });
+
+      expect(mockCreateReview).toHaveBeenCalledTimes(2);
     });
 
     it('onSubmit 실패 시 에러 Toast를 표시한다', async () => {

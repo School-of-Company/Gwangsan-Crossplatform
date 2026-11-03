@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { useSignupStore } from '@/shared/store/useSignupStore';
-import { useSigninStore } from '@/shared/store/useSigninStore';
-import { useResetPasswordStore } from '@/shared/store/useResetPasswordStore';
+import { useSignupStore } from '~/shared/store/useSignupStore';
+import { useSigninStore } from '~/shared/store/useSigninStore';
+import { useResetPasswordStore } from '~/shared/store/useResetPasswordStore';
 import type { SignupState, SigninState, ResetPasswordState } from '~/shared/types/authState';
 
 export function useCurrentStep<TState extends ResetPasswordState>(

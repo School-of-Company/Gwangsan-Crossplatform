@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react-native';
-import { useToastQueueStore } from '~/shared/lib/toastQueue';
+import { useToastQueueStore } from '~/shared/store/useToastQueueStore';
 import { ToastStack } from '../ToastStack';
 
 beforeEach(() => {

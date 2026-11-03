@@ -4,11 +4,11 @@ import { ActionSheetIOS, Alert, Platform, TouchableOpacity } from 'react-native'
 import * as ImagePicker from 'expo-image-picker';
 import { renderWithProviders } from '~/test-utils';
 import ImageUploader from '../index';
-import { useUploadImage } from '@/shared/model/useUploadImage';
-import { logger } from '@/shared/lib/logger';
-import type { ImageType } from '@/shared/types/imageType';
+import { useUploadImage } from '~/shared/model/useUploadImage';
+import { logger } from '~/shared/lib/logger';
+import type { ImageType } from '~/shared/types/imageType';
 
-jest.mock('@/shared/model/useUploadImage', () => ({
+jest.mock('~/shared/model/useUploadImage', () => ({
   useUploadImage: jest.fn(),
 }));
 
@@ -23,7 +23,7 @@ jest.mock('react-native-toast-message', () => ({
   show: jest.fn(),
 }));
 
-jest.mock('@/shared/lib/logger', () => ({
+jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn(), warn: jest.fn() },
 }));
 

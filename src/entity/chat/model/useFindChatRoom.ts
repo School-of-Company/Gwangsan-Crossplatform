@@ -4,7 +4,7 @@ import Toast from 'react-native-toast-message';
 import { findChatRoom } from '../api/findChatRoom';
 import { chatRoomKeys } from './useChatRooms';
 import type { FindChatRoomResponse, ChatApiError } from './chatTypes';
-import type { ProductId } from '@/shared/types/chatType';
+import type { ProductId } from '~/shared/types/chatType';
 
 interface UseFindChatRoomParams {
   onSuccess?: (data: FindChatRoomResponse) => void;

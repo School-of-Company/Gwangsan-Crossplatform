@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createItem } from '../api/createItem';
 import { ItemFormRequestBody } from './itemFormSchema';
 import Toast from 'react-native-toast-message';
-import { PostType } from '@/shared/types/postType';
+import { PostType } from '~/shared/types/postType';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { postKeys } from '~/shared/model/postQueryKeys';
@@ -22,11 +22,9 @@ export const useCreateItem = () => {
         queryKey: postKeys.list(newItem.mode, newItem.type),
       });
 
-      const previousPosts = queryClient.getQueryData<PostType[]>([
-        'posts',
-        newItem.mode,
-        newItem.type,
-      ]);
+      const previousPosts = queryClient.getQueryData<PostType[]>(
+        postKeys.list(newItem.mode, newItem.type)
+      );
 
       if (previousPosts) {
         const tempId = -Date.now();

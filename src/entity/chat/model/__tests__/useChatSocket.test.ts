@@ -2,15 +2,15 @@ import { act, renderHook } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import { useChatSocket } from '../useChatSocket';
 import { createChatSocketService } from '../../lib/socketService';
-import { createChatSocketManager } from '@/shared/lib/socket';
+import { getChatSocketManager } from '~/shared/lib/socket';
 import { useSocketConnection } from '../useSocketConnection';
 import { useMessageSync } from '../useMessageSync';
 import { useSocketEventHandlers } from '../useSocketEventHandlers';
-import { useChatQueueStore, MESSAGE_STATUS } from '@/shared/store/useChatQueueStore';
-import type { RoomId } from '@/shared/types/chatType';
+import { useChatQueueStore, MESSAGE_STATUS } from '~/shared/store/useChatQueueStore';
+import type { RoomId } from '~/shared/types/chatType';
 
-jest.mock('@/shared/lib/socket', () => ({
-  createChatSocketManager: jest.fn(() => ({})),
+jest.mock('~/shared/lib/socket', () => ({
+  getChatSocketManager: jest.fn(() => ({})),
 }));
 
 jest.mock('react-native-toast-message', () => ({
@@ -26,7 +26,6 @@ const mockChatSocketService = {
   destroy: jest.fn(),
   sendMessage: jest.fn(),
   joinRoom: jest.fn(),
-  leaveRoom: jest.fn(),
   on: jest.fn(),
   off: jest.fn(),
 };
@@ -78,7 +77,7 @@ describe('useChatSocket', () => {
   it('socketManager와 chatSocketService를 생성한다', () => {
     renderHook(() => useChatSocket());
 
-    expect(createChatSocketManager).toHaveBeenCalledTimes(1);
+    expect(getChatSocketManager).toHaveBeenCalledTimes(1);
     expect(createChatSocketService).toHaveBeenCalledTimes(1);
   });
 
@@ -106,16 +105,17 @@ describe('useChatSocket', () => {
     expect(mockChatSocketService.joinRoom).not.toHaveBeenCalled();
   });
 
-  it('언마운트 시 join했던 방을 leave한다', () => {
+  it('언마운트해도 공유 소켓에서 방을 나가지 않는다', () => {
     mockChatSocketService.isConnected = true;
 
     const { unmount } = renderHook(() => useChatSocket({ currentRoomId: 7 }));
     unmount();
 
-    expect(mockChatSocketService.leaveRoom).toHaveBeenCalledWith(7);
+    expect(mockChatSocketService.disconnect).not.toHaveBeenCalled();
+    expect(mockChatSocketService.destroy).toHaveBeenCalledTimes(1);
   });
 
-  it('currentRoomId가 바뀌면 이전 방을 leave하고 새 방을 join한다', () => {
+  it('currentRoomId가 바뀌면 새 방을 join한다', () => {
     mockChatSocketService.isConnected = true;
 
     const { rerender } = renderHook(
@@ -127,7 +127,6 @@ describe('useChatSocket', () => {
 
     rerender({ roomId: 2 });
 
-    expect(mockChatSocketService.leaveRoom).toHaveBeenCalledWith(1);
     expect(mockChatSocketService.joinRoom).toHaveBeenCalledWith(2);
   });
 
@@ -210,16 +209,6 @@ describe('useChatSocket', () => {
     });
 
     expect(mockChatSocketService.joinRoom).not.toHaveBeenCalled();
-  });
-
-  it('leaveRoom은 항상 chatSocketService.leaveRoom에 위임한다', () => {
-    const { result } = renderHook(() => useChatSocket());
-
-    act(() => {
-      result.current.leaveRoom(9);
-    });
-
-    expect(mockChatSocketService.leaveRoom).toHaveBeenCalledWith(9);
   });
 
   it('connection/messageSync의 값들을 그대로 반환한다', () => {

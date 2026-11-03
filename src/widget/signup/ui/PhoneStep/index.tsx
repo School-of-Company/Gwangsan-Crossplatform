@@ -1,14 +1,12 @@
-import { Input } from '@/shared/ui/Input';
-import { Button } from '@/shared/ui/Button';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import SignupForm from '~/entity/auth/ui/SignupForm';
-import { useSignupFormField } from '~/entity/auth/model/useAuthSelectors';
+import { Input } from '~/shared/ui/Input';
+import { Button } from '~/shared/ui/Button';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
+import { SignupForm, useSignupFormField, useSignupPhoneVerification } from '~/entity/auth';
 import { Platform, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useSignupPhoneVerification } from '~/entity/auth/model/useSignupPhoneVerification';
 
 export default function PhoneStep() {
-  // 가입 요청 시 인증이 만료돼 다시 인증하러 온 경우(#784)
+  // 가입 요청 시 인증이 만료돼 다시 인증하러 온 경우
   const { reverify } = useLocalSearchParams<{ reverify?: string }>();
   const isReverify = reverify === 'true';
   const { value: initialPhoneNumber, updateField: updatePhoneNumber } =
@@ -42,7 +40,7 @@ export default function PhoneStep() {
     updateVerificationCode(verificationCode);
     if (isReverify) {
       // signup 호출은 RecommenderStep에서 하므로, 재인증 완료 후 그 단계로 돌아가야
-      // 가입이 재시도된다(#784)
+      // 가입이 재시도된다
       router.replace('/signup/recommender');
       return;
     }

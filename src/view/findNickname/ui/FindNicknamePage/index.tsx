@@ -1,12 +1,11 @@
 import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Input } from '@/shared/ui/Input';
-import { Button } from '@/shared/ui/Button';
-import { ErrorMessage } from '@/shared/ui/ErrorMessage';
-import BackArrow from '@/shared/assets/svg/BackArrow';
-import { useFindNicknamePhoneVerification } from '~/entity/auth/model/useFindNicknamePhoneVerification';
-import { findNickname } from '~/entity/auth/api/findNickname';
+import { Input } from '~/shared/ui/Input';
+import { Button } from '~/shared/ui/Button';
+import { ErrorMessage } from '~/shared/ui/ErrorMessage';
+import BackArrow from '~/shared/assets/svg/BackArrow';
+import { useFindNicknamePhoneVerification, findNickname } from '~/entity/auth';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';

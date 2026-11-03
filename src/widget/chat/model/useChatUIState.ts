@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
-import { useGetItem } from '~/entity/post/model/useGetItem';
+import { useChatRoomData } from '~/entity/chat';
+import { useGetItem } from '~/entity/post';
 import { MODE } from '~/shared/types/mode';
 import type { RoomId } from '~/shared/types/chatType';
+import type { TradeProduct } from '~/entity/chat';
 
 interface UseChatUIStateParams {
   readonly roomId: RoomId;
@@ -17,7 +18,7 @@ interface UseChatUIStateParams {
 interface UseChatUIStateReturn {
   readonly tradeEmbedConfig: {
     readonly shouldShow: boolean;
-    readonly product: any;
+    readonly product: TradeProduct | null | undefined;
     readonly showButtons: boolean;
     readonly otherPartyNickname: string;
     readonly reserverNickname?: string;

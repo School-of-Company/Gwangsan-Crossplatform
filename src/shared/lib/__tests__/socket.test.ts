@@ -71,7 +71,7 @@ describe('chatSocket (SocketManager singleton)', () => {
       expect.stringContaining('/chat'),
       expect.objectContaining({
         auth: expect.any(Function),
-        transports: ['polling', 'websocket'],
+        transports: ['websocket'],
         forceNew: true,
       })
     );

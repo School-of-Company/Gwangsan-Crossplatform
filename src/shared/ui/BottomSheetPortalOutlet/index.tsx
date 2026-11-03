@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 
 // 앱 루트에 한 번만 마운트한다. BottomSheetModalWrapper는 여기로 자신의 내용을
@@ -14,7 +14,7 @@ export function BottomSheetPortalOutlet() {
   return (
     <Fragment>
       {entries.map(([id, node]) => (
-        <View key={id} style={StyleSheet.absoluteFill}>
+        <View key={id} className="absolute inset-0">
           {node}
         </View>
       ))}

@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import Post from '../index';
+import { resetNavigationLock } from '~/shared/lib/navigationGuard';
 
 const mockPush = jest.fn();
 
@@ -33,7 +34,10 @@ const makePost = (overrides = {}) => ({
   ...overrides,
 });
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  resetNavigationLock();
+});
 
 describe('Post', () => {
   it('썸네일을 메모리와 디스크에 캐시해 앱을 다시 켜도 다시 내려받지 않는다(#732)', () => {
@@ -49,12 +53,38 @@ describe('Post', () => {
     expect(getByText('3 광산')).toBeTruthy();
   });
 
+  it('긴 제목과 판매자·구매자 정보는 한 줄로 잘라 카드 높이를 고정한다', () => {
+    const title = '아주 긴 제목'.repeat(20);
+    const { getByText, getByTestId } = render(
+      <Post
+        {...makePost({
+          title,
+          seller: { memberId: 1, nickname: '판매자' },
+          buyer: { memberId: 2, nickname: '구매자' },
+        })}
+      />
+    );
+
+    expect(getByText(title).props.numberOfLines).toBe(1);
+    expect(getByTestId('post-seller').props.numberOfLines).toBe(1);
+    expect(getByTestId('post-buyer').props.numberOfLines).toBe(1);
+  });
+
   it('누르면 /post/:id 경로로 이동한다', () => {
     const { getByText } = render(<Post {...makePost({ id: 5 })} />);
 
     fireEvent.press(getByText('테스트 게시글'));
 
     expect(mockPush).toHaveBeenCalledWith('/post/5');
+  });
+
+  it('빠르게 두 번 누르면 상세 화면으로 한 번만 이동한다', () => {
+    const { getByText } = render(<Post {...makePost({ id: 5 })} />);
+
+    fireEvent.press(getByText('테스트 게시글'));
+    fireEvent.press(getByText('테스트 게시글'));
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
   });
 
   it('id가 0 미만이면 누를 때 이동하지 않는다', () => {

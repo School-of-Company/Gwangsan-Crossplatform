@@ -63,6 +63,8 @@ export function BottomSheetModalWrapper({
   const id = useId();
   const setSheet = useBottomSheetPortalStore((s) => s.setSheet);
   const removeSheet = useBottomSheetPortalStore((s) => s.removeSheet);
+  const setCloser = useBottomSheetPortalStore((s) => s.setCloser);
+  const onCloseRef = useRef(onClose);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const screenHeight = Dimensions.get('window').height;
@@ -79,8 +81,8 @@ export function BottomSheetModalWrapper({
   // 밀어 올리고도 키보드에 가려지는 높이. 시트 내부 하단 패딩으로 보정해 버튼이
   // 키보드 뒤로 숨지 않게 한다.
   const [keyboardOverlap, setKeyboardOverlap] = useState(0);
-  const translateY = useRef(new Animated.Value(modalHeight)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useState(() => new Animated.Value(modalHeight))[0];
+  const backdropOpacity = useState(() => new Animated.Value(0))[0];
   const dragStartValue = useRef(0);
   // 시트가 열릴 때마다 onLayout으로 열림 애니메이션이 딱 한 번만 실행되도록 막는 가드.
   // 열릴 때(isVisible 효과)마다 false로 리셋된다.
@@ -89,6 +91,8 @@ export function BottomSheetModalWrapper({
 
   const panResponder = useMemo(
     () =>
+      // 핸들러는 제스처 이벤트 안에서만 ref를 읽으므로 렌더 중 접근이 아니다.
+      // eslint-disable-next-line react-hooks/refs
       PanResponder.create({
         // 시작 시점엔 절대 가로채지 않는다 — 버튼 탭이 정상적으로 눌리게 하기 위함.
         // 아래로 끄는 움직임이 뚜렷해지는 순간(move, capture 단계)에만 시트가
@@ -269,6 +273,8 @@ export function BottomSheetModalWrapper({
                   {showCloseButton && (
                     <TouchableOpacity
                       onPress={onClose}
+                      accessibilityRole="button"
+                      accessibilityLabel="닫기"
                       className="absolute right-0"
                       style={{ right: 0 }}>
                       <Icon name="close" size={24} color={colors['gray-700']} />
@@ -307,6 +313,16 @@ export function BottomSheetModalWrapper({
 
     setSheet(id, sheetNode);
   }, [show, id, setSheet, removeSheet, sheetNode]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // 탭 화면은 다른 화면으로 가도 언마운트되지 않아, 열린 시트가 이동한 화면 위에 남는다.
+  // 열려 있는 동안 닫기 콜백을 등록해 두고 루트 레이아웃이 경로가 바뀔 때 닫는다.
+  useEffect(() => {
+    setCloser(id, isVisible ? () => onCloseRef.current() : null);
+  }, [id, isVisible, setCloser]);
 
   // 포털에서 빼는 건 언마운트 때만 한다. 내용이 바뀔 때마다 remove → set을 반복하면
   // 시트 트리 전체가 잠깐 사라졌다 다시 붙으면서, 입력 중이던 TextInput이 포커스를

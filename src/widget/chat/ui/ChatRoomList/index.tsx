@@ -7,7 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,27 +17,18 @@ import {
   useChatSocket,
   useDeleteChatRoom,
   chatRoomKeys,
-  chatMessageKeys,
-  getChatRoomData,
-} from '@/entity/chat';
-import type { ChatRoomListItem, ChatMessageResponse } from '@/entity/chat';
-import type { RoomId } from '@/shared/types/chatType';
+  useChatEntry,
+} from '~/entity/chat';
+import type { ChatRoomListItem } from '~/entity/chat';
+import type { RoomId } from '~/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
 import { Button } from '~/shared/ui/Button';
-import { ErrorFallback } from '@/shared/ui/ErrorFallback';
-import { useBlockUser } from '~/entity/profile/model/useBlockUser';
-import { chatRoomDataKeys } from '~/entity/chat/model/chatQueryKeys';
+import { ErrorFallback } from '~/shared/ui/ErrorFallback';
+import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
+import { useBlockUser } from '~/entity/profile';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
-
-// 배열 정렬 방향에 기대지 않고 실제 최신 시각을 구한다 — REST/소켓 배열의 정렬 방향이
-// 다를 수 있다(#610). 파싱 불가능한 값은 최신 판정에 끼어들지 않도록 무시한다.
-const getLatestMessageTime = (messages: readonly ChatMessageResponse[]): number =>
-  messages.reduce((max, message) => {
-    const time = new Date(message.createdAt).getTime();
-    return Number.isFinite(time) && time > max ? time : max;
-  }, 0);
 
 interface ActionSheetRowProps {
   label: string;
@@ -53,7 +44,7 @@ const ActionSheetRow = ({
   disabled = false,
   onPress,
 }: ActionSheetRowProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useState(() => new Animated.Value(1))[0];
 
   const handlePressIn = useCallback(() => {
     Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
@@ -83,6 +74,7 @@ const ActionSheetRow = ({
 export function ChatRoomList() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { prefetchRoom } = useChatEntry();
   const { data: chatRooms, isLoading, refetch, isError } = useChatRooms();
   // 채팅방별 액션 시트(차단/신고/나가기)가 열려있는 채팅방
   const [actionTargetRoomId, setActionTargetRoomId] = useState<RoomId | null>(null);
@@ -101,6 +93,7 @@ export function ChatRoomList() {
     nickname: string;
     memberId: number;
   } | null>(null);
+  const [leaveTargetRoomId, setLeaveTargetRoomId] = useState<RoomId | null>(null);
   const hasRooms = (chatRooms?.length ?? 0) > 0;
 
   // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
@@ -142,7 +135,7 @@ export function ChatRoomList() {
 
   // 상품의 '채팅하기'로 재참여하면 같은 roomId가 서버 목록에 다시 나타난다. hiddenRoomIds는
   // 나가기 애니메이션용 임시 캐시라 자동으로 정리되지 않으므로, 재참여로 복원된 방을 그대로
-  // 두면 계속 숨겨진 채로 남는다(#609). useChatSocket의 blockStateRoomId와 같은 방식으로,
+  // 두면 계속 숨겨진 채로 남는다. useChatSocket의 blockStateRoomId와 같은 방식으로,
   // effect 대신 렌더링 중 chatRooms 변화를 감지해 즉시 걷어낸다. 단, 그 방에 대한 나가기
   // 요청이 아직 진행 중이면(삭제 완료 전에 폴링 응답이 먼저 도착한 경우) 되살리지 않는다.
   const [prevChatRooms, setPrevChatRooms] = useState(chatRooms);
@@ -164,42 +157,26 @@ export function ChatRoomList() {
 
   const handleChatRoomPress = useCallback(
     (roomId: RoomId) => {
+      if (!acquireNavigationLock()) return;
+
       // 채팅방에 들어가기 전에 데이터를 미리 받아오고 소켓 방에 미리 join해
       // 화면 전환 애니메이션이 끝났을 때 목록에서 보던 내용이 바로 보이게 한다.
-      queryClient
-        .fetchQuery({
-          queryKey: chatRoomDataKeys.room(roomId),
-          queryFn: () => getChatRoomData(roomId),
-          staleTime: 30 * 1000,
-        })
-        .then((data) => {
-          // 서버는 Redis Stream 발행 후 DB에 비동기로 저장하므로, 이 REST snapshot에는
-          // 방금 보낸 메시지가 아직 없을 수 있다. 무조건 덮어쓰면 소켓 echo로 이미 반영된
-          // 최신 메시지가 재입장 시 일시적으로 사라진다(#610) — 기존 캐시와 snapshot 중
-          // 최대 createdAt이 더 큰 쪽을 그대로 쓴다. 배열 병합/ID union은 하지 않는다
-          // (소켓·REST 간 ID 표현 차이로 중복이 생길 수 있고, 서버 페이지 크기 제한을
-          // 클라이언트가 깨뜨리게 된다).
-          queryClient.setQueryData(
-            chatMessageKeys.room(roomId),
-            (oldData: ChatMessageResponse[] | undefined) => {
-              if (!oldData || oldData.length === 0) return [...data.messages];
-
-              return getLatestMessageTime(data.messages) > getLatestMessageTime(oldData)
-                ? [...data.messages]
-                : oldData;
-            }
-          );
-        })
-        .catch(() => {});
-
+      prefetchRoom(roomId);
       joinRoom(roomId);
       router.push(`/chatting/${roomId}`);
     },
-    [router, queryClient, joinRoom]
+    [router, prefetchRoom, joinRoom]
   );
 
-  const handleRefresh = useCallback(() => {
-    refetch();
+  // 30초 폴링에도 isRefetching이 켜지므로, 사용자가 당겨서 새로고침한 동안만 스피너를 유지한다
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsPullRefreshing(false);
+    }
   }, [refetch]);
 
   const handleChatRoomLongPress = useCallback((roomId: RoomId) => {
@@ -210,14 +187,24 @@ export function ChatRoomList() {
     setActionTargetRoomId(null);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleLeavePress = useCallback(() => {
     if (actionTargetRoomId === null) return;
+    setLeaveTargetRoomId(actionTargetRoomId);
+    setActionTargetRoomId(null);
+  }, [actionTargetRoomId]);
+
+  const handleCloseLeaveAlert = useCallback(() => {
+    setLeaveTargetRoomId(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (leaveTargetRoomId === null) return;
 
     // 슬라이드 아웃 애니메이션은 API 응답과 무관하게 먼저 재생한다 — 낙관적 업데이트.
     // 실제 삭제 요청은 애니메이션이 끝나 목록에서 제거된 뒤 handleChatRoomExited에서 보낸다.
-    setExitingRoomId(actionTargetRoomId);
-    setActionTargetRoomId(null);
-  }, [actionTargetRoomId]);
+    setExitingRoomId(leaveTargetRoomId);
+    setLeaveTargetRoomId(null);
+  }, [leaveTargetRoomId]);
 
   const handleBlockPress = useCallback(() => {
     if (actionTargetRoom === null || actionTargetMemberId === undefined) return;
@@ -320,7 +307,7 @@ export function ChatRoomList() {
 
   const renderEmptyState = () => (
     <View className="flex-1 items-center justify-center py-20">
-      <Text className="text-base text-gray-500">아직 채팅방 없습니다</Text>
+      <Text className="text-base text-gray-500">아직 채팅방이 없습니다</Text>
     </View>
   );
 
@@ -336,7 +323,7 @@ export function ChatRoomList() {
         data={visibleChatRooms}
         renderItem={renderChatRoomItem}
         keyExtractor={(item) => item.roomId.toString()}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+        refreshControl={<RefreshControl refreshing={isPullRefreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={isLoading ? renderLoadingState : renderEmptyState}
         showsVerticalScrollIndicator={false}
         className="flex-1"
@@ -364,7 +351,7 @@ export function ChatRoomList() {
               label={deleteChatRoomMutation.isPending ? '나가는 중...' : '채팅방 나가기'}
               labelClassName="text-error-500"
               disabled={deleteChatRoomMutation.isPending}
-              onPress={handleConfirmDelete}
+              onPress={handleLeavePress}
             />
           </View>
           <View className="mb-3">
@@ -387,6 +374,15 @@ export function ChatRoomList() {
         isLoading={block.isPending}
         onCancel={handleCloseBlockAlert}
         onConfirm={handleConfirmBlock}
+      />
+
+      <AlertModal
+        isVisible={leaveTargetRoomId !== null}
+        message="채팅방을 나가시겠습니까?"
+        confirmText="나가기"
+        destructive
+        onCancel={handleCloseLeaveAlert}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

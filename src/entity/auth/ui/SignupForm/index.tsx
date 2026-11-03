@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
-import { Button } from '@/shared/ui/Button';
+import { Button } from '~/shared/ui/Button';
 import { ReactNode, memo } from 'react';
 import { router } from 'expo-router';
-import BackArrow from '@/shared/assets/svg/BackArrow';
+import BackArrow from '~/shared/assets/svg/BackArrow';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SignupFormProps {

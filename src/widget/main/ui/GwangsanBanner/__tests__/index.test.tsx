@@ -8,6 +8,12 @@ describe('GwangsanBanner', () => {
     expect(getByText('120')).toBeTruthy();
   });
 
+  it('광산 아이콘에 대체 텍스트를 지정한다', () => {
+    const { getByLabelText } = render(<GwangsanBanner gwangsan={120} />);
+
+    expect(getByLabelText('광산 화폐 아이콘')).toBeTruthy();
+  });
+
   it('gwangsan이 0이면 0으로 표시한다', () => {
     const { getByText } = render(<GwangsanBanner gwangsan={0} />);
 

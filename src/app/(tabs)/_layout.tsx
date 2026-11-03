@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Animated, Easing } from 'react-native';
-import { AppFooter } from '~/widget/write/ui/AppFooter';
+import { AppFooter } from '~/widget/write';
 
 const HORIZONTAL_SHIFT = 32;
 const TRANSITION_DURATION = 100;

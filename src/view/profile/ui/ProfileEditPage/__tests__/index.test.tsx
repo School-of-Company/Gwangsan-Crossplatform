@@ -2,9 +2,9 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import Toast from 'react-native-toast-message';
 import ProfileEditPageView from '../index';
-import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
-import { useUpdateProfile } from '~/view/profile/model/useUpdateProfile';
-import { useUpdateBranch } from '~/view/profile/model/useUpdateBranch';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
+import { useUpdateProfile } from '~/entity/profile/model/useUpdateProfile';
+import { useUpdateBranch } from '~/entity/profile/model/useUpdateBranch';
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
@@ -16,9 +16,9 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({
   Header: ({ headerTitle }: any) => {
@@ -213,17 +213,42 @@ describe('ProfileEditPageView', () => {
     expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ specialties: ['요리'] }));
   });
 
-  it('현재 지점명을 지점 드롭다운 초기값으로 표시한다', () => {
+  it('서버가 예전 지점명(신창)을 줘도 바뀐 지점명으로 현재 지점을 표시한다', () => {
     const { getByText } = render(<ProfileEditPageView />);
 
-    expect(getByText('신창')).toBeTruthy();
+    expect(getByText('신창지점')).toBeTruthy();
+  });
+
+  it.each(['고실마을지점', '고실마을', ' 고실마을 지점 '])(
+    '서버 지점명이 "%s"여도 고실마을지점을 현재 지점으로 표시한다',
+    (placeName) => {
+      mockUseGetMyProfile.mockReturnValue({
+        data: { ...defaultProfileData, placeName },
+        isLoading: false,
+      });
+      const { getByText, queryByText } = render(<ProfileEditPageView />);
+
+      expect(getByText('고실마을지점')).toBeTruthy();
+      expect(queryByText('지점을 선택해주세요')).toBeNull();
+    }
+  );
+
+  it('placeId가 있으면 지점명보다 placeId로 현재 지점을 고른다', () => {
+    mockUseGetMyProfile.mockReturnValue({
+      data: { ...defaultProfileData, placeId: 2, placeName: '신창' },
+      isLoading: false,
+    });
+    const { getByText, queryByText } = render(<ProfileEditPageView />);
+
+    expect(getByText('고실마을지점')).toBeTruthy();
+    expect(queryByText('신창지점')).toBeNull();
   });
 
   it('지점을 선택하면 즉시 updateBranch mutation을 호출한다(제출 버튼과 무관)', () => {
     const { getByText } = render(<ProfileEditPageView />);
 
-    fireEvent.press(getByText('신창'));
-    fireEvent.press(getByText('고실마을'));
+    fireEvent.press(getByText('신창지점'));
+    fireEvent.press(getByText('고실마을지점'));
 
     expect(mockMutateBranch).toHaveBeenCalledWith({ placeId: 2 }, expect.any(Object));
     expect(mockMutate).not.toHaveBeenCalled();
@@ -232,8 +257,8 @@ describe('ProfileEditPageView', () => {
   it('이미 선택된 지점을 다시 고르면 updateBranch를 호출하지 않는다', () => {
     const { getAllByText, getByText } = render(<ProfileEditPageView />);
 
-    fireEvent.press(getByText('신창'));
-    fireEvent.press(getAllByText('신창')[1]);
+    fireEvent.press(getByText('신창지점'));
+    fireEvent.press(getAllByText('신창지점')[1]);
 
     expect(mockMutateBranch).not.toHaveBeenCalled();
   });
@@ -242,11 +267,11 @@ describe('ProfileEditPageView', () => {
     mockMutateBranch.mockImplementation((_data, options) => options?.onError?.(new Error('실패')));
     const { getByText, queryByText } = render(<ProfileEditPageView />);
 
-    fireEvent.press(getByText('신창'));
-    fireEvent.press(getByText('고실마을'));
+    fireEvent.press(getByText('신창지점'));
+    fireEvent.press(getByText('고실마을지점'));
 
-    expect(getByText('신창')).toBeTruthy();
-    expect(queryByText('고실마을')).toBeNull();
+    expect(getByText('신창지점')).toBeTruthy();
+    expect(queryByText('고실마을지점')).toBeNull();
   });
 
   it('별칭을 바꾸지 않으면 서버에 저장된 원본 별칭을 그대로 보낸다(#780)', () => {

@@ -1,9 +1,11 @@
 import { act, waitFor } from '@testing-library/react-native';
-import { renderHookWithProviders } from '~/test-utils';
+import { createQueryClient, renderHookWithProviders } from '~/test-utils';
 import { useChatEntry } from '../useChatEntry';
 import { findChatRoom } from '../../api/findChatRoom';
 import { createChatRoom } from '../../api/createChatRoom';
 import { getChatRooms } from '../../api/getChatRooms';
+import { getChatRoomData } from '../../api/getChatMessages';
+import { chatMessageKeys } from '../chatQueryKeys';
 import { chatRoomKeys } from '../useChatRooms';
 import Toast from 'react-native-toast-message';
 import { AxiosError, AxiosHeaders } from 'axios';
@@ -11,6 +13,10 @@ import { AxiosError, AxiosHeaders } from 'axios';
 jest.mock('../../api/findChatRoom', () => ({ findChatRoom: jest.fn() }));
 jest.mock('../../api/createChatRoom', () => ({ createChatRoom: jest.fn() }));
 jest.mock('../../api/getChatRooms', () => ({ getChatRooms: jest.fn() }));
+jest.mock('../../api/getChatMessages', () => ({
+  CHAT_MESSAGE_PAGE_SIZE: 30,
+  getChatRoomData: jest.fn(),
+}));
 jest.mock('../useChatRooms', () => ({
   chatRoomKeys: { all: ['chatRooms'], list: () => ['chatRooms', 'list'] },
 }));
@@ -225,6 +231,65 @@ describe('useChatEntry', () => {
       });
 
       expect(result.current.isLoading).toBe(false);
+    });
+  });
+
+  describe('prefetchRoom', () => {
+    const mockGetChatRoomData = getChatRoomData as jest.Mock;
+    const message = (messageId: number, createdAt: string) => ({
+      messageId,
+      roomId: 7,
+      content: `메시지 ${messageId}`,
+      messageType: 'TEXT',
+      createdAt,
+      isMine: false,
+    });
+
+    it('채팅방 데이터를 받아 메시지 캐시를 최신 페이지로 채운다', async () => {
+      mockGetChatRoomData.mockResolvedValue({
+        product: null,
+        messages: [message(1, '2026-01-01T00:00:00')],
+      });
+      const queryClient = createQueryClient();
+      const { result } = renderHookWithProviders(() => useChatEntry(), { queryClient });
+
+      act(() => result.current.prefetchRoom(7));
+
+      await waitFor(() =>
+        expect(queryClient.getQueryData(chatMessageKeys.room(7))).toEqual({
+          pages: [{ messages: [message(1, '2026-01-01T00:00:00')], nextCursor: null }],
+          pageParams: [null],
+        })
+      );
+    });
+
+    it('기존 캐시가 더 최신이면(방금 보낸 메시지) 덮어쓰지 않는다(#610)', async () => {
+      mockGetChatRoomData.mockResolvedValue({
+        product: null,
+        messages: [message(1, '2026-01-01T00:00:00')],
+      });
+      const queryClient = createQueryClient();
+      const fresh = {
+        pages: [{ messages: [message(2, '2026-01-01T00:10:00')], nextCursor: null }],
+        pageParams: [null],
+      };
+      queryClient.setQueryData(chatMessageKeys.room(7), fresh);
+      const { result } = renderHookWithProviders(() => useChatEntry(), { queryClient });
+
+      await act(async () => {
+        result.current.prefetchRoom(7);
+      });
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalledWith(7));
+
+      expect(queryClient.getQueryData(chatMessageKeys.room(7))).toBe(fresh);
+    });
+
+    it('조회가 실패해도 예외를 던지지 않는다', async () => {
+      mockGetChatRoomData.mockRejectedValue(new Error('network'));
+      const { result } = renderHookWithProviders(() => useChatEntry());
+
+      expect(() => act(() => result.current.prefetchRoom(7))).not.toThrow();
+      await waitFor(() => expect(mockGetChatRoomData).toHaveBeenCalled());
     });
   });
 });

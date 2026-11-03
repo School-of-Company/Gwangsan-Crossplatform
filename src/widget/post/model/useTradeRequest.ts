@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import { requestTrade } from '~/entity/post/api/requestTrade';
-import { withdrawTrade } from '~/entity/post/api/withdrawTrade';
-import { useChatEntry } from '~/entity/chat/model/useChatEntry';
+import { requestTrade, withdrawTrade } from '~/entity/post';
+import { useChatEntry } from '~/entity/chat';
 import { logger } from '~/shared/lib/logger';
 
 interface UseTradeRequestOptions {

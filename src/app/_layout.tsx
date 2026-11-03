@@ -5,38 +5,28 @@ import { AppState, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, useMemo, useRef } from 'react';
-import { z } from 'zod';
-import { saveE2ECoverage } from '@/shared/lib/e2eCoverage';
+import { saveE2ECoverage } from '~/shared/lib/e2eCoverage';
 import '../../global.css';
-import { useCustomFonts } from '@/shared/assets/fonts/fontLoader';
-import { ToastStack } from '@/shared/ui/Toast/ToastStack';
-import QueryProvider from '../shared/lib/QueryProvider';
-import '@/shared/lib/sentry';
+import { useCustomFonts } from '~/shared/assets/fonts/fontLoader';
+import { ToastStack } from '~/shared/ui/Toast/ToastStack';
+import QueryProvider from '~/shared/lib/QueryProvider';
+import '~/shared/lib/sentry';
 import * as SentryRN from '@sentry/react-native';
-import { useNetworkStatus } from '@/shared/lib/useNetworkStatus';
-import { NoNetworkOverlay } from '@/shared/ui/NoNetworkOverlay';
-import { BottomSheetPortalOutlet } from '@/shared/ui/BottomSheetPortalOutlet';
-import { RootErrorBoundary } from '@/shared/ui/RootErrorBoundary';
+import { useNetworkStatus } from '~/shared/lib/useNetworkStatus';
+import { NoNetworkOverlay } from '~/shared/ui/NoNetworkOverlay';
+import { BottomSheetPortalOutlet } from '~/shared/ui/BottomSheetPortalOutlet';
+import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
+import { RootErrorBoundary } from '~/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
-import { AlertType } from '@/entity/notification';
-import { useChatEntry } from '@/entity/chat/model/useChatEntry';
-import { useGlobalChatNotifications } from '@/entity/chat/model/useGlobalChatNotifications';
-import { registerChatBackgroundTask } from '@/shared/lib/chatBackgroundTask';
-import { VersionUpdateModal } from '@/widget/appVersion';
+import { useChatEntry, useGlobalChatNotifications, useChatQueueRecovery } from '~/entity/chat';
+import { registerChatBackgroundTask } from '~/shared/lib/chatBackgroundTask';
+import { VersionUpdateModal } from '~/widget/appVersion';
 import {
   createNotificationDedupeGuard,
+  parseNotificationData,
   resolveNotificationAction,
-} from '@/shared/lib/notificationRouting';
-import { useThemeColors } from '@/shared/lib/theme';
-
-// 알림 페이로드는 푸시 서버/OS를 거쳐 들어오는 신뢰할 수 없는 외부 입력이므로, 라우팅에
-// 쓰기 전에 형태와 범위를 검증한다. 잘못되거나 조작된 sourceId/roomId가 그대로
-// router.push의 경로 세그먼트로 흘러들어가지 않도록 막는다.
-const notificationDataSchema = z.object({
-  alertType: z.nativeEnum(AlertType).optional(),
-  sourceId: z.coerce.number().int().positive().optional(),
-  roomId: z.coerce.number().int().positive().optional(),
-});
+} from '~/shared/lib/notificationRouting';
+import { useThemeColors } from '~/shared/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -57,6 +47,7 @@ function ChatNotificationHandler() {
   const navigateToRoomRef = useRef(navigateToRoom);
   const routerRef = useRef(router);
   useGlobalChatNotifications();
+  useChatQueueRecovery();
 
   useEffect(() => {
     navigateToChatRef.current = navigateToChat;
@@ -82,12 +73,10 @@ function ChatNotificationHandler() {
       const id = response.notification.request.identifier;
       if (!dedupeGuardRef.current.shouldProcess(id)) return;
 
-      const parsedData = notificationDataSchema.safeParse(
-        response.notification.request.content.data
-      );
-      if (!parsedData.success) return;
+      const data = parseNotificationData(response.notification.request.content.data);
+      if (!data) return;
 
-      const action = resolveNotificationAction(parsedData.data);
+      const action = resolveNotificationAction(data);
       switch (action.type) {
         case 'chatEntry':
           navigateToChatRef.current(action.productId);
@@ -121,6 +110,12 @@ export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
   const isConnected = useNetworkStatus();
   const pathname = usePathname();
+  const closeAllSheets = useBottomSheetPortalStore((s) => s.closeAll);
+
+  // 바텀시트는 루트 포털에 그려지므로, 화면을 옮기면 이전 화면에서 열어 둔 시트를 닫는다
+  useEffect(() => {
+    closeAllSheets();
+  }, [pathname, closeAllSheets]);
   const themeColors = useThemeColors();
 
   // 네비게이션 화면(Stack/Tabs)의 기본 배경도 시스템 테마를 따르게 해서, 화면 전환 중에
@@ -168,7 +163,7 @@ export default function RootLayout() {
           <StatusBar style="auto" />
           <ThemeProvider value={navigationTheme}>
             <QueryProvider>
-              {/* 알림 핸들러도 렌더 중 에러가 나면 앱 전체가 죽지 않도록 바운더리 안에 둔다(#740) */}
+              {/* 알림 핸들러도 렌더 중 에러가 나면 앱 전체가 죽지 않도록 바운더리 안에 둔다 */}
               <RootErrorBoundary>
                 <ChatNotificationHandler />
                 <Stack

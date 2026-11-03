@@ -2,20 +2,18 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { Text, TouchableOpacity } from 'react-native';
 import { OtherMessage } from '../index';
-import { renderMessageContent } from '@/entity/chat';
-import type { ChatMessageResponse } from '@/entity/chat';
+import { renderMessageContent } from '~/entity/chat';
+import type { ChatMessageResponse } from '~/entity/chat';
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View } = require('react-native');
   return function MockIcon(props: any) {
     return React.createElement(View, { testID: `icon-${props.name}` });
   };
 });
 
-jest.mock('@/entity/chat', () => ({
+jest.mock('~/entity/chat', () => ({
   useImageLoader: jest.fn(() => ({})),
   formatMessageTime: jest.fn(() => '오후 3:00'),
   renderMessageContent: jest.fn(),
