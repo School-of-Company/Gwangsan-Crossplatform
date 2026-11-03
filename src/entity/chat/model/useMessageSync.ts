@@ -7,6 +7,7 @@ import type { ChatMessageResponse, ChatRoomListItem, ChatRoomWithProduct } from 
 import type { RoomId } from '@/shared/types/chatType';
 import { chatMessageKeys, chatRoomDataKeys } from './chatQueryKeys';
 import { logger } from '~/shared/lib/logger';
+import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
 import { matchPendingEcho } from '../lib/pendingEcho';
 import {
   applyIncomingMessageToRooms,
@@ -152,8 +153,8 @@ export const useMessageSync = ({
       // 상대가 거래를 확정해도 내 광산이 바뀌므로, 5분 캐시된 내 프로필과 홈 화면 광산 배너
       // (myInformation)를 바로 다시 받아온다
       if (data.isCompleted) {
-        queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
-        queryClient.invalidateQueries({ queryKey: ['myInformation'] });
+        queryClient.invalidateQueries({ queryKey: profileQueryKeys.myProfile() });
+        queryClient.invalidateQueries({ queryKey: profileQueryKeys.myInformation() });
       }
 
       if (!chatRoomQueryKey) return;

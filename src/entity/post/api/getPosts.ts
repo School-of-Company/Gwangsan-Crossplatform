@@ -1,8 +1,8 @@
-import { instance } from '../lib/axios';
-import { toAppError } from '../lib/errorHandler';
-import { PostType } from '../types/postType';
-import { ProductType } from '../types/type';
-import { ModeType } from '../types/mode';
+import { instance } from '~/shared/lib/axios';
+import { toAppError } from '~/shared/lib/errorHandler';
+import { PostType } from '~/shared/types/postType';
+import { ProductType } from '~/shared/types/type';
+import { ModeType } from '~/shared/types/mode';
 
 export const getPosts = async (type?: ProductType, mode?: ModeType): Promise<PostType[]> => {
   try {

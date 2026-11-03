@@ -3,8 +3,8 @@ import { render, act, fireEvent } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import ProfilePageView from '../index';
-import { useGetProfile } from '~/view/profile/model/useGetProfile';
-import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 
 jest.mock('expo-router', () => ({
@@ -20,8 +20,8 @@ jest.mock('react-native-toast-message', () => ({
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/view/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetProfile', () => ({ useGetProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
 jest.mock('~/entity/profile/model/useGetBlockList', () => ({ useGetBlockList: jest.fn() }));
 
 jest.mock('~/shared/ui', () => ({

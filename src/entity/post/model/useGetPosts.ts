@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { getPosts } from '../api/getPosts';
-import { PostType } from '../types/postType';
-import { ModeType } from '../types/mode';
-import { ProductType } from '../types/type';
-import { postKeys } from './postQueryKeys';
+import { PostType } from '~/shared/types/postType';
+import { ModeType } from '~/shared/types/mode';
+import { ProductType } from '~/shared/types/type';
+import { postKeys } from '~/shared/model/postQueryKeys';
 
 export const useGetPosts = (mode?: ModeType, type?: ProductType) => {
   return useQuery<PostType[]>({

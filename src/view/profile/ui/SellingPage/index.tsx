@@ -14,10 +14,12 @@ import { Header, PillTabs, BottomSheetModalWrapper, Button, AlertModal } from '~
 import { ActionSheetRow, SellingPanel } from '~/widget/profile/ui';
 import { PostType } from '~/shared/types/postType';
 import { useDeletePost } from '~/entity/post/model/useDeletePost';
-import { useGetProfile } from '../../model/useGetProfile';
-import { useGetMyProfile } from '../../model/useGetMyProfile';
-import { useGetSellingPosts } from '../../model/useGetSellingPosts';
-import { sellingPostsQueryKeys } from '../../model/sellingPostsQueryKeys';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
+import { useGetMyInformation } from '~/entity/profile/model/useGetMyInformation';
+import { useGetSellingPosts } from '~/entity/profile/model/useGetSellingPosts';
+import { sellingPostsQueryKeys } from '~/entity/profile/model/sellingPostsQueryKeys';
+import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
 import { useGetReviews } from '~/entity/reviews/model/useGetReviews';
 
 type SellingTab = 'onSale' | 'sold';
@@ -55,14 +57,20 @@ export default function SellingPageView() {
   // react-query v5의 isLoading은 isPending && isFetching이라 아직 enabled:false로
   // 대기 중인(= myInfo를 기다리는) 상태에서는 false를 반환한다. 그 시점에도 data는
   // 여전히 undefined이므로, "아직 받아오지 못함"을 정확히 판별하려면 isPending을 써야 한다
+  const { data: myInfo } = useGetMyInformation();
   const { data: receivedReviews, isPending: isReviewsLoading } = useGetReviews(
     'receive',
-    reviewsMemberId != null ? String(reviewsMemberId) : undefined
+    reviewsMemberId != null ? String(reviewsMemberId) : undefined,
+    { myMemberId: myInfo?.memberId }
   );
 
   const { deletePostInPlace, isLoading: isDeletingPost } = useDeletePost({
     // 구매 목록(PurchasedPage)은 아직 기존 전체 조회를 쓰므로 함께 무효화한다.
-    invalidateKeys: [sellingPostsQueryKeys.all, ['myPosts']],
+    invalidateKeys: [
+      sellingPostsQueryKeys.all,
+      profileQueryKeys.myPostsAll,
+      profileQueryKeys.memberPostsAll,
+    ],
   });
 
   // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 토스트가 반복되므로, 실패로 바뀌는 순간에만 띄운다

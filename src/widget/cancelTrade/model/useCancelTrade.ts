@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ImageUploadState } from '~/shared/ui/ImageUploader';
 import { cancelTrade } from '../api/cancelTrade';
 import Toast from 'react-native-toast-message';
+import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
 
 interface useCancelTradeProps {
   productId?: number;
@@ -29,8 +30,8 @@ export const useCancelTrade = ({ productId, onSuccess }: useCancelTradeProps) =>
       if (data.cancelled) {
         // 상대방이 이미 같은 거래의 철회를 요청해 둔 상태 — 양측 동의로 간주되어
         // 관리자 승인 없이 그 자리에서 철회(광산 환불)까지 끝난다.
-        queryClient.invalidateQueries({ queryKey: ['myInformation'] });
-        queryClient.invalidateQueries({ queryKey: ['myProfile', 'current'] });
+        queryClient.invalidateQueries({ queryKey: profileQueryKeys.myInformation() });
+        queryClient.invalidateQueries({ queryKey: profileQueryKeys.myProfile() });
         Toast.show({
           type: 'success',
           text1: '거래취소 완료',

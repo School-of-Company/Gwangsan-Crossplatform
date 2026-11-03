@@ -1,7 +1,6 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { getMyReceivedReview, getReceiveReview } from '../../api/getReviews';
-import { useGetMyInformation } from '~/shared/model/useGetMyInformation';
 import {
   useGetReceivedReviewsInfinite,
   RECEIVED_REVIEWS_PAGE_SIZE,
@@ -12,13 +11,9 @@ jest.mock('../../api/getReviews', () => ({
   getReceiveReview: jest.fn(),
 }));
 
-jest.mock('~/shared/model/useGetMyInformation', () => ({
-  useGetMyInformation: jest.fn(),
-}));
-
 const mockGetMyReceivedReview = getMyReceivedReview as jest.Mock;
 const mockGetReceiveReview = getReceiveReview as jest.Mock;
-const mockUseGetMyInformation = useGetMyInformation as jest.Mock;
+let myMemberId: number | undefined;
 
 const makeReview = (overrides: Record<string, unknown> = {}) => ({
   reviewerName: '홍길동',
@@ -35,14 +30,16 @@ const makePage = (count: number, startId: number) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseGetMyInformation.mockReturnValue({ data: { memberId: 99 } });
+  myMemberId = 99;
 });
 
 describe('useGetReceivedReviewsInfinite', () => {
   it('내 memberId면 getMyReceivedReview를 size와 함께 호출한다(첫 요청은 cursor를 생략한다)', async () => {
     mockGetMyReceivedReview.mockResolvedValue(makePage(5, 100));
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('99'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('99', true, myMemberId)
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -53,7 +50,9 @@ describe('useGetReceivedReviewsInfinite', () => {
   it('다른 사람 memberId면 getReceiveReview를 호출한다', async () => {
     mockGetReceiveReview.mockResolvedValue(makePage(5, 100));
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', true, myMemberId)
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -63,7 +62,9 @@ describe('useGetReceivedReviewsInfinite', () => {
   it('정확히 size개를 받으면 다음 페이지가 있다고 판단하고, 다음 요청에는 마지막 reviewId를 cursor로 보낸다', async () => {
     mockGetReceiveReview.mockResolvedValueOnce(makePage(RECEIVED_REVIEWS_PAGE_SIZE, 100));
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', true, myMemberId)
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.hasNextPage).toBe(true);
@@ -84,7 +85,9 @@ describe('useGetReceivedReviewsInfinite', () => {
   it('length가 size보다 작으면 다음 페이지가 없다고 판단한다', async () => {
     mockGetReceiveReview.mockResolvedValue(makePage(3, 100));
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', true, myMemberId)
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -94,7 +97,9 @@ describe('useGetReceivedReviewsInfinite', () => {
   it('빈 배열을 받으면 다음 페이지가 없다고 판단한다', async () => {
     mockGetReceiveReview.mockResolvedValue([]);
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', true, myMemberId)
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -102,23 +107,29 @@ describe('useGetReceivedReviewsInfinite', () => {
   });
 
   it('enabled=false로 넘기면 조회하지 않는다', () => {
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3', false));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', false, myMemberId)
+    );
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(mockGetReceiveReview).not.toHaveBeenCalled();
   });
 
   it('memberId가 없으면 조회하지 않는다', () => {
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite(undefined));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite(undefined, true, myMemberId)
+    );
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(mockGetReceiveReview).not.toHaveBeenCalled();
   });
 
   it('내 정보가 아직 없으면 조회하지 않는다', () => {
-    mockUseGetMyInformation.mockReturnValue({ data: undefined });
+    myMemberId = undefined;
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', true, myMemberId)
+    );
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(mockGetReceiveReview).not.toHaveBeenCalled();
@@ -127,7 +138,9 @@ describe('useGetReceivedReviewsInfinite', () => {
   it('판매 목록에서 쓰는 전체 조회 쿼리(reviews/receive/current)와 다른 쿼리키를 사용한다', async () => {
     mockGetMyReceivedReview.mockResolvedValue(makePage(2, 100));
 
-    const { queryClient } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('99'));
+    const { queryClient } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('99', true, myMemberId)
+    );
 
     await waitFor(() =>
       expect(
@@ -146,7 +159,9 @@ describe('useGetReceivedReviewsInfinite', () => {
   it('API 실패 시 error 상태가 된다', async () => {
     mockGetReceiveReview.mockRejectedValue(new Error('Server error'));
 
-    const { result } = renderHookWithProviders(() => useGetReceivedReviewsInfinite('3'));
+    const { result } = renderHookWithProviders(() =>
+      useGetReceivedReviewsInfinite('3', true, myMemberId)
+    );
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBeTruthy();

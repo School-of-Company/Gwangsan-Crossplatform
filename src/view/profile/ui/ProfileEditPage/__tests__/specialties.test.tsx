@@ -1,9 +1,9 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import ProfileEditPageView from '../index';
-import { useGetMyProfile } from '~/view/profile/model/useGetMyProfile';
-import { useUpdateProfile } from '~/view/profile/model/useUpdateProfile';
-import { useUpdateBranch } from '~/view/profile/model/useUpdateBranch';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
+import { useUpdateProfile } from '~/entity/profile/model/useUpdateProfile';
+import { useUpdateBranch } from '~/entity/profile/model/useUpdateBranch';
 import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalStore';
 
 // index.test.tsx와 달리 SpecialtiesDropdown을 mock하지 않고 실제 컴포넌트로 렌더링해,
@@ -24,9 +24,9 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
   return { __esModule: true, default: () => React.createElement('View', null) };
 });
 
-jest.mock('~/view/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
-jest.mock('~/view/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
+jest.mock('~/entity/profile/model/useGetMyProfile', () => ({ useGetMyProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useUpdateProfile', () => ({ useUpdateProfile: jest.fn() }));
+jest.mock('~/entity/profile/model/useUpdateBranch', () => ({ useUpdateBranch: jest.fn() }));
 
 jest.mock('~/shared/ui', () => {
   const React = require('react');

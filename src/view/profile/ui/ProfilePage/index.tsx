@@ -4,10 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Gwangsan, Information, Light } from '~/entity/profile/ui';
 import { Introduce, ProfileMenu } from '~/widget/profile/ui';
 import Toast from 'react-native-toast-message';
-import { useGetProfile } from '../../model/useGetProfile';
+import { useGetProfile } from '~/entity/profile/model/useGetProfile';
 import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
-import { useGetMyProfile } from '../../model/useGetMyProfile';
+import { useGetMyProfile } from '~/entity/profile/model/useGetMyProfile';
 import { useGetBlockList } from '~/entity/profile/model/useGetBlockList';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 
