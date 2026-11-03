@@ -1,5 +1,5 @@
 import Toast from 'react-native-toast-message';
-import { useToastQueueStore } from '../toastQueue';
+import { useToastQueueStore } from '~/shared/store/useToastQueueStore';
 import '../toastQueuePatch';
 
 beforeEach(() => {
