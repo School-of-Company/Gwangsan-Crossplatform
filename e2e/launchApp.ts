@@ -17,7 +17,8 @@ const devServerLaunchArgs = (): Record<string, string> => {
 
 async function isVisible(matcher: Detox.NativeMatcher): Promise<boolean> {
   try {
-    await expect(element(matcher)).toBeVisible();
+    // 런처의 'Updates'처럼 같은 텍스트가 여러 뷰에 걸리면 매칭 자체가 에러가 되므로 첫 요소만 본다
+    await expect(element(matcher).atIndex(0)).toBeVisible();
     return true;
   } catch {
     return false;
@@ -43,6 +44,8 @@ async function assertConnectedToDevServer(): Promise<void> {
     if (onAppScreen) return;
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
+  // 런처를 판별하지 못한 채 첫 화면도 안 떴으면 여기서 실패시켜야 launchAppResilient가 재실행한다
+  throw new Error('앱 첫 화면(로그인·홈)이 시간 안에 나타나지 않았습니다.');
 }
 
 // CI의 iOS 시뮬레이터에서 SpringBoard가 간헐적으로 크래시하며 launchApp이 실패하는 경우가 있어
