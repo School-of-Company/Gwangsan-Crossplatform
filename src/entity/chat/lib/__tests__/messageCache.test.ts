@@ -7,6 +7,7 @@ import {
   isSameMessageId,
   keepNewestPage,
   mapMessagePages,
+  mergeNewerCachedMessages,
   removeMessageById,
   seedMessagePagesFromSnapshot,
   toMessagePage,
@@ -185,5 +186,46 @@ describe('seedMessagePagesFromSnapshot', () => {
   it('기존 캐시가 더 최신이면(방금 보낸 메시지가 snapshot에 없음, #610) 기존 캐시를 유지한다', () => {
     const data = twoPages();
     expect(seedMessagePagesFromSnapshot(data, [at(1, 1)], 30)).toBe(data);
+  });
+});
+
+describe('mergeNewerCachedMessages', () => {
+  const page = () => toMessagePage([at(4, 4), at(3, 3)], 2);
+
+  it('응답의 최신 시각보다 늦은 캐시 메시지를 시간순으로 더한다', () => {
+    const current = addMessageToPages(twoPages(), at(5, 5));
+
+    const result = mergeNewerCachedMessages(page(), current);
+
+    expect(result.messages.map((m) => m.messageId)).toEqual([3, 4, 5]);
+  });
+
+  it('응답의 커서는 그대로 둔다', () => {
+    const current = addMessageToPages(twoPages(), at(5, 5));
+
+    expect(mergeNewerCachedMessages(page(), current).nextCursor).toEqual(page().nextCursor);
+  });
+
+  it('응답 시각 이하의 캐시 메시지는 ID가 달라도 더하지 않는다', () => {
+    const current = addMessageToPages(twoPages(), { ...at(4, 4), messageId: 'socket-4' });
+
+    const result = mergeNewerCachedMessages(page(), current);
+
+    expect(result.messages.map((m) => m.messageId)).toEqual([3, 4]);
+  });
+
+  it('응답에 이미 있는 메시지는 시각이 더 늦어도 중복으로 더하지 않는다', () => {
+    const current = addMessageToPages(twoPages(), { ...at(4, 6), messageId: '4' });
+
+    expect(mergeNewerCachedMessages(page(), current).messages.map((m) => m.messageId)).toEqual([
+      3, 4,
+    ]);
+  });
+
+  it('더할 메시지가 없으면 같은 페이지를 돌려준다', () => {
+    const response = page();
+
+    expect(mergeNewerCachedMessages(response, twoPages())).toBe(response);
+    expect(mergeNewerCachedMessages(response, undefined)).toBe(response);
   });
 });

@@ -21,7 +21,10 @@
         "NODE_ENV": "production"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "env": {
+          "SENTRY_ALLOW_FAILURE": "true"
+        }
       }
     },
     "preview2": {
@@ -30,7 +33,10 @@
         "NODE_ENV": "production"
       },
       "android": {
-        "gradleCommand": ":app:assembleRelease"
+        "gradleCommand": ":app:assembleRelease",
+        "env": {
+          "SENTRY_ALLOW_FAILURE": "true"
+        }
       }
     },
     "preview3": {
@@ -47,15 +53,17 @@
     "production": {
       "environment": "production",
       "env": {
-        "NODE_ENV": "production",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "NODE_ENV": "production"
       },
       "ios": {
         "autoIncrement": true,
         "image": "macos-tahoe-26.4-xcode-26.4"
       },
       "android": {
-        "autoIncrement": true
+        "autoIncrement": true,
+        "env": {
+          "SENTRY_ALLOW_FAILURE": "true"
+        }
       }
     }
   },
