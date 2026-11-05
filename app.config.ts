@@ -16,18 +16,7 @@ export default ({ config }: { config: ExpoConfig }) => {
       ...androidConfig,
       ...(hasGoogleServices ? { googleServicesFile } : {}),
     },
-    plugins: [
-      ...(config.plugins ?? []),
-      [
-        '@sentry/react-native',
-        {
-          organization: process.env.SENTRY_ORG,
-          project: process.env.SENTRY_PROJECT,
-          disableAutoUpload: true,
-        },
-      ],
-      './plugins/withNetworkSecurityConfig',
-    ],
+    plugins: [...(config.plugins ?? []), './plugins/withNetworkSecurityConfig'],
     extra: {
       ...config.extra,
       // env 미주입 시 app.json의 extra.apiUrl을 undefined로 덮어쓰지 않는다.
