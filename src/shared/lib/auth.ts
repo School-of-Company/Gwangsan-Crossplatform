@@ -26,6 +26,7 @@ export const clearAuthTokens = async (): Promise<void> => {
   await Promise.allSettled([
     removeData('accessToken'),
     removeData('refreshToken'),
+    // 생체 로그인을 지원하던 이전 버전이 키체인에 남긴 토큰 사본을 지운다
     Keychain.resetGenericPassword(),
   ]);
 };

@@ -25,6 +25,6 @@ export {
 } from './model/useAuthSelectors';
 export { usePasswordResetPhoneVerification } from './model/usePasswordResetPhoneVerification';
 export { resetPassword } from './api/resetPassword';
-export { getCredentialsForBiometric, signinWithDeviceInfo } from './api/signin';
+export { signinWithDeviceInfo } from './api/signin';
 export { useSignupPhoneVerification } from './model/useSignupPhoneVerification';
 export { signup } from './api/signup';

@@ -23,9 +23,6 @@ jest.mock('../auth', () => ({
   getAccessToken: jest.fn(),
   getRefreshToken: jest.fn(),
 }));
-jest.mock('../biometricCredentials', () => ({
-  syncBiometricCredentials: jest.fn(() => Promise.resolve()),
-}));
 jest.mock('../clearSession', () => ({
   clearSession: jest.fn(),
 }));

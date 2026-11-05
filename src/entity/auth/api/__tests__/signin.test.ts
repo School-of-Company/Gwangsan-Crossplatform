@@ -22,7 +22,6 @@ jest.mock('~/shared/lib/setData', () => ({
 jest.mock('~/shared/model/getDeviceInfo', () => ({
   getDeviceInfo: jest.fn(),
 }));
-jest.mock('~/shared/lib/biometricCredentials', () => ({}));
 jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
