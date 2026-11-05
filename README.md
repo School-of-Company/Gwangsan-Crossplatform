@@ -182,16 +182,16 @@ npm run e2e:build:ios && npm run e2e:test:ios   # Detox E2E (iOS)
 
 ### 환경 변수
 
-| 이름                             | 사용처                               | 설명                                                                                  |
-| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
-| `API_URL`                        | `app.config.ts` → `extra.apiUrl`     | API 서버 주소. 없으면 `app.json`의 값(`https://api.gwangsan.io.kr/api`) 사용          |
-| `EXPO_PUBLIC_SENTRY_DSN`         | `src/shared/lib/sentry.ts`           | Sentry DSN (앱 번들에 인라인)                                                         |
-| `EXPO_PUBLIC_KAKAO_REST_API_KEY` | `src/shared/api/kakaoLocalSearch.ts` | 카카오 로컬(장소 검색) REST 키                                                        |
-| `EXPO_PUBLIC_KAKAO_JS_KEY`       | 예약 장소 지도 WebView               | 카카오 지도 JavaScript 키                                                             |
-| `SENTRY_DSN`                     | `app.config.ts` → `extra.sentryDsn`  | 네이티브 설정용 Sentry DSN                                                            |
-| `SENTRY_ORG` / `SENTRY_PROJECT`  | `@sentry/react-native` config plugin | 소스맵 업로드 대상                                                                    |
-| `SENTRY_AUTH_TOKEN`              | EAS 빌드                             | 소스맵 업로드 인증                                                                    |
-| `GOOGLE_SERVICES_JSON`           | `app.config.ts`                      | Android Firebase 설정 파일 경로 (없으면 `./google-services.json`, 파일이 없으면 생략) |
+| 이름                             | 사용처                               | 설명                                                                                     |
+| -------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `API_URL`                        | `app.config.ts` → `extra.apiUrl`     | API 서버 주소. 없으면 `app.json`의 값(`https://api.gwangsan.io.kr/api`) 사용             |
+| `EXPO_PUBLIC_SENTRY_DSN`         | `src/shared/lib/sentry.ts`           | Sentry DSN (앱 번들에 인라인)                                                            |
+| `EXPO_PUBLIC_KAKAO_REST_API_KEY` | `src/shared/api/kakaoLocalSearch.ts` | 카카오 로컬(장소 검색) REST 키                                                           |
+| `EXPO_PUBLIC_KAKAO_JS_KEY`       | 예약 장소 지도 WebView               | 카카오 지도 JavaScript 키                                                                |
+| `SENTRY_DSN`                     | `app.config.ts` → `extra.sentryDsn`  | 네이티브 설정용 Sentry DSN                                                               |
+| `SENTRY_ORG` / `SENTRY_PROJECT`  | sentry-cli (선택)                    | 업로드 대상 덮어쓰기. 기본값은 `app.json` Sentry 플러그인과 `ios/sentry.properties`      |
+| `SENTRY_AUTH_TOKEN`              | EAS 빌드 (secret)                    | 소스맵·R8 mapping·dSYM 업로드 인증. 없으면 iOS는 업로드를 건너뛰고 Android는 실패를 무시 |
+| `GOOGLE_SERVICES_JSON`           | `app.config.ts`                      | Android Firebase 설정 파일 경로 (없으면 `./google-services.json`, 파일이 없으면 생략)    |
 
 `.env`는 커밋하지 않습니다. EAS 빌드에서는 EAS 환경 변수로 주입합니다.
 
