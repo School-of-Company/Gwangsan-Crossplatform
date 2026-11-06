@@ -1396,7 +1396,45 @@ describe('useMessageSync', () => {
       expect(cached?.[0].product).toBeUndefined();
     });
 
-    it('chatRoomQueryKey를 invalidate하여 새로 생긴 거래 정보(title/images 등)를 다시 받아온다', async () => {
+    it('목록에 해당 방의 상품이 있으면 캐시만 고치고 목록을 다시 받아오지 않는다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [
+        { roomId: ROOM_ID, product: { id: 1, isCompleted: false } },
+      ]);
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: true,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      const cached = queryClient.getQueryData<ChatRoomListItem[]>(CHAT_ROOM_KEY);
+      expect(cached?.[0].product?.isCompleted).toBe(true);
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+    });
+
+    it('목록에 방은 있지만 상품이 아직 없으면 목록을 다시 받아온다', async () => {
+      const { result, queryClient } = await renderSync();
+      queryClient.setQueryData(CHAT_ROOM_KEY, [{ roomId: ROOM_ID }]);
+      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+      act(() => {
+        result.current.handleTransactionStateChanged({
+          roomId: ROOM_ID,
+          productId: 1,
+          isCompleted: false,
+          createdAt: '2024-01-01T00:00:00Z',
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: CHAT_ROOM_KEY });
+    });
+
+    it('목록 캐시에 방이 없으면 chatRoomQueryKey를 invalidate하여 새로 생긴 거래 정보(title/images 등)를 다시 받아온다', async () => {
       const { result, queryClient } = await renderSync();
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 

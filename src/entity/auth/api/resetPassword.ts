@@ -11,7 +11,7 @@ export const resetPassword = async (request: ResetPasswordRequest): Promise<void
   try {
     await publicInstance.patch('/auth/password', request);
   } catch (error) {
-    logger.error('resetPassword failed', error);
+    logger.requestError('resetPassword failed', error);
     throw toAppError(error);
   }
 };

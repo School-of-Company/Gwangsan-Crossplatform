@@ -46,7 +46,7 @@ export const signinWithDeviceInfo = async (credentials: {
 
     return await signin(formData);
   } catch (error) {
-    logger.error('signinWithDeviceInfo failed', error);
+    logger.requestError('signinWithDeviceInfo failed', error);
     throw toAppError(error);
   }
 };

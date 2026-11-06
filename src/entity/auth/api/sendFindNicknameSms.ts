@@ -6,7 +6,7 @@ export const sendFindNicknameSms = async (phoneNumber: string): Promise<void> =>
   try {
     await publicInstance.post('/sms/nickname', { phoneNumber });
   } catch (error) {
-    logger.error('sendFindNicknameSms failed', error);
+    logger.requestError('sendFindNicknameSms failed', error);
     throw toAppError(error);
   }
 };

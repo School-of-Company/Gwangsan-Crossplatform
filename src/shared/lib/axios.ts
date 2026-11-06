@@ -33,7 +33,7 @@ type TimedRequestConfig = InternalAxiosRequestConfig & { __sentryStartTime?: num
 instance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     (config as TimedRequestConfig).__sentryStartTime = Date.now();
-    const accessToken = await getAccessToken();
+    const accessToken = await readToken(getAccessToken);
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     } else {
@@ -80,9 +80,12 @@ instance.interceptors.response.use(
       },
     });
 
+    // 로그아웃 요청의 401은 재발급하지 않는다. 재발급 실패 시의 세션 만료 안내·이동과
+    // 로그아웃 정리(useSignout)가 겹쳐 화면이 두 번 이동한다
     const isAuthRequest =
       originalRequest?.url?.includes('/auth/signin') ||
-      originalRequest?.url?.includes('/auth/reissue');
+      originalRequest?.url?.includes('/auth/reissue') ||
+      originalRequest?.url?.includes('/auth/signout');
 
     if (
       originalRequest &&

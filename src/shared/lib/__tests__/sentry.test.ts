@@ -121,6 +121,63 @@ describe('beforeSend', () => {
     ]);
   });
 
+  it('extra의 토큰·비밀번호·전화번호·인증 헤더를 가리고 URL 쿼리스트링을 지운다', () => {
+    const event = {
+      extra: {
+        data: {
+          refreshToken: 'r-token',
+          nested: { password: 'pw', phoneNumber: '01012345678', keep: 'ok' },
+          headers: { Authorization: 'Bearer x', 'Content-Type': 'application/json' },
+          url: '/member?token=secret',
+          list: [{ accessToken: 'a' }],
+        },
+        context: 'token_refresh_failed',
+      },
+    } as unknown as ErrorEvent;
+
+    const result = beforeSend(event, {}) as ErrorEvent;
+
+    expect(result.extra).toEqual({
+      data: {
+        refreshToken: '[Filtered]',
+        nested: { password: '[Filtered]', phoneNumber: '[Filtered]', keep: 'ok' },
+        headers: { Authorization: '[Filtered]', 'Content-Type': 'application/json' },
+        url: '/member',
+        list: [{ accessToken: '[Filtered]' }],
+      },
+      context: 'token_refresh_failed',
+    });
+  });
+
+  it('extra에 담긴 axios 에러는 요청 설정·바디 없이 상태와 경로만 남긴다', () => {
+    const axiosError = Object.assign(new Error('Request failed'), {
+      name: 'AxiosError',
+      isAxiosError: true,
+      code: 'ERR_BAD_REQUEST',
+      config: {
+        method: 'post',
+        url: '/auth/signin?x=1',
+        headers: { Authorization: 'Bearer x' },
+        data: '{"password":"pw"}',
+      },
+      response: { status: 401, data: { message: 'no' } },
+    });
+    const event = { extra: { data: axiosError } } as unknown as ErrorEvent;
+
+    const result = beforeSend(event, {}) as ErrorEvent;
+
+    expect(result.extra).toEqual({
+      data: {
+        name: 'AxiosError',
+        message: 'Request failed',
+        code: 'ERR_BAD_REQUEST',
+        status: 401,
+        method: 'post',
+        url: '/auth/signin',
+      },
+    });
+  });
+
   it('request·breadcrumbs가 없는 이벤트는 그대로 반환한다', () => {
     const event = { message: 'boom' } as ErrorEvent;
 

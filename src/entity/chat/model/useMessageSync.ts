@@ -159,12 +159,16 @@ export const useMessageSync = ({
 
       if (!chatRoomQueryKey) return;
 
-      queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (oldData) =>
-        applyTransactionStateToRooms(oldData, data)
-      );
+      let hasRoomProduct = false;
+      queryClient.setQueryData<ChatRoomListItem[]>(chatRoomQueryKey, (oldData) => {
+        hasRoomProduct = !!oldData?.some((room) => room.roomId === data.roomId && room.product);
+        return applyTransactionStateToRooms(oldData, data);
+      });
 
-      // 새로 생성된 거래 요청처럼 캐시에 없는 필드(title/images 등)는 목록을 다시 받아와 채운다.
-      queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
+      // 새로 생성된 거래 요청처럼 목록에 방(상품)이 없으면 title/images 등을 채울 수 없어 다시 받아온다
+      if (!hasRoomProduct) {
+        queryClient.invalidateQueries({ queryKey: chatRoomQueryKey });
+      }
     },
     [queryClient, chatRoomQueryKey]
   );
