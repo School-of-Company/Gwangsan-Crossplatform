@@ -10,15 +10,30 @@ import {
 } from '~/shared/types/chatType';
 import { logger } from './logger';
 import { isNetworkOrTimeoutError } from './errorHandler';
+import { refreshAccessToken } from './tokenRefresh';
 
 // axios.ts를 import하면 axios → clearSession → sessionCleanup → socket → axios 순환이 생겨
 // 모듈 평가 시점에 baseURL이 undefined가 되고, 상대 경로 '/chat'이 Metro 개발 서버로 연결된다.
 const SOCKET_URL = API_BASE_URL.replace(/\/$/, '') + '/chat';
 
+// 채팅 서버 핸드셰이크 미들웨어가 토큰 검증 실패 시 next(error)로 돌려주는 메시지
+// (Gwangsan-Chatting-Server auth.service.ts validateToken). 재발급으로 해결될 수 있는 경우만 모았다
+const SOCKET_AUTH_ERROR_MESSAGES = new Set([
+  '만료된 토큰입니다.',
+  '유효하지 않은 토큰입니다.',
+  '로그아웃된 토큰입니다.',
+  '인증에 실패했습니다.',
+]);
+
+export const isSocketAuthError = (error: unknown): boolean =>
+  error instanceof Error && SOCKET_AUTH_ERROR_MESSAGES.has(error.message);
+
 class SocketManager implements ISocketManager {
   private static instance: SocketManager;
   private socket: Socket | null = null;
   private isConnecting = false;
+  // disconnect()나 새 connect()가 끼어들면 증가해, 진행 중이던 연결 시도가 소켓을 만들지 않게 한다
+  private connectGeneration = 0;
   private eventHandlers: Map<string, Set<Function>> = new Map();
   private config: SocketConnectionConfig;
 
@@ -36,12 +51,19 @@ class SocketManager implements ISocketManager {
     return SocketManager.instance;
   }
 
-  async connect(): Promise<void> {
+  connect(): Promise<void> {
+    return this.openConnection(false);
+  }
+
+  private async openConnection(isAuthRetry: boolean): Promise<void> {
     if (this.isConnecting || this.socket?.connected) return;
     this.isConnecting = true;
+    const generation = ++this.connectGeneration;
+    const isCurrent = () => generation === this.connectGeneration;
 
     try {
       const accessToken = await getData('accessToken');
+      if (!isCurrent()) return;
       if (!accessToken) {
         throw new Error('Access token not found');
       }
@@ -53,9 +75,10 @@ class SocketManager implements ISocketManager {
       }
 
       this.socket = io(this.config.url, {
+        // 로그아웃으로 토큰이 지워졌으면 이전 토큰으로 대신 보내지 않는다. 서버가 거부하면 재연결도 멈춘다
         auth: async (cb: (data: Record<string, unknown>) => void) => {
           const latestToken = await getData('accessToken').catch(() => null);
-          cb({ token: `Bearer ${latestToken ?? accessToken}` });
+          cb(latestToken ? { token: `Bearer ${latestToken}` } : {});
         },
         transports: [...this.config.transports],
         timeout: this.config.timeout,
@@ -75,7 +98,7 @@ class SocketManager implements ISocketManager {
         }
 
         const connectTimeout = setTimeout(() => {
-          this.isConnecting = false;
+          if (isCurrent()) this.isConnecting = false;
           reject(new Error('Connection timeout'));
         }, 20000);
 
@@ -91,13 +114,35 @@ class SocketManager implements ISocketManager {
           this.isConnecting = false;
           this.handleConnectionError(error);
           reject(error);
+          // socket.io는 서버 미들웨어가 거부한 연결을 자동으로 다시 시도하지 않는다.
+          // 재발급 후 한 번만 다시 연결하고, 그 연결이 또 거부되면 멈춘다
+          if (!isAuthRetry && isSocketAuthError(error)) {
+            void this.reconnectAfterRefresh(generation);
+          }
         });
       });
     } catch (error) {
-      this.isConnecting = false;
+      if (isCurrent()) this.isConnecting = false;
       logger.error('Socket connection error', error);
       throw error;
     }
+  }
+
+  private async reconnectAfterRefresh(generation: number): Promise<void> {
+    try {
+      await refreshAccessToken('Socket handshake rejected');
+    } catch (error) {
+      // 세션 만료 처리(로그아웃 안내)는 다음 API 요청의 401 흐름이 맡는다
+      Sentry.addBreadcrumb({
+        category: 'socket',
+        message: `Socket token refresh failed: ${error instanceof Error ? error.message : String(error)}`,
+        level: 'warning',
+      });
+      return;
+    }
+
+    if (generation !== this.connectGeneration) return;
+    await this.openConnection(true).catch(() => {});
   }
 
   private setupBasicEventListeners(): void {
@@ -127,6 +172,16 @@ class SocketManager implements ISocketManager {
   }
 
   private handleConnectionError(error: Error): void {
+    if (isSocketAuthError(error)) {
+      Sentry.addBreadcrumb({
+        category: 'socket',
+        message: `Socket connect_error due to auth: ${error.message}`,
+        level: 'warning',
+      });
+      this.emit('connect_error', error);
+      return;
+    }
+
     // 기기 오프라인, NoRouteToHostException, 자체 20s 연결 타임아웃 등 실사용자
     // 네트워크 상태에 의한 연결 실패는 앱 버그가 아니므로 Sentry 예외로 남기지
     // 않고 breadcrumb만 남겨 노이즈를 줄인다.
@@ -179,6 +234,7 @@ class SocketManager implements ISocketManager {
   }
 
   disconnect(): void {
+    this.connectGeneration++;
     if (this.socket) {
       this.socket.removeAllListeners();
       this.socket.disconnect();
