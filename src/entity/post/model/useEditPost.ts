@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { editPost } from '../api/editPost';
 import { postKeys } from '~/shared/model/postQueryKeys';
+import { invalidatePostChangedQueries } from '~/shared/model/postChangedQueryKeys';
 
 interface EditPostData {
   type: string;
@@ -17,10 +18,7 @@ export const useEditPost = () => {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: EditPostData }) => editPost(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['post', variables.id] });
-      queryClient.invalidateQueries({ queryKey: postKeys.all });
-
+    onSuccess: () => {
       Toast.show({
         type: 'success',
         text1: '수정 완료',
@@ -33,6 +31,10 @@ export const useEditPost = () => {
         text1: '수정 실패',
         text2: err instanceof Error ? err.message : '거래글 수정 중 오류가 발생했습니다.',
       });
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: postKeys.detail(variables.id) });
+      invalidatePostChangedQueries(queryClient);
     },
   });
 };

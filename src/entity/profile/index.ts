@@ -4,7 +4,6 @@ export { useGetMyInformation } from './model/useGetMyInformation';
 export { useGetMyPosts } from './model/useGetMyPosts';
 export { useGetMemberPosts } from './model/useGetMemberPosts';
 export { useGetSellingPosts } from './model/useGetSellingPosts';
-export { sellingPostsQueryKeys } from './model/sellingPostsQueryKeys';
 export { useUpdateProfile } from './model/useUpdateProfile';
 export { useUpdateBranch } from './model/useUpdateBranch';
 export { useBlockUser } from './model/useBlockUser';
