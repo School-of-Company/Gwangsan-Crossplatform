@@ -21,9 +21,6 @@ jest.mock('~/shared/lib/auth', () => ({
   getAccessToken: jest.fn(() => Promise.resolve(null)),
   getRefreshToken: jest.fn(() => Promise.resolve(null)),
 }));
-jest.mock('~/shared/lib/biometricCredentials', () => ({
-  syncBiometricCredentials: jest.fn(() => Promise.resolve()),
-}));
 jest.mock('~/shared/lib/clearSession', () => ({ clearSession: jest.fn() }));
 jest.mock('~/shared/lib/setData', () => ({ setData: jest.fn() }));
 jest.mock('react-native-toast-message', () => ({

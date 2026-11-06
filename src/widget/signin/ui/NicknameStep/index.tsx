@@ -1,59 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from '~/shared/ui/Input';
 import { ErrorMessage } from '~/shared/ui/ErrorMessage';
-import {
-  SigninForm,
-  useSigninFormField,
-  useSigninResetStore,
-  nicknameSchema,
-  getCredentialsForBiometric,
-} from '~/entity/auth';
+import { SigninForm, useSigninFormField, useSigninResetStore, nicknameSchema } from '~/entity/auth';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
-import { setData } from '~/shared/lib/setData';
-import { chatSocket } from '~/shared/lib/socket';
-import { logger } from '~/shared/lib/logger';
 
 export default function NicknameStep() {
   const { value: initialNickname, updateField } = useSigninFormField('nickname');
   const resetStore = useSigninResetStore();
   const [nickname, setNickname] = useState<string | undefined>(initialNickname as string);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const tryBiometricLogin = async () => {
-      try {
-        const savedTokens = await getCredentialsForBiometric();
-        if (!savedTokens || !isMounted) return;
-
-        await Promise.all([
-          setData('accessToken', savedTokens.accessToken),
-          setData('refreshToken', savedTokens.refreshToken),
-        ]);
-        if (!isMounted) return;
-
-        // 생체 로그인 직후에도 전역 채팅 소켓을 연결
-        chatSocket
-          .connect()
-          .catch((e) => logger.error('chat socket connect after biometric login failed', e));
-
-        resetStore();
-        if (router.canDismiss()) router.dismissAll();
-        router.replace('/main');
-      } catch (e) {
-        logger.error('Biometric login failed', e);
-      }
-    };
-
-    tryBiometricLogin();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [resetStore]);
 
   const handleBack = () => {
     resetStore();

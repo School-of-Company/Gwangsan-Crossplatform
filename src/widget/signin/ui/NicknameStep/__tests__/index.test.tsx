@@ -1,12 +1,8 @@
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { getCredentialsForBiometric } from '~/entity/auth/api/signin';
-import { setData } from '~/shared/lib/setData';
 import { useSigninFormField, useSigninResetStore } from '~/entity/auth/model/useAuthSelectors';
 import { nicknameSchema } from '~/entity/auth/model/authSchema';
-import { chatSocket } from '~/shared/lib/socket';
-import { logger } from '~/shared/lib/logger';
 import NicknameStep from '../index';
 
 jest.mock('expo-router', () => ({
@@ -17,22 +13,6 @@ jest.mock('expo-router', () => ({
     canDismiss: jest.fn(() => false),
     dismissAll: jest.fn(),
   },
-}));
-
-jest.mock('~/entity/auth/api/signin', () => ({
-  getCredentialsForBiometric: jest.fn(),
-}));
-
-jest.mock('~/shared/lib/setData', () => ({
-  setData: jest.fn(),
-}));
-
-jest.mock('~/shared/lib/socket', () => ({
-  chatSocket: { connect: jest.fn().mockResolvedValue(undefined) },
-}));
-
-jest.mock('~/shared/lib/logger', () => ({
-  logger: { error: jest.fn(), warn: jest.fn() },
 }));
 
 jest.mock('~/entity/auth/model/useAuthSelectors', () => ({
@@ -84,15 +64,11 @@ jest.mock('~/entity/auth/ui/SigninForm', () => {
   };
 });
 
-const mockGetCredentials = jest.mocked(getCredentialsForBiometric);
-const mockSetData = jest.mocked(setData);
 const mockUseSigninFormField = jest.mocked(useSigninFormField);
 const mockUseSigninResetStore = jest.mocked(useSigninResetStore);
 const mockRouterPush = jest.mocked(router.push);
 const mockRouterReplace = jest.mocked(router.replace);
 const mockRouterDismissTo = jest.mocked(router.dismissTo);
-const mockCanDismiss = jest.mocked(router.canDismiss);
-const mockDismissAll = jest.mocked(router.dismissAll);
 
 const mockResetStore = jest.fn();
 const mockUpdateField = jest.fn();
@@ -102,114 +78,15 @@ beforeEach(() => {
 
   mockUseSigninFormField.mockReturnValue({ value: '', updateField: mockUpdateField });
   mockUseSigninResetStore.mockReturnValue(mockResetStore);
-  mockGetCredentials.mockResolvedValue(null);
-  mockSetData.mockResolvedValue();
-  mockCanDismiss.mockReturnValue(false);
 });
 
-describe('NicknameStep — 생체인증 자동 로그인', () => {
-  it('저장된 토큰이 없으면 자동 로그인을 시도하지 않는다', async () => {
-    mockGetCredentials.mockResolvedValue(null);
+describe('NicknameStep — 진입', () => {
+  it('마운트만으로는 로그인 처리를 하지 않고 별칭 입력을 기다린다', async () => {
+    const { getByTestId } = render(<NicknameStep />);
 
-    render(<NicknameStep />);
-
-    await waitFor(() => {
-      expect(mockSetData).not.toHaveBeenCalled();
-      expect(mockRouterReplace).not.toHaveBeenCalled();
-    });
-  });
-
-  it('저장된 토큰이 있으면 SecureStore에 저장하고 /main으로 이동한다', async () => {
-    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
-
-    render(<NicknameStep />);
-
-    await waitFor(() => {
-      expect(mockSetData).toHaveBeenCalledWith('accessToken', 'acc-token');
-      expect(mockSetData).toHaveBeenCalledWith('refreshToken', 'ref-token');
-      expect(mockResetStore).toHaveBeenCalled();
-      expect(mockRouterReplace).toHaveBeenCalledWith('/main');
-    });
-  });
-
-  it('토큰 저장 실패 시 /main으로 이동하지 않는다', async () => {
-    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
-    mockSetData.mockRejectedValue(new Error('storage failed'));
-
-    render(<NicknameStep />);
-
-    await waitFor(() => {
-      expect(mockRouterReplace).not.toHaveBeenCalledWith('/main');
-    });
-  });
-
-  it('컴포넌트 언마운트 후에는 resetStore와 router.replace를 호출하지 않는다', async () => {
-    let resolveCredentials!: (v: any) => void;
-    mockGetCredentials.mockReturnValue(
-      new Promise((res) => {
-        resolveCredentials = res;
-      })
-    );
-
-    const { unmount } = render(<NicknameStep />);
-
-    unmount();
-
-    await act(async () => {
-      resolveCredentials({ accessToken: 'acc', refreshToken: 'ref' });
-    });
-
-    expect(mockSetData).not.toHaveBeenCalled();
+    await waitFor(() => expect(getByTestId('NicknameStep-nickname-input')).toBeTruthy());
     expect(mockRouterReplace).not.toHaveBeenCalled();
-  });
-
-  it('setData 완료 후 언마운트 상태면 resetStore와 router를 호출하지 않는다', async () => {
-    let resolveSetData!: () => void;
-    mockGetCredentials.mockResolvedValue({ accessToken: 'acc', refreshToken: 'ref' });
-    mockSetData.mockReturnValue(
-      new Promise((res) => {
-        resolveSetData = res;
-      })
-    );
-
-    const { unmount } = render(<NicknameStep />);
-
-    await waitFor(() => expect(mockSetData).toHaveBeenCalled());
-
-    unmount();
-
-    await act(async () => {
-      resolveSetData();
-    });
-
     expect(mockResetStore).not.toHaveBeenCalled();
-    expect(mockRouterReplace).not.toHaveBeenCalledWith('/main');
-  });
-
-  it('dismiss 가능한 화면 스택이 있으면 생체 로그인 후 dismissAll을 호출한다', async () => {
-    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
-    mockCanDismiss.mockReturnValue(true);
-
-    render(<NicknameStep />);
-
-    await waitFor(() => expect(mockDismissAll).toHaveBeenCalled());
-    expect(mockRouterReplace).toHaveBeenCalledWith('/main');
-  });
-
-  it('생체 로그인 후 채팅 소켓 연결이 실패해도 /main으로 이동하고 에러를 로깅한다', async () => {
-    mockGetCredentials.mockResolvedValue({ accessToken: 'acc-token', refreshToken: 'ref-token' });
-    const mockChatSocketConnect = jest.mocked(chatSocket.connect);
-    mockChatSocketConnect.mockRejectedValue(new Error('소켓 연결 실패'));
-
-    render(<NicknameStep />);
-
-    await waitFor(() => expect(mockRouterReplace).toHaveBeenCalledWith('/main'));
-    await waitFor(() =>
-      expect(logger.error).toHaveBeenCalledWith(
-        'chat socket connect after biometric login failed',
-        expect.any(Error)
-      )
-    );
   });
 });
 

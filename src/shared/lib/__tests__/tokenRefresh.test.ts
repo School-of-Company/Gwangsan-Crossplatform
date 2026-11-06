@@ -6,9 +6,6 @@ import { refreshAccessToken, SessionExpiredError, TokenStorageError } from '../t
 jest.mock('../apiInstance', () => ({ instance: { post: jest.fn() } }));
 jest.mock('../auth', () => ({ getRefreshToken: jest.fn() }));
 jest.mock('../setData', () => ({ setData: jest.fn(() => Promise.resolve()) }));
-jest.mock('../biometricCredentials', () => ({
-  syncBiometricCredentials: jest.fn(() => Promise.resolve()),
-}));
 jest.mock('@sentry/react-native', () => ({ addBreadcrumb: jest.fn() }));
 
 const mockPost = instance.post as jest.Mock;
