@@ -189,3 +189,21 @@ export const seedMessagePagesFromSnapshot = (
     ? snapshotPages
     : current;
 };
+
+// 재조회한 최신 페이지에, 요청 중 소켓으로 들어와 캐시에만 있는 메시지를 더한다.
+// 응답이 DB 저장 전에 만들어져 그 메시지가 빠질 수 있어서다(seed와 같은 이유). 응답의 최신 시각보다
+// 늦은 메시지만 더해, 소켓·REST 간 ID 표현이 달라도 이미 응답에 있는 메시지가 중복되지 않게 한다.
+export const mergeNewerCachedMessages = (
+  page: ChatMessagePage,
+  current: ChatMessagePages | undefined
+): ChatMessagePage => {
+  const latest = getLatestMessageTime(page.messages);
+  const newer = flattenMessagePages(current).filter(
+    (cached) =>
+      toTime(cached.createdAt) > latest &&
+      !page.messages.some((message) => isSameMessageId(message.messageId, cached.messageId))
+  );
+  if (newer.length === 0) return page;
+
+  return { ...page, messages: sortAscending([...page.messages, ...newer]) };
+};
