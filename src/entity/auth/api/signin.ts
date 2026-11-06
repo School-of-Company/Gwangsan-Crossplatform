@@ -32,13 +32,6 @@ const signin = async (formData: SigninFormData): Promise<AuthResponse> => {
   }
 };
 
-// 생체 인증 로그인용 키체인 처리는 토큰 재발급(shared/lib/axios)에서도 써야 해서 shared로 옮겼다
-export {
-  saveCredentialsForBiometric,
-  getCredentialsForBiometric,
-  clearCredentialsForBiometric,
-} from '~/shared/lib/biometricCredentials';
-
 export const signinWithDeviceInfo = async (credentials: {
   nickname: string;
   password: string;
@@ -53,7 +46,7 @@ export const signinWithDeviceInfo = async (credentials: {
 
     return await signin(formData);
   } catch (error) {
-    logger.error('signinWithDeviceInfo failed', error);
+    logger.requestError('signinWithDeviceInfo failed', error);
     throw toAppError(error);
   }
 };

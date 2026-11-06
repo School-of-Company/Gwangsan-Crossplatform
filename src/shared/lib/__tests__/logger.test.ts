@@ -1,10 +1,23 @@
 import * as Sentry from '@sentry/react-native';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { logger } from '../logger';
 
 jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
   captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
 }));
+
+const mockAddBreadcrumb = Sentry.addBreadcrumb as jest.MockedFunction<typeof Sentry.addBreadcrumb>;
+
+const makeAxiosError = (status: number) =>
+  new AxiosError('failed', 'ERR_BAD_RESPONSE', undefined, null, {
+    status,
+    data: {},
+    statusText: '',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  });
 
 const mockCaptureException = Sentry.captureException as jest.MockedFunction<
   typeof Sentry.captureException
@@ -80,6 +93,43 @@ describe('logger', () => {
         level: 'warning',
         extra: { data: { detail: 'y' } },
       });
+    });
+
+    it.each([400, 401, 404])(
+      'requestError: %i 응답은 예외 대신 breadcrumb로만 남긴다',
+      (status) => {
+        logger.requestError('sendSms failed', makeAxiosError(status));
+
+        expect(mockCaptureException).not.toHaveBeenCalled();
+        expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+          expect.objectContaining({
+            category: 'api',
+            message: 'sendSms failed',
+            data: { status },
+          })
+        );
+      }
+    );
+
+    it('requestError: 응답이 없는 네트워크 실패도 breadcrumb로만 남긴다', () => {
+      logger.requestError(
+        'sendSms failed',
+        new AxiosError('Network Error', 'ERR_NETWORK', undefined, null, undefined)
+      );
+
+      expect(mockCaptureException).not.toHaveBeenCalled();
+      expect(mockAddBreadcrumb).toHaveBeenCalled();
+    });
+
+    it('requestError: 5xx와 알 수 없는 에러는 captureException으로 보낸다', () => {
+      const serverError = makeAxiosError(500);
+      logger.requestError('sendSms failed', serverError);
+      expect(mockCaptureException).toHaveBeenCalledWith(serverError);
+
+      const unknownError = new Error('device info failed');
+      logger.requestError('signin failed', unknownError);
+      expect(mockCaptureException).toHaveBeenCalledWith(unknownError);
+      expect(mockAddBreadcrumb).not.toHaveBeenCalled();
     });
   });
 });

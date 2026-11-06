@@ -6,7 +6,7 @@ export const verifyFindNicknameSms = async (phoneNumber: string, code: string): 
   try {
     await publicInstance.post('/sms/nickname/verify', { phoneNumber, code });
   } catch (error) {
-    logger.error('verifyFindNicknameSms failed', error);
+    logger.requestError('verifyFindNicknameSms failed', error);
     throw toAppError(error);
   }
 };

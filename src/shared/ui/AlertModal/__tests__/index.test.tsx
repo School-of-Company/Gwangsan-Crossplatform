@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Modal, TouchableOpacity } from 'react-native';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { AlertModal } from '../index';
 
@@ -237,6 +237,36 @@ describe('AlertModal', () => {
     );
     fireEvent.press(UNSAFE_getByProps({ className: 'flex-1' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('dismissible이 false이면 배경을 눌러도 아무것도 호출하지 않는다', () => {
+    const onConfirm = jest.fn();
+    const { UNSAFE_getByProps } = render(
+      <AlertModal
+        isVisible
+        message="알림 메시지"
+        confirmText="확인"
+        onConfirm={onConfirm}
+        dismissible={false}
+      />
+    );
+    fireEvent.press(UNSAFE_getByProps({ className: 'flex-1' }));
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('dismissible이 false이면 안드로이드 뒤로가기(onRequestClose)로 닫히지 않는다', () => {
+    const onConfirm = jest.fn();
+    const { UNSAFE_getByType } = render(
+      <AlertModal
+        isVisible
+        message="알림 메시지"
+        confirmText="확인"
+        onConfirm={onConfirm}
+        dismissible={false}
+      />
+    );
+    UNSAFE_getByType(Modal).props.onRequestClose();
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it('스냅샷 - 기본 상태', () => {

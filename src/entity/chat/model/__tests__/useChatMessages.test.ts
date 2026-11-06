@@ -354,6 +354,83 @@ describe('useChatMessages', () => {
     });
   });
 
+  describe('재조회 중 소켓 수신', () => {
+    const refetchWithSocketMessage = async (
+      response: ReturnType<typeof makeServerMessage>[],
+      socketMessage: ReturnType<typeof makeServerMessage>
+    ) => {
+      const first = makeServerMessage({ messageId: 1, createdAt: '2024-01-01T10:00:00Z' });
+      mockGetChatMessages.mockResolvedValueOnce([first]);
+
+      const hook = renderHookWithProviders(() => useChatMessages(ROOM_ID));
+      await waitFor(() => expect(hook.result.current.isLoading).toBe(false));
+
+      let resolveRefetch: (messages: typeof response) => void = () => {};
+      mockGetChatMessages.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRefetch = resolve;
+        })
+      );
+      act(() => {
+        hook.result.current.invalidateMessages();
+      });
+      await waitFor(() => expect(mockGetChatMessages).toHaveBeenCalledTimes(2));
+
+      act(() => {
+        hook.result.current.addMessage(socketMessage);
+      });
+      await act(async () => {
+        resolveRefetch(response);
+      });
+      // 렌더된 isFetching은 재조회 중에도 false로 보일 수 있어 queryClient로 완료를 기다린다
+      await waitFor(() =>
+        expect(hook.queryClient.isFetching({ queryKey: chatMessageKeys.room(ROOM_ID) })).toBe(0)
+      );
+
+      return hook;
+    };
+
+    const expectMessageIds = async (
+      hook: Awaited<ReturnType<typeof refetchWithSocketMessage>>,
+      expected: number[]
+    ) => {
+      const cached = hook.queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(ROOM_ID));
+      expect(flattenMessagePages(cached).map((m) => m.messageId)).toEqual(expected);
+      await waitFor(() =>
+        expect(hook.result.current.data.map((m) => m.messageId)).toEqual(expected)
+      );
+    };
+
+    it('응답에 아직 없는 소켓 메시지를 덮어쓰지 않는다', async () => {
+      const socketMessage = makeServerMessage({
+        messageId: 2,
+        content: '소켓 메시지',
+        createdAt: '2024-01-01T10:05:00Z',
+      });
+
+      const hook = await refetchWithSocketMessage(
+        [makeServerMessage({ messageId: 1, createdAt: '2024-01-01T10:00:00Z' })],
+        socketMessage
+      );
+
+      await expectMessageIds(hook, [1, 2]);
+    });
+
+    it('응답에 이미 반영된 소켓 메시지는 한 번만 남긴다', async () => {
+      const socketMessage = makeServerMessage({
+        messageId: 2,
+        createdAt: '2024-01-01T10:05:00Z',
+      });
+
+      const hook = await refetchWithSocketMessage(
+        [makeServerMessage({ messageId: 1, createdAt: '2024-01-01T10:00:00Z' }), socketMessage],
+        socketMessage
+      );
+
+      await expectMessageIds(hook, [1, 2]);
+    });
+  });
+
   describe('에러 처리', () => {
     it('API 에러 발생 시 isError와 error를 노출한다', async () => {
       const error = new Error('API error');

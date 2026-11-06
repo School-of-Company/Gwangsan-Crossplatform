@@ -8,7 +8,6 @@ import {
   passwordSchema,
   signinWithDeviceInfo,
 } from '~/entity/auth';
-import { offerBiometricLogin } from '../../model/offerBiometricLogin';
 import { View } from 'react-native';
 import { ZodError } from 'zod';
 import { router } from 'expo-router';
@@ -36,14 +35,10 @@ export default function PasswordStep() {
       updateField(trimmedPassword);
       setIsLoading(true);
 
-      const authResponse = await signinWithDeviceInfo({
+      await signinWithDeviceInfo({
         nickname: trimmedNickname,
         password: trimmedPassword,
       });
-      // 생체 인증 로그인은 사용자가 동의한 경우에만 켠다
-      offerBiometricLogin(authResponse.accessToken, authResponse.refreshToken).catch((e) =>
-        logger.error('offerBiometricLogin failed', e)
-      );
       // Sentry 사용자 식별은 여기서 닉네임(PII)으로 하지 않는다. 로그인 직후 /main에서
       // useGetMyInformation이 memberId만으로 Sentry.setUser({ id })를 호출한다.
 

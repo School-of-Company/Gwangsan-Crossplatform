@@ -12,6 +12,7 @@ import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
 import { setQueryClientInstance } from './axios';
+import { SessionExpiredError, TokenStorageError } from './authErrors';
 import { isNetworkOrTimeoutError } from './errorHandler';
 import * as Sentry from '@sentry/react-native';
 
@@ -25,9 +26,11 @@ const ReactQueryDevtools: typeof ReactQueryDevtoolsType | null =
       require('@tanstack/react-query-devtools').ReactQueryDevtools
     : null;
 
-// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다
+// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다.
+// 세션 만료·토큰 읽기 실패도 status는 없지만 다시 보내면 같은 이유로 실패하므로 재시도하지 않는다
 export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
   if (failureCount >= MAX_QUERY_RETRY) return false;
+  if (error instanceof SessionExpiredError || error instanceof TokenStorageError) return false;
   const status = error instanceof AxiosError ? error.response?.status : undefined;
   return status === undefined || status >= 500;
 };
@@ -71,6 +74,17 @@ const queryClient = new QueryClient({
         Sentry.addBreadcrumb({
           category: 'react-query',
           message: `Mutation failed with network/timeout error: ${JSON.stringify(mutation.options.mutationKey)}`,
+          level: 'warning',
+        });
+        return;
+      }
+
+      // 비밀번호 오류·권한 없음 같은 4xx는 사용자 입력에 따른 예상된 실패라 예외로 남기지 않는다
+      const status = error instanceof AxiosError ? error.response?.status : undefined;
+      if (status !== undefined && status >= 400 && status < 500) {
+        Sentry.addBreadcrumb({
+          category: 'react-query',
+          message: `Mutation failed with ${status}: ${JSON.stringify(mutation.options.mutationKey)}`,
           level: 'warning',
         });
         return;

@@ -67,7 +67,7 @@ describe('useEditPost', () => {
       );
     });
 
-    it('성공 시 post와 posts 쿼리를 무효화한다', async () => {
+    it('성공 시 상세와 게시글·판매중·내 글·회원 글 목록을 한 번씩 무효화한다', async () => {
       mockEditPost.mockResolvedValue({});
       const queryClient = createQueryClient();
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
@@ -78,10 +78,30 @@ describe('useEditPost', () => {
         result.current.mutate({ id: '5', data: makeEditData() });
       });
 
-      await waitFor(() => {
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['post', '5'] });
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['posts'] });
+      await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(5));
+      expect(invalidateSpy.mock.calls.map(([filters]) => filters?.queryKey)).toEqual([
+        ['post', '5'],
+        ['posts'],
+        ['sellingPosts'],
+        ['myPosts'],
+        ['memberPosts'],
+      ]);
+    });
+
+    it('무효화하는 상세 키가 useGetItem의 캐시와 일치한다', async () => {
+      mockEditPost.mockResolvedValue({});
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(['post', '5'], { id: 5 });
+
+      const { result } = renderHookWithProviders(() => useEditPost(), { queryClient });
+
+      act(() => {
+        result.current.mutate({ id: '5', data: makeEditData() });
       });
+
+      await waitFor(() =>
+        expect(queryClient.getQueryState(['post', '5'])?.isInvalidated).toBe(true)
+      );
     });
 
     it('수정 완료 후 isSuccess가 true이다', async () => {

@@ -14,6 +14,7 @@ import { AxiosError } from 'axios';
 import QueryProvider, { shouldRetryQuery, shouldThrowQueryError } from '../QueryProvider';
 import { toAppError } from '../errorHandler';
 import { setQueryClientInstance } from '../axios';
+import { SessionExpiredError, TokenStorageError } from '../authErrors';
 import * as Sentry from '@sentry/react-native';
 
 jest.mock('../axios', () => ({ setQueryClientInstance: jest.fn() }));
@@ -210,6 +211,57 @@ describe('QueryProvider', () => {
     );
   });
 
+  const renderFailingMutation = (error: unknown) => {
+    function FailingMutation() {
+      const { mutate, isError } = useMutation({
+        mutationKey: ['signin'],
+        mutationFn: () => Promise.reject(error),
+      });
+      return (
+        <>
+          <Text onPress={() => mutate()}>trigger</Text>
+          <Text>{isError ? 'errored' : 'idle'}</Text>
+        </>
+      );
+    }
+
+    const utils = render(
+      <QueryProvider>
+        <FailingMutation />
+      </QueryProvider>
+    );
+    utils.getByText('trigger').props.onPress();
+    return utils;
+  };
+
+  it.each([400, 401, 403, 404])(
+    '%i mutation 실패는 Sentry 예외 대신 breadcrumb로만 남긴다',
+    async (status) => {
+      const { getByText } = renderFailingMutation(toAppError(makeAxiosError(status)));
+
+      await waitFor(() => expect(getByText('errored')).toBeTruthy());
+      expect(mockCaptureException).not.toHaveBeenCalled();
+      expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: 'react-query',
+          message: expect.stringContaining(`${status}`),
+        })
+      );
+    }
+  );
+
+  it('5xx mutation 실패는 Sentry 예외로 보낸다', async () => {
+    const { getByText } = renderFailingMutation(makeAxiosError(500));
+
+    await waitFor(() => expect(getByText('errored')).toBeTruthy());
+    expect(mockCaptureException).toHaveBeenCalledWith(
+      expect.any(AxiosError),
+      expect.objectContaining({
+        extra: expect.objectContaining({ context: 'react_mutation_error' }),
+      })
+    );
+  });
+
   // 기기 오프라인/타임아웃 등 응답이 없는 네트워크 실패는 앱 버그가 아니므로
   // Sentry 예외로 남기지 않고 breadcrumb만 남긴다 (see #560).
   it('does not report network/timeout query failures to Sentry', async () => {
@@ -279,6 +331,11 @@ describe('QueryProvider', () => {
 
     it('응답이 없는 네트워크 오류는 한 번 재시도한다', () => {
       expect(shouldRetryQuery(0, new Error('Network Error'))).toBe(true);
+    });
+
+    it('세션 만료·토큰 읽기 실패는 status가 없어도 재시도하지 않는다', () => {
+      expect(shouldRetryQuery(0, new SessionExpiredError())).toBe(false);
+      expect(shouldRetryQuery(0, new TokenStorageError(new Error('locked')))).toBe(false);
     });
   });
 

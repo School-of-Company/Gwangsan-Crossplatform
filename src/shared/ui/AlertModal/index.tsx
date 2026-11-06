@@ -13,7 +13,11 @@ interface AlertModalProps {
   onConfirm: () => void;
   destructive?: boolean;
   isLoading?: boolean;
+  // false면 배경 터치와 안드로이드 뒤로가기로 닫히지 않는다 — 버튼으로만 처리해야 하는 안내용
+  dismissible?: boolean;
 }
+
+const noop = () => {};
 
 // iOS UIAlertController가 뜰 때 살짝 확대된 상태(1.1배)에서 축소되며 페이드인되는
 // 값 — Material처럼 작은 상태에서 커지는 게 아니라 큰 상태에서 줄어드는 게 Apple 특유의 느낌
@@ -30,13 +34,14 @@ export function AlertModal({
   onConfirm,
   destructive = false,
   isLoading = false,
+  dismissible = true,
 }: AlertModalProps) {
   const [show, setShow] = useState(isVisible);
   const scale = useState(() => new Animated.Value(ALERT_ENTER_SCALE))[0];
   const opacity = useState(() => new Animated.Value(0))[0];
   // 취소 버튼은 애니메이션 없이 즉시 닫혀야 해서, 다음 닫힘이 취소로 인한 것인지 표시해둔다
   const skipCloseAnimationRef = useRef(false);
-  const dismiss = onCancel ?? onConfirm;
+  const dismiss = dismissible ? (onCancel ?? onConfirm) : noop;
 
   useEffect(() => {
     if (isVisible) {
