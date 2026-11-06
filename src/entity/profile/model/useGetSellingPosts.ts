@@ -4,7 +4,7 @@ import { MODE } from '~/shared/types/mode';
 import type { PostType } from '~/shared/types/postType';
 import type { ProductType } from '~/shared/types/type';
 import { getSellingPosts, SELLING_PAGE_SIZE } from '../api/getSellingPosts';
-import { sellingPostsQueryKeys } from './sellingPostsQueryKeys';
+import { sellingPostsQueryKeys } from '~/shared/model/sellingPostsQueryKeys';
 
 interface UseGetSellingPostsParams {
   memberId?: string;

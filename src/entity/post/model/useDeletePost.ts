@@ -1,30 +1,23 @@
-import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 import { deletePost } from '../api/deletePost';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
-import { postKeys } from '~/shared/model/postQueryKeys';
+import { invalidatePostChangedQueries } from '~/shared/model/postChangedQueryKeys';
 
 interface UseDeletePostParams {
   onSuccess?: () => void;
-  // 게시글 목록 외에 함께 무효화할 쿼리(판매·구매 내역 등)
-  invalidateKeys?: readonly QueryKey[];
 }
 
-export const useDeletePost = ({ onSuccess, invalidateKeys = [] }: UseDeletePostParams = {}) => {
+export const useDeletePost = ({ onSuccess }: UseDeletePostParams = {}) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const deletePostMutation = useMutation({
     mutationFn: deletePost,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: postKeys.all,
-      });
-      invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
-
       Toast.show({
         type: 'success',
         text1: '게시글 삭제 완료',
@@ -40,6 +33,9 @@ export const useDeletePost = ({ onSuccess, invalidateKeys = [] }: UseDeletePostP
         text2: error instanceof Error ? error.message : '게시글 삭제 중 오류가 발생했습니다.',
         visibilityTime: 3000,
       });
+    },
+    onSettled: () => {
+      invalidatePostChangedQueries(queryClient);
     },
   });
 

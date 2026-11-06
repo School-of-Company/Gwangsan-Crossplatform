@@ -6,6 +6,7 @@ import { PostType } from '~/shared/types/postType';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { postKeys } from '~/shared/model/postQueryKeys';
+import { invalidatePostChangedQueries } from '~/shared/model/postChangedQueryKeys';
 
 type MutationContext = {
   previousPosts?: PostType[];
@@ -64,13 +65,7 @@ export const useCreateItem = () => {
       });
     },
 
-    onSuccess: (_response, variables) => {
-      if (!variables) return;
-
-      queryClient.invalidateQueries({
-        queryKey: postKeys.list(variables.mode, variables.type),
-      });
-
+    onSuccess: () => {
       Toast.show({
         type: 'success',
         text1: '등록 완료',
@@ -78,12 +73,8 @@ export const useCreateItem = () => {
       });
     },
 
-    onSettled: (_response, _error, variables) => {
-      if (!variables) return;
-
-      queryClient.invalidateQueries({
-        queryKey: postKeys.list(variables.mode, variables.type),
-      });
+    onSettled: () => {
+      invalidatePostChangedQueries(queryClient);
     },
   });
 };

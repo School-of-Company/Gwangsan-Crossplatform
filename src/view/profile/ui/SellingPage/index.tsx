@@ -19,9 +19,7 @@ import {
   useGetMyProfile,
   useGetMyInformation,
   useGetSellingPosts,
-  sellingPostsQueryKeys,
 } from '~/entity/profile';
-import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
 import { useGetReviews } from '~/entity/reviews';
 
 type SellingTab = 'onSale' | 'sold';
@@ -66,14 +64,7 @@ export default function SellingPageView() {
     { myMemberId: myInfo?.memberId }
   );
 
-  const { deletePostInPlace, isLoading: isDeletingPost } = useDeletePost({
-    // 구매 목록(PurchasedPage)은 아직 기존 전체 조회를 쓰므로 함께 무효화한다.
-    invalidateKeys: [
-      sellingPostsQueryKeys.all,
-      profileQueryKeys.myPostsAll,
-      profileQueryKeys.memberPostsAll,
-    ],
-  });
+  const { deletePostInPlace, isLoading: isDeletingPost } = useDeletePost();
 
   // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 토스트가 반복되므로, 실패로 바뀌는 순간에만 띄운다
   useEffect(() => {
