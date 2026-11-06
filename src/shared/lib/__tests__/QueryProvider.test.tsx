@@ -13,10 +13,14 @@ import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
 import QueryProvider, { shouldRetryQuery, shouldThrowQueryError } from '../QueryProvider';
 import { toAppError } from '../errorHandler';
-import { setQueryClientInstance } from '../axios';
+import { SessionExpiredError, setQueryClientInstance, TokenStorageError } from '../axios';
 import * as Sentry from '@sentry/react-native';
 
-jest.mock('../axios', () => ({ setQueryClientInstance: jest.fn() }));
+jest.mock('../axios', () => {
+  class SessionExpiredError extends Error {}
+  class TokenStorageError extends Error {}
+  return { setQueryClientInstance: jest.fn(), SessionExpiredError, TokenStorageError };
+});
 jest.mock('@react-native-community/netinfo', () => ({
   __esModule: true,
   default: { addEventListener: jest.fn(() => jest.fn()) },
@@ -279,6 +283,11 @@ describe('QueryProvider', () => {
 
     it('응답이 없는 네트워크 오류는 한 번 재시도한다', () => {
       expect(shouldRetryQuery(0, new Error('Network Error'))).toBe(true);
+    });
+
+    it('세션 만료·토큰 읽기 실패는 status가 없어도 재시도하지 않는다', () => {
+      expect(shouldRetryQuery(0, new SessionExpiredError())).toBe(false);
+      expect(shouldRetryQuery(0, new TokenStorageError(new Error('locked')))).toBe(false);
     });
   });
 

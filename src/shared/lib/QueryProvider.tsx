@@ -11,7 +11,7 @@ import type { ReactQueryDevtools as ReactQueryDevtoolsType } from '@tanstack/rea
 import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
-import { setQueryClientInstance } from './axios';
+import { SessionExpiredError, setQueryClientInstance, TokenStorageError } from './axios';
 import { isNetworkOrTimeoutError } from './errorHandler';
 import * as Sentry from '@sentry/react-native';
 
@@ -25,9 +25,11 @@ const ReactQueryDevtools: typeof ReactQueryDevtoolsType | null =
       require('@tanstack/react-query-devtools').ReactQueryDevtools
     : null;
 
-// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다
+// 4xx(권한 없음·없는 리소스·잘못된 요청)는 다시 보내도 결과가 같으므로 재시도하지 않는다.
+// 세션 만료·토큰 읽기 실패도 status는 없지만 다시 보내면 같은 이유로 실패하므로 재시도하지 않는다
 export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
   if (failureCount >= MAX_QUERY_RETRY) return false;
+  if (error instanceof SessionExpiredError || error instanceof TokenStorageError) return false;
   const status = error instanceof AxiosError ? error.response?.status : undefined;
   return status === undefined || status >= 500;
 };
