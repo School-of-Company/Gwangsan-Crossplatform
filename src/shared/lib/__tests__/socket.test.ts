@@ -3,8 +3,10 @@ import * as Sentry from '@sentry/react-native';
 import { getData } from '../getData';
 import { logger } from '../logger';
 import { chatSocket } from '../socket';
+import { refreshAccessToken } from '../tokenRefresh';
 
 jest.mock('socket.io-client', () => ({ io: jest.fn() }));
+jest.mock('../tokenRefresh', () => ({ refreshAccessToken: jest.fn() }));
 jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'https://api.test.com/api' }));
 jest.mock('../getData', () => ({ getData: jest.fn() }));
 jest.mock('../logger', () => ({ logger: { error: jest.fn(), warn: jest.fn() } }));
@@ -15,6 +17,7 @@ jest.mock('@sentry/react-native', () => ({
 
 const mockIo = io as jest.Mock;
 const mockGetData = getData as jest.Mock;
+const mockRefreshAccessToken = refreshAccessToken as jest.Mock;
 const mockSentry = Sentry as jest.Mocked<typeof Sentry>;
 
 function createMockSocket() {
@@ -95,7 +98,7 @@ describe('chatSocket (SocketManager singleton)', () => {
     expect(cb).toHaveBeenCalledWith({ token: 'Bearer new-token' });
   });
 
-  it('auth 콜백은 토큰을 읽지 못하면 최초 연결 토큰으로 대체한다', async () => {
+  it('auth 콜백은 토큰을 읽지 못하면 최초 연결 토큰으로 대체하지 않는다', async () => {
     const socket = createMockSocket();
     mockIo.mockReturnValue(socket);
 
@@ -108,7 +111,167 @@ describe('chatSocket (SocketManager singleton)', () => {
     auth(cb);
     await flush();
 
-    expect(cb).toHaveBeenCalledWith({ token: 'Bearer abc-token' });
+    expect(cb).toHaveBeenCalledWith({});
+  });
+
+  it('auth 콜백은 로그아웃으로 토큰이 지워졌으면 토큰 없이 보낸다', async () => {
+    const socket = createMockSocket();
+    mockIo.mockReturnValue(socket);
+
+    await connectSuccessfully(socket, 'abc-token');
+
+    const { auth } = mockIo.mock.calls[0][1];
+    mockGetData.mockResolvedValue(null);
+
+    const cb = jest.fn();
+    auth(cb);
+    await flush();
+
+    expect(cb).toHaveBeenCalledWith({});
+  });
+
+  describe('연결 중 로그아웃', () => {
+    it('토큰을 읽는 동안 disconnect되면 소켓을 만들지 않는다', async () => {
+      let resolveToken: (value: string) => void = () => {};
+      mockGetData.mockReturnValue(
+        new Promise<string>((resolve) => {
+          resolveToken = resolve;
+        })
+      );
+
+      const promise = chatSocket.connect();
+      chatSocket.disconnect();
+      resolveToken('old-token');
+
+      await expect(promise).resolves.toBeUndefined();
+      expect(mockIo).not.toHaveBeenCalled();
+      expect(chatSocket.connectionState).toBe('disconnected');
+    });
+
+    it('이전 시도가 늦게 끝나도 새 연결 시도의 connecting 상태를 지우지 않는다', async () => {
+      let resolveOld: (value: string) => void = () => {};
+      mockGetData.mockReturnValueOnce(
+        new Promise<string>((resolve) => {
+          resolveOld = resolve;
+        })
+      );
+      const socket = createMockSocket();
+      mockIo.mockReturnValue(socket);
+
+      const stale = chatSocket.connect();
+      chatSocket.disconnect();
+      mockGetData.mockResolvedValue('new-token');
+      const fresh = chatSocket.connect();
+      resolveOld('old-token');
+      await stale;
+
+      expect(chatSocket.connectionState).toBe('connecting');
+      await flush();
+      socket.__trigger('connect');
+      await fresh;
+      expect(mockIo).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('핸드셰이크 인증 거부', () => {
+    const rejectHandshake = async (socket: MockSocket, message = '만료된 토큰입니다.') => {
+      const error = new Error(message);
+      socket.__trigger('connect_error', error);
+      return error;
+    };
+
+    it('만료 토큰으로 거부되면 재발급 후 한 번 다시 연결한다', async () => {
+      const first = createMockSocket();
+      const second = createMockSocket();
+      mockIo.mockReturnValueOnce(first).mockReturnValueOnce(second);
+      mockGetData.mockResolvedValue('expired-token');
+      mockRefreshAccessToken.mockResolvedValue('new-token');
+
+      const promise = chatSocket.connect();
+      await flush();
+      const error = await rejectHandshake(first);
+      await expect(promise).rejects.toBe(error);
+
+      await flush();
+      expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(mockIo).toHaveBeenCalledTimes(2);
+
+      second.connected = true;
+      second.__trigger('connect');
+      expect(chatSocket.connectionState).toBe('connected');
+      // 인증 거부는 예상된 흐름이라 Sentry 예외로 남기지 않는다
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it('재연결도 거부되면 다시 재발급하지 않는다', async () => {
+      const first = createMockSocket();
+      const second = createMockSocket();
+      mockIo.mockReturnValueOnce(first).mockReturnValueOnce(second);
+      mockGetData.mockResolvedValue('token');
+      mockRefreshAccessToken.mockResolvedValue('new-token');
+
+      chatSocket.connect().catch(() => {});
+      await flush();
+      await rejectHandshake(first);
+      await flush();
+      await rejectHandshake(second, '로그아웃된 토큰입니다.');
+      await flush();
+
+      expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(mockIo).toHaveBeenCalledTimes(2);
+      expect(chatSocket.connectionState).toBe('disconnected');
+    });
+
+    it('재발급에 실패하면 다시 연결하지 않는다', async () => {
+      const first = createMockSocket();
+      mockIo.mockReturnValue(first);
+      mockGetData.mockResolvedValue('token');
+      mockRefreshAccessToken.mockRejectedValue(new Error('세션이 만료되었습니다.'));
+
+      chatSocket.connect().catch(() => {});
+      await flush();
+      await rejectHandshake(first);
+      await flush();
+
+      expect(mockRefreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(mockIo).toHaveBeenCalledTimes(1);
+      expect(chatSocket.connectionState).toBe('disconnected');
+    });
+
+    it('재발급 중 disconnect되면 다시 연결하지 않는다', async () => {
+      const first = createMockSocket();
+      mockIo.mockReturnValue(first);
+      mockGetData.mockResolvedValue('token');
+      let resolveRefresh: (value: string) => void = () => {};
+      mockRefreshAccessToken.mockReturnValue(
+        new Promise<string>((resolve) => {
+          resolveRefresh = resolve;
+        })
+      );
+
+      chatSocket.connect().catch(() => {});
+      await flush();
+      await rejectHandshake(first);
+      chatSocket.disconnect();
+      resolveRefresh('new-token');
+      await flush();
+
+      expect(mockIo).toHaveBeenCalledTimes(1);
+    });
+
+    it('네트워크 오류로 실패하면 재발급하지 않는다', async () => {
+      const first = createMockSocket();
+      mockIo.mockReturnValue(first);
+      mockGetData.mockResolvedValue('token');
+
+      chatSocket.connect().catch(() => {});
+      await flush();
+      await rejectHandshake(first, 'websocket error');
+      await flush();
+
+      expect(mockRefreshAccessToken).not.toHaveBeenCalled();
+      expect(mockIo).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('reports a "connecting" state while the connection is in flight', async () => {
