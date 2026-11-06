@@ -3,7 +3,7 @@ import { Linking, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Application from 'expo-application';
 import { useAppVersion } from '~/entity/appVersion';
-import { isVersionLower } from '~/shared/lib/versionCompare';
+import { isValidVersion, isVersionLower } from '~/shared/lib/versionCompare';
 import { AlertModal } from '~/shared/ui/AlertModal';
 
 const DISMISS_STORAGE_KEY = 'appVersionUpdateDismissed';
@@ -36,14 +36,24 @@ const isDismissed = async (latestVersion: string): Promise<boolean> => {
   }
 };
 
+// minimumVersion이 없거나 형식이 깨졌으면 강제하지 않는다 — 잘못된 설정으로 앱을 막지 않기 위해
+const isForceUpdateRequired = (
+  currentVersion: string | null,
+  minimumVersion: string | null | undefined
+): boolean =>
+  !!currentVersion &&
+  isValidVersion(minimumVersion) &&
+  isVersionLower(currentVersion, minimumVersion.trim());
+
 export function VersionUpdateModal() {
   const { data } = useAppVersion();
   const [isVisible, setIsVisible] = useState(false);
   const latestVersion = data?.latestVersion;
   const currentVersion = Application.nativeApplicationVersion;
+  const isForced = isForceUpdateRequired(currentVersion, data?.minimumVersion);
 
   useEffect(() => {
-    if (!latestVersion || !currentVersion) return;
+    if (isForced || !latestVersion || !currentVersion) return;
     if (!isVersionLower(currentVersion, latestVersion)) return;
 
     let isMounted = true;
@@ -54,7 +64,7 @@ export function VersionUpdateModal() {
     return () => {
       isMounted = false;
     };
-  }, [latestVersion, currentVersion]);
+  }, [isForced, latestVersion, currentVersion]);
 
   const handleLater = useCallback(() => {
     setIsVisible(false);
@@ -67,7 +77,8 @@ export function VersionUpdateModal() {
   }, [latestVersion]);
 
   const handleUpdate = useCallback(() => {
-    setIsVisible(false);
+    // 강제 업데이트는 스토어에서 업데이트하지 않고 돌아와도 계속 막아야 하므로 닫지 않는다
+    if (!isForced) setIsVisible(false);
     if (Platform.OS === 'ios') {
       Linking.openURL(IOS_STORE_URL).catch(() => {});
       return;
@@ -76,7 +87,19 @@ export function VersionUpdateModal() {
     Linking.openURL(ANDROID_STORE_URL).catch(() => {
       Linking.openURL(ANDROID_STORE_WEB_URL).catch(() => {});
     });
-  }, []);
+  }, [isForced]);
+
+  if (isForced) {
+    return (
+      <AlertModal
+        isVisible
+        message="업데이트 후 이용할 수 있습니다"
+        confirmText="업데이트"
+        onConfirm={handleUpdate}
+        dismissible={false}
+      />
+    );
+  }
 
   return (
     <AlertModal
