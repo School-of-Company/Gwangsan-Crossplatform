@@ -35,9 +35,57 @@ const scrubHeaders = (
   return scrubbed;
 };
 
+const SENSITIVE_EXTRA_KEY_PATTERN = /authorization|cookie|token|password|secret|phone|body/i;
+const MAX_EXTRA_DEPTH = 5;
+
+const isAxiosErrorLike = (
+  value: object
+): value is {
+  name?: string;
+  message?: string;
+  code?: string;
+  config?: { method?: string; url?: string };
+  response?: { status?: number };
+} => (value as { isAxiosError?: unknown }).isAxiosError === true;
+
+// logger.warn 등으로 extra에 실린 값(AxiosError의 config.headers·요청 바디 포함)에서 토큰·비밀번호·
+// 전화번호가 나가지 않도록, 민감한 키는 가리고 axios 에러는 상태·경로만 남긴다
+const scrubExtraValue = (value: unknown, depth: number): unknown => {
+  if (value === null || typeof value !== 'object') return value;
+  if (depth >= MAX_EXTRA_DEPTH) return REDACTED;
+  if (Array.isArray(value)) return value.map((item) => scrubExtraValue(item, depth + 1));
+  if (isAxiosErrorLike(value)) {
+    return {
+      name: value.name,
+      message: value.message,
+      code: value.code,
+      status: value.response?.status,
+      method: value.config?.method,
+      url: value.config?.url ? stripQueryString(value.config.url) : value.config?.url,
+    };
+  }
+  if (value instanceof Error) return value;
+
+  const scrubbed: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (SENSITIVE_EXTRA_KEY_PATTERN.test(key)) {
+      scrubbed[key] = REDACTED;
+    } else if (key === 'url' && typeof item === 'string') {
+      scrubbed[key] = stripQueryString(item);
+    } else {
+      scrubbed[key] = scrubExtraValue(item, depth + 1);
+    }
+  }
+  return scrubbed;
+};
+
 // Sentry 이벤트(에러/트랜잭션)에 Authorization 헤더, 요청 바디, 쿼리스트링이 그대로
 // 담기지 않도록 전송 직전에 걸러낸다.
 export const beforeSend: BeforeSend = (event) => {
+  if (event.extra) {
+    event.extra = scrubExtraValue(event.extra, 0) as typeof event.extra;
+  }
+
   if (event.request) {
     event.request = {
       ...event.request,

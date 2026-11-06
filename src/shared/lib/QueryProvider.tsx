@@ -78,6 +78,17 @@ const queryClient = new QueryClient({
         return;
       }
 
+      // 비밀번호 오류·권한 없음 같은 4xx는 사용자 입력에 따른 예상된 실패라 예외로 남기지 않는다
+      const status = error instanceof AxiosError ? error.response?.status : undefined;
+      if (status !== undefined && status >= 400 && status < 500) {
+        Sentry.addBreadcrumb({
+          category: 'react-query',
+          message: `Mutation failed with ${status}: ${JSON.stringify(mutation.options.mutationKey)}`,
+          level: 'warning',
+        });
+        return;
+      }
+
       Sentry.captureException(error, {
         extra: {
           mutationKey: JSON.stringify(mutation.options.mutationKey),

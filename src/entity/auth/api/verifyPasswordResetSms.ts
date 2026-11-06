@@ -13,7 +13,7 @@ export const verifyPasswordResetSms = async (
   try {
     await publicInstance.post('/sms/password/verify', request);
   } catch (error) {
-    logger.error('verifyPasswordResetSms failed', error);
+    logger.requestError('verifyPasswordResetSms failed', error);
     throw toAppError(error);
   }
 };

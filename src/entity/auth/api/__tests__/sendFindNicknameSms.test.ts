@@ -6,7 +6,7 @@ jest.mock('~/shared/lib/publicInstance', () => ({
   publicInstance: { post: jest.fn(), patch: jest.fn() },
 }));
 jest.mock('~/shared/lib/logger', () => ({
-  logger: { error: jest.fn(), warn: jest.fn() },
+  logger: { error: jest.fn(), warn: jest.fn(), requestError: jest.fn() },
 }));
 
 const mockRequest = publicInstance.post as jest.Mock;
