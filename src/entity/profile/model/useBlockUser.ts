@@ -3,6 +3,7 @@ import Toast from 'react-native-toast-message';
 import { getErrorMessage } from '~/shared/lib/errorHandler';
 import { blockUser, unblockUser } from '../api/blockUser';
 import { postKeys } from '~/shared/model/postQueryKeys';
+import { blockKeys } from './blockQueryKeys';
 
 export const useBlockUser = (targetMemberId: number | undefined) => {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export const useBlockUser = (targetMemberId: number | undefined) => {
       return blockUser(targetMemberId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockList'] });
+      queryClient.invalidateQueries({ queryKey: blockKeys.list() });
       queryClient.invalidateQueries({ queryKey: postKeys.all });
       Toast.show({ type: 'success', text1: '차단되었습니다.' });
     },
@@ -28,7 +29,7 @@ export const useBlockUser = (targetMemberId: number | undefined) => {
       return unblockUser(targetMemberId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockList'] });
+      queryClient.invalidateQueries({ queryKey: blockKeys.list() });
       queryClient.invalidateQueries({ queryKey: postKeys.all });
       Toast.show({ type: 'success', text1: '차단이 해제되었습니다.' });
     },
