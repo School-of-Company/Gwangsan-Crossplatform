@@ -382,9 +382,23 @@ describe('useChatMessages', () => {
       await act(async () => {
         resolveRefetch(response);
       });
-      await waitFor(() => expect(hook.result.current.isFetching).toBe(false));
+      // 렌더된 isFetching은 재조회 중에도 false로 보일 수 있어 queryClient로 완료를 기다린다
+      await waitFor(() =>
+        expect(hook.queryClient.isFetching({ queryKey: chatMessageKeys.room(ROOM_ID) })).toBe(0)
+      );
 
       return hook;
+    };
+
+    const expectMessageIds = async (
+      hook: Awaited<ReturnType<typeof refetchWithSocketMessage>>,
+      expected: number[]
+    ) => {
+      const cached = hook.queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(ROOM_ID));
+      expect(flattenMessagePages(cached).map((m) => m.messageId)).toEqual(expected);
+      await waitFor(() =>
+        expect(hook.result.current.data.map((m) => m.messageId)).toEqual(expected)
+      );
     };
 
     it('응답에 아직 없는 소켓 메시지를 덮어쓰지 않는다', async () => {
@@ -394,12 +408,12 @@ describe('useChatMessages', () => {
         createdAt: '2024-01-01T10:05:00Z',
       });
 
-      const { result } = await refetchWithSocketMessage(
+      const hook = await refetchWithSocketMessage(
         [makeServerMessage({ messageId: 1, createdAt: '2024-01-01T10:00:00Z' })],
         socketMessage
       );
 
-      expect(result.current.data.map((m) => m.messageId)).toEqual([1, 2]);
+      await expectMessageIds(hook, [1, 2]);
     });
 
     it('응답에 이미 반영된 소켓 메시지는 한 번만 남긴다', async () => {
@@ -408,12 +422,12 @@ describe('useChatMessages', () => {
         createdAt: '2024-01-01T10:05:00Z',
       });
 
-      const { result } = await refetchWithSocketMessage(
+      const hook = await refetchWithSocketMessage(
         [makeServerMessage({ messageId: 1, createdAt: '2024-01-01T10:00:00Z' }), socketMessage],
         socketMessage
       );
 
-      expect(result.current.data.map((m) => m.messageId)).toEqual([1, 2]);
+      await expectMessageIds(hook, [1, 2]);
     });
   });
 
