@@ -66,17 +66,13 @@ const scrubExtraValue = (value: unknown, depth: number): unknown => {
   }
   if (value instanceof Error) return value;
 
-  const scrubbed: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(value)) {
-    if (SENSITIVE_EXTRA_KEY_PATTERN.test(key)) {
-      scrubbed[key] = REDACTED;
-    } else if (key === 'url' && typeof item === 'string') {
-      scrubbed[key] = stripQueryString(item);
-    } else {
-      scrubbed[key] = scrubExtraValue(item, depth + 1);
-    }
-  }
-  return scrubbed;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => {
+      if (SENSITIVE_EXTRA_KEY_PATTERN.test(key)) return [key, REDACTED];
+      if (key === 'url' && typeof item === 'string') return [key, stripQueryString(item)];
+      return [key, scrubExtraValue(item, depth + 1)];
+    })
+  );
 };
 
 // Sentry 이벤트(에러/트랜잭션)에 Authorization 헤더, 요청 바디, 쿼리스트링이 그대로
