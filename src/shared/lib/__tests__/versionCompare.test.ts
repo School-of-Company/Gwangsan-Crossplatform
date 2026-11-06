@@ -1,4 +1,4 @@
-import { isVersionLower } from '../versionCompare';
+import { isValidVersion, isVersionLower } from '../versionCompare';
 
 describe('isVersionLower', () => {
   it('문자열 비교로는 틀리는 1.9.0 < 1.10.0을 올바르게 판단한다', () => {
@@ -24,5 +24,22 @@ describe('isVersionLower', () => {
   it('숫자가 아닌 값은 0으로 취급해 크래시하지 않는다', () => {
     expect(isVersionLower('1.1.0', '')).toBe(false);
     expect(isVersionLower('', '1.0.0')).toBe(true);
+  });
+});
+
+describe('isValidVersion', () => {
+  it('major.minor.patch 형식만 유효하다', () => {
+    expect(isValidVersion('1.2.3')).toBe(true);
+    expect(isValidVersion(' 1.10.0 ')).toBe(true);
+  });
+
+  it('빈 값, 숫자가 아닌 자리, 자리수가 다른 값, 문자열이 아닌 값은 유효하지 않다', () => {
+    expect(isValidVersion('')).toBe(false);
+    expect(isValidVersion('9abc')).toBe(false);
+    expect(isValidVersion('1.2')).toBe(false);
+    expect(isValidVersion('1.2.x')).toBe(false);
+    expect(isValidVersion(null)).toBe(false);
+    expect(isValidVersion(undefined)).toBe(false);
+    expect(isValidVersion(123)).toBe(false);
   });
 });

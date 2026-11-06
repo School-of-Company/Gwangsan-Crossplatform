@@ -4,8 +4,9 @@ import { toAppError } from '~/shared/lib/errorHandler';
 
 export interface AppVersionResponse {
   latestVersion: string;
-  // 강제 업데이트(차단)용 필드 — 현재 앱에서는 사용하지 않고 응답 타입에만 남겨둔다.
-  minimumVersion: string;
+  // 이보다 낮은 버전은 강제 업데이트 대상. 서버는 x.y.z를 보장하지만(AppVersion 도메인 검증),
+  // 값이 없거나 깨져도 앱을 막지 않도록 optional로 두고 쓰는 쪽에서 검증한다.
+  minimumVersion?: string | null;
 }
 
 export const getAppVersion = async (
