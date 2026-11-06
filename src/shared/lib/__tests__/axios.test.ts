@@ -100,6 +100,17 @@ describe('request interceptor', () => {
     await expect(instance.get('/req-error')).rejects.toThrow();
   });
 
+  it('토큰 저장소 읽기에 실패하면 원본 에러 대신 TokenStorageError로 reject된다', async () => {
+    const storageError = new Error('User interaction is not allowed.');
+    mockGetAccessToken.mockRejectedValue(storageError);
+
+    const error = await instance.get('/req-storage-error').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(TokenStorageError);
+    expect((error as TokenStorageError).cause).toBe(storageError);
+    expect((error as Error).message).toBe('토큰을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
+  });
+
   it('request 인터셉터 체인 이전 단계에서 에러가 발생하면 그대로 reject한다', async () => {
     const handlers = (instance.interceptors.request as unknown as { handlers: any[] }).handlers;
     const rejectedHandler = handlers[0].rejected;
@@ -146,6 +157,21 @@ describe('response interceptor', () => {
 
     await expect(instance.post('/auth/signin', {})).rejects.toThrow();
     expect(mockGetRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it('/auth/signout 401은 재발급·세션 만료 안내·이동 없이 reject된다', async () => {
+    mockGetAccessToken.mockResolvedValue('expired-token');
+    mockGetRefreshToken.mockResolvedValue('expired-refresh-token');
+
+    server.use(http.delete(`${BASE}/auth/signout`, () => new HttpResponse(null, { status: 401 })));
+
+    await expect(instance.delete('/auth/signout')).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+    expect(mockGetRefreshToken).not.toHaveBeenCalled();
+    expect(mockClearSession).not.toHaveBeenCalled();
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockRouter.replace).not.toHaveBeenCalled();
   });
 
   it('/auth/reissue 자체가 401이면 재시도 없이 reject된다', async () => {
