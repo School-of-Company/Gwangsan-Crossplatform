@@ -11,7 +11,8 @@ import type { ReactQueryDevtools as ReactQueryDevtoolsType } from '@tanstack/rea
 import { ReactNode, useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { AxiosError } from 'axios';
-import { SessionExpiredError, setQueryClientInstance, TokenStorageError } from './axios';
+import { setQueryClientInstance } from './axios';
+import { SessionExpiredError, TokenStorageError } from './authErrors';
 import { isNetworkOrTimeoutError } from './errorHandler';
 import * as Sentry from '@sentry/react-native';
 

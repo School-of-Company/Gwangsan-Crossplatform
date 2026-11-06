@@ -13,14 +13,11 @@ import { Text, AppState, AppStateStatus } from 'react-native';
 import { AxiosError } from 'axios';
 import QueryProvider, { shouldRetryQuery, shouldThrowQueryError } from '../QueryProvider';
 import { toAppError } from '../errorHandler';
-import { SessionExpiredError, setQueryClientInstance, TokenStorageError } from '../axios';
+import { setQueryClientInstance } from '../axios';
+import { SessionExpiredError, TokenStorageError } from '../authErrors';
 import * as Sentry from '@sentry/react-native';
 
-jest.mock('../axios', () => {
-  class SessionExpiredError extends Error {}
-  class TokenStorageError extends Error {}
-  return { setQueryClientInstance: jest.fn(), SessionExpiredError, TokenStorageError };
-});
+jest.mock('../axios', () => ({ setQueryClientInstance: jest.fn() }));
 jest.mock('@react-native-community/netinfo', () => ({
   __esModule: true,
   default: { addEventListener: jest.fn(() => jest.fn()) },
