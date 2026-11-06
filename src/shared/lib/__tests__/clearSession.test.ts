@@ -5,6 +5,7 @@ import { clearAuthTokens } from '../auth';
 import { removeData } from '../removeData';
 import { clearCurrentUserId } from '../getCurrentUserId';
 import { cleanupNotificationSession } from '../sessionCleanup';
+import { chatSocket } from '../socket';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
 import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 
@@ -12,6 +13,7 @@ jest.mock('../auth', () => ({ clearAuthTokens: jest.fn() }));
 jest.mock('../removeData', () => ({ removeData: jest.fn() }));
 jest.mock('../getCurrentUserId', () => ({ clearCurrentUserId: jest.fn() }));
 jest.mock('../sessionCleanup', () => ({ cleanupNotificationSession: jest.fn() }));
+jest.mock('../socket', () => ({ chatSocket: { disconnect: jest.fn() } }));
 jest.mock('@sentry/react-native', () => ({ setUser: jest.fn() }));
 
 beforeEach(() => {
@@ -68,5 +70,17 @@ describe('clearSession', () => {
 
     expect(clearCurrentUserId).toHaveBeenCalled();
     expect(useChatQueueStore.getState().pendingMessages).toEqual([]);
+  });
+
+  it('토큰을 지우기 전에 채팅 소켓을 먼저 끊는다', async () => {
+    const order: string[] = [];
+    (chatSocket.disconnect as jest.Mock).mockImplementation(() => order.push('disconnect'));
+    (clearAuthTokens as jest.Mock).mockImplementation(async () => {
+      order.push('clearAuthTokens');
+    });
+
+    await clearSession();
+
+    expect(order).toEqual(['disconnect', 'clearAuthTokens']);
   });
 });
