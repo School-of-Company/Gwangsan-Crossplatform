@@ -74,7 +74,10 @@
         {
           "url": "https://sentry.io/",
           "project": "react-native",
-          "organization": "gsmschool"
+          "organization": "gsmschool",
+          "experimental_android": {
+            "enableAndroidGradlePlugin": true
+          }
         }
       ]
     ],

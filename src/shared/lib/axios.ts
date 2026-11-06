@@ -1,21 +1,22 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import Constants from 'expo-constants';
+import { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { router } from 'expo-router';
-import { setData } from './setData';
-import { getAccessToken, getRefreshToken } from './auth';
+import { getAccessToken } from './auth';
 import { clearSession } from './clearSession';
-import { syncBiometricCredentials } from './biometricCredentials';
 import Toast from 'react-native-toast-message';
 import { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
 import { isNetworkOrTimeoutError } from './errorHandler';
+import { instance } from './apiInstance';
+import {
+  readToken,
+  refreshAccessToken,
+  SessionExpiredError,
+  TokenStorageError,
+} from './tokenRefresh';
 
-// env(API_URL)가 빌드에 주입되지 않은 경우(예: EAS 빌드에 env 미등록)에도
-// 동작하도록 프로덕션 API 주소를 폴백으로 사용한다.
-const FALLBACK_API_URL = 'https://api.gwangsan.io.kr/api';
-
-export const baseURL: string = Constants.expoConfig?.extra?.apiUrl ?? FALLBACK_API_URL;
+export { baseURL, instance } from './apiInstance';
+export { SessionExpiredError, TokenStorageError } from './tokenRefresh';
 
 let queryClientInstance: QueryClient | null = null;
 
@@ -23,44 +24,11 @@ export const setQueryClientInstance = (client: QueryClient) => {
   queryClientInstance = client;
 };
 
+// 재발급 요청의 중복 방지는 tokenRefresh가 맡는다. 이 값은 재발급을 시작한 요청이 세션 정리를
+// 마칠 때까지 뒤이은 401도 같은 결과를 기다리게 해, 실패 시 다시 재발급하지 않도록 한다
 let refreshPromise: Promise<string> | null = null;
 
-// 기기가 잠겨 SecureStore(Keychain)에서 토큰을 읽지 못한 경우. 토큰이 만료된 것이 아니므로
-// 로그아웃하지 않고 요청만 실패시킨다
-export class TokenStorageError extends Error {
-  constructor(cause: unknown) {
-    super('토큰을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
-    this.name = 'TokenStorageError';
-    this.cause = cause;
-  }
-}
-
-// 재발급할 수 없어 다시 로그인해야 하는 경우. 기다리던 요청들도 같은 한국어 메시지로 실패한다
-export class SessionExpiredError extends Error {
-  constructor(cause?: unknown) {
-    super('세션이 만료되었습니다. 다시 로그인해 주세요.');
-    this.name = 'SessionExpiredError';
-    this.cause = cause;
-  }
-}
-
-const readToken = async (read: () => Promise<string | null>) => {
-  try {
-    return await read();
-  } catch (error) {
-    throw new TokenStorageError(error);
-  }
-};
-
 type TimedRequestConfig = InternalAxiosRequestConfig & { __sentryStartTime?: number };
-
-export const instance = axios.create({
-  baseURL,
-  timeout: 5000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 instance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
@@ -157,40 +125,7 @@ instance.interceptors.response.use(
         }
       }
 
-      refreshPromise = (async () => {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: `401 on ${originalRequest.url}, attempting token refresh`,
-          level: 'warning',
-        });
-
-        const refreshToken = await readToken(getRefreshToken);
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        const response = await instance.post<{ accessToken: string; refreshToken?: string }>(
-          '/auth/reissue',
-          { refreshToken }
-        );
-
-        const { accessToken: newAccessToken, refreshToken: rotatedRefreshToken } = response.data;
-        // 서버가 refresh token을 교체해 내려주면 함께 저장한다. 예전 값을 계속 쓰면 다음 재발급이
-        // 실패해 강제 로그아웃된다
-        await Promise.all([
-          setData('accessToken', newAccessToken),
-          rotatedRefreshToken ? setData('refreshToken', rotatedRefreshToken) : Promise.resolve(),
-        ]);
-        // 생체 인증용 사본 갱신이 실패해도 요청 재시도는 막지 않는다
-        syncBiometricCredentials(newAccessToken, rotatedRefreshToken ?? refreshToken).catch(
-          (error) => logger.warn('Failed to sync biometric credentials', error)
-        );
-        return newAccessToken;
-      })().catch((error: unknown) => {
-        // 기다리던 요청들도 같은 에러를 받으므로, 로그아웃할 상황이면 한국어 안내로 바꿔 던진다
-        if (error instanceof TokenStorageError || isNetworkOrTimeoutError(error)) throw error;
-        throw new SessionExpiredError(error);
-      });
+      refreshPromise = refreshAccessToken(`401 on ${originalRequest.url}`);
 
       try {
         const newAccessToken = await refreshPromise;

@@ -19,3 +19,8 @@ export const isVersionLower = (current: string, latest: string): boolean => {
   }
   return false;
 };
+
+// 잘못된 값이 곧 앱 차단으로 이어지는 곳에서는 '9abc'를 9로 읽는 위의 관대한 파싱을 믿지 않고
+// 숫자.숫자.숫자 형식인지 먼저 확인한다.
+export const isValidVersion = (version: unknown): version is string =>
+  typeof version === 'string' && /^\d+\.\d+\.\d+$/.test(version.trim());

@@ -7,6 +7,7 @@ import {
   flattenMessagePages,
   keepNewestPage,
   mapMessagePages,
+  mergeNewerCachedMessages,
   toMessagePage,
   type ChatMessagePage,
   type ChatMessagePageCursor,
@@ -52,7 +53,10 @@ export const useChatMessages = (roomId: RoomId, options: UseChatMessagesOptions 
           queryFn: () => getChatRoomData(roomId),
           staleTime: 0,
         });
-        return toMessagePage(data.messages, CHAT_MESSAGE_PAGE_SIZE);
+        return mergeNewerCachedMessages(
+          toMessagePage(data.messages, CHAT_MESSAGE_PAGE_SIZE),
+          queryClient.getQueryData<ChatMessagePages>(chatMessageKeys.room(roomId))
+        );
       }
       const data = await getChatRoomData(roomId, { cursor: pageParam });
       return toMessagePage(data.messages, CHAT_MESSAGE_PAGE_SIZE);
