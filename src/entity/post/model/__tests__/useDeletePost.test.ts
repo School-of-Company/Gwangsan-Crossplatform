@@ -251,22 +251,23 @@ describe('useDeletePost', () => {
       expect(mockReplace).not.toHaveBeenCalled();
     });
 
-    it('invalidateKeys로 넘긴 쿼리도 게시글 목록과 함께 무효화한다', async () => {
+    it('게시글·판매중·내 글·회원 글 목록을 한 번씩 무효화한다', async () => {
       mockDeletePost.mockResolvedValue(undefined);
       const queryClient = createQueryClient();
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-      const { result } = renderHookWithProviders(
-        () => useDeletePost({ invalidateKeys: [['sellingPosts'], ['myPosts']] }),
-        { queryClient }
-      );
+      const { result } = renderHookWithProviders(() => useDeletePost(), { queryClient });
 
       act(() => {
         result.current.deletePostInPlace(7);
       });
 
-      await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['myPosts'] }));
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['posts'] });
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sellingPosts'] });
+      await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
+      expect(invalidateSpy.mock.calls.map(([filters]) => filters?.queryKey)).toEqual([
+        ['posts'],
+        ['sellingPosts'],
+        ['myPosts'],
+        ['memberPosts'],
+      ]);
     });
   });
 });

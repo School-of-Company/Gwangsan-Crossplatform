@@ -42,23 +42,44 @@ const makePost = (overrides: Partial<PostType> = {}): PostType => ({
 beforeEach(() => jest.clearAllMocks());
 
 describe('useCreateItem', () => {
-  it('성공 시 createItem을 호출하고 posts 캐시를 무효화한다', async () => {
+  it('성공 시 게시글·판매중·내 글·회원 글 목록을 한 번씩 무효화한다', async () => {
     const body = makeRequestBody();
     mockCreateItem.mockResolvedValue({ id: 1 });
 
     const { result, queryClient } = renderHookWithProviders(() => useCreateItem());
-    jest.spyOn(queryClient, 'invalidateQueries');
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
     await act(async () => {
       await result.current.mutateAsync(body);
     });
 
     expect(mockCreateItem).toHaveBeenCalledWith(body);
-    await waitFor(() =>
-      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['posts', body.mode, body.type],
-      })
-    );
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
+    expect(invalidateSpy.mock.calls.map(([filters]) => filters?.queryKey)).toEqual([
+      ['posts'],
+      ['sellingPosts'],
+      ['myPosts'],
+      ['memberPosts'],
+    ]);
+  });
+
+  it('실패해도 게시글 관련 목록을 무효화해 서버 상태와 맞춘다', async () => {
+    const body = makeRequestBody();
+    mockCreateItem.mockRejectedValue(new Error('등록 실패'));
+
+    const { result, queryClient } = renderHookWithProviders(() => useCreateItem());
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync(body);
+      } catch {
+        // expected
+      }
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['posts'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['sellingPosts'] });
   });
 
   it('성공 시 성공 Toast를 표시한다', async () => {
