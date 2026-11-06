@@ -3,6 +3,8 @@ import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
+import { AxiosError, AxiosHeaders } from 'axios';
 
 import {
   CHAT_BACKGROUND_TASK,
@@ -39,6 +41,12 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
+jest.mock('@sentry/react-native', () => ({
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+}));
+
 jest.mock('~/shared/lib/publicInstance', () => ({ publicInstance: { get: jest.fn() } }));
 
 const mockDefineTask = TaskManager.defineTask as jest.Mock;
@@ -52,6 +60,16 @@ const mockSetBadgeCountAsync = Notifications.setBadgeCountAsync as jest.Mock;
 const mockAsyncGetItem = AsyncStorage.getItem as jest.Mock;
 const mockAsyncSetItem = AsyncStorage.setItem as jest.Mock;
 const mockAsyncRemoveItem = AsyncStorage.removeItem as jest.Mock;
+const mockAddBreadcrumb = Sentry.addBreadcrumb as jest.Mock;
+
+const axiosErrorWithStatus = (status: number) =>
+  new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+    status,
+    statusText: '',
+    data: {},
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  });
 
 // TaskManager.defineTask is called synchronously at module import time, so the
 // registered handler must be captured immediately, before any beforeEach clears it.
@@ -269,11 +287,80 @@ describe('CHAT_BACKGROUND_TASK handler', () => {
     expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NewData);
   });
 
-  it('returns Failed when an unexpected error is thrown', async () => {
-    mockGetItemAsync.mockRejectedValue(new Error('boom'));
+  it('기기가 잠겨 토큰을 읽지 못하면 요청 없이 Failed를 반환하고 breadcrumb을 남긴다', async () => {
+    mockGetItemAsync.mockRejectedValue(new Error('User interaction is not allowed.'));
 
     const result = await taskHandler();
 
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'chat-background',
+        message: 'Chat background fetch skipped: token storage unavailable',
+      })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('401이면 재발급하지 않고 Failed를 반환하며, 토큰 없이 사유만 breadcrumb으로 남긴다', async () => {
+    mockGetItemAsync.mockResolvedValue('secret-token');
+    mockGet.mockRejectedValue(axiosErrorWithStatus(401));
+
+    const result = await taskHandler();
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: unauthorized',
+        data: { status: 401 },
+      })
+    );
+    expect(JSON.stringify(mockAddBreadcrumb.mock.calls)).not.toContain('secret-token');
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('네트워크 오류면 network 사유로 breadcrumb을 남긴다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockGet.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
+
+    const result = await taskHandler();
+
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: network or timeout',
+        data: { status: undefined },
+      })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('그 밖의 요청 실패는 상태 코드와 함께 남긴다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockGet.mockRejectedValue(axiosErrorWithStatus(500));
+
+    await taskHandler();
+
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: request failed',
+        data: { status: 500 },
+      })
+    );
+  });
+
+  it('returns Failed when an unexpected error is thrown', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockFetchResponse(true, [{ roomId: 1, unreadMessageCount: 1 }]);
+    mockAsyncGetItem.mockRejectedValue(new TypeError('boom'));
+
+    const result = await taskHandler();
+
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: unexpected error',
+        data: { name: 'TypeError' },
+      })
+    );
     expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
   });
 });
