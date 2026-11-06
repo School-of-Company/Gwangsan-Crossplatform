@@ -10,26 +10,30 @@ const path = require('path');
  *  2. AndroidManifest.xml에 networkSecurityConfig 속성 추가
  *  3. usesCleartextTraffic="false" 로 HTTP 평문 트래픽 차단
  *
- * 핀 갱신 주기:
- *  - Let's Encrypt는 인증서 갱신 시 발급 중간 CA가 바뀔 수 있다 (예: R13 → YR1, 2026-07-03 갱신 확인).
- *    중간 CA 핀은 CA가 바뀌면 반드시 재확인/갱신해야 하며, 90일 인증서 갱신 주기마다 확인 권장.
- *  - CA 로테이션 대비 ISRG Root YR 핀을 백업으로 포함
- *  - 핀 확인 (리프): openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
- *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
- *      | openssl dgst -sha256 -binary | base64
- *  - 핀 확인 (중간 CA): openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts 2>/dev/null \
- *      | awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/{ if(/BEGIN/){n++}; if(n==2) print }' \
- *      | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
- *      | openssl dgst -sha256 -binary | base64
- *  - 최종 갱신: 2026-07-04 (배포 환경 로그인 Network Error 장애 대응, YR1/Root YR 계열로 전환됨을 확인)
- *  - iOS는 ios/app/AppDelegate.swift의 TrustKit 핀도 함께 갱신할 것
+ * 핀 정책:
+ *  - Let's Encrypt는 인증서 갱신 때마다 발급 중간 CA를 바꿀 수 있으므로(YR1 ↔ YR2 ...) 중간 CA 핀만으로는
+ *    로그인 장애가 난다. 체인 어디든 하나만 맞으면 통과하므로 루트(Root YR, ISRG Root X1/X2)를 함께 건다.
+ *    구형 기기는 Root YR을 신뢰 저장소에 갖고 있지 않아 X1 교차서명 경로로 검증되므로 X1 핀이 필요하다.
+ *  - PIN_EXPIRATION 이후에는 피닝이 꺼지고 일반 TLS 검증만 한다(fail-open). 업데이트하지 않은 구버전 앱이
+ *    CA 교체로 영영 접속 불가가 되는 것을 막기 위함이므로, 날짜가 가까워지면 핀을 재확인하고 연장해 배포한다.
+ *  - 해시 계산: openssl x509 -in <cert.pem> -pubkey -noout | openssl pkey -pubin -outform der \
+ *      | openssl dgst -sha256 -binary | openssl base64
+ *    현재 체인: openssl s_client -connect api.gwangsan.io.kr:443 -servername api.gwangsan.io.kr -showcerts
+ *    CA 원본: https://letsencrypt.org/certificates/
+ *  - iOS는 ios/app/AppDelegate.swift의 TrustKit 설정이 같은 값을 써야 한다(plugins/__tests__에서 검사).
  */
+const PIN_EXPIRATION = '2027-12-31';
+
+const CERTIFICATE_PINS = [
+  { hash: 'nWN7PSep5XDQdge5zK24CnCRXHr3KvzhKEGxsdqCX9E=', label: "Let's Encrypt YR2 중간 CA" },
+  { hash: 'LoMHBotttiDko50Gi13uXW71eIy7LAttI+rYT8wXF4w=', label: "Let's Encrypt YR1 중간 CA" },
+  { hash: 'fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=', label: 'ISRG Root YR' },
+  { hash: 'C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=', label: 'ISRG Root X1' },
+  { hash: 'diGVwiVYbubAI3RW4hB9xU8e/CH2GnkuvVFZE8zmgzI=', label: 'ISRG Root X2' },
+];
+
 const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
-<!--
-  Certificate Pinning - Gwangsan Crossplatform
-  Primary : Let's Encrypt YR1 중간 CA (인증서 갱신 후에도 유효)
-  Backup  : ISRG Root YR + api.gwangsan.io.kr 리프 인증서
--->
+<!-- Certificate Pinning - Gwangsan Crossplatform (plugins/withNetworkSecurityConfig.js에서 생성) -->
 <network-security-config>
   <base-config cleartextTrafficPermitted="false">
     <trust-anchors>
@@ -38,13 +42,10 @@ const NSC_XML = `<?xml version="1.0" encoding="utf-8"?>
   </base-config>
   <domain-config cleartextTrafficPermitted="false">
     <domain includeSubdomains="true">gwangsan.io.kr</domain>
-    <pin-set>
-      <!-- Let's Encrypt YR1 중간 CA (주 핀) -->
-      <pin digest="SHA-256">LoMHBotttiDko50Gi13uXW71eIy7LAttI+rYT8wXF4w=</pin>
-      <!-- ISRG Root YR (중간 CA 로테이션 대비 백업 핀) -->
-      <pin digest="SHA-256">fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=</pin>
-      <!-- api.gwangsan.io.kr 리프 인증서 (백업 핀) -->
-      <pin digest="SHA-256">LJvhzltzFZmCqLJuDqFT7BtZJTQu+ViVV0IEfAsYeF4=</pin>
+    <pin-set expiration="${PIN_EXPIRATION}">
+${CERTIFICATE_PINS.map(
+  ({ hash, label }) => `      <!-- ${label} -->\n      <pin digest="SHA-256">${hash}</pin>`
+).join('\n')}
     </pin-set>
   </domain-config>
 </network-security-config>
@@ -114,3 +115,6 @@ const withNetworkSecurityConfig = (config) => {
 };
 
 module.exports = withNetworkSecurityConfig;
+module.exports.PIN_EXPIRATION = PIN_EXPIRATION;
+module.exports.CERTIFICATE_PINS = CERTIFICATE_PINS;
+module.exports.NSC_XML = NSC_XML;

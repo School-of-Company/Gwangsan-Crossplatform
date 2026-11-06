@@ -15,10 +15,8 @@ class AppDelegate: ExpoAppDelegate {
   ) -> Bool {
     #if !DEBUG
     // Certificate Pinning — TrustKit
-    // Pins: Let's Encrypt YR1 중간 CA (주 핀) + ISRG Root YR (백업) + 리프 인증서 (백업)
-    // 핀 갱신 명령: openssl s_client -connect api.gwangsan.io.kr:443 2>/dev/null \
-    //   | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
-    //   | openssl dgst -sha256 -binary | base64
+    // 핀 목록·만료일은 plugins/withNetworkSecurityConfig.js(Android)와 같아야 한다 — 정책과 해시 계산법은 그 파일 참고.
+    // 만료일 이후에는 피닝이 꺼져(fail-open) CA 교체 시 구버전 앱이 접속 불가가 되지 않는다.
     let trustKitConfig: [String: Any] = [
       kTSKSwizzleNetworkDelegates: true,
       kTSKPinnedDomains: [
@@ -26,10 +24,13 @@ class AppDelegate: ExpoAppDelegate {
           kTSKIncludeSubdomains: true,
           kTSKEnforcePinning: true,
           kTSKDisableDefaultReportUri: true,
+          kTSKExpirationDate: "2027-12-31",
           kTSKPublicKeyHashes: [
+            "nWN7PSep5XDQdge5zK24CnCRXHr3KvzhKEGxsdqCX9E=",  // Let's Encrypt YR2 중간 CA
             "LoMHBotttiDko50Gi13uXW71eIy7LAttI+rYT8wXF4w=",  // Let's Encrypt YR1 중간 CA
-            "fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=",  // ISRG Root YR (중간 CA 로테이션 대비 백업)
-            "LJvhzltzFZmCqLJuDqFT7BtZJTQu+ViVV0IEfAsYeF4=",  // 리프 인증서 (백업)
+            "fk6IOKit1ild5647BH06ujSIq5XbCgqlbYl6ANhhi88=",  // ISRG Root YR
+            "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=",  // ISRG Root X1
+            "diGVwiVYbubAI3RW4hB9xU8e/CH2GnkuvVFZE8zmgzI=",  // ISRG Root X2
           ],
         ]
       ]
