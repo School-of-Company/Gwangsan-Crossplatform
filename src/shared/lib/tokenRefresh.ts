@@ -2,8 +2,6 @@ import * as Sentry from '@sentry/react-native';
 import { instance } from './apiInstance';
 import { getRefreshToken } from './auth';
 import { setData } from './setData';
-import { syncBiometricCredentials } from './biometricCredentials';
-import { logger } from './logger';
 import { isNetworkOrTimeoutError } from './errorHandler';
 import { SessionExpiredError, TokenStorageError } from './authErrors';
 
@@ -50,10 +48,6 @@ export const refreshAccessToken = (reason: string): Promise<string> => {
       setData('accessToken', newAccessToken),
       rotatedRefreshToken ? setData('refreshToken', rotatedRefreshToken) : Promise.resolve(),
     ]);
-    // 생체 인증용 사본 갱신이 실패해도 요청 재시도는 막지 않는다
-    syncBiometricCredentials(newAccessToken, rotatedRefreshToken ?? refreshToken).catch((error) =>
-      logger.warn('Failed to sync biometric credentials', error)
-    );
     return newAccessToken;
   })().catch((error: unknown) => {
     // 기다리던 요청들도 같은 에러를 받으므로, 로그아웃할 상황이면 한국어 안내로 바꿔 던진다
