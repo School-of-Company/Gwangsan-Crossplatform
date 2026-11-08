@@ -4,7 +4,7 @@
     "owner": "gsmstartup",
     "name": "시민화폐 광산",
     "slug": "my-expo-app",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "scheme": "gwangsan",
     "web": {
       "favicon": "./src/app/favicon.png"
@@ -16,6 +16,44 @@
       "expo-router",
       "expo-image",
       "expo-asset",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Pretendard",
+                "fontDefinitions": [
+                  {
+                    "path": "./src/shared/assets/fonts/Pretendard/Pretendard-Regular.otf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./src/shared/assets/fonts/Pretendard/Pretendard-Medium.otf",
+                    "weight": 500
+                  },
+                  {
+                    "path": "./src/shared/assets/fonts/Pretendard/Pretendard-SemiBold.otf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./src/shared/assets/fonts/Pretendard/Pretendard-Bold.otf",
+                    "weight": 700
+                  }
+                ]
+              }
+            ]
+          },
+          "ios": {
+            "fonts": [
+              "./src/shared/assets/fonts/Pretendard/Pretendard-Regular.otf",
+              "./src/shared/assets/fonts/Pretendard/Pretendard-Medium.otf",
+              "./src/shared/assets/fonts/Pretendard/Pretendard-SemiBold.otf",
+              "./src/shared/assets/fonts/Pretendard/Pretendard-Bold.otf"
+            ]
+          }
+        }
+      ],
       [
         "expo-build-properties",
         {

@@ -27,6 +27,34 @@ async function isSignedIn(): Promise<boolean> {
   );
 }
 
+async function isVisible(matcher: Detox.NativeMatcher): Promise<boolean> {
+  try {
+    await expect(element(matcher)).toBeVisible();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 동기화를 끈 상태라 replaceText 직후의 리턴 키가 입력값 state 반영보다 먼저 처리되면
+// onSubmitEditing이 빈 값으로 판단해 넘어가지 않는다. 같은 화면에 남아 있으면 다시 누른다.
+async function submitUntilVisible(
+  inputId: string,
+  next: Detox.NativeMatcher,
+  timeoutMs: number
+): Promise<void> {
+  const attempts = 3;
+  for (let attempt = 1; ; attempt++) {
+    await element(by.id(inputId)).tapReturnKey();
+    try {
+      await waitFor(element(next)).toBeVisible().withTimeout(timeoutMs);
+      return;
+    } catch (error) {
+      if (attempt >= attempts || !(await isVisible(by.id(inputId)))) throw error;
+    }
+  }
+}
+
 export async function launchAndSignIn(): Promise<void> {
   await launchAppResilient({
     newInstance: true,
@@ -48,16 +76,13 @@ export async function launchAndSignIn(): Promise<void> {
     .withTimeout(5000);
   await element(by.id('NicknameStep-nickname-input')).tap();
   await element(by.id('NicknameStep-nickname-input')).replaceText(E2E_NICKNAME);
-  await element(by.id('NicknameStep-nickname-input')).tapReturnKey();
+  await submitUntilVisible(
+    'NicknameStep-nickname-input',
+    by.id('PasswordStep-password-input'),
+    5000
+  );
 
-  await waitFor(element(by.id('PasswordStep-password-input')))
-    .toBeVisible()
-    .withTimeout(5000);
   await element(by.id('PasswordStep-password-input')).tap();
   await element(by.id('PasswordStep-password-input')).replaceText(E2E_PASSWORD);
-  await element(by.id('PasswordStep-password-input')).tapReturnKey();
-
-  await waitFor(element(by.id('Footer-profile-button')))
-    .toBeVisible()
-    .withTimeout(30000);
+  await submitUntilVisible('PasswordStep-password-input', by.id('Footer-profile-button'), 30000);
 }

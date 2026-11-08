@@ -19,7 +19,7 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.4.0</string>
+    <string>1.4.1</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -77,6 +77,13 @@
     <string>$(RCT_METRO_PORT)</string>
     <key>RCTNewArchEnabled</key>
     <true/>
+    <key>UIAppFonts</key>
+    <array>
+      <string>Pretendard-Regular.otf</string>
+      <string>Pretendard-Medium.otf</string>
+      <string>Pretendard-SemiBold.otf</string>
+      <string>Pretendard-Bold.otf</string>
+    </array>
     <key>UIBackgroundModes</key>
     <array>
       <string>fetch</string>
