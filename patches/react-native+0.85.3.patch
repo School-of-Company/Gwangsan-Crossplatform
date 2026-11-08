@@ -1,7 +1,17 @@
 diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInput.js b/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
+index e1d5ca1..d733332 100644
 --- a/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
 +++ b/node_modules/react-native/Libraries/Components/TextInput/TextInput.js
-@@ -904,6 +904,8 @@
+@@ -673,6 +673,8 @@ function InternalTextInput(props: TextInputProps): React.Node {
+       _style = [_style, overrides];
+     }
+   }
++  // Gwangsan: Text와 같이 앱 내장 Pretendard를 기본 글꼴로 쓴다.
++  _style = [styles.appFont, _style];
+ 
+   if (Platform.OS === 'ios') {
+     const RCTTextInputView =
+@@ -904,6 +906,8 @@ const TextInput: component(
  ) = function TextInput({
    ref: forwardedRef,
    allowFontScaling = true,
@@ -10,7 +20,7 @@ diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInput.
    rejectResponderTermination = true,
    underlineColorAndroid = 'transparent',
    autoComplete,
-@@ -923,6 +925,7 @@
+@@ -923,6 +927,7 @@ const TextInput: component(
    return (
      <InternalTextInput
        allowFontScaling={allowFontScaling}
@@ -18,11 +28,28 @@ diff --git a/node_modules/react-native/Libraries/Components/TextInput/TextInput.
        rejectResponderTermination={rejectResponderTermination}
        underlineColorAndroid={underlineColorAndroid}
        editable={readOnly !== undefined ? !readOnly : editable}
+@@ -974,6 +979,9 @@ export type TextInputComponentStatics = Readonly<{
+ }>;
+ 
+ const styles = StyleSheet.create({
++  appFont: {
++    fontFamily: 'Pretendard',
++  },
+   multilineDefault: {
+     // This default top inset makes RCTMultilineTextInputView seem as close as possible
+     // to single-line RCTSinglelineTextInputView defaults, using the system defaults
 diff --git a/node_modules/react-native/Libraries/Text/Text.js b/node_modules/react-native/Libraries/Text/Text.js
+index 5a1e760..6a4b1ee 100644
 --- a/node_modules/react-native/Libraries/Text/Text.js
 +++ b/node_modules/react-native/Libraries/Text/Text.js
-@@ -287,6 +287,10 @@
+@@ -285,8 +285,16 @@ const TextImpl: component(
  
+   let nativeText = null;
+ 
++  // Gwangsan: 앱 내장 Pretendard를 기본 글꼴로 쓴다. 갤럭시 글꼴 스타일(다운로드 글꼴)이
++  // 적용되면 측정 폭과 실제 그린 폭이 달라 말풍선·시간 텍스트의 마지막 단어가 잘린다.
++  // 중첩 Text는 부모 글꼴을 상속해야 하므로 최상위 Text에만 넣는다.
++  processedProps.style = [styles.appFont, processedProps.style];
    processedProps.accessible = _accessible;
    processedProps.allowFontScaling = allowFontScaling !== false;
 +  // Gwangsan: 기기 접근성 글자 크기를 최대 1.3배까지만 반영한다. 그 이상 커지면
@@ -32,3 +59,13 @@ diff --git a/node_modules/react-native/Libraries/Text/Text.js b/node_modules/rea
    processedProps.disabled = _disabled;
    processedProps.ellipsizeMode = ellipsizeMode ?? 'tail';
    processedProps.children = children;
+@@ -551,6 +559,9 @@ const styles = StyleSheet.create({
+   default: {
+     overflow: 'hidden',
+   },
++  appFont: {
++    fontFamily: 'Pretendard',
++  },
+ });
+ 
+ export default TextImpl;
