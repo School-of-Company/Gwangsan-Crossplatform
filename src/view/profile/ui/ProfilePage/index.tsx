@@ -93,6 +93,7 @@ export default function ProfilePageView() {
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="프로필" showBackButton={!isMe} />
       <ScrollView
+        testID="profile-scroll"
         className="flex-0.8 flex gap-3"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Information
