@@ -1,4 +1,11 @@
-import { LayoutChangeEvent, RefreshControl, Text, View, ViewStyle } from 'react-native';
+import {
+  LayoutChangeEvent,
+  RefreshControl,
+  Text,
+  View,
+  ViewStyle,
+  useWindowDimensions,
+} from 'react-native';
 import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
@@ -10,8 +17,10 @@ import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 import { Spinner } from '~/shared/ui/Spinner';
 
-// Post 카드 한 장의 높이. VirtualList는 이 값으로 각 카드를 absolute 배치하므로 카드가 이보다 커지면 안 된다.
+// 글자 크기 1배일 때 Post 카드 한 장의 높이. VirtualList는 이 값으로 각 카드를 absolute 배치하므로
+// 글자 크기 설정에 맞춰 늘려야 카드가 잘리지 않는다. 위아래 패딩(py-4)은 글자와 무관하게 고정이다.
 const POST_ITEM_HEIGHT = 120;
+const POST_ITEM_PADDING = 32;
 // 화면 높이를 재기 전 첫 렌더에 쓰는 높이(scrolloop 기본값과 같다)
 const INITIAL_LIST_HEIGHT = 400;
 
@@ -19,6 +28,10 @@ export default function PostList({ category, type }: { category: Category; type:
   // VirtualList는 height로 화면에 그릴 범위를 계산하고 높이도 그 값으로 고정한다. 넘기지 않으면
   // 화면 크기와 상관없이 400으로 고정돼 큰 화면에서 목록 아래가 비었다. 실제 영역을 재서 넘긴다.
   const [listHeight, setListHeight] = useState(0);
+  const { fontScale } = useWindowDimensions();
+  const itemSize = Math.ceil(
+    POST_ITEM_PADDING + (POST_ITEM_HEIGHT - POST_ITEM_PADDING) * Math.max(fontScale, 1)
+  );
   const currentMode = category ? returnValue(category) : undefined;
 
   const {
@@ -98,7 +111,7 @@ export default function PostList({ category, type }: { category: Category; type:
       <VirtualList
         height={listHeight > 0 ? listHeight : INITIAL_LIST_HEIGHT}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        itemSize={POST_ITEM_HEIGHT}
+        itemSize={itemSize}
         overscan={12}
         count={data.length}
         renderItem={renderItem}

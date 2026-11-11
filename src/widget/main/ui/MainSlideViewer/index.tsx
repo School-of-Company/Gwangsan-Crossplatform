@@ -17,11 +17,12 @@ const MainSlideViewer = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
 
+  const currentRef = useRef(0);
+
   useEffect(() => {
-    let current = 0;
     intervalRef.current = setInterval(() => {
-      current = (current + 1) % images.length;
-      scrollViewRef.current?.scrollTo({ x: screenWidth * current, animated: true });
+      currentRef.current = (currentRef.current + 1) % images.length;
+      scrollViewRef.current?.scrollTo({ x: screenWidth * currentRef.current, animated: true });
     }, 3000);
 
     return () => {
