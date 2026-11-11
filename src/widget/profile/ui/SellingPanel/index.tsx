@@ -1,7 +1,5 @@
 import { memo, useCallback } from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
   FlatList,
   ListRenderItemInfo,
   RefreshControl,
@@ -12,13 +10,13 @@ import {
 import { PostType } from '~/shared/types/postType';
 import type { ReviewPostType } from '~/entity/reviews';
 import { SellingPostCard } from '../SellingPostCard';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { Spinner } from '~/shared/ui/Spinner';
 
 const keyExtractor = (post: PostType) => String(post.id);
 
 export interface SellingPanelProps {
   testIDPrefix: string;
+  width: number;
   posts: PostType[];
   emptyMessage: string;
   receivedReviews?: ReviewPostType[];
@@ -38,6 +36,7 @@ export interface SellingPanelProps {
 export const SellingPanel = memo(
   ({
     testIDPrefix,
+    width,
     posts,
     emptyMessage,
     receivedReviews,
@@ -80,7 +79,7 @@ export const SellingPanel = memo(
       if (isFetchingNextPage) {
         return (
           <View testID={`${testIDPrefix}-loading-more`} className="items-center py-4">
-            <ActivityIndicator color="#8FC31D" />
+            <Spinner />
           </View>
         );
       }
@@ -92,7 +91,7 @@ export const SellingPanel = memo(
       if (isPending) {
         return (
           <View testID={`${testIDPrefix}-loading`} className="pt-20">
-            <ActivityIndicator color="#8FC31D" />
+            <Spinner />
           </View>
         );
       }
@@ -103,7 +102,7 @@ export const SellingPanel = memo(
     return (
       <FlatList
         testID={testIDPrefix}
-        style={{ width: SCREEN_WIDTH }}
+        style={{ width }}
         data={posts}
         keyExtractor={keyExtractor}
         renderItem={renderItem}

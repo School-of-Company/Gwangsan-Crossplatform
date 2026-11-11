@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import {
@@ -17,6 +17,7 @@ import { Header } from '~/shared/ui/Header';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat';
 import { useChatRoomPage } from '~/view/chat/model/useChatRoomPage';
+import { Spinner } from '~/shared/ui/Spinner';
 
 export default function ChatRoomPage() {
   const {
@@ -144,7 +145,7 @@ export default function ChatRoomPage() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#8FC31D" />
+        <Spinner size="large" />
       </SafeAreaView>
     );
   }

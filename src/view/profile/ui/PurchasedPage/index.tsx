@@ -1,26 +1,18 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { PostThumbnail } from '~/shared/ui/PostThumbnail';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
-import { Header, PillTabs } from '~/shared/ui';
+import { Header } from '~/shared/ui';
+import { TabPager } from '~/shared/ui/TabPager';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { MODE } from '~/shared/types/mode';
 import { PostType } from '~/shared/types/postType';
 import { useGetProfile, useGetMyPosts, useGetMemberPosts } from '~/entity/profile';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 type TradeTab = 'purchased' | 'sold';
 type CounterpartRole = 'seller' | 'buyer';
@@ -29,8 +21,6 @@ const TRADE_TABS = [
   { value: 'purchased' as const, label: '구매내역' },
   { value: 'sold' as const, label: '판매내역' },
 ];
-
-const getTabIndex = (tab: TradeTab) => TRADE_TABS.findIndex((t) => t.value === tab);
 
 const TradePostCard = memo(
   ({ post, counterpartRole }: { post: PostType; counterpartRole: CounterpartRole }) => {
@@ -115,23 +105,13 @@ export default function PurchasedPageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isMe = !Boolean(id);
   const [activeTab, setActiveTab] = useState<TradeTab>('purchased');
-  const scrollRef = useRef<ScrollView>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const { width: screenWidth } = useWindowDimensions();
 
   const { data: profileData } = useGetProfile(id);
   const myPosts = useGetMyPosts(isMe);
   const otherPosts = useGetMemberPosts(id);
   const { data: postsData, isError, isLoading, refetch } = isMe ? myPosts : otherPosts;
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing, onRefresh: handleRefresh } = usePullToRefresh(refetch);
 
   const purchasedPosts = useMemo(
     () =>
@@ -148,28 +128,13 @@ export default function PurchasedPageView() {
     [postsData]
   );
 
-  // 받아둔 목록이 없으면 오류 화면이 대신 보이므로, 목록을 유지한 채 새로고침이 실패했을 때만 알린다.
-  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다
-  useEffect(() => {
-    if (!isError || !postsData) return;
-    Toast.show({
-      type: 'error',
-      text1: '글을 불러오는데 실패했습니다.',
-      text2: '잠시 후 다시 시도해 주세요.',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError]);
-
-  const handleTabChange = (tab: TradeTab) => {
-    setActiveTab(tab);
-    scrollRef.current?.scrollTo({ x: getTabIndex(tab) * screenWidth, animated: true });
-  };
-
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
-    const tab = TRADE_TABS[index]?.value;
-    if (tab && tab !== activeTab) setActiveTab(tab);
-  };
+  // 받아둔 목록이 없으면 오류 화면이 대신 보이므로, 목록을 유지한 채 새로고침이 실패했을 때만 알린다
+  useErrorToastOnTransition(
+    isError,
+    '글을 불러오는데 실패했습니다.',
+    '잠시 후 다시 시도해 주세요.',
+    !!postsData
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
@@ -177,45 +142,39 @@ export default function PurchasedPageView() {
         headerTitle={isMe ? '거래내역' : `${profileData?.nickname ?? ''}님의 거래 내역`}
         showBackButton
       />
-      <PillTabs
+      <TabPager
         tabs={TRADE_TABS}
         value={activeTab}
-        onChange={handleTabChange}
-        containerClassName="mx-6 mb-3 mt-3"
+        onChange={setActiveTab}
         testIDPrefix="trade-tab"
-      />
-      {!postsData && isLoading ? (
-        <View testID="trade-history-loading" className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#8FC31D" />
-        </View>
-      ) : !postsData && isError ? (
-        <ErrorFallback title="거래내역을 불러오지 못했습니다." onRetry={() => refetch()} />
-      ) : (
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          decelerationRate="fast"
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={handleMomentumScrollEnd}>
-          <TradePanel
-            posts={purchasedPosts}
-            counterpartRole="seller"
-            emptyMessage="구매 내역이 없습니다."
-            width={screenWidth}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-          <TradePanel
-            posts={soldPosts}
-            counterpartRole="buyer"
-            emptyMessage="판매 내역이 없습니다."
-            width={screenWidth}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-        </ScrollView>
-      )}
+        fallback={
+          !postsData && isLoading ? (
+            <LoadingView testID="trade-history-loading" size="large" />
+          ) : !postsData && isError ? (
+            <ErrorFallback title="거래내역을 불러오지 못했습니다." onRetry={() => refetch()} />
+          ) : undefined
+        }>
+        {(screenWidth) => (
+          <>
+            <TradePanel
+              posts={purchasedPosts}
+              counterpartRole="seller"
+              emptyMessage="구매 내역이 없습니다."
+              width={screenWidth}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+            <TradePanel
+              posts={soldPosts}
+              counterpartRole="buyer"
+              emptyMessage="판매 내역이 없습니다."
+              width={screenWidth}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          </>
+        )}
+      </TabPager>
     </SafeAreaView>
   );
 }

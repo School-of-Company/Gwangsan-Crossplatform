@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { Button, Header } from '~/shared/ui';
@@ -9,6 +9,7 @@ import ImageUploader, { type ImageUploadState } from '~/shared/ui/ImageUploader'
 import { useCancelTrade } from '~/widget/cancelTrade';
 import { useGetReview } from '~/entity/reviews';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 export default function CancelTradeReasonPage() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -79,9 +80,7 @@ export default function CancelTradeReasonPage() {
         {isReviewError ? (
           <ErrorFallback onRetry={() => refetchReview()} />
         ) : (
-          <View testID="cancel-trade-loading" className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#8FC31D" />
-          </View>
+          <LoadingView testID="cancel-trade-loading" />
         )}
       </SafeAreaView>
     );

@@ -34,11 +34,7 @@ jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
   useGetMyInformation: () => ({ data: { memberId: 1 } }),
 }));
 
-jest.mock('~/shared/ui', () => ({
-  Header: ({ headerTitle, showBackButton }: any) => {
-    const { Text } = require('react-native');
-    return <Text testID="header">{JSON.stringify({ headerTitle, showBackButton })}</Text>;
-  },
+jest.mock('~/shared/ui/PillTabs', () => ({
   PillTabs: ({ tabs, value, onChange, testIDPrefix }: any) => {
     const { Text, TouchableOpacity, View } = require('react-native');
     return (
@@ -53,6 +49,13 @@ jest.mock('~/shared/ui', () => ({
         ))}
       </View>
     );
+  },
+}));
+
+jest.mock('~/shared/ui', () => ({
+  Header: ({ headerTitle, showBackButton }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="header">{JSON.stringify({ headerTitle, showBackButton })}</Text>;
   },
   BottomSheetModalWrapper: ({ isVisible, children }: any) => (isVisible ? children : null),
   Button: ({ children, onPress, disabled, testID }: any) => {
