@@ -21,8 +21,6 @@ import Toast from 'react-native-toast-message';
 import { logger } from '~/shared/lib/logger';
 import { useThemeColors } from '~/shared/lib/theme';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
 export type { ImageUploadState };
 
 interface Props {
@@ -83,14 +81,9 @@ const ImageUploader = ({
       if (result.canceled || !result.assets || result.assets.length === 0) return;
 
       const accepted: SelectedAsset[] = [];
-      let hasOversized = false;
       let hasDuplicate = false;
 
       result.assets.forEach((asset) => {
-        if (asset.fileSize !== undefined && asset.fileSize > MAX_FILE_SIZE) {
-          hasOversized = true;
-          return;
-        }
         const isDuplicateInBatch = accepted.some((item) =>
           asset.assetId ? item.assetId === asset.assetId : item.uri === asset.uri
         );
@@ -105,13 +98,7 @@ const ImageUploader = ({
       const exceedsLimit = accepted.length > remainingCount;
       const toAttach = accepted.slice(0, remainingCount);
 
-      if (hasOversized) {
-        Toast.show({
-          type: 'error',
-          text1: '파일 크기 초과',
-          text2: '10MB를 넘는 사진은 제외했습니다.',
-        });
-      } else if (hasDuplicate) {
+      if (hasDuplicate) {
         Toast.show({
           type: 'error',
           text1: '중복된 사진',

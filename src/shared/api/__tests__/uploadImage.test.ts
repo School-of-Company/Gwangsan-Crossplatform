@@ -3,6 +3,7 @@ import { uploadImage } from '../uploadImage';
 import { instance } from '~/shared/lib/axios';
 import { createAxiosError } from '~/test-utils/axiosError';
 import * as FileSystem from 'expo-file-system';
+import { prepareImageForUpload } from '~/shared/lib/prepareImageForUpload';
 
 jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
@@ -23,6 +24,10 @@ jest.mock('expo-file-system', () => ({
   File: jest.fn().mockReturnValue({ exists: true, size: 0 }),
 }));
 
+jest.mock('~/shared/lib/prepareImageForUpload', () => ({
+  prepareImageForUpload: jest.fn(async (uri: string) => uri),
+}));
+
 const mockPost = instance.post as jest.Mock;
 const MockFile = FileSystem.File as unknown as jest.Mock;
 
@@ -39,6 +44,15 @@ describe('uploadImage', () => {
     const result = await uploadImage('file:///local/path/photo.jpg');
 
     expect(result).toEqual(mockResponse);
+  });
+
+  it('리사이즈한 이미지의 uri로 업로드한다', async () => {
+    (prepareImageForUpload as jest.Mock).mockResolvedValueOnce('file:///cache/resized.jpg');
+    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+
+    await uploadImage('file:///local/path/photo.heic');
+
+    expect(MockFile).toHaveBeenCalledWith('file:///cache/resized.jpg');
   });
 
   it('multipart/form-data Content-Type으로 POST 요청한다', async () => {
