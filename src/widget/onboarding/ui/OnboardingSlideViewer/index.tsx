@@ -2,8 +2,8 @@ import { useRef, useState } from 'react';
 import {
   View,
   Image,
-  Dimensions,
   ScrollView,
+  useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -13,20 +13,20 @@ import onboardingSlide3 from '~/shared/assets/png/startSlide/onboardingSlide3.pn
 import { SlideIndicator } from '~/shared/ui';
 
 const images = [onboardingSlide1, onboardingSlide2, onboardingSlide3];
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const OnboardingSlideViewer = () => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [current, setCurrent] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const handleDotPress = (idx: number) => {
-    scrollViewRef.current?.scrollTo({ x: SCREEN_WIDTH * idx, animated: true });
+    scrollViewRef.current?.scrollTo({ x: screenWidth * idx, animated: true });
     setCurrent(idx);
   };
 
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
+    const newIndex = Math.round(contentOffsetX / screenWidth);
     setCurrent(newIndex);
   };
 
@@ -44,8 +44,8 @@ const OnboardingSlideViewer = () => {
             key={idx}
             source={img}
             style={{
-              width: SCREEN_WIDTH,
-              height: SCREEN_HEIGHT * 0.65,
+              width: screenWidth,
+              height: screenHeight * 0.65,
               resizeMode: 'contain',
             }}
           />

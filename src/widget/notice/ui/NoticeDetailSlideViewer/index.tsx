@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import {
   View,
-  Dimensions,
   ScrollView,
+  useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -10,24 +10,23 @@ import { SlideIndicator } from '~/shared/ui';
 import { NoticeData } from '~/entity/notice';
 import { CachedImage } from '~/shared/ui/CachedImage';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 interface NoticeDetailSlideViewerProps {
   notice: NoticeData;
 }
 
 const NoticeDetailSlideViewer = ({ notice }: NoticeDetailSlideViewerProps) => {
+  const { width: screenWidth } = useWindowDimensions();
   const [current, setCurrent] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const handleIndicatorPress = (index: number) => {
-    scrollViewRef.current?.scrollTo({ x: SCREEN_WIDTH * index, animated: true });
+    scrollViewRef.current?.scrollTo({ x: screenWidth * index, animated: true });
     setCurrent(index);
   };
 
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    setCurrent(Math.round(contentOffsetX / SCREEN_WIDTH));
+    setCurrent(Math.round(contentOffsetX / screenWidth));
   };
 
   return (
@@ -44,7 +43,7 @@ const NoticeDetailSlideViewer = ({ notice }: NoticeDetailSlideViewerProps) => {
             key={index}
             source={{ uri: image.imageUrl }}
             style={{
-              width: SCREEN_WIDTH,
+              width: screenWidth,
               height: 256,
             }}
           />

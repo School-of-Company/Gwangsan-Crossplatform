@@ -5,6 +5,9 @@ import { PostThumbnail } from '~/shared/ui/PostThumbnail';
 import { PostType } from '~/shared/types/postType';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 
+// 목록(VirtualList)이 카드 높이를 120으로 고정하므로 큰 글씨 설정에서도 줄이 잘리지 않을 만큼만 키운다
+const MAX_FONT_SCALE = 1.1;
+
 interface PostProps extends PostType {
   paddingClassName?: string;
 }
@@ -36,13 +39,16 @@ function Post({
         ? images.length
         : 0) - 1;
   const isTemporary = id < 0;
+  const accessibilityLabel = `${title}, ${gwangsan} 광산${isReserved ? ', 예약중' : ''}`;
 
   return (
     <TouchableOpacity
       onPress={handlePress}
       className={`flex flex-row items-center gap-6 ${paddingClassName}`}
       activeOpacity={isTemporary ? 1 : 0.7}
-      disabled={isTemporary}>
+      disabled={isTemporary}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}>
       <View className="relative">
         <PostThumbnail post={{ imageUrls, images }} className={isTemporary ? 'opacity-70' : ''} />
         {additionalImagesCount > 0 && (
@@ -56,29 +62,47 @@ function Post({
           {/* 목록(VirtualList)이 카드 높이를 고정값으로 배치하므로 긴 제목이 줄바꿈돼 카드가 커지지 않게 한다 */}
           <Text
             numberOfLines={1}
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
             className={`shrink text-lg font-semibold text-foreground ${isTemporary ? 'opacity-70' : ''}`}>
             {title}
           </Text>
           {isReserved && (
-            <Text testID="post-reserved-tag" className="text-xs text-gray-500">
+            <Text
+              testID="post-reserved-tag"
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+              className="text-xs text-gray-500">
               예약중
             </Text>
           )}
         </View>
-        <Text className={`text-sm text-gray-600 ${isTemporary ? 'opacity-70' : ''}`}>
+        <Text
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
+          className={`text-sm text-gray-600 ${isTemporary ? 'opacity-70' : ''}`}>
           {gwangsan} 광산
         </Text>
         {seller && (
-          <Text testID="post-seller" numberOfLines={1} className="text-xs text-gray-500">
+          <Text
+            testID="post-seller"
+            numberOfLines={1}
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
+            className="text-xs text-gray-500">
             판매자: {seller.nickname}
           </Text>
         )}
         {buyer && (
-          <Text testID="post-buyer" numberOfLines={1} className="text-xs text-gray-500">
+          <Text
+            testID="post-buyer"
+            numberOfLines={1}
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
+            className="text-xs text-gray-500">
             구매자: {buyer.nickname}
           </Text>
         )}
-        {isTemporary && <Text className="mt-1 text-xs text-gray-400">업로드 중...</Text>}
+        {isTemporary && (
+          <Text maxFontSizeMultiplier={MAX_FONT_SCALE} className="mt-1 text-xs text-gray-400">
+            업로드 중...
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );

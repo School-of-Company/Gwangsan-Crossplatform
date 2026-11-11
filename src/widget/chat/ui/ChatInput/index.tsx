@@ -93,13 +93,13 @@ const ChatInputComponent = ({
             onChangeText={chatInput.updateMessage}
             placeholder="채팅을 입력해주세요"
             placeholderTextColor={colors['gray-400']}
-            className="min-h-[48px] flex-1 px-4 py-3 text-base text-gray-900"
-            multiline={false}
+            className="max-h-[120px] min-h-[48px] flex-1 px-4 py-3 text-base text-gray-900"
+            multiline
+            submitBehavior="submit"
             onSubmitEditing={handleSend}
+            returnKeyType="send"
             onFocus={onFocus}
             editable={!isInputDisabled}
-            returnKeyType="send"
-            blurOnSubmit={false}
             style={{ textAlignVertical: 'center' }}
           />
           {/* 수정은 텍스트만 가능하므로 수정 모드에서는 사진 첨부를 숨긴다 */}
