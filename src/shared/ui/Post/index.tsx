@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { memo, useCallback } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { PostThumbnail } from '~/shared/ui/PostThumbnail';
 import { PostType } from '~/shared/types/postType';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 
@@ -9,7 +9,7 @@ interface PostProps extends PostType {
   paddingClassName?: string;
 }
 
-export default function Post({
+function Post({
   id,
   title,
   gwangsan,
@@ -29,13 +29,6 @@ export default function Post({
     router.push(`/post/${id}`);
   }, [router, id]);
 
-  const firstImage =
-    imageUrls?.[0]?.imageUrl ??
-    (Array.isArray(images) && images.length > 0
-      ? typeof images[0] === 'string'
-        ? images[0]
-        : (images[0]?.imageUrl ?? images[0]?.imageUrl ?? images[0]?.imageUrl)
-      : null);
   const additionalImagesCount =
     (imageUrls?.length && imageUrls.length > 0
       ? imageUrls.length
@@ -44,12 +37,6 @@ export default function Post({
         : 0) - 1;
   const isTemporary = id < 0;
 
-  useEffect(() => {
-    if (firstImage) {
-      ExpoImage.prefetch(firstImage);
-    }
-  }, [firstImage]);
-
   return (
     <TouchableOpacity
       onPress={handlePress}
@@ -57,15 +44,7 @@ export default function Post({
       activeOpacity={isTemporary ? 1 : 0.7}
       disabled={isTemporary}>
       <View className="relative">
-        <ExpoImage
-          source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
-          className={`size-20 rounded-lg ${isTemporary ? 'opacity-70' : ''}`}
-          style={{ width: 80, height: 80, borderRadius: 12 }}
-          cachePolicy="memory-disk"
-          contentFit="cover"
-          recyclingKey={firstImage ?? 'placeholder'}
-          transition={200}
-        />
+        <PostThumbnail post={{ imageUrls, images }} className={isTemporary ? 'opacity-70' : ''} />
         {additionalImagesCount > 0 && (
           <View className="absolute bottom-1 right-1 rounded-md bg-black/50 px-2 py-1">
             <Text className="text-xs text-white">+{additionalImagesCount}</Text>
@@ -104,3 +83,5 @@ export default function Post({
     </TouchableOpacity>
   );
 }
+
+export default memo(Post);

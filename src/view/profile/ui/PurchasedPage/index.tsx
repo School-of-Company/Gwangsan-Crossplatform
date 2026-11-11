@@ -11,7 +11,8 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import { PostThumbnail } from '~/shared/ui/PostThumbnail';
+import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -31,72 +32,47 @@ const TRADE_TABS = [
 
 const getTabIndex = (tab: TradeTab) => TRADE_TABS.findIndex((t) => t.value === tab);
 
-const TradePostCard = ({
-  post,
-  counterpartRole,
-}: {
-  post: PostType;
-  counterpartRole: CounterpartRole;
-}) => {
-  const router = useRouter();
-  const { id, title, gwangsan, imageUrls = [], images = [] } = post;
-  const counterpart = post[counterpartRole];
-  const counterpartLabel = counterpartRole === 'seller' ? '판매자' : '구매자';
-  const testPrefix = counterpartRole === 'seller' ? 'purchased' : 'sold';
-  const isTemporary = id < 0;
+const TradePostCard = memo(
+  ({ post, counterpartRole }: { post: PostType; counterpartRole: CounterpartRole }) => {
+    const router = useRouter();
+    const { id, title, gwangsan } = post;
+    const counterpart = post[counterpartRole];
+    const counterpartLabel = counterpartRole === 'seller' ? '판매자' : '구매자';
+    const testPrefix = counterpartRole === 'seller' ? 'purchased' : 'sold';
+    const isTemporary = id < 0;
 
-  const handlePress = useCallback(() => {
-    if (isTemporary) return;
-    router.push(`/post/${id}`);
-  }, [router, id, isTemporary]);
+    const handlePress = useCallback(() => {
+      if (isTemporary || !acquireNavigationLock()) return;
+      router.push(`/post/${id}`);
+    }, [router, id, isTemporary]);
 
-  const firstImage =
-    imageUrls?.[0]?.imageUrl ??
-    (Array.isArray(images) && images.length > 0
-      ? typeof images[0] === 'string'
-        ? images[0]
-        : (images[0]?.imageUrl ?? null)
-      : null);
-
-  useEffect(() => {
-    if (firstImage) {
-      ExpoImage.prefetch(firstImage);
-    }
-  }, [firstImage]);
-
-  return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={isTemporary ? 1 : 0.7}
-      disabled={isTemporary}
-      className="overflow-hidden rounded-2xl bg-gray-50"
-      testID={`${testPrefix}-card-${id}`}>
-      <View className="flex-row items-center gap-4 px-5 py-5">
-        <ExpoImage
-          source={firstImage ? { uri: firstImage } : require('~/shared/assets/png/icon.png')}
-          style={{ width: 80, height: 80, borderRadius: 12 }}
-          cachePolicy="memory-disk"
-          contentFit="cover"
-          recyclingKey={firstImage ?? 'placeholder'}
-          transition={200}
-        />
-        <View className="flex-1 gap-1">
-          <Text className="text-lg font-semibold text-foreground" numberOfLines={1}>
-            {title}
-          </Text>
-          <Text className="text-sm text-gray-500">{gwangsan} 광산</Text>
-          {counterpart && (
-            <Text
-              testID={`${testPrefix}-card-${counterpartRole}-${id}`}
-              className="text-sm font-medium text-gray-700">
-              {counterpartLabel} {counterpart.nickname}
+    return (
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={isTemporary ? 1 : 0.7}
+        disabled={isTemporary}
+        className="overflow-hidden rounded-2xl bg-gray-50"
+        testID={`${testPrefix}-card-${id}`}>
+        <View className="flex-row items-center gap-4 px-5 py-5">
+          <PostThumbnail post={post} />
+          <View className="flex-1 gap-1">
+            <Text className="text-lg font-semibold text-foreground" numberOfLines={1}>
+              {title}
             </Text>
-          )}
+            <Text className="text-sm text-gray-500">{gwangsan} 광산</Text>
+            {counterpart && (
+              <Text
+                testID={`${testPrefix}-card-${counterpartRole}-${id}`}
+                className="text-sm font-medium text-gray-700">
+                {counterpartLabel} {counterpart.nickname}
+              </Text>
+            )}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
+      </TouchableOpacity>
+    );
+  }
+);
 
 const TradePanel = memo(
   ({
