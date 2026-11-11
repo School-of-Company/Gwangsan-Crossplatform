@@ -6,6 +6,7 @@ import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatEntry } from '~/entity/chat';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
 import { useCreateReview } from '~/entity/reviews';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 
 interface UsePostPageLogicParams {
   readonly id: string;
@@ -30,7 +31,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const [isMyPost, setIsMyPost] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   const tradeRequest = useTradeRequest({
     productId: data?.id,
@@ -123,14 +124,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
     onTradeRequest: tradeRequest.hasPendingRequest
       ? tradeRequest.handleWithdrawTradeRequest
       : tradeRequest.handleTradeRequest,
-    onRefresh: useCallback(async () => {
-      setRefreshing(true);
-      try {
-        await refetch();
-      } finally {
-        setRefreshing(false);
-      }
-    }, [refetch]),
+    onRefresh,
   };
 
   useEffect(() => {

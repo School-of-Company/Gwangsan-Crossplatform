@@ -1,17 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { useCallback, useState } from 'react';
+import { Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-import { Header, PillTabs, BottomSheetModalWrapper, Button, AlertModal } from '~/shared/ui';
-import { ActionSheetRow, SellingPanel } from '~/widget/profile';
+import { Header, BottomSheetModalWrapper, Button, AlertModal } from '~/shared/ui';
+import { TabPager } from '~/shared/ui/TabPager';
+import { SellingPanel } from '~/widget/profile';
+import { ActionSheetRow } from '~/shared/ui/ActionSheetRow';
 import { PostType } from '~/shared/types/postType';
 import { useDeletePost } from '~/entity/post';
 import {
@@ -21,6 +16,7 @@ import {
   useGetSellingPosts,
 } from '~/entity/profile';
 import { useGetReviews } from '~/entity/reviews';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
 
 type SellingTab = 'onSale' | 'sold';
 
@@ -28,10 +24,6 @@ const SELLING_TABS = [
   { value: 'onSale' as const, label: '판매중' },
   { value: 'sold' as const, label: '판매완료' },
 ];
-
-const getTabIndex = (tab: SellingTab) => SELLING_TABS.findIndex((t) => t.value === tab);
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function SellingPageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,7 +33,6 @@ export default function SellingPageView() {
   const [actionTargetPost, setActionTargetPost] = useState<PostType | null>(null);
   // 삭제 확인 AlertModal은 액션 시트가 닫힌 뒤에도 열려있어야 하므로 대상 postId를 따로 보관한다
   const [deleteTargetPostId, setDeleteTargetPostId] = useState<number | null>(null);
-  const scrollRef = useRef<ScrollView>(null);
 
   const { data: profileData } = useGetProfile(id);
   const { data: myProfileData } = useGetMyProfile(isMe);
@@ -66,28 +57,7 @@ export default function SellingPageView() {
 
   const { deletePostInPlace, isLoading: isDeletingPost } = useDeletePost();
 
-  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 토스트가 반복되므로, 실패로 바뀌는 순간에만 띄운다
-  useEffect(() => {
-    if (!isError) return;
-    Toast.show({
-      type: 'error',
-      text1: '글을 불러오는데 실패했습니다.',
-      text2: error?.message || '잠시 후 다시 시도해주세요.',
-    });
-    // 같은 실패가 이어지는 동안 에러 객체가 바뀌어도 다시 띄우지 않는다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError]);
-
-  const handleTabChange = (tab: SellingTab) => {
-    setActiveTab(tab);
-    scrollRef.current?.scrollTo({ x: getTabIndex(tab) * SCREEN_WIDTH, animated: true });
-  };
-
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-    const tab = SELLING_TABS[index]?.value;
-    if (tab && tab !== activeTab) setActiveTab(tab);
-  };
+  useErrorToastOnTransition(isError, '글을 불러오는데 실패했습니다.', error?.message);
 
   const handleMenuPress = useCallback((post: PostType) => {
     setActionTargetPost(post);
@@ -135,49 +105,44 @@ export default function SellingPageView() {
         headerTitle={isMe ? '판매관리' : `${profileData?.nickname ?? ''}님의 판매 목록`}
         showBackButton
       />
-      <PillTabs
+      <TabPager
         tabs={SELLING_TABS}
         value={activeTab}
-        onChange={handleTabChange}
-        containerClassName="mx-6 mb-3 mt-3"
-        testIDPrefix="selling-tab"
-      />
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        decelerationRate="fast"
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleMomentumScrollEnd}>
-        <SellingPanel
-          testIDPrefix="selling-panel-onSale"
-          posts={onSaleQuery.posts}
-          emptyMessage="판매 중인 게시물이 없습니다."
-          isPending={onSaleQuery.isPending}
-          isRefetching={onSaleQuery.isRefetching}
-          isFetchingNextPage={onSaleQuery.isFetchingNextPage}
-          isFetchNextPageError={onSaleQuery.isFetchNextPageError}
-          onEndReached={onSaleQuery.loadMore}
-          onRetryNextPage={onSaleQuery.retryNextPage}
-          onRefresh={onSaleQuery.refetch}
-          onMenuPress={handleMenuPress}
-        />
-        <SellingPanel
-          testIDPrefix="selling-panel-sold"
-          posts={soldQuery.posts}
-          emptyMessage="판매 완료된 게시물이 없습니다."
-          receivedReviews={receivedReviews}
-          isReviewsLoading={isReviewsLoading}
-          isPending={soldQuery.isPending}
-          isRefetching={soldQuery.isRefetching}
-          isFetchingNextPage={soldQuery.isFetchingNextPage}
-          isFetchNextPageError={soldQuery.isFetchNextPageError}
-          onEndReached={soldQuery.loadMore}
-          onRetryNextPage={soldQuery.retryNextPage}
-          onRefresh={soldQuery.refetch}
-          onMenuPress={handleMenuPress}
-        />
-      </ScrollView>
+        onChange={setActiveTab}
+        testIDPrefix="selling-tab">
+        {() => (
+          <>
+            <SellingPanel
+              testIDPrefix="selling-panel-onSale"
+              posts={onSaleQuery.posts}
+              emptyMessage="판매 중인 게시물이 없습니다."
+              isPending={onSaleQuery.isPending}
+              isRefetching={onSaleQuery.isRefetching}
+              isFetchingNextPage={onSaleQuery.isFetchingNextPage}
+              isFetchNextPageError={onSaleQuery.isFetchNextPageError}
+              onEndReached={onSaleQuery.loadMore}
+              onRetryNextPage={onSaleQuery.retryNextPage}
+              onRefresh={onSaleQuery.refetch}
+              onMenuPress={handleMenuPress}
+            />
+            <SellingPanel
+              testIDPrefix="selling-panel-sold"
+              posts={soldQuery.posts}
+              emptyMessage="판매 완료된 게시물이 없습니다."
+              receivedReviews={receivedReviews}
+              isReviewsLoading={isReviewsLoading}
+              isPending={soldQuery.isPending}
+              isRefetching={soldQuery.isRefetching}
+              isFetchingNextPage={soldQuery.isFetchingNextPage}
+              isFetchNextPageError={soldQuery.isFetchNextPageError}
+              onEndReached={soldQuery.loadMore}
+              onRetryNextPage={soldQuery.retryNextPage}
+              onRefresh={soldQuery.refetch}
+              onMenuPress={handleMenuPress}
+            />
+          </>
+        )}
+      </TabPager>
 
       <BottomSheetModalWrapper
         isVisible={actionTargetPost !== null}

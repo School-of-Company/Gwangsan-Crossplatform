@@ -4,20 +4,12 @@ import { NotificationItem } from '~/widget/notification';
 import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback } from 'react';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 
 const NotificationPage = () => {
   const { data: apiResponse, isLoading, error, refetch } = useGetAlertList();
 
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   const alerts = apiResponse ?? [];
 

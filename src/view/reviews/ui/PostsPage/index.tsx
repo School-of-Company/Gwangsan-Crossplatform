@@ -1,19 +1,17 @@
 import { useLocalSearchParams } from 'expo-router';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Header, PillTabs } from '~/shared/ui';
+import { Header } from '~/shared/ui';
+import { TabPager } from '~/shared/ui/TabPager';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import {
   ReviewPost,
@@ -23,6 +21,7 @@ import {
   ReviewPostType,
 } from '~/entity/reviews';
 import { useGetMyInformation } from '~/entity/profile';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 
 interface ReviewsPageViewProps {
   mode: ReviewsMode;
@@ -32,8 +31,6 @@ const TABS = [
   { value: 'receive' as ReviewsMode, label: '받은 후기' },
   { value: 'toss' as ReviewsMode, label: '작성한 후기' },
 ];
-
-const getTabIndex = (mode: ReviewsMode) => TABS.findIndex((t) => t.value === mode);
 
 const EMPTY_MESSAGE: Record<ReviewsMode, string> = {
   receive: '받은 후기가 없습니다.',
@@ -166,9 +163,6 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   const rawParams = useLocalSearchParams();
   const id = Array.isArray(rawParams.id) ? rawParams.id[0] : rawParams.id;
   const [activeMode, setActiveMode] = useState<ReviewsMode>(mode);
-  const [refreshing, setRefreshing] = useState(false);
-  const { width: screenWidth } = useWindowDimensions();
-  const scrollRef = useRef<ScrollView>(null);
 
   // 활성 탭만 조회하도록, 현재 보고 있지 않은 탭의 쿼리는 비활성화한다.
   // (react-query는 enabled가 꺼져도 이미 받아온 데이터는 캐시에 유지하므로
@@ -208,68 +202,44 @@ export default function ReviewsPageView({ mode }: ReviewsPageViewProps) {
   }, [receiveInfinite]);
 
   const { refetch: refetchReceive } = receiveInfinite;
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await (activeMode === 'receive' ? refetchReceive() : refetchToss());
-    } finally {
-      setRefreshing(false);
-    }
-  }, [activeMode, refetchReceive, refetchToss]);
-
-  const handleTabChange = (nextMode: ReviewsMode) => {
-    setActiveMode(nextMode);
-    scrollRef.current?.scrollTo({ x: getTabIndex(nextMode) * screenWidth, animated: true });
-  };
-
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
-    const nextMode = TABS[index]?.value;
-    if (nextMode && nextMode !== activeMode) setActiveMode(nextMode);
-  };
+  const refetchActive = useCallback(
+    () => (activeMode === 'receive' ? refetchReceive() : refetchToss()),
+    [activeMode, refetchReceive, refetchToss]
+  );
+  const { refreshing, onRefresh: handleRefresh } = usePullToRefresh(refetchActive);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>
       <Header headerTitle="후기" />
-      <PillTabs
-        tabs={TABS}
-        value={activeMode}
-        onChange={handleTabChange}
-        containerClassName="mx-6 mb-3 mt-3"
-        testIDPrefix="reviews-tab"
-      />
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        decelerationRate="fast"
-        showsHorizontalScrollIndicator={false}
-        contentOffset={{ x: getTabIndex(mode) * screenWidth, y: 0 }}
-        onMomentumScrollEnd={handleMomentumScrollEnd}>
-        <ReceiveReviewsPanel
-          posts={receivePosts}
-          isInitialLoading={receiveInfinite.isPending}
-          isError={receiveInfinite.isError}
-          hasNextPage={Boolean(receiveInfinite.hasNextPage)}
-          isFetchingNextPage={receiveInfinite.isFetchingNextPage}
-          isFetchNextPageError={receiveInfinite.isFetchNextPageError}
-          onEndReached={handleReceiveEndReached}
-          onRetryNextPage={() => receiveInfinite.fetchNextPage()}
-          onRetry={() => receiveInfinite.refetch()}
-          width={screenWidth}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-        />
-        <ReviewsPanel
-          posts={tossPosts}
-          mode="toss"
-          isError={tossIsError}
-          onRetry={() => refetchToss()}
-          width={screenWidth}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-        />
-      </ScrollView>
+      <TabPager tabs={TABS} value={activeMode} onChange={setActiveMode} testIDPrefix="reviews-tab">
+        {(screenWidth) => (
+          <>
+            <ReceiveReviewsPanel
+              posts={receivePosts}
+              isInitialLoading={receiveInfinite.isPending}
+              isError={receiveInfinite.isError}
+              hasNextPage={Boolean(receiveInfinite.hasNextPage)}
+              isFetchingNextPage={receiveInfinite.isFetchingNextPage}
+              isFetchNextPageError={receiveInfinite.isFetchNextPageError}
+              onEndReached={handleReceiveEndReached}
+              onRetryNextPage={() => receiveInfinite.fetchNextPage()}
+              onRetry={() => receiveInfinite.refetch()}
+              width={screenWidth}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+            <ReviewsPanel
+              posts={tossPosts}
+              mode="toss"
+              isError={tossIsError}
+              onRetry={() => refetchToss()}
+              width={screenWidth}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          </>
+        )}
+      </TabPager>
     </SafeAreaView>
   );
 }

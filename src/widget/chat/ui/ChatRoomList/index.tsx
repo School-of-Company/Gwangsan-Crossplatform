@@ -1,12 +1,4 @@
-import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  View,
-  Text,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
+import { ActivityIndicator, FlatList, View, Text, RefreshControl } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
@@ -23,53 +15,13 @@ import type { ChatRoomListItem } from '~/entity/chat';
 import type { RoomId } from '~/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
+import { ActionSheetRow } from '~/shared/ui/ActionSheetRow';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
-
-interface ActionSheetRowProps {
-  label: string;
-  labelClassName?: string;
-  disabled?: boolean;
-  onPress?: () => void;
-}
-
-// 채팅방 액션 시트(차단/신고/나가기) 버튼 한 줄. 눌렀을 때 살짝 작아지는 효과를 준다.
-const ActionSheetRow = ({
-  label,
-  labelClassName = 'text-gray-900',
-  disabled = false,
-  onPress,
-}: ActionSheetRowProps) => {
-  const scale = useState(() => new Animated.Value(1))[0];
-
-  const handlePressIn = useCallback(() => {
-    Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
-  }, [scale]);
-
-  const handlePressOut = useCallback(() => {
-    Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
-  }, [scale]);
-
-  return (
-    <TouchableOpacity
-      activeOpacity={1}
-      disabled={disabled}
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      className={disabled ? 'opacity-50' : ''}>
-      <Animated.View
-        className="h-[56px] items-center justify-center"
-        style={{ transform: [{ scale }] }}>
-        <Text className={`text-lg font-medium ${labelClassName}`}>{label}</Text>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-};
 
 export function ChatRoomList() {
   const router = useRouter();
