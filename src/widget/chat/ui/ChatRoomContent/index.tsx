@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -80,7 +80,7 @@ const keyExtractor = (item: ChatListItem): string => {
   return `d-${item.timestamp}`;
 };
 
-export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
+export const ChatRoomContent = memo(function ChatRoomContent({
   messages,
   hasMessages,
   flatListRef,
@@ -93,7 +93,7 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
   hasReviewedTrade,
   onMyMessageLongPress,
   olderMessages,
-}) => {
+}: ChatRoomContentProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
 
@@ -333,4 +333,4 @@ export const ChatRoomContent: React.FC<ChatRoomContentProps> = ({
       )}
     </>
   );
-};
+});
