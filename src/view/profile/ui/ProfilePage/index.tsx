@@ -1,4 +1,4 @@
-import { ScrollView, View, RefreshControl, ActivityIndicator } from 'react-native';
+import { ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Gwangsan,
@@ -14,6 +14,7 @@ import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -66,9 +67,7 @@ export default function ProfilePageView() {
         {activeIsError ? (
           <ErrorFallback onRetry={() => refetchActiveProfile()} />
         ) : (
-          <View testID="profile-loading" className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#8FC31D" />
-          </View>
+          <LoadingView testID="profile-loading" size="large" />
         )}
       </SafeAreaView>
     );

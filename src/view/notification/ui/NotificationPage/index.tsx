@@ -1,10 +1,11 @@
-import { FlatList, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
+import { FlatList, Text, RefreshControl } from 'react-native';
 import { useGetAlertList } from '~/entity/notification';
 import { NotificationItem } from '~/widget/notification';
 import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 const NotificationPage = () => {
   const { data: apiResponse, isLoading, error, refetch } = useGetAlertList();
@@ -17,9 +18,7 @@ const NotificationPage = () => {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="알림" />
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#8FC31D" />
-        </View>
+        <LoadingView size="large" />
       </SafeAreaView>
     );
   }

@@ -1,11 +1,4 @@
-import {
-  ActivityIndicator,
-  LayoutChangeEvent,
-  RefreshControl,
-  Text,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { LayoutChangeEvent, RefreshControl, Text, View, ViewStyle } from 'react-native';
 import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
@@ -15,6 +8,7 @@ import { useGetBlockList } from '~/entity/profile';
 import { VirtualList } from 'scrolloop/native';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { Spinner } from '~/shared/ui/Spinner';
 
 // Post 카드 한 장의 높이. VirtualList는 이 값으로 각 카드를 absolute 배치하므로 카드가 이보다 커지면 안 된다.
 const POST_ITEM_HEIGHT = 120;
@@ -86,7 +80,7 @@ export default function PostList({ category, type }: { category: Category; type:
   if ((isPostsLoading && !rawPosts) || (isBlockListLoading && !blockList)) {
     return (
       <View testID="post-list-loading" className="flex-1 items-center justify-center py-20">
-        <ActivityIndicator color="#8FC31D" />
+        <Spinner />
       </View>
     );
   }

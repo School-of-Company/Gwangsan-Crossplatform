@@ -1,12 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { PostThumbnail } from '~/shared/ui/PostThumbnail';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -19,6 +12,7 @@ import { PostType } from '~/shared/types/postType';
 import { useGetProfile, useGetMyPosts, useGetMemberPosts } from '~/entity/profile';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 type TradeTab = 'purchased' | 'sold';
 type CounterpartRole = 'seller' | 'buyer';
@@ -155,9 +149,7 @@ export default function PurchasedPageView() {
         testIDPrefix="trade-tab"
         fallback={
           !postsData && isLoading ? (
-            <View testID="trade-history-loading" className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#8FC31D" />
-            </View>
+            <LoadingView testID="trade-history-loading" size="large" />
           ) : !postsData && isError ? (
             <ErrorFallback title="거래내역을 불러오지 못했습니다." onRetry={() => refetch()} />
           ) : undefined

@@ -1,9 +1,10 @@
-import { FlatList, ScrollView, ActivityIndicator, Text, View, RefreshControl } from 'react-native';
+import { FlatList, ScrollView, Text, RefreshControl } from 'react-native';
 import { NoticeItem } from '~/widget/notice';
 import { Header } from '~/shared/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetNoticeList } from '~/entity/notice';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 const NoticePage = () => {
   const { data: noticeList, isLoading, error, refetch } = useGetNoticeList();
@@ -11,11 +12,7 @@ const NoticePage = () => {
 
   const renderContent = () => {
     if (isLoading && !noticeList) {
-      return (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#8FC31D" />
-        </View>
-      );
+      return <LoadingView size="large" />;
     }
 
     if (error && !noticeList) {

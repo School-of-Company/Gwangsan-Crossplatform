@@ -1,6 +1,5 @@
 import { memo, useCallback } from 'react';
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   ListRenderItemInfo,
@@ -12,6 +11,7 @@ import {
 import { PostType } from '~/shared/types/postType';
 import type { ReviewPostType } from '~/entity/reviews';
 import { SellingPostCard } from '../SellingPostCard';
+import { Spinner } from '~/shared/ui/Spinner';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -80,7 +80,7 @@ export const SellingPanel = memo(
       if (isFetchingNextPage) {
         return (
           <View testID={`${testIDPrefix}-loading-more`} className="items-center py-4">
-            <ActivityIndicator color="#8FC31D" />
+            <Spinner />
           </View>
         );
       }
@@ -92,7 +92,7 @@ export const SellingPanel = memo(
       if (isPending) {
         return (
           <View testID={`${testIDPrefix}-loading`} className="pt-20">
-            <ActivityIndicator color="#8FC31D" />
+            <Spinner />
           </View>
         );
       }

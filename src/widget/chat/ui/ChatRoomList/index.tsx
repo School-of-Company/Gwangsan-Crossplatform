@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, View, Text, RefreshControl } from 'react-native';
+import { FlatList, View, Text, RefreshControl } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
@@ -20,6 +20,7 @@ import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile';
+import { Spinner } from '~/shared/ui/Spinner';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
 
@@ -253,7 +254,7 @@ export function ChatRoomList() {
   // 첫 조회가 길어질 때 당겨서 새로고침 스피너만 보이면 빈 회색 화면처럼 보여, 가운데에 로딩을 표시한다
   const renderLoadingState = () => (
     <View testID="chat-room-list-loading" className="flex-1 items-center justify-center py-20">
-      <ActivityIndicator size="large" color="#8FC31D" />
+      <Spinner size="large" />
     </View>
   );
 

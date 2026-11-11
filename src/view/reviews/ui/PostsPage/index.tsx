@@ -1,14 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '~/shared/ui';
 import { TabPager } from '~/shared/ui/TabPager';
@@ -22,6 +14,7 @@ import {
 } from '~/entity/reviews';
 import { useGetMyInformation } from '~/entity/profile';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { Spinner } from '~/shared/ui/Spinner';
 
 interface ReviewsPageViewProps {
   mode: ReviewsMode;
@@ -114,7 +107,7 @@ const ReceiveReviewsPanel = memo(
     if (isInitialLoading) {
       return (
         <View style={{ width }} className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#8FC31D" />
+          <Spinner />
         </View>
       );
     }
@@ -143,7 +136,7 @@ const ReceiveReviewsPanel = memo(
         ListFooterComponent={
           isFetchingNextPage ? (
             <View testID="receive-reviews-next-page-loading" className="items-center py-4">
-              <ActivityIndicator color="#8FC31D" />
+              <Spinner />
             </View>
           ) : isFetchNextPageError ? (
             <TouchableOpacity
