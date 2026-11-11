@@ -3,22 +3,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Text, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
-import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { Button, Header, ProgressBar } from '~/shared/ui';
 import { TextField } from '~/shared/ui/TextField';
 import { ChatRoomProductInfo } from '~/widget/chat';
 import { useChatRoomData, useChatOtherUser } from '~/entity/chat';
-import { useGetItem, createReview } from '~/entity/post';
+import { useGetItem } from '~/entity/post';
 import { logger } from '~/shared/lib/logger';
 import type { RoomId } from '~/shared/types/chatType';
-import { reviewKeys } from '~/entity/reviews';
+import { useCreateReview } from '~/entity/reviews';
 
 export default function ReviewWritePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roomId = Number(id) as RoomId;
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const { mutateAsync: createReview } = useCreateReview();
   const insets = useSafeAreaInsets();
 
   const { data: roomData, isError: isRoomDataError } = useChatRoomData({ roomId });
@@ -56,7 +55,6 @@ export default function ReviewWritePage() {
         content: contents.trim(),
         light,
       });
-      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
       Toast.show({ type: 'success', text1: '리뷰가 성공적으로 작성되었습니다.' });
       router.back();
     } catch (error) {
@@ -69,7 +67,7 @@ export default function ReviewWritePage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [productId, otherUserInfo.id, contents, light, isDisabled, queryClient, router]);
+  }, [productId, otherUserInfo.id, contents, light, isDisabled, createReview, router]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>

@@ -1,11 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
-import { requestTrade, withdrawTrade, makeReservation, cancelReservation } from '~/entity/post';
-import { getChatRoomData, chatRoomDataKeys } from '~/entity/chat';
+import { useRequestTrade, useWithdrawTrade, useReservation } from '~/entity/post';
+import { getChatRoomData, chatRoomDataKeys, usePatchChatRoomProduct } from '~/entity/chat';
 import type { RoomId } from '~/shared/types/chatType';
 import { logger } from '~/shared/lib/logger';
-import { profileQueryKeys } from '~/shared/model/profileQueryKeys';
 
 interface UseTradeHandlersParams {
   readonly roomId: RoomId;
@@ -47,15 +46,10 @@ export const useTradeHandlers = ({
 }: UseTradeHandlersParams): UseTradeHandlersReturn => {
   const queryClient = useQueryClient();
 
-  const patchProduct = useCallback(
-    (patch: Record<string, unknown>) => {
-      queryClient.setQueryData<{ product: Record<string, unknown> | null }>(
-        chatRoomDataKeys.room(roomId),
-        (old) => (old?.product ? { ...old, product: { ...old.product, ...patch } } : old)
-      );
-    },
-    [queryClient, roomId]
-  );
+  const patchProduct = usePatchChatRoomProduct(roomId);
+  const { mutateAsync: requestTrade } = useRequestTrade();
+  const { mutateAsync: withdrawTrade } = useWithdrawTrade();
+  const { reserve: makeReservation, cancel: cancelReservation } = useReservation();
 
   const hasTradeRequest =
     roomData?.product?.createdAt !== null && roomData?.product?.createdAt !== undefined;
@@ -119,12 +113,6 @@ export const useTradeHandlers = ({
 
       if (isCompleted) {
         patchProduct({ isCompleted: true, isCompletable: false });
-        // 거래가 확정되면 서버에서 광산이 차감/적립된다. 내 프로필은 5분간 캐시되므로 바로 다시
-        // 받아오지 않으면 잔액이 이전 값(예: 0)으로 남아 있었다(#785). 홈 화면 광산 배너는 별도
-        // 쿼리(myInformation)를 써서 함께 무효화해야 한다.
-        queryClient.invalidateQueries({ queryKey: profileQueryKeys.myProfile() });
-        queryClient.invalidateQueries({ queryKey: profileQueryKeys.myInformation() });
-
         Toast.show({
           type: 'success',
           text1: '거래가 완료되었습니다!',
@@ -153,7 +141,7 @@ export const useTradeHandlers = ({
     hasTradeRequest,
     fetchIsTradeCompleted,
     patchProduct,
-    queryClient,
+    requestTrade,
   ]);
 
   // 대기중인 내 요청을 다시 누르면 "취소" 개념을 노출하지 않고, 하루가 지났을 때만
@@ -204,7 +192,7 @@ export const useTradeHandlers = ({
 
       return false;
     }
-  }, [canWithdrawTradeRequest, roomData, otherUserInfo.id, patchProduct]);
+  }, [canWithdrawTradeRequest, roomData, otherUserInfo.id, patchProduct, withdrawTrade]);
 
   const handleReservation = useCallback(
     async ({ scheduledAt, placeName, address, latitude, longitude }: ReservationInput) => {
@@ -243,7 +231,7 @@ export const useTradeHandlers = ({
         throw error;
       }
     },
-    [roomData, roomId, patchProduct]
+    [roomData, roomId, patchProduct, makeReservation]
   );
 
   const handleCancelReservation = useCallback(async () => {
@@ -273,7 +261,7 @@ export const useTradeHandlers = ({
         text2: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
       });
     }
-  }, [roomData, patchProduct]);
+  }, [roomData, patchProduct, cancelReservation]);
 
   return {
     handleTradeAccept,

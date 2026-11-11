@@ -32,3 +32,4 @@ export { useGlobalChatNotifications } from './model/useGlobalChatNotifications';
 export { useChatQueueRecovery } from './model/useChatQueueRecovery';
 export { useResilientMessageSender } from './model/useResilientMessageSender';
 export { chatRoomDataKeys } from './model/chatQueryKeys';
+export { usePatchChatRoomProduct } from './model/usePatchChatRoomProduct';

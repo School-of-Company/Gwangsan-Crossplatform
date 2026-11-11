@@ -1,12 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { useQueryClient } from '@tanstack/react-query';
-import { createReview, useGetItem, useDeletePost } from '~/entity/post';
+import { useGetItem, useDeletePost } from '~/entity/post';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatEntry } from '~/entity/chat';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
-import { reviewKeys } from '~/entity/reviews';
+import { useCreateReview } from '~/entity/reviews';
 
 interface UsePostPageLogicParams {
   readonly id: string;
@@ -15,7 +14,7 @@ interface UsePostPageLogicParams {
 
 export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const { mutateAsync: createReview } = useCreateReview();
   const { data, isLoading, error, refetch } = useGetItem(id);
   const { deletePost, isLoading: isDeleting } = useDeletePost();
   const { rejoinChat, isLoading: isChatLoading } = useChatEntry();
@@ -66,7 +65,6 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
             content: contents,
             light: light,
           });
-          queryClient.invalidateQueries({ queryKey: reviewKeys.all });
           Toast.show({
             type: 'success',
             text1: '리뷰가 성공적으로 작성되었습니다.',
@@ -83,7 +81,7 @@ export const usePostAction = ({ id, review }: UsePostPageLogicParams) => {
           setIsSubmittingReview(false);
         }
       },
-      [id, data, queryClient]
+      [id, data, createReview]
     ),
   };
 

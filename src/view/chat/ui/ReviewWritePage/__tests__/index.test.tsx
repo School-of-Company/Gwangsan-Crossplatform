@@ -4,7 +4,8 @@ import { renderWithProviders as render } from '~/test-utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChatRoomData } from '~/entity/chat/model/useChatRoomData';
 import { useChatOtherUser } from '~/entity/chat/model/useChatOtherUser';
-import { useGetItem, createReview } from '~/entity/post';
+import { useGetItem } from '~/entity/post';
+import { createReview } from '~/entity/reviews/api/createReview';
 import { logger } from '~/shared/lib/logger';
 import Toast from 'react-native-toast-message';
 import ReviewWritePage from '../index';
@@ -48,8 +49,8 @@ jest.mock('~/entity/chat/model/useChatOtherUser', () => ({
 
 jest.mock('~/entity/post', () => ({
   useGetItem: jest.fn(),
-  createReview: jest.fn(),
 }));
+jest.mock('~/entity/reviews/api/createReview', () => ({ createReview: jest.fn() }));
 
 jest.mock('~/widget/chat/ui/ChatRoomProductInfo', () => ({
   ChatRoomProductInfo: ({ title, gwangsan }: any) => {
@@ -157,12 +158,15 @@ describe('ReviewWritePage', () => {
     fireEvent.press(getByText('작성완료'));
 
     await waitFor(() =>
-      expect(mockCreateReview).toHaveBeenCalledWith({
-        productId: 1,
-        otherMemberId: 7,
-        content: '좋은 거래였어요',
-        light: 60,
-      })
+      expect(mockCreateReview).toHaveBeenCalledWith(
+        {
+          productId: 1,
+          otherMemberId: 7,
+          content: '좋은 거래였어요',
+          light: 60,
+        },
+        expect.anything()
+      )
     );
     await waitFor(() =>
       expect(mockToastShow).toHaveBeenCalledWith(
