@@ -69,20 +69,21 @@ export default function ChatRoomPage() {
     handleReviewButtonPress,
   } = useChatRoomPage();
 
+  const lastMessageDate = formatLastMessageDate(visibleMessages);
+
   const renderHeader = useCallback(
     () => (
       <ChatRoomHeader
         otherUserNickname={otherUserInfo.nickname}
         otherUserId={otherUserInfo.id}
-        lastMessageDate={formatLastMessageDate(visibleMessages)}
+        lastMessageDate={lastMessageDate}
         onProfilePress={navigationHandlers.goToOtherUserProfile}
       />
     ),
     [
       otherUserInfo.nickname,
       otherUserInfo.id,
-      formatLastMessageDate,
-      visibleMessages,
+      lastMessageDate,
       navigationHandlers.goToOtherUserProfile,
     ]
   );
