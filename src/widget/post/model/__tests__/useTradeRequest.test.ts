@@ -81,7 +81,10 @@ describe('useTradeRequest', () => {
         await result.current.handleTradeRequest();
       });
 
-      expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
+      expect(mockRequestTrade).toHaveBeenCalledWith(
+        { productId: 1, otherMemberId: 2 },
+        expect.anything()
+      );
     });
 
     it('성공 Toast를 표시한다', async () => {
@@ -450,7 +453,10 @@ describe('useTradeRequest', () => {
         await result.current.handleWithdrawTradeRequest();
       });
 
-      expect(mockWithdrawTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 2 });
+      expect(mockWithdrawTrade).toHaveBeenCalledWith(
+        { productId: 1, otherMemberId: 2 },
+        expect.anything()
+      );
     });
 
     it('취소 성공 시 hasPendingRequest가 false가 되고 저장소 기록을 지운다', async () => {

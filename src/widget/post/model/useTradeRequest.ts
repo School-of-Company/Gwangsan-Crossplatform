@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import { requestTrade, withdrawTrade } from '~/entity/post';
+import { useRequestTrade, useWithdrawTrade } from '~/entity/post';
 import { useChatEntry } from '~/entity/chat';
 import { logger } from '~/shared/lib/logger';
 
@@ -52,6 +52,8 @@ export const useTradeRequest = ({
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const { navigateToChat, navigateToRoom } = useChatEntry();
+  const { mutateAsync: requestTrade } = useRequestTrade();
+  const { mutateAsync: withdrawTrade } = useWithdrawTrade();
 
   useEffect(() => {
     if (!productId) return;
@@ -126,7 +128,15 @@ export const useTradeRequest = ({
     } finally {
       setIsLoading(false);
     }
-  }, [productId, sellerId, isLoading, hasPendingRequest, navigateToChat, navigateToRoom]);
+  }, [
+    productId,
+    sellerId,
+    isLoading,
+    hasPendingRequest,
+    navigateToChat,
+    navigateToRoom,
+    requestTrade,
+  ]);
 
   const handleWithdrawTradeRequest = useCallback(async () => {
     if (isWithdrawing) return;
@@ -163,7 +173,7 @@ export const useTradeRequest = ({
     } finally {
       setIsWithdrawing(false);
     }
-  }, [productId, sellerId, isWithdrawing]);
+  }, [productId, sellerId, isWithdrawing, withdrawTrade]);
 
   return {
     handleTradeRequest,
