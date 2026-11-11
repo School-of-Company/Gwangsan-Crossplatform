@@ -1,6 +1,5 @@
 import { FlatList, View, Text, RefreshControl } from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import Toast from 'react-native-toast-message';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -15,6 +14,8 @@ import type { ChatRoomListItem } from '~/entity/chat';
 import type { RoomId } from '~/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 import { ActionSheetRow } from '~/shared/ui/ActionSheetRow';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
@@ -51,17 +52,12 @@ export function ChatRoomList() {
 
   // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
   // 30초 폴링이 연달아 실패해도 토스트가 반복되지 않도록 에러 상태로 바뀌는 순간에만 띄운다.
-  useEffect(() => {
-    if (!isError || !hasRooms) return;
-    Toast.show({
-      type: 'error',
-      text1: '채팅 목록을 새로 불러오지 못했어요',
-      text2: '아래로 당겨 다시 시도해 주세요.',
-      visibilityTime: 3000,
-    });
-    // hasRooms가 바뀔 때마다 다시 띄우지 않도록 isError 전환만 따른다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError]);
+  useErrorToastOnTransition(
+    isError,
+    '채팅 목록을 새로 불러오지 못했어요',
+    '아래로 당겨 다시 시도해 주세요.',
+    hasRooms
+  );
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
@@ -122,15 +118,7 @@ export function ChatRoomList() {
   );
 
   // 30초 폴링에도 isRefetching이 켜지므로, 사용자가 당겨서 새로고침한 동안만 스피너를 유지한다
-  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
-  const handleRefresh = useCallback(async () => {
-    setIsPullRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setIsPullRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing: isPullRefreshing, onRefresh: handleRefresh } = usePullToRefresh(refetch);
 
   const handleChatRoomLongPress = useCallback((roomId: RoomId) => {
     setActionTargetRoomId(roomId);

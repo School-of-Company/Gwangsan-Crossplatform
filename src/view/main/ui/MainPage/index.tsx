@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '~/entity/main';
 import { GwangsanBanner, Inform, MainSlideViewer } from '~/widget/main';
 import { useGetMyInformation } from '~/entity/profile';
-import Toast from 'react-native-toast-message';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 
 export default function MainPageView() {
@@ -12,14 +11,7 @@ export default function MainPageView() {
   const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   // 서버 메시지 원문은 사용자에게 의미가 없으므로 고정 문구만 보여준다
-  useEffect(() => {
-    if (isError)
-      Toast.show({
-        type: 'error',
-        text1: '정보 조회 실패',
-        text2: '잠시 후 다시 시도해 주세요.',
-      });
-  }, [isError]);
+  useErrorToastOnTransition(isError, '정보 조회 실패', '잠시 후 다시 시도해 주세요.');
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>

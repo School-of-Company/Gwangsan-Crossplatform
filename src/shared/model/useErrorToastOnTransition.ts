@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 
 const DEFAULT_TEXT2 = '잠시 후 다시 시도해주세요.';
@@ -12,15 +12,9 @@ export const useErrorToastOnTransition = (
   text2?: string,
   canShow = true
 ) => {
-  const latest = useRef({ text1, text2, canShow });
-  latest.current = { text1, text2, canShow };
-
   useEffect(() => {
-    if (!isError || !latest.current.canShow) return;
-    Toast.show({
-      type: 'error',
-      text1: latest.current.text1,
-      text2: latest.current.text2 || DEFAULT_TEXT2,
-    });
+    if (!isError || !canShow) return;
+    Toast.show({ type: 'error', text1, text2: text2 || DEFAULT_TEXT2 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isError]);
 };

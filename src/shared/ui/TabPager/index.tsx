@@ -1,4 +1,4 @@
-import { ReactNode, useRef } from 'react';
+import { ReactNode, RefObject, useRef, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -15,6 +15,33 @@ interface TabPagerProps<T extends string> {
   // 있으면 탭은 그대로 두고 페이저 자리에만 대신 그린다 (로딩/에러 화면)
   fallback?: ReactNode;
   children: (width: number) => ReactNode;
+}
+
+// contentOffset은 prop이 바뀌면 애니메이션 없이 위치를 옮기므로 처음 마운트할 때 한 번만 잡는다
+function PagerScrollView({
+  scrollRef,
+  initialX,
+  onMomentumScrollEnd,
+  children,
+}: {
+  scrollRef: RefObject<ScrollView | null>;
+  initialX: number;
+  onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  children: ReactNode;
+}) {
+  const [contentOffset] = useState(() => ({ x: initialX, y: 0 }));
+  return (
+    <ScrollView
+      ref={scrollRef}
+      horizontal
+      pagingEnabled
+      decelerationRate="fast"
+      showsHorizontalScrollIndicator={false}
+      contentOffset={contentOffset}
+      onMomentumScrollEnd={onMomentumScrollEnd}>
+      {children}
+    </ScrollView>
+  );
 }
 
 export function TabPager<T extends string>({
@@ -49,17 +76,12 @@ export function TabPager<T extends string>({
         testIDPrefix={testIDPrefix}
       />
       {fallback ?? (
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          decelerationRate="fast"
-          showsHorizontalScrollIndicator={false}
-          // 페이저가 늦게 마운트돼도 현재 탭 위치에서 시작한다
-          contentOffset={{ x: indexOf(value) * width, y: 0 }}
+        <PagerScrollView
+          scrollRef={scrollRef}
+          initialX={indexOf(value) * width}
           onMomentumScrollEnd={handleMomentumScrollEnd}>
           {children(width)}
-        </ScrollView>
+        </PagerScrollView>
       )}
     </>
   );

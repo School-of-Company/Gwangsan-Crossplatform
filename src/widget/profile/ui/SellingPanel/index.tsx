@@ -1,6 +1,5 @@
 import { memo, useCallback } from 'react';
 import {
-  Dimensions,
   FlatList,
   ListRenderItemInfo,
   RefreshControl,
@@ -13,12 +12,11 @@ import type { ReviewPostType } from '~/entity/reviews';
 import { SellingPostCard } from '../SellingPostCard';
 import { Spinner } from '~/shared/ui/Spinner';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 const keyExtractor = (post: PostType) => String(post.id);
 
 export interface SellingPanelProps {
   testIDPrefix: string;
+  width: number;
   posts: PostType[];
   emptyMessage: string;
   receivedReviews?: ReviewPostType[];
@@ -38,6 +36,7 @@ export interface SellingPanelProps {
 export const SellingPanel = memo(
   ({
     testIDPrefix,
+    width,
     posts,
     emptyMessage,
     receivedReviews,
@@ -103,7 +102,7 @@ export const SellingPanel = memo(
     return (
       <FlatList
         testID={testIDPrefix}
-        style={{ width: SCREEN_WIDTH }}
+        style={{ width }}
         data={posts}
         keyExtractor={keyExtractor}
         renderItem={renderItem}

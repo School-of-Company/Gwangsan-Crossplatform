@@ -110,9 +110,10 @@ export default function SellingPageView() {
         value={activeTab}
         onChange={setActiveTab}
         testIDPrefix="selling-tab">
-        {() => (
+        {(width) => (
           <>
             <SellingPanel
+              width={width}
               testIDPrefix="selling-panel-onSale"
               posts={onSaleQuery.posts}
               emptyMessage="판매 중인 게시물이 없습니다."
@@ -126,6 +127,7 @@ export default function SellingPageView() {
               onMenuPress={handleMenuPress}
             />
             <SellingPanel
+              width={width}
               testIDPrefix="selling-panel-sold"
               posts={soldQuery.posts}
               emptyMessage="판매 완료된 게시물이 없습니다."
