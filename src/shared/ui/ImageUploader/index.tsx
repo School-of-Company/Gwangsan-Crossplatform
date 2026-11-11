@@ -75,7 +75,6 @@ const ImageUploader = ({
         allowsMultipleSelection: true,
         selectionLimit: remainingCount,
         orderedSelection: true,
-        quality: 0.8,
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) return;
@@ -128,7 +127,6 @@ const ImageUploader = ({
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        quality: 0.8,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
