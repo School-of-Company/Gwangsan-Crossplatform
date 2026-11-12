@@ -36,7 +36,16 @@ function Post({
         ? images.length
         : 0) - 1;
   const isTemporary = id < 0;
-  const accessibilityLabel = `${title}, ${gwangsan} 광산${isReserved ? ', 예약중' : ''}`;
+  const accessibilityLabel = [
+    title,
+    `${gwangsan} 광산`,
+    isTemporary && '업로드 중',
+    isReserved && '예약중',
+    seller && `판매자 ${seller.nickname}`,
+    buyer && `구매자 ${buyer.nickname}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <TouchableOpacity

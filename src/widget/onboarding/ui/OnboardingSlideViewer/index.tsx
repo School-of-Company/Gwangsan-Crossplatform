@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Image,
@@ -18,6 +18,12 @@ const OnboardingSlideViewer = () => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [current, setCurrent] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // 회전·분할화면으로 폭이 바뀌면 현재 슬라이드 위치를 새 폭에 맞춘다
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({ x: screenWidth * current, animated: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 폭이 바뀔 때만 맞춘다. 페이지 전환은 스크롤이 처리한다
+  }, [screenWidth]);
 
   const handleDotPress = (idx: number) => {
     scrollViewRef.current?.scrollTo({ x: screenWidth * idx, animated: true });
