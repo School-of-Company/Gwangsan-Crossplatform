@@ -36,13 +36,25 @@ function Post({
         ? images.length
         : 0) - 1;
   const isTemporary = id < 0;
+  const accessibilityLabel = [
+    title,
+    `${gwangsan} 광산`,
+    isTemporary && '업로드 중',
+    isReserved && '예약중',
+    seller && `판매자 ${seller.nickname}`,
+    buyer && `구매자 ${buyer.nickname}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <TouchableOpacity
       onPress={handlePress}
       className={`flex flex-row items-center gap-6 ${paddingClassName}`}
       activeOpacity={isTemporary ? 1 : 0.7}
-      disabled={isTemporary}>
+      disabled={isTemporary}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}>
       <View className="relative">
         <PostThumbnail post={{ imageUrls, images }} className={isTemporary ? 'opacity-70' : ''} />
         {additionalImagesCount > 0 && (

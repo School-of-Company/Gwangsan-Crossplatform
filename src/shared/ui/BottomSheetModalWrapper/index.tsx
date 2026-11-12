@@ -3,7 +3,7 @@ import {
   View,
   TouchableOpacity,
   Text,
-  Dimensions,
+  useWindowDimensions,
   Pressable,
   Animated,
   Easing,
@@ -67,7 +67,7 @@ export function BottomSheetModalWrapper({
   const onCloseRef = useRef(onClose);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const screenHeight = Dimensions.get('window').height;
+  const { height: screenHeight } = useWindowDimensions();
   const modalHeight = height ?? (screenHeight * 2) / 3;
 
   // 키보드를 피해 밀어 올릴 수 있는 최대량. 이보다 더 올리면 시트 상단이 화면 위로

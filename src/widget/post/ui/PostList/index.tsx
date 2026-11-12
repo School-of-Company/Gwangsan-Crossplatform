@@ -1,4 +1,11 @@
-import { LayoutChangeEvent, RefreshControl, Text, View, ViewStyle } from 'react-native';
+import {
+  LayoutChangeEvent,
+  RefreshControl,
+  Text,
+  View,
+  ViewStyle,
+  useWindowDimensions,
+} from 'react-native';
 import Post from '~/shared/ui/Post';
 import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
@@ -10,8 +17,12 @@ import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
 import { Spinner } from '~/shared/ui/Spinner';
 
-// Post 카드 한 장의 높이. VirtualList는 이 값으로 각 카드를 absolute 배치하므로 카드가 이보다 커지면 안 된다.
-const POST_ITEM_HEIGHT = 120;
+// VirtualList는 이 값으로 각 카드를 absolute 배치하므로 카드가 이보다 커지면 안 된다. 높이는
+// 위아래 패딩(py-4) + max(썸네일, 글자 영역)이고, 글자 영역만 글자 크기 설정에 따라 커진다.
+// 글자 영역 88은 제목·가격·판매자·구매자 4줄이 모두 나오는 최악의 경우(글자 크기 1배)에 여유를 더한 값이다.
+const POST_ITEM_PADDING = 32;
+const POST_THUMBNAIL_SIZE = 80;
+const POST_TEXT_BLOCK_HEIGHT = 88;
 // 화면 높이를 재기 전 첫 렌더에 쓰는 높이(scrolloop 기본값과 같다)
 const INITIAL_LIST_HEIGHT = 400;
 
@@ -19,6 +30,11 @@ export default function PostList({ category, type }: { category: Category; type:
   // VirtualList는 height로 화면에 그릴 범위를 계산하고 높이도 그 값으로 고정한다. 넘기지 않으면
   // 화면 크기와 상관없이 400으로 고정돼 큰 화면에서 목록 아래가 비었다. 실제 영역을 재서 넘긴다.
   const [listHeight, setListHeight] = useState(0);
+  const { fontScale } = useWindowDimensions();
+  const itemSize = Math.ceil(
+    POST_ITEM_PADDING +
+      Math.max(POST_THUMBNAIL_SIZE, POST_TEXT_BLOCK_HEIGHT * Math.max(fontScale, 1))
+  );
   const currentMode = category ? returnValue(category) : undefined;
 
   const {
@@ -98,7 +114,7 @@ export default function PostList({ category, type }: { category: Category; type:
       <VirtualList
         height={listHeight > 0 ? listHeight : INITIAL_LIST_HEIGHT}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        itemSize={POST_ITEM_HEIGHT}
+        itemSize={itemSize}
         overscan={12}
         count={data.length}
         renderItem={renderItem}
