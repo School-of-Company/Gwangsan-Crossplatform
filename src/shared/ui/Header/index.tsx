@@ -1,6 +1,7 @@
 import { View, TouchableOpacity, Text } from 'react-native';
 import Icon from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useThemeColors } from '~/shared/lib/theme';
 
 type ConnectionState = 'connected' | 'connecting' | 'disconnected';
 
@@ -29,6 +30,7 @@ export function Header({
   showBackButton = true,
   connectionState,
 }: Props) {
+  const colors = useThemeColors();
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -68,7 +70,7 @@ export function Header({
             ? 'w-10 items-center justify-center'
             : 'w-10 items-center justify-center opacity-0'
         }>
-        <Icon name="chevron-back" size={24} color="#8F9094" />
+        <Icon name="chevron-back" size={24} color={colors['gray-500']} />
       </TouchableOpacity>
       <View className="flex-1 flex-row items-center justify-center gap-2">
         {onTitlePress ? (
@@ -91,7 +93,7 @@ export function Header({
           accessibilityRole="button"
           accessibilityLabel="메뉴 더보기"
           className="w-10 items-center justify-center">
-          <Icon name="ellipsis-vertical" size={24} />
+          <Icon name="ellipsis-vertical" size={24} color={colors.foreground} />
         </TouchableOpacity>
       ) : (
         <View className="w-10" />

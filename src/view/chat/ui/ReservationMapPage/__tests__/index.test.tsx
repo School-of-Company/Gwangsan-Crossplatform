@@ -101,6 +101,10 @@ const mockSearchNearbyPlaces = searchNearbyPlaces as jest.Mock;
 const mockGetAddressName = getAddressName as jest.Mock;
 const mockSearchPlaces = searchPlaces as jest.Mock;
 const mockUseReservationLocationStore = useReservationLocationStore as unknown as jest.Mock;
+const mockStore = (state: unknown) =>
+  mockUseReservationLocationStore.mockImplementation((selector: (s: unknown) => unknown) =>
+    selector(state)
+  );
 const mockUseRouter = useRouter as jest.Mock;
 
 const mockSetCoordinates = jest.fn();
@@ -152,7 +156,7 @@ describe('ReservationMapPage', () => {
     mockSearchNearbyPlaces.mockResolvedValue([]);
     mockGetAddressName.mockResolvedValue('');
     mockSearchPlaces.mockResolvedValue([]);
-    mockUseReservationLocationStore.mockReturnValue({
+    mockStore({
       setCoordinates: mockSetCoordinates,
       setPlaceName: mockSetPlaceName,
     });

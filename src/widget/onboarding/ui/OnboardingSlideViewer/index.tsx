@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Image,
-  Dimensions,
   ScrollView,
+  useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -13,20 +13,26 @@ import onboardingSlide3 from '~/shared/assets/png/startSlide/onboardingSlide3.pn
 import { SlideIndicator } from '~/shared/ui';
 
 const images = [onboardingSlide1, onboardingSlide2, onboardingSlide3];
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const OnboardingSlideViewer = () => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [current, setCurrent] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // 회전·분할화면으로 폭이 바뀌면 현재 슬라이드 위치를 새 폭에 맞춘다
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({ x: screenWidth * current, animated: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 폭이 바뀔 때만 맞춘다. 페이지 전환은 스크롤이 처리한다
+  }, [screenWidth]);
+
   const handleDotPress = (idx: number) => {
-    scrollViewRef.current?.scrollTo({ x: SCREEN_WIDTH * idx, animated: true });
+    scrollViewRef.current?.scrollTo({ x: screenWidth * idx, animated: true });
     setCurrent(idx);
   };
 
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
+    const newIndex = Math.round(contentOffsetX / screenWidth);
     setCurrent(newIndex);
   };
 
@@ -44,8 +50,8 @@ const OnboardingSlideViewer = () => {
             key={idx}
             source={img}
             style={{
-              width: SCREEN_WIDTH,
-              height: SCREEN_HEIGHT * 0.65,
+              width: screenWidth,
+              height: screenHeight * 0.65,
               resizeMode: 'contain',
             }}
           />

@@ -53,6 +53,17 @@ describe('ChatInput', () => {
     expect(updateMessage).toHaveBeenCalledWith('새 메시지');
   });
 
+  it('엔터(submitEditing)를 누르면 handleSendMessage가 호출된다', () => {
+    const handleSendMessage = jest.fn();
+    mockUseChatInput.mockReturnValue(makeChatInputReturn({ canSend: true, handleSendMessage }));
+
+    const { UNSAFE_getByType } = render(<ChatInput onSendMessage={jest.fn()} />);
+
+    fireEvent(UNSAFE_getByType(TextInput), 'submitEditing');
+
+    expect(handleSendMessage).toHaveBeenCalled();
+  });
+
   it('onFocus prop이 TextInput에 전달된다', () => {
     const onFocus = jest.fn();
     const { UNSAFE_getByType } = render(<ChatInput onSendMessage={jest.fn()} onFocus={onFocus} />);
