@@ -55,6 +55,16 @@ describe('uploadImage', () => {
     expect(MockFile).toHaveBeenCalledWith('file:///cache/resized.jpg');
   });
 
+  it('.jpg 파일은 MIME type을 image/jpeg로 보낸다', async () => {
+    const append = jest.spyOn(FormData.prototype, 'append');
+    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+
+    await uploadImage('file:///cache/photo.jpg');
+
+    expect(append).toHaveBeenCalledWith('file', expect.objectContaining({ type: 'image/jpeg' }));
+    append.mockRestore();
+  });
+
   it('multipart/form-data Content-Type으로 POST 요청한다', async () => {
     mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
 

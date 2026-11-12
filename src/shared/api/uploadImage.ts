@@ -26,7 +26,8 @@ export const uploadImage = async (originalUri: string): Promise<ImageType> => {
       fileType = uri.match(/\.(jpeg|jpg|png|gif|webp)$/i)?.[1] || 'jpeg';
     }
 
-    const type = `image/${fileType || 'jpeg'}`;
+    // 리사이즈 결과는 .jpg로 나오는데 정식 MIME은 image/jpeg다
+    const type = `image/${!fileType || fileType === 'jpg' ? 'jpeg' : fileType}`;
 
     const formData = new FormData();
     // RN의 FormData는 Blob 대신 { uri, name, type } 파일 객체를 받는다
