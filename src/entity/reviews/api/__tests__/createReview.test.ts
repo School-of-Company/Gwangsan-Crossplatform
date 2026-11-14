@@ -1,78 +1,43 @@
-import { createReview } from '../createReview';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { createReview } from '../createReview';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { post: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockPost = instance.post as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
-beforeEach(() => jest.clearAllMocks());
+const request = { productId: 99, otherMemberId: 8, content: '보통이에요', light: 50 };
 
 describe('createReview', () => {
-  describe('성공 케이스', () => {
-    it('POST /review를 올바른 payload로 호출하고 true를 반환한다', async () => {
-      mockPost.mockResolvedValue({});
+  it('POST /review에 payload를 보내고 true를 반환한다', async () => {
+    const received = jest.fn();
+    server.use(
+      http.post(`${BASE}/review`, async ({ request: req }) => {
+        received(await req.json());
+        return new HttpResponse(null, { status: 201 });
+      })
+    );
 
-      const result = await createReview({
-        productId: 1,
-        otherMemberId: 7,
-        content: '좋았어요',
-        light: 80,
-      });
-
-      expect(mockPost).toHaveBeenCalledWith('/review', {
-        productId: 1,
-        otherMemberId: 7,
-        content: '좋았어요',
-        light: 80,
-      });
-      expect(result).toBe(true);
-    });
-
-    it('다른 파라미터로 호출해도 정상 동작한다', async () => {
-      mockPost.mockResolvedValue({});
-
-      const result = await createReview({
-        productId: 99,
-        otherMemberId: 8,
-        content: '보통이에요',
-        light: 50,
-      });
-
-      expect(mockPost).toHaveBeenCalledWith('/review', {
-        productId: 99,
-        otherMemberId: 8,
-        content: '보통이에요',
-        light: 50,
-      });
-      expect(result).toBe(true);
-    });
+    await expect(createReview(request)).resolves.toBe(true);
+    expect(received).toHaveBeenCalledWith(request);
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockPost.mockRejectedValue(new Error('Bad Request'));
+  it('4xx 응답은 서버 메시지를 담은 에러로 던진다', async () => {
+    server.use(
+      http.post(`${BASE}/review`, () =>
+        HttpResponse.json({ message: '이미 후기를 작성했습니다' }, { status: 409 })
+      )
+    );
 
-      await expect(
-        createReview({ productId: 1, otherMemberId: 7, content: '내용', light: 80 })
-      ).rejects.toThrow();
-    });
+    await expect(createReview(request)).rejects.toThrow('이미 후기를 작성했습니다');
+  });
 
-    it('에러 메시지가 전파된다', async () => {
-      mockPost.mockRejectedValue(new Error('Server error'));
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.post(`${BASE}/review`, () => HttpResponse.error()));
 
-      await expect(
-        createReview({ productId: 1, otherMemberId: 7, content: '내용', light: 80 })
-      ).rejects.toThrow('Server error');
-    });
-
-    it('네트워크 에러 시 에러를 throw한다', async () => {
-      mockPost.mockRejectedValue(new Error('Network Error'));
-
-      await expect(
-        createReview({ productId: 1, otherMemberId: 7, content: '내용', light: 80 })
-      ).rejects.toThrow('Network Error');
-    });
+    await expect(createReview(request)).rejects.toThrow();
   });
 });
