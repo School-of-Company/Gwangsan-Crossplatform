@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode, useState } from 'react';
 import {
   Animated,
-  Dimensions,
+  useWindowDimensions,
   Modal,
   Platform,
   Pressable,
@@ -122,9 +122,10 @@ export function MessageActionOverlay({
     }).start();
   }, [visible, progress]);
 
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
   if (!visible || !anchor) return null;
 
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   // 수정(텍스트만)·삭제·취소
   const rowCount = (canEdit ? 1 : 0) + 2;
   const menuHeight = getMenuHeight(rowCount, !!timeLabel);

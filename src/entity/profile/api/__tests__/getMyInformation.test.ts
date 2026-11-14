@@ -1,35 +1,41 @@
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
 import { getMyInformation } from '../getMyInformation';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('getMyInformation', () => {
   it('GET /member 응답 data를 반환한다', async () => {
-    const memberInfo = { memberId: 1, headName: '본점', dongName: '동', placeName: '지점' };
-    mockGet.mockResolvedValue({ data: memberInfo });
+    server.use(
+      http.get(`${BASE}/member`, () =>
+        HttpResponse.json({ memberId: 1, headName: '본점', dongName: '동', placeName: '지점' })
+      )
+    );
 
-    const result = await getMyInformation();
-
-    expect(mockGet).toHaveBeenCalledWith('/member');
-    expect(result).toEqual(memberInfo);
+    await expect(getMyInformation()).resolves.toEqual({
+      memberId: 1,
+      headName: '본점',
+      dongName: '동',
+      placeName: '지점',
+    });
   });
 
-  it('API 실패 시 원본 에러를 그대로 전파한다', async () => {
-    const error = new Error('Server error');
-    mockGet.mockRejectedValue(error);
+  it('실패하면 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/member`, () => HttpResponse.json({ message: '서버 오류' }, { status: 400 }))
+    );
 
-    await expect(getMyInformation()).rejects.toThrow('Server error');
+    await expect(getMyInformation()).rejects.toThrow('서버 오류');
   });
 
-  it('네트워크 에러 시에도 에러를 전파한다', async () => {
-    mockGet.mockRejectedValue(new Error('Network Error'));
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/member`, () => HttpResponse.error()));
 
-    await expect(getMyInformation()).rejects.toThrow('Network Error');
+    await expect(getMyInformation()).rejects.toThrow();
   });
 });

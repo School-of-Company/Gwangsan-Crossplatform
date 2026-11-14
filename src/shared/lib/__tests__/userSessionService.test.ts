@@ -1,23 +1,20 @@
 import { getData } from '~/shared/lib/getData';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
 import { createUserSessionService } from '../userSessionService';
 
 jest.mock('~/shared/lib/getData', () => ({
   getData: jest.fn(),
 }));
-jest.mock('~/shared/lib/axios', () => ({
-  instance: {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    defaults: { baseURL: 'http://test-api.com' },
-  },
-  baseURL: 'http://test-api.com',
-  setQueryClientInstance: jest.fn(),
-}));
 
 const mockGetData = getData as jest.MockedFunction<typeof getData>;
-const mockInstanceGet = instance.get as jest.MockedFunction<typeof instance.get>;
+
+const BASE = 'http://test-api.com';
+
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -59,7 +56,7 @@ describe('createUserSessionService', () => {
         if (key === 'accessToken') return 'acc-token';
         return null;
       });
-      mockInstanceGet.mockResolvedValue({ data: { memberId: 99 } });
+      server.use(http.get(`${BASE}/member`, () => HttpResponse.json({ memberId: 99 })));
 
       const service = createUserSessionService();
       const session = await service.getCurrentSession();
@@ -81,7 +78,7 @@ describe('createUserSessionService', () => {
         if (key === 'accessToken') return 'acc-token';
         return null;
       });
-      mockInstanceGet.mockRejectedValue(new Error('Network Error'));
+      server.use(http.get(`${BASE}/member`, () => HttpResponse.error()));
 
       jest.spyOn(console, 'error').mockImplementation(() => {});
       const service = createUserSessionService();

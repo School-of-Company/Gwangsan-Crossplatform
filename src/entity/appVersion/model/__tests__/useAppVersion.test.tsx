@@ -2,11 +2,11 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
 import { instance } from '~/shared/lib/axios';
 import { shouldThrowQueryError } from '~/shared/lib/QueryProvider';
 import { renderHookWithProviders } from '~/test-utils';
-import { appVersionHandlers, makeAppVersion } from '~/mocks/handlers/appVersion';
+import { server } from '~/mocks/server';
+import { makeAppVersion } from '~/mocks/handlers/appVersion';
 import { useAppVersion } from '../useAppVersion';
 
 jest.mock('expo-constants', () => ({
@@ -29,14 +29,10 @@ jest.mock('react-native-toast-message', () => ({
 }));
 
 const BASE = 'http://test-api.com';
-const server = setupServer(...appVersionHandlers);
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
-  server.listen({ onUnhandledRequest: 'error' });
 });
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 
 describe('useAppVersion', () => {
   it('현재 OS의 최신 버전 정보를 ["appVersion", OS] 키로 캐시한다', async () => {

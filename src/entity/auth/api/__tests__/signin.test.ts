@@ -1,44 +1,22 @@
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import { server } from '~/mocks/server';
 import { setData } from '~/shared/lib/setData';
 import { getDeviceInfo } from '~/shared/model/getDeviceInfo';
 import { signinWithDeviceInfo } from '../signin';
 
 jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'http://test-api.com' }));
-jest.mock('~/shared/lib/axios', () => ({
-  instance: {
-    defaults: { baseURL: 'http://test-api.com' },
-    interceptors: {
-      request: { use: jest.fn() },
-      response: { use: jest.fn() },
-    },
-  },
-  baseURL: 'http://test-api.com',
-  setQueryClientInstance: jest.fn(),
-}));
 jest.mock('~/shared/lib/setData', () => ({
   setData: jest.fn(),
 }));
 jest.mock('~/shared/model/getDeviceInfo', () => ({
   getDeviceInfo: jest.fn(),
 }));
-jest.mock('@sentry/react-native', () => ({
-  addBreadcrumb: jest.fn(),
-  captureException: jest.fn(),
-}));
 
 const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockGetDeviceInfo = getDeviceInfo as jest.MockedFunction<typeof getDeviceInfo>;
 
 const BASE = 'http://test-api.com';
-const server = setupServer();
-
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => {
-  server.resetHandlers();
-  jest.clearAllMocks();
-});
-afterAll(() => server.close());
+afterEach(() => jest.clearAllMocks());
 
 const mockAuthResponse = {
   accessToken: 'access-token',

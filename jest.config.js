@@ -6,6 +6,7 @@ process.env.TZ = 'Asia/Seoul';
 module.exports = {
   preset: 'jest-expo',
   setupFiles: ['./jest.setup.js'],
+  setupFilesAfterEnv: ['./jest.setup.after-env.js'],
   transform: {
     '^.+\\.mjs$': 'babel-jest',
   },
