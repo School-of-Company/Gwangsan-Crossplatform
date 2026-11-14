@@ -69,6 +69,7 @@ module.exports = defineConfig([
       '**/*.test.{js,jsx,ts,tsx}',
       '__mocks__/**',
       'jest.setup.js',
+      'jest.setup.after-env.js',
       'e2e/**',
       'src/test-utils/**',
     ],
