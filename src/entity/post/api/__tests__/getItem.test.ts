@@ -1,102 +1,88 @@
-import { getItem } from '../getItem';
+import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { makePostDetail } from '~/mocks/handlers/post';
+import { getItem } from '../getItem';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
+jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
+jest.mock('@sentry/react-native', () => ({
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+}));
+jest.mock('~/shared/lib/auth', () => ({
+  getAccessToken: jest.fn(() => Promise.resolve(null)),
+  getRefreshToken: jest.fn(() => Promise.resolve(null)),
+}));
+jest.mock('~/shared/lib/clearSession', () => ({ clearSession: jest.fn() }));
+jest.mock('~/shared/lib/setData', () => ({ setData: jest.fn() }));
+jest.mock('react-native-toast-message', () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
 }));
 
-const mockGet = instance.get as jest.Mock;
+const BASE = 'http://test-api.com';
 
-const makePostDetail = (overrides: Record<string, unknown> = {}) => ({
-  id: 1,
-  title: '상세 게시글',
-  content: '상세 내용',
-  gwangsan: 1,
-  type: 'OBJECT',
-  mode: 'GIVER',
-  images: [{ imageId: 1, imageUrl: 'https://example.com/img.jpg' }],
-  isCompletable: true,
-  isCompleted: false,
-  member: {
-    memberId: 42,
-    nickname: '홍길동',
-    placeName: '광산구',
-    light: 80,
-  },
-  ...overrides,
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
 });
 
-beforeEach(() => jest.clearAllMocks());
-
 describe('getItem', () => {
-  describe('성공 케이스', () => {
-    it('GET /post/:id 응답 data를 반환한다', async () => {
-      const detail = makePostDetail();
-      mockGet.mockResolvedValue({ data: detail });
-
-      const result = await getItem('1');
-
-      expect(mockGet).toHaveBeenCalledWith('/post/1');
-      expect(result).toEqual(detail);
-    });
-
-    it('다른 postId로 올바른 경로를 요청한다', async () => {
-      mockGet.mockResolvedValue({ data: makePostDetail({ id: 99 }) });
-
-      await getItem('99');
-
-      expect(mockGet).toHaveBeenCalledWith('/post/99');
-    });
-
-    it('images 배열이 비어있는 게시글도 정상 반환한다', async () => {
-      const detail = makePostDetail({ images: [] });
-      mockGet.mockResolvedValue({ data: detail });
-
-      const result = await getItem('1');
-
-      expect(result.images).toEqual([]);
-    });
-
-    it('member 정보를 포함한 응답을 반환한다', async () => {
-      const detail = makePostDetail();
-      mockGet.mockResolvedValue({ data: detail });
-
-      const result = await getItem('1');
-
-      expect(result.member).toEqual({
-        memberId: 42,
-        nickname: '홍길동',
-        placeName: '광산구',
-        light: 80,
-      });
-    });
+  it('GET /post/:id 응답 data를 반환한다', async () => {
+    await expect(getItem('99')).resolves.toEqual(makePostDetail({ id: 99 }));
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockGet.mockRejectedValue(new Error('Not found'));
+  it('images 배열이 비어있는 게시글도 정상 반환한다', async () => {
+    server.use(http.get(`${BASE}/post/1`, () => HttpResponse.json(makePostDetail({ images: [] }))));
 
-      await expect(getItem('999')).rejects.toThrow();
-    });
+    const result = await getItem('1');
 
-    it('에러 메시지가 getErrorMessage를 통해 래핑된다', async () => {
-      mockGet.mockRejectedValue(new Error('Server error'));
+    expect(result.images).toEqual([]);
+  });
 
-      await expect(getItem('1')).rejects.toThrow('Server error');
-    });
+  it('4xx 응답은 서버 메시지를 담은 AxiosError로 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/post/999`, () =>
+        HttpResponse.json({ message: '게시글을 찾을 수 없습니다' }, { status: 404 })
+      )
+    );
 
-    it('네트워크 에러 시 에러를 throw한다', async () => {
-      mockGet.mockRejectedValue(new Error('Network Error'));
+    const error = await getItem('999').catch((e: unknown) => e);
 
-      await expect(getItem('1')).rejects.toThrow('Network Error');
-    });
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).message).toBe('게시글을 찾을 수 없습니다');
+    expect((error as AxiosError).response?.status).toBe(404);
+  });
 
-    it('postId가 양의 정수 문자열이 아니면 API를 호출하지 않고 즉시 실패한다', async () => {
-      await expect(getItem('1; DROP TABLE post;')).rejects.toThrow();
-      await expect(getItem('NaN')).rejects.toThrow();
-      await expect(getItem('-1')).rejects.toThrow();
+  it('5xx 응답은 서버 본문 대신 상태 코드만 알리는 AxiosError로 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/post/1`, () =>
+        HttpResponse.json({ message: 'FunctionCallException' }, { status: 500 })
+      )
+    );
 
-      expect(mockGet).not.toHaveBeenCalled();
-    });
+    const error = await getItem('1').catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).message).toBe('요청이 실패했습니다. (500)');
+    expect((error as AxiosError).response?.status).toBe(500);
+  });
+
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/post/1`, () => HttpResponse.error()));
+
+    await expect(getItem('1')).rejects.toThrow();
+  });
+
+  it('postId가 양의 정수 문자열이 아니면 요청을 보내지 않고 실패한다', async () => {
+    const requested = jest.fn();
+    server.events.on('request:start', requested);
+
+    await expect(getItem('1; DROP TABLE post;')).rejects.toThrow();
+    await expect(getItem('NaN')).rejects.toThrow();
+    await expect(getItem('-1')).rejects.toThrow();
+
+    expect(requested).not.toHaveBeenCalled();
+    server.events.removeAllListeners();
   });
 });
