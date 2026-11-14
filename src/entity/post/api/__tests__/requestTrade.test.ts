@@ -1,58 +1,46 @@
-import { requestTrade } from '../requestTrade';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { requestTrade } from '../requestTrade';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { post: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockPost = instance.post as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('requestTrade', () => {
-  describe('성공 케이스', () => {
-    it('POST /post/trade를 올바른 payload로 호출하고 응답 data를 반환한다', async () => {
-      const response = { success: true, roomId: 10 };
-      mockPost.mockResolvedValue({ data: response });
+  it('POST /post/trade에 payload를 보내고 응답 data를 반환한다', async () => {
+    const received = jest.fn();
+    server.use(
+      http.post(`${BASE}/post/trade`, async ({ request }) => {
+        received(await request.json());
+        return HttpResponse.json({ success: true, roomId: 99 });
+      })
+    );
 
-      const result = await requestTrade({ productId: 1, otherMemberId: 2 });
-
-      expect(mockPost).toHaveBeenCalledWith('/post/trade', { productId: 1, otherMemberId: 2 });
-      expect(result).toEqual(response);
+    await expect(requestTrade({ productId: 42, otherMemberId: 7 })).resolves.toEqual({
+      success: true,
+      roomId: 99,
     });
-
-    it('다른 파라미터로 호출해도 정상 동작한다', async () => {
-      const response = { success: true, roomId: 99 };
-      mockPost.mockResolvedValue({ data: response });
-
-      const result = await requestTrade({ productId: 42, otherMemberId: 7 });
-
-      expect(mockPost).toHaveBeenCalledWith('/post/trade', { productId: 42, otherMemberId: 7 });
-      expect(result).toEqual(response);
-    });
+    expect(received).toHaveBeenCalledWith({ productId: 42, otherMemberId: 7 });
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockPost.mockRejectedValue(new Error('Bad Request'));
+  it('4xx 응답은 서버 메시지를 담은 에러로 던진다', async () => {
+    server.use(
+      http.post(`${BASE}/post/trade`, () =>
+        HttpResponse.json({ message: '이미 거래 중입니다' }, { status: 400 })
+      )
+    );
 
-      await expect(requestTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow();
-    });
+    await expect(requestTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow(
+      '이미 거래 중입니다'
+    );
+  });
 
-    it('에러 메시지가 전파된다', async () => {
-      mockPost.mockRejectedValue(new Error('Server error'));
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.post(`${BASE}/post/trade`, () => HttpResponse.error()));
 
-      await expect(requestTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow(
-        'Server error'
-      );
-    });
-
-    it('네트워크 에러 시 에러를 throw한다', async () => {
-      mockPost.mockRejectedValue(new Error('Network Error'));
-
-      await expect(requestTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow(
-        'Network Error'
-      );
-    });
+    await expect(requestTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow();
   });
 });

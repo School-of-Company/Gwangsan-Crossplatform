@@ -1,50 +1,37 @@
-import { withdrawTrade } from '../withdrawTrade';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { withdrawTrade } from '../withdrawTrade';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { delete: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockDelete = instance.delete as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('withdrawTrade', () => {
-  describe('성공 케이스', () => {
-    it('DELETE /post/trade를 올바른 payload로 호출한다', async () => {
-      mockDelete.mockResolvedValue({ data: undefined });
+  it('DELETE /post/trade에 payload를 body로 보낸다', async () => {
+    const received = jest.fn();
+    server.use(
+      http.delete(`${BASE}/post/trade`, async ({ request }) => {
+        received(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
 
-      await withdrawTrade({ productId: 1, otherMemberId: 2 });
-
-      expect(mockDelete).toHaveBeenCalledWith('/post/trade', {
-        data: { productId: 1, otherMemberId: 2 },
-      });
-    });
-
-    it('다른 파라미터로 호출해도 정상 동작한다', async () => {
-      mockDelete.mockResolvedValue({ data: undefined });
-
-      await withdrawTrade({ productId: 42, otherMemberId: 7 });
-
-      expect(mockDelete).toHaveBeenCalledWith('/post/trade', {
-        data: { productId: 42, otherMemberId: 7 },
-      });
-    });
+    await expect(withdrawTrade({ productId: 42, otherMemberId: 7 })).resolves.toBeUndefined();
+    expect(received).toHaveBeenCalledWith({ productId: 42, otherMemberId: 7 });
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockDelete.mockRejectedValue(new Error('Not found'));
+  it('4xx 응답은 서버 메시지를 담은 에러로 던진다', async () => {
+    server.use(
+      http.delete(`${BASE}/post/trade`, () =>
+        HttpResponse.json({ message: '거래 완료 요청자가 아닙니다.' }, { status: 403 })
+      )
+    );
 
-      await expect(withdrawTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow();
-    });
-
-    it('에러 메시지가 전파된다', async () => {
-      mockDelete.mockRejectedValue(new Error('거래 완료 요청자가 아닙니다.'));
-
-      await expect(withdrawTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow(
-        '거래 완료 요청자가 아닙니다.'
-      );
-    });
+    await expect(withdrawTrade({ productId: 1, otherMemberId: 2 })).rejects.toThrow(
+      '거래 완료 요청자가 아닙니다.'
+    );
   });
 });
