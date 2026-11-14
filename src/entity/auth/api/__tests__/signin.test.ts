@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import { server } from '~/mocks/server';
 import { setData } from '~/shared/lib/setData';
 import { getDeviceInfo } from '~/shared/model/getDeviceInfo';
 import { signinWithDeviceInfo } from '../signin';
@@ -31,14 +31,7 @@ const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockGetDeviceInfo = getDeviceInfo as jest.MockedFunction<typeof getDeviceInfo>;
 
 const BASE = 'http://test-api.com';
-const server = setupServer();
-
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => {
-  server.resetHandlers();
-  jest.clearAllMocks();
-});
-afterAll(() => server.close());
+afterEach(() => jest.clearAllMocks());
 
 const mockAuthResponse = {
   accessToken: 'access-token',

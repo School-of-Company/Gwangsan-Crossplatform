@@ -7,10 +7,6 @@ import { postHandlers, makePostListItem, makePostDetail } from '../handlers/post
 const BASE = 'http://test-api.com';
 const client = axios.create({ baseURL: BASE });
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
 describe('authHandlers', () => {
   it('POST /auth/signin은 토큰 응답을 반환한다', async () => {
     const { data } = await client.post('/auth/signin');
