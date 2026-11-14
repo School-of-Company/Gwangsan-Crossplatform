@@ -5,20 +5,10 @@ import { server } from '~/mocks/server';
 import { makePostDetail } from '~/mocks/handlers/post';
 import { getItem } from '../getItem';
 
-jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
+// 실제 Sentry를 불러오면 내부 setInterval이 남아 Jest가 종료되지 않는다
 jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
-}));
-jest.mock('~/shared/lib/auth', () => ({
-  getAccessToken: jest.fn(() => Promise.resolve(null)),
-  getRefreshToken: jest.fn(() => Promise.resolve(null)),
-}));
-jest.mock('~/shared/lib/clearSession', () => ({ clearSession: jest.fn() }));
-jest.mock('~/shared/lib/setData', () => ({ setData: jest.fn() }));
-jest.mock('react-native-toast-message', () => ({
-  __esModule: true,
-  default: { show: jest.fn() },
 }));
 
 const BASE = 'http://test-api.com';
@@ -78,11 +68,14 @@ describe('getItem', () => {
     const requested = jest.fn();
     server.events.on('request:start', requested);
 
-    await expect(getItem('1; DROP TABLE post;')).rejects.toThrow();
-    await expect(getItem('NaN')).rejects.toThrow();
-    await expect(getItem('-1')).rejects.toThrow();
+    try {
+      await expect(getItem('1; DROP TABLE post;')).rejects.toThrow();
+      await expect(getItem('NaN')).rejects.toThrow();
+      await expect(getItem('-1')).rejects.toThrow();
 
-    expect(requested).not.toHaveBeenCalled();
-    server.events.removeAllListeners();
+      expect(requested).not.toHaveBeenCalled();
+    } finally {
+      server.events.removeListener('request:start', requested);
+    }
   });
 });
