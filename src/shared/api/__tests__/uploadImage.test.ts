@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
-import { uploadImage } from '../uploadImage';
+import { uploadImage, UPLOAD_TIMEOUT_MS } from '../uploadImage';
 
 jest.mock('expo-file-system', () => ({
   File: jest.fn().mockReturnValue({ exists: true, size: 0 }),
@@ -20,36 +20,80 @@ beforeAll(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
+// 실제 요청은 MSW로 처리하고, axios config와 FormData 인자는 spy로 확인한다
+let postSpy: jest.SpyInstance;
+let appendSpy: jest.SpyInstance;
+
 beforeEach(() => {
+  postSpy = jest.spyOn(instance, 'post');
+  appendSpy = jest.spyOn(FormData.prototype, 'append');
   MockFile.mockReset();
   MockFile.mockReturnValue({ exists: true, size: 0 });
 });
 
-// 요청이 도착했는지와 Content-Type 헤더를 기록하고 이미지 응답을 돌려준다
+afterEach(() => {
+  postSpy.mockRestore();
+  appendSpy.mockRestore();
+});
+
+// 요청이 도착했는지 기록하고 이미지 응답을 돌려준다
 const captureUpload = (response: object = IMAGE) => {
   const received = jest.fn();
   server.use(
-    http.post(`${BASE}/image`, ({ request }) => {
-      received(request.headers.get('content-type'));
+    http.post(`${BASE}/image`, () => {
+      received();
       return HttpResponse.json(response);
     })
   );
   return received;
 };
 
+const uploadedFile = () => appendSpy.mock.calls[0][1];
+
 describe('uploadImage', () => {
   it('POST /image로 multipart 업로드하고 서버 응답 데이터를 반환한다', async () => {
     const received = captureUpload();
 
     await expect(uploadImage('file:///local/path/photo.jpg')).resolves.toEqual(IMAGE);
-    expect(received).toHaveBeenCalledWith(expect.stringContaining('multipart/form-data'));
+    expect(received).toHaveBeenCalledTimes(1);
+  });
+
+  it('multipart Content-Type 헤더를 명시하고 업로드 전용 타임아웃을 건다', async () => {
+    captureUpload();
+
+    await uploadImage('file:///local/path/photo.jpg');
+
+    expect(postSpy).toHaveBeenCalledWith(
+      '/image',
+      expect.any(FormData),
+      expect.objectContaining({
+        timeout: UPLOAD_TIMEOUT_MS,
+        headers: expect.objectContaining({ 'Content-Type': 'multipart/form-data' }),
+      })
+    );
+  });
+
+  it('RN 방식의 { uri, name, type } 파일 객체를 file 필드로 담는다', async () => {
+    captureUpload();
+
+    await uploadImage('file:///local/path/photo.png');
+
+    expect(appendSpy).toHaveBeenCalledWith('file', {
+      uri: 'file:///local/path/photo.png',
+      name: 'photo.png',
+      type: 'image/png',
+    });
   });
 
   it('확장자·파일명을 알 수 없는 URI도 기본값으로 업로드한다', async () => {
     captureUpload();
 
     await expect(uploadImage('file:///local/path/')).resolves.toEqual(IMAGE);
+    expect(uploadedFile()).toEqual(expect.objectContaining({ name: 'image.jpg' }));
+
+    appendSpy.mockClear();
     await expect(uploadImage('file:///local/path/photo')).resolves.toEqual(IMAGE);
+    expect(uploadedFile()).toEqual(expect.objectContaining({ name: 'photo' }));
   });
 
   it('10MB 초과 파일은 요청을 보내지 않고 에러를 던진다', async () => {
@@ -98,13 +142,14 @@ describe('uploadImage', () => {
       Platform.OS = 'ios';
     });
 
-    it.each(['file:///local/path/photo.', 'file:///local/path/photo.jpg'])(
-      '%s 도 업로드한다',
-      async (uri) => {
-        captureUpload();
+    it.each([
+      ['file:///local/path/photo.', 'image/jpeg'],
+      ['file:///local/path/photo.jpg', 'image/jpg'],
+    ])('%s 는 %s 타입으로 업로드한다', async (uri, type) => {
+      captureUpload();
 
-        await expect(uploadImage(uri)).resolves.toEqual(IMAGE);
-      }
-    );
+      await expect(uploadImage(uri)).resolves.toEqual(IMAGE);
+      expect(uploadedFile()).toEqual(expect.objectContaining({ type }));
+    });
   });
 });
