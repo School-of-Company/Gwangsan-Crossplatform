@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import Toast from 'react-native-toast-message';
 import { instance } from '~/shared/lib/axios';
@@ -36,13 +37,21 @@ describe('createChatRoom', () => {
       )
     );
 
-    await expect(createChatRoom(1)).rejects.toThrow('본인 상품에는 채팅할 수 없습니다');
+    const error = await createChatRoom(1).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(400);
+    expect((error as Error).message).toBe('본인 상품에는 채팅할 수 없습니다');
     expect(Toast.show).not.toHaveBeenCalled();
   });
 
   it('5xx는 상태 코드만 알리는 에러를 던진다', async () => {
     server.use(http.post(`${BASE}/chat/room/1`, () => new HttpResponse(null, { status: 500 })));
 
-    await expect(createChatRoom(1)).rejects.toThrow('요청이 실패했습니다. (500)');
+    const error = await createChatRoom(1).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(500);
+    expect((error as Error).message).toBe('요청이 실패했습니다. (500)');
   });
 });

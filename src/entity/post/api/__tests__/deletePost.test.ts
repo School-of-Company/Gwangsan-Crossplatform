@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
@@ -30,13 +31,21 @@ describe('deletePost', () => {
       )
     );
 
-    await expect(deletePost(999)).rejects.toThrow('게시글을 찾을 수 없습니다');
+    const error = await deletePost(999).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(404);
+    expect((error as Error).message).toBe('게시글을 찾을 수 없습니다');
   });
 
   it('5xx 응답은 상태 코드만 알리는 에러로 던진다', async () => {
     server.use(http.delete(`${BASE}/post/1`, () => new HttpResponse(null, { status: 500 })));
 
-    await expect(deletePost(1)).rejects.toThrow('요청이 실패했습니다. (500)');
+    const error = await deletePost(1).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(500);
+    expect((error as Error).message).toBe('요청이 실패했습니다. (500)');
   });
 
   it('네트워크 오류는 에러를 던진다', async () => {

@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
@@ -42,7 +43,11 @@ describe('makeReservation', () => {
       )
     );
 
-    await expect(makeReservation(baseRequest)).rejects.toThrow('이미 예약된 상품입니다');
+    const error = await makeReservation(baseRequest).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(409);
+    expect((error as Error).message).toBe('이미 예약된 상품입니다');
   });
 
   it('네트워크 오류는 에러를 던진다', async () => {
