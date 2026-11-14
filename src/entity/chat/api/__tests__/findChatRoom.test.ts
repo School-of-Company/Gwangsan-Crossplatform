@@ -1,56 +1,44 @@
-import { findChatRoom } from '../findChatRoom';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
-import { toAppError } from '~/shared/lib/errorHandler';
+import { server } from '~/mocks/server';
+import { findChatRoom } from '../findChatRoom';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-jest.mock('~/shared/lib/errorHandler', () => ({
-  toAppError: jest.fn((error) => error),
-}));
-
-const mockGet = instance.get as jest.Mock;
-const mockToAppError = toAppError as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('findChatRoom', () => {
-  describe('성공 케이스', () => {
-    it('GET /chat/room/:productId 요청 후 roomId를 반환한다', async () => {
-      mockGet.mockResolvedValue({ data: { roomId: 55 } });
+  it('GET /chat/room/:productId 요청 후 roomId를 반환한다', async () => {
+    const requested = jest.fn();
+    server.use(
+      http.get(`${BASE}/chat/room/:productId`, ({ params }) => {
+        requested(params.productId);
+        return HttpResponse.json({ roomId: 55, extra: 'ignored' });
+      })
+    );
 
-      const result = await findChatRoom(1);
+    await expect(findChatRoom(88)).resolves.toEqual({ roomId: 55 });
+    expect(requested).toHaveBeenCalledWith('88');
+  });
 
-      expect(mockGet).toHaveBeenCalledWith('/chat/room/1');
-      expect(result).toEqual({ roomId: 55 });
-    });
+  it('채팅방이 없으면(404) 상태 코드를 유지한 에러를 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/chat/room/1`, () =>
+        HttpResponse.json({ message: '채팅방을 찾을 수 없습니다' }, { status: 404 })
+      )
+    );
 
-    it('다른 productId로 올바른 경로를 요청한다', async () => {
-      mockGet.mockResolvedValue({ data: { roomId: 77 } });
-
-      await findChatRoom(88);
-
-      expect(mockGet).toHaveBeenCalledWith('/chat/room/88');
+    await expect(findChatRoom(1)).rejects.toMatchObject({
+      message: '채팅방을 찾을 수 없습니다',
+      response: { status: 404 },
     });
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패(404) 시 에러를 throw한다', async () => {
-      mockGet.mockRejectedValue(new Error('Not found'));
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/chat/room/1`, () => HttpResponse.error()));
 
-      await expect(findChatRoom(1)).rejects.toThrow('Not found');
-    });
-
-    it('에러가 toAppError를 통해 래핑된다', async () => {
-      const originalError = new Error('Server error');
-      const wrappedError = new Error('Wrapped server error');
-      mockGet.mockRejectedValue(originalError);
-      mockToAppError.mockReturnValueOnce(wrappedError);
-
-      await expect(findChatRoom(1)).rejects.toBe(wrappedError);
-
-      expect(mockToAppError).toHaveBeenCalledWith(originalError);
-    });
+    await expect(findChatRoom(1)).rejects.toThrow();
   });
 });
