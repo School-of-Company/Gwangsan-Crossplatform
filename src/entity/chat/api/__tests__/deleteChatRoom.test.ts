@@ -1,63 +1,48 @@
-import { deleteChatRoom } from '../deleteChatRoom';
-import { instance } from '~/shared/lib/axios';
+import { http, HttpResponse } from 'msw';
 import Toast from 'react-native-toast-message';
-import { toAppError } from '~/shared/lib/errorHandler';
-
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { delete: jest.fn() },
-}));
+import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { deleteChatRoom } from '../deleteChatRoom';
 
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/shared/lib/errorHandler', () => ({
-  toAppError: jest.fn((error) => error),
-}));
+const BASE = 'http://test-api.com';
 
-const mockDelete = instance.delete as jest.Mock;
-const mockToAppError = toAppError as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('deleteChatRoom', () => {
-  describe('성공 케이스', () => {
-    it('DELETE /chat/room/:roomId 요청을 보낸다', async () => {
-      mockDelete.mockResolvedValue({});
+  it('DELETE /chat/room/:roomId 요청을 보낸다', async () => {
+    const requested = jest.fn();
+    server.use(
+      http.delete(`${BASE}/chat/room/:roomId`, ({ params }) => {
+        requested(params.roomId);
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
 
-      await deleteChatRoom(1);
-
-      expect(mockDelete).toHaveBeenCalledWith('/chat/room/1');
-    });
-
-    it('다른 roomId로 올바른 경로를 요청한다', async () => {
-      mockDelete.mockResolvedValue({});
-
-      await deleteChatRoom(42);
-
-      expect(mockDelete).toHaveBeenCalledWith('/chat/room/42');
-    });
+    await expect(deleteChatRoom(42)).resolves.toBeUndefined();
+    expect(requested).toHaveBeenCalledWith('42');
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 토스트 없이 에러를 throw한다(#739)', async () => {
-      mockDelete.mockRejectedValue(new Error('Network error'));
+  it('API 실패 시 토스트 없이 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.delete(`${BASE}/chat/room/1`, () =>
+        HttpResponse.json({ message: '채팅방을 찾을 수 없습니다' }, { status: 404 })
+      )
+    );
 
-      await expect(deleteChatRoom(1)).rejects.toThrow('Network error');
+    await expect(deleteChatRoom(1)).rejects.toThrow('채팅방을 찾을 수 없습니다');
+    expect(Toast.show).not.toHaveBeenCalled();
+  });
 
-      expect(Toast.show).not.toHaveBeenCalled();
-    });
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.delete(`${BASE}/chat/room/1`, () => HttpResponse.error()));
 
-    it('에러가 toAppError를 통해 래핑된다', async () => {
-      const originalError = new Error('Server error');
-      const wrappedError = new Error('Wrapped server error');
-      mockDelete.mockRejectedValue(originalError);
-      mockToAppError.mockReturnValueOnce(wrappedError);
-
-      await expect(deleteChatRoom(1)).rejects.toBe(wrappedError);
-
-      expect(mockToAppError).toHaveBeenCalledWith(originalError);
-    });
+    await expect(deleteChatRoom(1)).rejects.toThrow();
   });
 });

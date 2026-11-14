@@ -1,64 +1,57 @@
-import { createChatRoom } from '../createChatRoom';
-import { instance } from '~/shared/lib/axios';
+import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import Toast from 'react-native-toast-message';
-import { toAppError } from '~/shared/lib/errorHandler';
-
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { post: jest.fn() },
-}));
+import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { createChatRoom } from '../createChatRoom';
 
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
 
-jest.mock('~/shared/lib/errorHandler', () => ({
-  toAppError: jest.fn((error) => error),
-}));
+const BASE = 'http://test-api.com';
 
-const mockPost = instance.post as jest.Mock;
-const mockToAppError = toAppError as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('createChatRoom', () => {
-  describe('성공 케이스', () => {
-    it('POST /chat/room/:productId 요청 후 roomId를 반환한다', async () => {
-      mockPost.mockResolvedValue({ data: { roomId: 123 } });
+  it('POST /chat/room/:productId 요청 후 roomId를 반환한다', async () => {
+    const requested = jest.fn();
+    server.use(
+      http.post(`${BASE}/chat/room/:productId`, ({ params }) => {
+        requested(params.productId);
+        return HttpResponse.json({ roomId: 123 });
+      })
+    );
 
-      const result = await createChatRoom(1);
-
-      expect(mockPost).toHaveBeenCalledWith('/chat/room/1');
-      expect(result).toEqual({ roomId: 123 });
-    });
-
-    it('다른 productId로 올바른 경로를 요청한다', async () => {
-      mockPost.mockResolvedValue({ data: { roomId: 999 } });
-
-      await createChatRoom(42);
-
-      expect(mockPost).toHaveBeenCalledWith('/chat/room/42');
-    });
+    await expect(createChatRoom(42)).resolves.toEqual({ roomId: 123 });
+    expect(requested).toHaveBeenCalledWith('42');
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 토스트 없이 에러를 throw한다(#739)', async () => {
-      mockPost.mockRejectedValue(new Error('Network error'));
+  it('API 실패 시 토스트 없이 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.post(`${BASE}/chat/room/1`, () =>
+        HttpResponse.json({ message: '본인 상품에는 채팅할 수 없습니다' }, { status: 400 })
+      )
+    );
 
-      await expect(createChatRoom(1)).rejects.toThrow('Network error');
+    const error = await createChatRoom(1).catch((e: unknown) => e);
 
-      expect(Toast.show).not.toHaveBeenCalled();
-    });
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(400);
+    expect((error as Error).message).toBe('본인 상품에는 채팅할 수 없습니다');
+    expect(Toast.show).not.toHaveBeenCalled();
+  });
 
-    it('에러가 toAppError를 통해 래핑된다', async () => {
-      const originalError = new Error('Server error');
-      const wrappedError = new Error('Wrapped server error');
-      mockPost.mockRejectedValue(originalError);
-      mockToAppError.mockReturnValueOnce(wrappedError);
+  it('5xx는 상태 코드만 알리는 에러를 던진다', async () => {
+    server.use(http.post(`${BASE}/chat/room/1`, () => new HttpResponse(null, { status: 500 })));
 
-      await expect(createChatRoom(1)).rejects.toBe(wrappedError);
+    const error = await createChatRoom(1).catch((e: unknown) => e);
 
-      expect(mockToAppError).toHaveBeenCalledWith(originalError);
-    });
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(500);
+    expect((error as Error).message).toBe('요청이 실패했습니다. (500)');
   });
 });

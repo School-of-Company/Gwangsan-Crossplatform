@@ -1,11 +1,13 @@
-import { getNoticeDetail } from '../getNoticeDetail';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { getNoticeDetail } from '../getNoticeDetail';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 const makeNotice = (overrides: Record<string, unknown> = {}) => ({
   id: 1,
@@ -19,35 +21,32 @@ const makeNotice = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('getNoticeDetail', () => {
-  beforeEach(() => jest.clearAllMocks());
-
   it('GET /notice/:id 호출 후 데이터를 반환한다', async () => {
-    const notice = makeNotice();
-    mockGet.mockResolvedValue({ data: notice });
-
-    const result = await getNoticeDetail(1);
-
-    expect(mockGet).toHaveBeenCalledWith('/notice/1');
-    expect(result).toEqual(notice);
-  });
-
-  it('이미지가 여러 개인 공지를 반환한다', async () => {
     const notice = makeNotice({
+      id: 99999,
       images: [
         { imageId: 1, imageUrl: 'https://example.com/1.png' },
         { imageId: 2, imageUrl: 'https://example.com/2.png' },
       ],
     });
-    mockGet.mockResolvedValue({ data: notice });
+    const requested = jest.fn();
+    server.use(
+      http.get(`${BASE}/notice/:id`, ({ params }) => {
+        requested(params.id);
+        return HttpResponse.json(notice);
+      })
+    );
 
-    const result = await getNoticeDetail(1);
-
-    expect(result.images).toHaveLength(2);
+    await expect(getNoticeDetail(99999)).resolves.toEqual(notice);
+    expect(requested).toHaveBeenCalledWith('99999');
   });
 
-  it('place, createdAt이 빈 문자열인 경우도 처리한다', async () => {
-    const notice = makeNotice({ place: '', createdAt: '' });
-    mockGet.mockResolvedValue({ data: notice });
+  it('place, createdAt이 빈 문자열인 경우도 그대로 반환한다', async () => {
+    server.use(
+      http.get(`${BASE}/notice/1`, () =>
+        HttpResponse.json(makeNotice({ place: '', createdAt: '' }))
+      )
+    );
 
     const result = await getNoticeDetail(1);
 
@@ -55,17 +54,19 @@ describe('getNoticeDetail', () => {
     expect(result.createdAt).toBe('');
   });
 
-  it('API 실패 시 에러를 그대로 던진다', async () => {
-    mockGet.mockRejectedValue(new Error('Server error'));
+  it('없는 공지는 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/notice/404`, () =>
+        HttpResponse.json({ message: '공지를 찾을 수 없습니다' }, { status: 404 })
+      )
+    );
 
-    await expect(getNoticeDetail(1)).rejects.toThrow('Server error');
+    await expect(getNoticeDetail(404)).rejects.toThrow('공지를 찾을 수 없습니다');
   });
 
-  it('noticeId가 큰 숫자여도 올바르게 호출한다', async () => {
-    mockGet.mockResolvedValue({ data: makeNotice({ id: 99999 }) });
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/notice/1`, () => HttpResponse.error()));
 
-    await getNoticeDetail(99999);
-
-    expect(mockGet).toHaveBeenCalledWith('/notice/99999');
+    await expect(getNoticeDetail(1)).rejects.toThrow();
   });
 });

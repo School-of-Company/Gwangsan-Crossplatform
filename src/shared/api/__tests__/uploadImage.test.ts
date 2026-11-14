@@ -1,24 +1,11 @@
 import { AxiosError } from 'axios';
-import { uploadImage } from '../uploadImage';
-import { instance } from '~/shared/lib/axios';
-import { createAxiosError } from '~/test-utils/axiosError';
+import { http, HttpResponse } from 'msw';
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
 import { prepareImageForUpload } from '~/shared/lib/prepareImageForUpload';
-
-jest.mock('@sentry/react-native', () => ({
-  captureException: jest.fn(),
-  captureMessage: jest.fn(),
-  addBreadcrumb: jest.fn(),
-  init: jest.fn(),
-}));
-
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { post: jest.fn() },
-}));
-
-jest.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
-}));
+import { uploadImage, UPLOAD_TIMEOUT_MS } from '../uploadImage';
 
 jest.mock('expo-file-system', () => ({
   File: jest.fn().mockReturnValue({ exists: true, size: 0 }),
@@ -28,27 +15,84 @@ jest.mock('~/shared/lib/prepareImageForUpload', () => ({
   prepareImageForUpload: jest.fn(async (uri: string) => uri),
 }));
 
-const mockPost = instance.post as jest.Mock;
 const MockFile = FileSystem.File as unknown as jest.Mock;
 
+const BASE = 'http://test-api.com';
+const IMAGE = { imageId: 1, imageUrl: 'https://cdn.example.com/img.jpg' };
+
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+// 실제 요청은 MSW로 처리하고, axios config와 FormData 인자는 spy로 확인한다
+let postSpy: jest.SpyInstance;
+let appendSpy: jest.SpyInstance;
+
+beforeEach(() => {
+  postSpy = jest.spyOn(instance, 'post');
+  appendSpy = jest.spyOn(FormData.prototype, 'append');
+  MockFile.mockReset();
+  MockFile.mockReturnValue({ exists: true, size: 0 });
+});
+
+afterEach(() => {
+  postSpy.mockRestore();
+  appendSpy.mockRestore();
+});
+
+// 요청이 도착했는지 기록하고 이미지 응답을 돌려준다
+const captureUpload = (response: object = IMAGE) => {
+  const received = jest.fn();
+  server.use(
+    http.post(`${BASE}/image`, () => {
+      received();
+      return HttpResponse.json(response);
+    })
+  );
+  return received;
+};
+
+const uploadedFile = () => appendSpy.mock.calls[0][1];
+
 describe('uploadImage', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    MockFile.mockReturnValue({ exists: true, size: 0 });
+  it('POST /image로 multipart 업로드하고 서버 응답 데이터를 반환한다', async () => {
+    const received = captureUpload();
+
+    await expect(uploadImage('file:///local/path/photo.jpg')).resolves.toEqual(IMAGE);
+    expect(received).toHaveBeenCalledTimes(1);
   });
 
-  it('성공 시 서버 응답 데이터를 반환한다', async () => {
-    const mockResponse = { imageId: 1, imageUrl: 'https://cdn.example.com/img.jpg' };
-    mockPost.mockResolvedValue({ data: mockResponse });
+  it('multipart Content-Type 헤더를 명시하고 업로드 전용 타임아웃을 건다', async () => {
+    captureUpload();
 
-    const result = await uploadImage('file:///local/path/photo.jpg');
+    await uploadImage('file:///local/path/photo.jpg');
 
-    expect(result).toEqual(mockResponse);
+    expect(postSpy).toHaveBeenCalledWith(
+      '/image',
+      expect.any(FormData),
+      expect.objectContaining({
+        timeout: UPLOAD_TIMEOUT_MS,
+        headers: expect.objectContaining({ 'Content-Type': 'multipart/form-data' }),
+      })
+    );
+  });
+
+  it('RN 방식의 { uri, name, type } 파일 객체를 file 필드로 담는다', async () => {
+    captureUpload();
+
+    await uploadImage('file:///local/path/photo.png');
+
+    expect(appendSpy).toHaveBeenCalledWith('file', {
+      uri: 'file:///local/path/photo.png',
+      name: 'photo.png',
+      type: 'image/png',
+    });
   });
 
   it('리사이즈한 이미지의 uri로 업로드한다', async () => {
     (prepareImageForUpload as jest.Mock).mockResolvedValueOnce('file:///cache/resized.jpg');
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+    captureUpload();
 
     await uploadImage('file:///local/path/photo.heic');
 
@@ -56,96 +100,46 @@ describe('uploadImage', () => {
   });
 
   it('.jpg 파일은 MIME type을 image/jpeg로 보낸다', async () => {
-    const append = jest.spyOn(FormData.prototype, 'append');
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+    captureUpload();
 
     await uploadImage('file:///cache/photo.jpg');
 
-    expect(append).toHaveBeenCalledWith('file', expect.objectContaining({ type: 'image/jpeg' }));
-    append.mockRestore();
+    expect(uploadedFile()).toEqual(expect.objectContaining({ type: 'image/jpeg' }));
   });
 
-  it('multipart/form-data Content-Type으로 POST 요청한다', async () => {
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+  it('확장자·파일명을 알 수 없는 URI도 기본값으로 업로드한다', async () => {
+    captureUpload();
 
-    await uploadImage('file:///local/path/photo.jpg');
+    await expect(uploadImage('file:///local/path/')).resolves.toEqual(IMAGE);
+    expect(uploadedFile()).toEqual(expect.objectContaining({ name: 'image.jpg' }));
 
-    expect(mockPost).toHaveBeenCalledWith(
-      '/image',
-      expect.any(Object),
-      expect.objectContaining({
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-    );
+    appendSpy.mockClear();
+    await expect(uploadImage('file:///local/path/photo')).resolves.toEqual(IMAGE);
+    expect(uploadedFile()).toEqual(expect.objectContaining({ name: 'photo' }));
   });
 
-  it('전역 5초 대신 업로드 전용 타임아웃(60초)으로 요청한다(#739)', async () => {
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: 'https://example.com/a.jpg' } });
-
-    await uploadImage('file:///local/path/photo.jpg');
-
-    expect(mockPost).toHaveBeenCalledWith(
-      '/image',
-      expect.any(Object),
-      expect.objectContaining({ timeout: 60_000 })
-    );
-  });
-
-  it('URI에서 파일명을 추출해 FormData에 추가한다', async () => {
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
-
-    await uploadImage('file:///local/path/photo.png');
-
-    const formData = mockPost.mock.calls[0][1] as FormData;
-    expect(formData).toBeDefined();
-  });
-
-  it('URI가 슬래시로 끝나 파일명을 추출할 수 없으면 image.jpg를 기본 파일명으로 사용해 정상 업로드한다', async () => {
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
-
-    await expect(uploadImage('file:///local/path/')).resolves.toEqual({ imageId: 1, imageUrl: '' });
-    expect(mockPost).toHaveBeenCalledWith(
-      '/image',
-      expect.any(Object),
-      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } })
-    );
-  });
-
-  it('확장자가 없는 URI는 jpeg를 기본 타입으로 사용한다', async () => {
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
-
-    await uploadImage('file:///local/path/photo');
-
-    expect(mockPost).toHaveBeenCalled();
-  });
-
-  it('10MB 초과 파일은 에러를 던진다', async () => {
+  it('10MB 초과 파일은 요청을 보내지 않고 에러를 던진다', async () => {
     MockFile.mockReturnValue({ exists: true, size: 11 * 1024 * 1024 });
+    const received = captureUpload();
 
     await expect(uploadImage('file:///local/path/photo.jpg')).rejects.toThrow(
       '파일 크기가 10MB를 초과합니다'
     );
-    expect(mockPost).not.toHaveBeenCalled();
+    expect(received).not.toHaveBeenCalled();
   });
 
   it('파일이 존재하지 않으면 크기 검사를 건너뛴다', async () => {
     MockFile.mockReturnValue({ exists: false, size: 11 * 1024 * 1024 });
-    mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+    captureUpload();
 
-    await expect(uploadImage('file:///local/path/photo.jpg')).resolves.toBeDefined();
-  });
-
-  it('API 실패 시 에러를 그대로 던진다', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockPost.mockRejectedValue(new Error('Upload failed'));
-
-    await expect(uploadImage('file:///local/path/photo.jpg')).rejects.toThrow('Upload failed');
+    await expect(uploadImage('file:///local/path/photo.jpg')).resolves.toEqual(IMAGE);
   });
 
   it('서버 4xx는 서버 메시지로 바꾸되 상태 코드를 유지한 AxiosError로 던진다', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockPost.mockRejectedValue(
-      createAxiosError(413, { message: '업로드할 수 있는 크기를 초과했습니다.' })
+    server.use(
+      http.post(`${BASE}/image`, () =>
+        HttpResponse.json({ message: '업로드할 수 있는 크기를 초과했습니다.' }, { status: 413 })
+      )
     );
 
     const error = await uploadImage('file:///local/path/photo.jpg').catch((e: unknown) => e);
@@ -155,37 +149,29 @@ describe('uploadImage', () => {
     expect((error as Error).message).toBe('업로드할 수 있는 크기를 초과했습니다.');
   });
 
-  describe('Android 플랫폼', () => {
-    const platform = require('react-native').Platform;
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.post(`${BASE}/image`, () => HttpResponse.error()));
 
+    await expect(uploadImage('file:///local/path/photo.jpg')).rejects.toThrow();
+  });
+
+  describe('Android 플랫폼', () => {
     beforeEach(() => {
-      platform.OS = 'android';
+      Platform.OS = 'android';
     });
 
     afterEach(() => {
-      platform.OS = 'ios';
+      Platform.OS = 'ios';
     });
 
-    it('Android에서 확장자 없는 URI는 jpeg를 기본 타입으로 사용한다', async () => {
-      mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
+    it.each([
+      ['file:///local/path/photo.', 'image/jpeg'],
+      ['file:///local/path/photo.jpg', 'image/jpeg'],
+    ])('%s 는 %s 타입으로 업로드한다', async (uri, type) => {
+      captureUpload();
 
-      await uploadImage('file:///local/path/photo.');
-
-      expect(mockPost).toHaveBeenCalledWith(
-        '/image',
-        expect.any(Object),
-        expect.objectContaining({
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-      );
-    });
-
-    it('Android에서 확장자 있는 URI는 해당 타입으로 요청한다', async () => {
-      mockPost.mockResolvedValue({ data: { imageId: 1, imageUrl: '' } });
-
-      await uploadImage('file:///local/path/photo.jpg');
-
-      expect(mockPost).toHaveBeenCalled();
+      await expect(uploadImage(uri)).resolves.toEqual(IMAGE);
+      expect(uploadedFile()).toEqual(expect.objectContaining({ type }));
     });
   });
 });

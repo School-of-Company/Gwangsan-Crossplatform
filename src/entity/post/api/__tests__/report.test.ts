@@ -1,115 +1,99 @@
-import { report } from '../report';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { report } from '../report';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { post: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockPost = instance.post as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
-beforeEach(() => jest.clearAllMocks());
+const captureReport = () => {
+  const received = jest.fn();
+  server.use(
+    http.post(`${BASE}/report`, async ({ request }) => {
+      received(await request.json());
+      return new HttpResponse(null, { status: 204 });
+    })
+  );
+  return received;
+};
 
 describe('report', () => {
-  describe('PRODUCT 신고', () => {
-    const productReportData = {
-      targetType: 'PRODUCT' as const,
+  it('PRODUCT 신고는 productId를 sourceId로 보낸다', async () => {
+    const received = captureReport();
+
+    await report({
+      targetType: 'PRODUCT',
       productId: 5,
       memberId: 42,
-      reason: 'SPAM_AD' as const,
+      reason: 'SPAM_AD',
       content: '스팸 게시글입니다.',
       imageIds: [1, 2],
-    };
-
-    it('POST /report를 올바른 payload로 호출한다', async () => {
-      mockPost.mockResolvedValue({});
-
-      await report(productReportData);
-
-      expect(mockPost).toHaveBeenCalledWith('/report', {
-        sourceId: 5,
-        targetType: 'PRODUCT',
-        reportType: 'SPAM_AD',
-        content: '스팸 게시글입니다.',
-        imageIds: [1, 2],
-      });
     });
 
-    it('이미지 없는 신고도 빈 배열로 전송한다', async () => {
-      mockPost.mockResolvedValue({});
-
-      await report({ ...productReportData, imageIds: [] });
-
-      expect(mockPost).toHaveBeenCalledWith('/report', expect.objectContaining({ imageIds: [] }));
+    expect(received).toHaveBeenCalledWith({
+      sourceId: 5,
+      targetType: 'PRODUCT',
+      reportType: 'SPAM_AD',
+      content: '스팸 게시글입니다.',
+      imageIds: [1, 2],
     });
   });
 
-  describe('MEMBER 신고', () => {
-    const memberReportData = {
-      targetType: 'MEMBER' as const,
+  it('MEMBER 신고는 memberId를 sourceId로 보낸다', async () => {
+    const received = captureReport();
+
+    await report({
+      targetType: 'MEMBER',
       memberId: 99,
-      reason: 'ABUSE_HATE_HARASSMENT' as const,
+      reason: 'ABUSE_HATE_HARASSMENT',
       content: '욕설을 사용했습니다.',
       imageIds: [],
-    };
+    });
 
-    it('POST /report를 올바른 payload로 호출한다', async () => {
-      mockPost.mockResolvedValue({});
-
-      await report(memberReportData);
-
-      expect(mockPost).toHaveBeenCalledWith('/report', {
-        sourceId: 99,
-        targetType: 'MEMBER',
-        reportType: 'ABUSE_HATE_HARASSMENT',
-        content: '욕설을 사용했습니다.',
-        imageIds: [],
-      });
+    expect(received).toHaveBeenCalledWith({
+      sourceId: 99,
+      targetType: 'MEMBER',
+      reportType: 'ABUSE_HATE_HARASSMENT',
+      content: '욕설을 사용했습니다.',
+      imageIds: [],
     });
   });
 
-  describe('모든 ReportReason 타입', () => {
-    const reasons = [
-      'SEXUAL',
-      'ABUSE_HATE_HARASSMENT',
-      'SPAM_AD',
-      'IMPERSONATION',
-      'SELF_HARM_DANGER',
-      'ETC',
-    ] as const;
+  it.each([
+    'SEXUAL',
+    'ABUSE_HATE_HARASSMENT',
+    'SPAM_AD',
+    'IMPERSONATION',
+    'SELF_HARM_DANGER',
+    'ETC',
+  ] as const)('%s 사유를 reportType으로 보낸다', async (reason) => {
+    const received = captureReport();
 
-    it.each(reasons)('%s 사유로 신고할 수 있다', async (reason) => {
-      mockPost.mockResolvedValue({});
+    await report({ targetType: 'MEMBER', memberId: 1, reason, content: '신고 내용', imageIds: [] });
 
-      await report({
-        targetType: 'MEMBER',
-        memberId: 1,
-        reason,
-        content: '신고 내용',
-        imageIds: [],
-      });
-
-      expect(mockPost).toHaveBeenCalledWith(
-        '/report',
-        expect.objectContaining({ reportType: reason })
-      );
-    });
+    expect(received).toHaveBeenCalledWith(expect.objectContaining({ reportType: reason }));
   });
 
-  describe('에러 처리', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockPost.mockRejectedValue(new Error('서버 오류'));
+  it('4xx 응답은 서버 메시지를 담은 에러로 던진다', async () => {
+    server.use(
+      http.post(`${BASE}/report`, () =>
+        HttpResponse.json({ message: '이미 신고한 대상입니다' }, { status: 409 })
+      )
+    );
 
-      await expect(
-        report({ targetType: 'MEMBER', memberId: 1, reason: 'ETC', content: '내용', imageIds: [] })
-      ).rejects.toThrow();
-    });
+    await expect(
+      report({ targetType: 'MEMBER', memberId: 1, reason: 'ETC', content: '내용', imageIds: [] })
+    ).rejects.toThrow('이미 신고한 대상입니다');
+  });
 
-    it('네트워크 에러도 throw한다', async () => {
-      mockPost.mockRejectedValue(new Error('Network Error'));
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.post(`${BASE}/report`, () => HttpResponse.error()));
 
-      await expect(
-        report({ targetType: 'MEMBER', memberId: 1, reason: 'ETC', content: '내용', imageIds: [] })
-      ).rejects.toThrow('Network Error');
-    });
+    await expect(
+      report({ targetType: 'MEMBER', memberId: 1, reason: 'ETC', content: '내용', imageIds: [] })
+    ).rejects.toThrow();
   });
 });
