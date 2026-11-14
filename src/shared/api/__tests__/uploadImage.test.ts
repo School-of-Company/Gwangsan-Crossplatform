@@ -4,10 +4,15 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
+import { prepareImageForUpload } from '~/shared/lib/prepareImageForUpload';
 import { uploadImage, UPLOAD_TIMEOUT_MS } from '../uploadImage';
 
 jest.mock('expo-file-system', () => ({
   File: jest.fn().mockReturnValue({ exists: true, size: 0 }),
+}));
+
+jest.mock('~/shared/lib/prepareImageForUpload', () => ({
+  prepareImageForUpload: jest.fn(async (uri: string) => uri),
 }));
 
 const MockFile = FileSystem.File as unknown as jest.Mock;
@@ -85,6 +90,23 @@ describe('uploadImage', () => {
     });
   });
 
+  it('리사이즈한 이미지의 uri로 업로드한다', async () => {
+    (prepareImageForUpload as jest.Mock).mockResolvedValueOnce('file:///cache/resized.jpg');
+    captureUpload();
+
+    await uploadImage('file:///local/path/photo.heic');
+
+    expect(MockFile).toHaveBeenCalledWith('file:///cache/resized.jpg');
+  });
+
+  it('.jpg 파일은 MIME type을 image/jpeg로 보낸다', async () => {
+    captureUpload();
+
+    await uploadImage('file:///cache/photo.jpg');
+
+    expect(uploadedFile()).toEqual(expect.objectContaining({ type: 'image/jpeg' }));
+  });
+
   it('확장자·파일명을 알 수 없는 URI도 기본값으로 업로드한다', async () => {
     captureUpload();
 
@@ -144,7 +166,7 @@ describe('uploadImage', () => {
 
     it.each([
       ['file:///local/path/photo.', 'image/jpeg'],
-      ['file:///local/path/photo.jpg', 'image/jpg'],
+      ['file:///local/path/photo.jpg', 'image/jpeg'],
     ])('%s 는 %s 타입으로 업로드한다', async (uri, type) => {
       captureUpload();
 

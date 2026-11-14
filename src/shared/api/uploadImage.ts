@@ -4,14 +4,16 @@ import * as FileSystem from 'expo-file-system';
 import { ImageType } from '~/shared/types/imageType';
 import { logger } from '~/shared/lib/logger';
 import { toAppError } from '~/shared/lib/errorHandler';
+import { prepareImageForUpload } from '~/shared/lib/prepareImageForUpload';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // 전역 타임아웃(5초)은 최대 10MB 업로드에는 짧아 셀룰러 환경에서 실패하므로 따로 길게 잡는다
 export const UPLOAD_TIMEOUT_MS = 60_000;
 
-export const uploadImage = async (uri: string): Promise<ImageType> => {
+export const uploadImage = async (originalUri: string): Promise<ImageType> => {
   try {
+    const uri = await prepareImageForUpload(originalUri);
     const file = new FileSystem.File(uri);
     if (file.exists && file.size > MAX_FILE_SIZE) {
       throw new Error('파일 크기가 10MB를 초과합니다');
@@ -24,7 +26,8 @@ export const uploadImage = async (uri: string): Promise<ImageType> => {
       fileType = uri.match(/\.(jpeg|jpg|png|gif|webp)$/i)?.[1] || 'jpeg';
     }
 
-    const type = `image/${fileType || 'jpeg'}`;
+    // 리사이즈 결과는 .jpg로 나오는데 정식 MIME은 image/jpeg다
+    const type = `image/${!fileType || fileType === 'jpg' ? 'jpeg' : fileType}`;
 
     const formData = new FormData();
     // RN의 FormData는 Blob 대신 { uri, name, type } 파일 객체를 받는다

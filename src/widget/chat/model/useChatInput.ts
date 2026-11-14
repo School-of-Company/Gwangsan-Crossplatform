@@ -85,7 +85,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
       ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsMultipleSelection: false,
-        quality: 0.8,
       })
     );
   }, [pickAndUpload]);
@@ -99,7 +98,6 @@ export const useChatInput = ({ onSendMessage, disabled = false }: UseChatInputPr
     await pickAndUpload(() =>
       ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        quality: 0.8,
       })
     );
   }, [pickAndUpload]);
