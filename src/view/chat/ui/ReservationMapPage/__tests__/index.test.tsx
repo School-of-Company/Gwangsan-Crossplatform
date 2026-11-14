@@ -581,6 +581,140 @@ describe('ReservationMapPage', () => {
     expect(mockRouterBack).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['120', '지하철,전철 · 120m'],
+    ['1500', '지하철,전철 · 1.5km'],
+    [undefined, '지하철,전철'],
+    ['abc', '지하철,전철'],
+  ] as const)('거리 %s는 카테고리 옆에 "%s"로 표시한다', async (distance, label) => {
+    mockSearchNearbyPlaces.mockResolvedValue([
+      makePlace({
+        id: 'd1',
+        category_name: '교통,수송 > 지하철,전철',
+        distance,
+        place_name: '거리',
+      }),
+    ]);
+
+    const { getByText } = render(<ReservationMapPage />);
+    await flush();
+
+    expect(getByText(label)).toBeTruthy();
+  });
+
+  it('도로명 주소가 없으면 지번 주소를 보여주고 저장한다', async () => {
+    mockSearchNearbyPlaces.mockResolvedValue([
+      makePlace({ id: 'j1', road_address_name: '', address_name: '광주 광산구 지번동 5' }),
+      makePlace({ id: 'j2', distance: '900' }),
+    ]);
+
+    const { getAllByText } = render(<ReservationMapPage />);
+    await flush();
+    fireEvent.press(getAllByText('선택')[0]);
+
+    expect(getAllByText('광주 광산구 지번동 5').length).toBeGreaterThan(0);
+    expect(mockSetCoordinates).toHaveBeenCalledWith(35.1397, 126.7938, '광주 광산구 지번동 5');
+  });
+
+  it('위치를 확인하기 전에는 지도를 렌더링하지 않는다', () => {
+    mockGetCurrentLocation.mockReturnValue(new Promise(() => {}));
+
+    const { queryByTestId } = render(<ReservationMapPage />);
+
+    expect(queryByTestId('apple-maps-view')).toBeNull();
+    expect(mockSearchNearbyPlaces).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['성공', (resolve: (v: unknown) => void) => resolve({ latitude: 1, longitude: 2 })],
+    ['실패', (_: unknown, reject: (e: Error) => void) => reject(new Error('권한 없음'))],
+  ] as const)(
+    '위치 조회가 %s하기 전에 화면이 사라지면 인근 장소를 조회하지 않는다',
+    async (_, settle) => {
+      let settleLocation: (...args: any[]) => void = () => {};
+      mockGetCurrentLocation.mockReturnValue(
+        new Promise((resolve, reject) => {
+          settleLocation = () => (settle as any)(resolve, reject);
+        })
+      );
+
+      const { unmount } = render(<ReservationMapPage />);
+      unmount();
+      await act(async () => {
+        settleLocation();
+      });
+      await flush();
+
+      expect(mockSearchNearbyPlaces).not.toHaveBeenCalled();
+    }
+  );
+
+  it('좌표가 없는 지도 이동 이벤트는 인근 장소를 다시 조회하지 않는다', async () => {
+    setPlatform('android');
+
+    render(<ReservationMapPage />);
+    await flush();
+    expect(mockSearchNearbyPlaces).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      lastKakaoMapWebViewProps.onCameraMove({ coordinates: { latitude: 9 } });
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(NEARBY_DEBOUNCE_MS);
+    });
+    await flush();
+
+    expect(mockSearchNearbyPlaces).toHaveBeenCalledTimes(1);
+  });
+
+  it('검색 응답을 기다리는 동안에는 "검색 중..."을 보여준다', async () => {
+    mockSearchPlaces.mockReturnValue(new Promise(() => {}));
+
+    const { getByPlaceholderText, getByText } = render(<ReservationMapPage />);
+    await flush();
+    fireEvent.changeText(getByPlaceholderText('장소나 주소로 검색'), '상무역');
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+    });
+
+    expect(getByText('검색 중...')).toBeTruthy();
+  });
+
+  it('검색 결과에 도로명 주소가 없으면 지번 주소를 보여준다', async () => {
+    mockSearchPlaces.mockResolvedValue([
+      makePlace({
+        id: 's2',
+        place_name: '지번만',
+        road_address_name: '',
+        address_name: '지번 주소',
+      }),
+    ]);
+
+    const { getByPlaceholderText, getByText } = render(<ReservationMapPage />);
+    await flush();
+    fireEvent.changeText(getByPlaceholderText('장소나 주소로 검색'), '지번');
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+    });
+    await flush();
+
+    expect(getByText('지번 주소')).toBeTruthy();
+  });
+
+  it('검색 결과가 비어 있으면 안내 문구를 보여준다', async () => {
+    mockSearchPlaces.mockResolvedValue([]);
+
+    const { getByPlaceholderText, getByText } = render(<ReservationMapPage />);
+    await flush();
+    fireEvent.changeText(getByPlaceholderText('장소나 주소로 검색'), '없는장소');
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+    });
+    await flush();
+
+    expect(getByText('검색 결과가 없어요.')).toBeTruthy();
+  });
+
   it('iOS에서는 AppleMaps.View를, Android에서는 KakaoMapWebView를 렌더링한다', async () => {
     setPlatform('ios');
     mockGetCurrentLocation.mockResolvedValue({ latitude: 1, longitude: 1 });
