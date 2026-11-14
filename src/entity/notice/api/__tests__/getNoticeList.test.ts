@@ -1,43 +1,17 @@
-import { getNoticeList } from '../getNoticeList';
+import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { getNoticeList } from '../getNoticeList';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('getNoticeList', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('GET /notice 호출 후 데이터를 반환한다', async () => {
-    const list = [
-      { id: 1, title: '공지1', content: '내용1', images: [] },
-      { id: 2, title: '공지2', content: '내용2', images: [] },
-    ];
-    mockGet.mockResolvedValue({ data: list });
-
-    const result = await getNoticeList();
-
-    expect(mockGet).toHaveBeenCalledWith('/notice');
-    expect(result).toEqual(list);
-  });
-
-  it('빈 배열을 반환할 수 있다', async () => {
-    mockGet.mockResolvedValue({ data: [] });
-
-    const result = await getNoticeList();
-
-    expect(result).toEqual([]);
-  });
-
-  it('API 실패 시 에러를 그대로 던진다', async () => {
-    mockGet.mockRejectedValue(new Error('Network error'));
-
-    await expect(getNoticeList()).rejects.toThrow('Network error');
-  });
-
-  it('이미지가 포함된 공지 목록을 반환한다', async () => {
+  it('GET /notice 호출 후 이미지가 포함된 목록을 반환한다', async () => {
     const list = [
       {
         id: 1,
@@ -45,12 +19,32 @@ describe('getNoticeList', () => {
         content: '내용',
         images: [{ imageId: 1, imageUrl: 'https://example.com/img.png' }],
       },
+      { id: 2, title: '공지2', content: '내용2', images: [] },
     ];
-    mockGet.mockResolvedValue({ data: list });
+    server.use(http.get(`${BASE}/notice`, () => HttpResponse.json(list)));
 
-    const result = await getNoticeList();
+    await expect(getNoticeList()).resolves.toEqual(list);
+  });
 
-    expect(result[0].images).toHaveLength(1);
-    expect(result[0].images[0].imageUrl).toBe('https://example.com/img.png');
+  it('빈 배열을 반환할 수 있다', async () => {
+    server.use(http.get(`${BASE}/notice`, () => HttpResponse.json([])));
+
+    await expect(getNoticeList()).resolves.toEqual([]);
+  });
+
+  it('5xx는 상태 코드만 알리는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/notice`, () => new HttpResponse(null, { status: 500 })));
+
+    const error = await getNoticeList().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(500);
+    expect((error as Error).message).toBe('요청이 실패했습니다. (500)');
+  });
+
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/notice`, () => HttpResponse.error()));
+
+    await expect(getNoticeList()).rejects.toThrow();
   });
 });

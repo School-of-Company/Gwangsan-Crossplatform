@@ -1,29 +1,36 @@
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
 import { getMyPosts } from '../getMyPosts';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: {
-    get: jest.fn(),
-  },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('getMyPosts', () => {
   it('GET /post/current 응답 data를 반환한다', async () => {
-    mockGet.mockResolvedValue({ data: [{ id: 1, title: '내 게시글' }] });
+    server.use(
+      http.get(`${BASE}/post/current`, () => HttpResponse.json([{ id: 1, title: '내 게시글' }]))
+    );
 
-    const result = await getMyPosts();
-
-    expect(mockGet).toHaveBeenCalledWith('/post/current');
-    expect(result).toEqual([{ id: 1, title: '내 게시글' }]);
+    await expect(getMyPosts()).resolves.toEqual([{ id: 1, title: '내 게시글' }]);
   });
 
-  it('API 실패 시 에러를 전파한다', async () => {
-    mockGet.mockRejectedValue(new Error('Unauthorized'));
+  it('실패하면 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/post/current`, () =>
+        HttpResponse.json({ message: '접근 권한이 없습니다' }, { status: 403 })
+      )
+    );
 
-    await expect(getMyPosts()).rejects.toThrow('Unauthorized');
+    await expect(getMyPosts()).rejects.toThrow('접근 권한이 없습니다');
+  });
+
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/post/current`, () => HttpResponse.error()));
+
+    await expect(getMyPosts()).rejects.toThrow();
   });
 });
