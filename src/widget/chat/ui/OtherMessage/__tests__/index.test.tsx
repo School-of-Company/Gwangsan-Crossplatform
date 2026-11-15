@@ -108,4 +108,78 @@ describe('OtherMessage', () => {
     expect(getByText('(수정됨)')).toBeTruthy();
     expect(queryByText('오후 3:00')).toBeNull();
   });
+
+  it('showProfile=false이면 닉네임과 프로필 아이콘을 렌더링하지 않는다', () => {
+    const { queryByText, queryByTestId, getByText } = render(
+      <OtherMessage message={makeMessage()} showProfile={false} />
+    );
+
+    expect(getByText('안녕하세요')).toBeTruthy();
+    expect(queryByText('상대방')).toBeNull();
+    expect(queryByTestId('icon-person')).toBeNull();
+  });
+
+  it('프로필 아이콘을 눌러도 senderId로 onProfilePress가 호출된다', () => {
+    const onProfilePress = jest.fn();
+    const { getByTestId } = render(
+      <OtherMessage message={makeMessage({ senderId: 7 })} onProfilePress={onProfilePress} />
+    );
+
+    fireEvent.press(getByTestId('icon-person'));
+
+    expect(onProfilePress).toHaveBeenCalledWith(7);
+  });
+
+  it('onProfilePress가 없어도 프로필을 눌렀을 때 오류가 나지 않는다', () => {
+    const { getByText } = render(<OtherMessage message={makeMessage()} />);
+
+    expect(() => fireEvent.press(getByText('상대방'))).not.toThrow();
+  });
+
+  it('showTime=false이고 수정되지 않았으면 시간 영역을 렌더링하지 않는다', () => {
+    const { queryByText } = render(<OtherMessage message={makeMessage()} showTime={false} />);
+
+    expect(queryByText('오후 3:00')).toBeNull();
+    expect(queryByText('(수정됨)')).toBeNull();
+  });
+
+  it('이미지 메시지는 말풍선 배경 없이 렌더링한다', () => {
+    const { toJSON } = render(
+      <OtherMessage
+        message={makeMessage({
+          messageType: 'IMAGE',
+          images: [{ imageId: 1, imageUrl: 'https://example.com/a.jpg' }],
+        } as Partial<ChatMessageResponse>)}
+      />
+    );
+
+    expect(JSON.stringify(toJSON())).not.toContain('rounded-3xl');
+  });
+
+  it('images가 없는 이미지 메시지도 오류 없이 말풍선으로 렌더링한다', () => {
+    const { toJSON } = render(
+      <OtherMessage
+        message={makeMessage({
+          messageType: 'IMAGE',
+          images: undefined,
+        } as Partial<ChatMessageResponse>)}
+      />
+    );
+
+    expect(JSON.stringify(toJSON())).toContain('rounded-3xl');
+  });
+
+  it('텍스트 메시지는 말풍선 배경과 함께 렌더링한다', () => {
+    const { toJSON } = render(<OtherMessage message={makeMessage()} />);
+
+    expect(JSON.stringify(toJSON())).toContain('rounded-3xl');
+  });
+
+  it('다음 메시지와 묶이면 아래 여백을 줄인다', () => {
+    const grouped = render(<OtherMessage message={makeMessage()} isFollowedByGrouped />);
+    const single = render(<OtherMessage message={makeMessage()} />);
+
+    expect(JSON.stringify(grouped.toJSON())).toContain('mb-1');
+    expect(JSON.stringify(single.toJSON())).toContain('mb-4');
+  });
 });

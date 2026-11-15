@@ -161,6 +161,15 @@ describe('SellingPageView', () => {
     expect(header.headerTitle).toBe('상대방님의 판매 목록');
   });
 
+  it('상대방 프로필을 아직 불러오지 못했으면 닉네임 없이 타이틀을 표시한다', () => {
+    mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+
+    const { getByTestId } = renderWithProviders(<SellingPageView />);
+
+    const header = JSON.parse(getByTestId('header').props.children);
+    expect(header.headerTitle).toBe('님의 판매 목록');
+  });
+
   it('기본 탭은 "판매중"이며, 게시물이 없으면 두 패널 모두 안내 문구를 표시한다', () => {
     const { getByText } = renderWithProviders(<SellingPageView />);
 

@@ -843,6 +843,72 @@ describe('ChatRoomPage', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/post/1');
   });
 
+  it('받은 후기가 아직 없으면 내 후기 목록 페이지로 이동한다', async () => {
+    mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
+    mockGetMyReceivedReview.mockResolvedValue([]);
+
+    const { getByTestId } = render(<ChatRoomPage />);
+    fireEvent.press(getByTestId('received-reviews-link'));
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/reviews/5');
+  });
+
+  it('채팅방 ID가 올바르지 않으면 읽음 처리를 하지 않는다', async () => {
+    mockUseLocalSearchParams.mockReturnValue({ id: 'abc' });
+
+    render(<ChatRoomPage />);
+
+    expect(mockMarkRoomAsRead).not.toHaveBeenCalled();
+  });
+
+  describe('예약 장소 지도 열기', () => {
+    const openMap = () => {
+      const { onOpenMap } = mockUseChatUIState.mock.calls.at(-1)![0];
+      act(() => onOpenMap());
+    };
+
+    it('예약 좌표가 있으면 장소명을 인코딩해 지도 화면으로 이동한다', () => {
+      mockUseChatRoomData.mockReturnValue({
+        data: {
+          product: {
+            id: 1,
+            isCompleted: false,
+            reservationLatitude: 35.1,
+            reservationLongitude: 126.8,
+            reservationPlaceName: '광산 구청',
+          },
+        },
+      });
+
+      render(<ChatRoomPage />);
+      openMap();
+
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        '/chatting/10/reservation/location?latitude=35.1&longitude=126.8&placeName=%EA%B4%91%EC%82%B0%20%EA%B5%AC%EC%B2%AD'
+      );
+    });
+
+    it('장소명이 없어도 빈 값으로 이동한다', () => {
+      mockUseChatRoomData.mockReturnValue({
+        data: {
+          product: { id: 1, reservationLatitude: 35.1, reservationLongitude: 126.8 },
+        },
+      });
+
+      render(<ChatRoomPage />);
+      openMap();
+
+      expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining('placeName='));
+    });
+
+    it('예약 좌표가 없으면 이동하지 않는다', () => {
+      render(<ChatRoomPage />);
+      openMap();
+
+      expect(mockRouterPush).not.toHaveBeenCalled();
+    });
+  });
+
   it('해당 거래로 받은 후기가 있으면 후기 취소/상세 페이지로 이동한다', async () => {
     mockUseChatRoomData.mockReturnValue({ data: { product: { id: 1, isCompleted: true } } });
     mockGetMyReceivedReview.mockResolvedValue([{ productId: 1, reviewId: 99 }]);
