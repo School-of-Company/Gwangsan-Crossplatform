@@ -31,3 +31,10 @@
 - 현재 `develop` 기준 실제 커버리지는 Lines 98.5 / Statements 97.6 / Functions 96.5 / Branches 92.6입니다.
   여유가 줄어든 만큼 새 코드는 테스트와 함께 들어와야 합니다.
 - 커버리지가 더 오르면 하한도 함께 올리는 방식(ratchet)으로 유지합니다.
+
+## 후속 변경: 레이어별 기준
+
+- `src/test-utils/**`와 `src/mocks/**`는 테스트 보조 코드라 측정 대상에서 제외합니다.
+- 하한은 `global` 하나에서 `src/entity`·`shared`·`widget`·`view` 경로별 기준으로 나눴습니다. 한 레이어가 크게 떨어져도 전체 평균에 가려지지 않습니다.
+- Jest는 경로 기준에 걸린 파일을 `global` 계산에서 빼므로, `global`은 나머지(`src/app/index.tsx`)만 봅니다.
+- 위 표의 수치는 상향 당시 기준입니다. 현재 기준은 `jest.config.js`를 따릅니다.
