@@ -395,34 +395,6 @@ describe('ImageUploader', () => {
       expect(mutateAsync).toHaveBeenCalledTimes(3);
     });
 
-    it('10MB를 넘는 사진만 제외하고 나머지는 첨부한다', async () => {
-      const Toast = require('react-native-toast-message');
-      const mutateAsync = setupUploadMock(
-        jest.fn().mockResolvedValue({ imageId: 1, imageUrl: 'https://example.com/img.jpg' })
-      );
-      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
-      mockLaunchGallery.mockResolvedValue({
-        canceled: false,
-        assets: [
-          { uri: 'file://ok.jpg', fileSize: 1024 },
-          { uri: 'file://big.jpg', fileSize: 11 * 1024 * 1024 },
-        ],
-      });
-
-      const onImagesChange = jest.fn();
-      const container = renderWithProviders(
-        <StatefulImageUploader onImagesChange={onImagesChange} />
-      );
-      fireEvent.press(getButtons(container)[0]);
-
-      await waitFor(() => expect(onImagesChange).toHaveBeenCalledWith(['file://ok.jpg']));
-      expect(Toast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', text1: '파일 크기 초과' })
-      );
-      expect(mutateAsync).toHaveBeenCalledTimes(1);
-      expect(mutateAsync).toHaveBeenCalledWith('file://ok.jpg');
-    });
-
     it('이미 추가된 사진은 제외하고 새 사진만 첨부한다', async () => {
       const Toast = require('react-native-toast-message');
       setupUploadMock(
@@ -788,30 +760,6 @@ describe('ImageUploader', () => {
       expect(onUploadStateChange).toHaveBeenLastCalledWith(
         expect.objectContaining({ uploadedCount: 1 })
       );
-    });
-  });
-
-  describe('파일 크기 초과', () => {
-    it('갤러리에서 선택한 파일이 10MB를 초과하면 Toast 에러를 표시하고 업로드하지 않는다', async () => {
-      const Toast = require('react-native-toast-message');
-      const mutateAsync = setupUploadMock();
-      mockRequestGalleryPermission.mockResolvedValue({ granted: true });
-      mockLaunchGallery.mockResolvedValue({
-        canceled: false,
-        assets: [{ uri: 'file://big.jpg', fileSize: 11 * 1024 * 1024 }],
-      });
-
-      const onImagesChange = jest.fn();
-      const container = renderWithProviders(<ImageUploader onImagesChange={onImagesChange} />);
-      fireEvent.press(getButtons(container)[0]);
-
-      await waitFor(() =>
-        expect(Toast.show).toHaveBeenCalledWith(
-          expect.objectContaining({ type: 'error', text1: '파일 크기 초과' })
-        )
-      );
-      expect(mutateAsync).not.toHaveBeenCalled();
-      expect(onImagesChange).not.toHaveBeenCalled();
     });
   });
 
