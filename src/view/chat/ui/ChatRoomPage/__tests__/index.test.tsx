@@ -950,12 +950,17 @@ describe('ChatRoomPage', () => {
       makeChatMessagesReturn({ messages: [{ id: 1, content: 'hi' }] })
     );
 
-    render(<ChatRoomPage />);
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    });
+    jest.useFakeTimers();
+    try {
+      render(<ChatRoomPage />);
+      await act(async () => {
+        jest.advanceTimersByTime(200);
+      });
 
-    expect(mockScrollToEnd).not.toHaveBeenCalled();
+      expect(mockScrollToEnd).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('채팅 목록에서 스크롤 요청 시 scrollToEnd가 호출된다', () => {
