@@ -9,6 +9,29 @@ import { useReservationLocationStore } from '~/shared/store/useReservationLocati
 import { logger } from '~/shared/lib/logger';
 import ReservationPage from '../index';
 
+// "오늘"에 의존하는 날짜 계산이 실행일에 따라 흔들리지 않도록 시각만 고정한다.
+// 타이머는 건드리지 않아 waitFor 등은 실제 시간으로 동작한다.
+jest.useFakeTimers({
+  now: new Date(2026, 10, 15, 12, 0, 0),
+  doNotFake: [
+    'setTimeout',
+    'clearTimeout',
+    'setInterval',
+    'clearInterval',
+    'setImmediate',
+    'clearImmediate',
+    'nextTick',
+    'queueMicrotask',
+    'requestAnimationFrame',
+    'cancelAnimationFrame',
+    'requestIdleCallback',
+    'cancelIdleCallback',
+    'performance',
+    'hrtime',
+  ],
+});
+afterAll(() => jest.useRealTimers());
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),
