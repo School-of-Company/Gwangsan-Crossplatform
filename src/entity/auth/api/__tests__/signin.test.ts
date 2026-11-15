@@ -3,6 +3,7 @@ import { server } from '~/mocks/server';
 import { setData } from '~/shared/lib/setData';
 import { getDeviceInfo } from '~/shared/model/getDeviceInfo';
 import { signinWithDeviceInfo } from '../signin';
+import { BASE } from '~/mocks/constants';
 
 jest.mock('~/shared/consts/api', () => ({ API_BASE_URL: 'http://test-api.com' }));
 jest.mock('~/shared/lib/setData', () => ({
@@ -15,7 +16,6 @@ jest.mock('~/shared/model/getDeviceInfo', () => ({
 const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockGetDeviceInfo = getDeviceInfo as jest.MockedFunction<typeof getDeviceInfo>;
 
-const BASE = 'http://test-api.com';
 afterEach(() => jest.clearAllMocks());
 
 const mockAuthResponse = {

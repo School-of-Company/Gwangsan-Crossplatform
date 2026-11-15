@@ -3,8 +3,7 @@ import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { updateChatMessage } from '../updateChatMessage';
 import { deleteChatMessage } from '../deleteChatMessage';
-
-const BASE = 'http://test-api.com';
+import { BASE } from '~/mocks/constants';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;

@@ -8,6 +8,7 @@ import { clearSession } from '../clearSession';
 import Toast from 'react-native-toast-message';
 import { setData } from '../setData';
 import { instance, setQueryClientInstance, SessionExpiredError, TokenStorageError } from '../axios';
+import { BASE } from '~/mocks/constants';
 
 jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { apiUrl: 'http://test-api.com' } } },
@@ -40,8 +41,6 @@ const mockGetRefreshToken = getRefreshToken as jest.MockedFunction<typeof getRef
 const mockClearSession = clearSession as jest.MockedFunction<typeof clearSession>;
 const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockSentry = Sentry as jest.Mocked<typeof Sentry>;
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;

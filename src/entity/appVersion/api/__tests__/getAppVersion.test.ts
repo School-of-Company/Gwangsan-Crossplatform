@@ -5,6 +5,8 @@ import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvi
 import { server } from '~/mocks/server';
 import { makeAppVersion } from '~/mocks/handlers/appVersion';
 import { getAppVersion } from '../getAppVersion';
+import { BASE } from '~/mocks/constants';
+import { expectAppError } from '~/test-utils/expectAppError';
 
 jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { apiUrl: 'http://test-api.com' } } },
@@ -24,8 +26,6 @@ jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
@@ -71,10 +71,7 @@ describe('getAppVersion', () => {
       )
     );
 
-    const error = await getAppVersion('ios').catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(AxiosError);
-    expect((error as AxiosError).response?.status).toBe(400);
+    const error = await expectAppError(getAppVersion('ios'), 400);
     expect(shouldRetryQuery(0, error)).toBe(false);
     expect(shouldThrowQueryError(error, false)).toBe(false);
   });

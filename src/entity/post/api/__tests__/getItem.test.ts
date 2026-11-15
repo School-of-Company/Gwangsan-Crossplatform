@@ -4,14 +4,13 @@ import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { makePostDetail } from '~/mocks/handlers/post';
 import { getItem } from '../getItem';
+import { BASE } from '~/mocks/constants';
 
 // 실제 Sentry를 불러오면 내부 setInterval이 남아 Jest가 종료되지 않는다
 jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
 }));
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
