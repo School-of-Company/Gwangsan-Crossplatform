@@ -1,6 +1,6 @@
 {
   "name": "gwangsan-crossplatform",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
