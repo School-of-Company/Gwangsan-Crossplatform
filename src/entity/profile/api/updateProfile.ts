@@ -16,7 +16,9 @@ export const updateProfile = async (data: UpdateProfileRequest): Promise<void> =
   } catch (error) {
     // PATCH /member의 409는 별칭 중복뿐이다. 응답 본문이 없어도 원인을 알 수 있게 안내한다
     if (error instanceof AxiosError && error.response?.status === 409) {
-      throw new Error(DUPLICATE_NICKNAME_MESSAGE);
+      // AxiosError를 그대로 던져야 QueryProvider가 response.status(409)로 재시도 여부를 판단한다
+      error.message = DUPLICATE_NICKNAME_MESSAGE;
+      throw error;
     }
     // "Request failed with status code 400" 같은 원문 대신 사용자용 메시지로 바꿔 던진다
     throw toAppError(error);

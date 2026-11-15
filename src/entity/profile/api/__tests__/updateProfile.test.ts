@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
+import { shouldRetryQuery } from '~/shared/lib/QueryProvider';
 import { updateProfile } from '../updateProfile';
 
 const BASE = 'http://test-api.com';
@@ -43,9 +44,12 @@ describe('updateProfile', () => {
   it('409(별칭 중복)는 본문이 없어도 원인을 알 수 있는 메시지로 바꿔 던진다', async () => {
     server.use(http.patch(`${BASE}/member`, () => new HttpResponse(null, { status: 409 })));
 
-    await expect(updateProfile(payload)).rejects.toThrow(
-      '이미 사용 중인 별칭입니다. 다른 별칭을 입력해주세요.'
-    );
+    const error = await updateProfile(payload).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(409);
+    expect((error as Error).message).toBe('이미 사용 중인 별칭입니다. 다른 별칭을 입력해주세요.');
+    expect(shouldRetryQuery(0, error)).toBe(false);
   });
 
   it('네트워크 오류는 에러를 던진다', async () => {
