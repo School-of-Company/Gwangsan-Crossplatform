@@ -1,32 +1,35 @@
 import { AxiosError } from 'axios';
-import { getPosts } from '../getPosts';
+import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { getPosts } from '../getPosts';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 const makeRawPost = (overrides: Record<string, unknown> = {}) => ({
   id: 1,
   title: '테스트 게시글',
   content: '내용',
-  gwangsan: '광산구',
+  gwangsan: 1,
   type: 'OBJECT',
   mode: 'GIVER',
-  images: ['https://example.com/img.jpg'],
+  images: [{ imageId: 1, imageUrl: 'https://example.com/img.jpg' }],
   isCompletable: true,
   isCompleted: false,
   ...overrides,
 });
 
-describe('getPosts', () => {
-  beforeEach(() => jest.clearAllMocks());
+const useListResponse = (body: JsonBodyType) =>
+  server.use(http.get(`${BASE}/post`, () => HttpResponse.json(body)));
 
+describe('getPosts', () => {
   describe('성공 케이스', () => {
     it('응답 데이터를 PostType 형태로 변환해 반환한다', async () => {
-      mockGet.mockResolvedValue({ data: [makeRawPost()] });
+      useListResponse([makeRawPost()]);
 
       const result = await getPosts();
 
@@ -34,87 +37,84 @@ describe('getPosts', () => {
       expect(result[0]).toMatchObject({
         id: 1,
         title: '테스트 게시글',
-        imageUrls: ['https://example.com/img.jpg'],
+        imageUrls: [{ imageId: 1, imageUrl: 'https://example.com/img.jpg' }],
         isCompletable: true,
         isCompleted: false,
       });
     });
 
-    it('images가 없으면 imageUrls를 빈 배열로 설정한다', async () => {
-      mockGet.mockResolvedValue({ data: [makeRawPost({ images: undefined })] });
+    it.each([
+      ['images', 'imageUrls', []],
+      ['isCompletable', 'isCompletable', false],
+      ['isCompleted', 'isCompleted', false],
+      ['isReserved', 'isReserved', false],
+    ])('%s가 없으면 %s를 기본값으로 설정한다', async (missing, field, expected) => {
+      useListResponse([makeRawPost({ [missing]: undefined })]);
 
       const result = await getPosts();
 
-      expect(result[0].imageUrls).toEqual([]);
+      expect(result[0]).toHaveProperty(field, expected);
     });
 
-    it('isCompletable이 없으면 false로 기본값을 설정한다', async () => {
-      mockGet.mockResolvedValue({ data: [makeRawPost({ isCompletable: undefined })] });
+    it('type과 mode를 쿼리스트링으로 보낸다', async () => {
+      const received = jest.fn();
+      server.use(
+        http.get(`${BASE}/post`, ({ request }) => {
+          received(Object.fromEntries(new URL(request.url).searchParams));
+          return HttpResponse.json([]);
+        })
+      );
 
-      const result = await getPosts();
+      await getPosts('OBJECT', 'GIVER');
 
-      expect(result[0].isCompletable).toBe(false);
+      expect(received).toHaveBeenCalledWith({ type: 'OBJECT', mode: 'GIVER' });
     });
 
-    it('isCompleted가 없으면 false로 기본값을 설정한다', async () => {
-      mockGet.mockResolvedValue({ data: [makeRawPost({ isCompleted: undefined })] });
-
-      const result = await getPosts();
-
-      expect(result[0].isCompleted).toBe(false);
-    });
-
-    it('type이 있으면 쿼리스트링에 포함한다', async () => {
-      mockGet.mockResolvedValue({ data: [] });
-
-      await getPosts('OBJECT');
-
-      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('type=OBJECT'));
-    });
-
-    it('mode가 있으면 쿼리스트링에 포함한다', async () => {
-      mockGet.mockResolvedValue({ data: [] });
-
-      await getPosts(undefined, 'GIVER');
-
-      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('mode=GIVER'));
-    });
-
-    it('params 없이 호출하면 빈 쿼리스트링으로 요청한다', async () => {
-      mockGet.mockResolvedValue({ data: [] });
+    it('params 없이 호출하면 쿼리스트링 없이 요청한다', async () => {
+      const received = jest.fn();
+      server.use(
+        http.get(`${BASE}/post`, ({ request }) => {
+          received(new URL(request.url).search);
+          return HttpResponse.json([]);
+        })
+      );
 
       await getPosts();
 
-      expect(mockGet).toHaveBeenCalledWith('/post?');
+      expect(received).toHaveBeenCalledWith('');
     });
   });
 
   describe('에러 케이스', () => {
-    it('Error 인스턴스는 메시지가 가공된 상태로 re-throw된다', async () => {
-      mockGet.mockRejectedValue(new Error('Network error'));
+    it('4xx 응답은 서버 메시지를 담은 AxiosError로 던진다', async () => {
+      server.use(
+        http.get(`${BASE}/post`, () =>
+          HttpResponse.json({ message: '잘못된 요청입니다' }, { status: 400 })
+        )
+      );
 
-      await expect(getPosts()).rejects.toThrow('Network error');
+      const error = await getPosts().catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(AxiosError);
+      expect((error as AxiosError).message).toBe('잘못된 요청입니다');
+      expect((error as AxiosError).response?.status).toBe(400);
     });
 
-    it('AxiosError는 instanceof와 status 정보가 보존된다', async () => {
-      const axiosError = new AxiosError('Request failed', 'ERR_BAD_RESPONSE', undefined, null, {
-        status: 500,
-        statusText: 'Internal Server Error',
-        headers: {},
-        config: {} as never,
-        data: { message: '서버 오류' },
-      });
-      mockGet.mockRejectedValue(axiosError);
+    it('5xx 응답은 상태 코드만 알리는 AxiosError로 던진다', async () => {
+      server.use(
+        http.get(`${BASE}/post`, () => HttpResponse.json({ message: '서버 오류' }, { status: 500 }))
+      );
 
-      await expect(getPosts()).rejects.toBeInstanceOf(AxiosError);
-      await expect(getPosts()).rejects.toMatchObject({ response: { status: 500 } });
+      const error = await getPosts().catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(AxiosError);
+      expect((error as AxiosError).message).toBe('요청이 실패했습니다. (500)');
     });
 
-    it('Error 인스턴스가 아닌 예외는 새 Error로 감싸 throw된다', async () => {
-      mockGet.mockRejectedValue('string error');
+    it('네트워크 오류는 에러를 던진다', async () => {
+      server.use(http.get(`${BASE}/post`, () => HttpResponse.error()));
 
-      await expect(getPosts()).rejects.toBeInstanceOf(Error);
-      await expect(getPosts()).rejects.toThrow('string error');
+      await expect(getPosts()).rejects.toThrow();
     });
   });
 });

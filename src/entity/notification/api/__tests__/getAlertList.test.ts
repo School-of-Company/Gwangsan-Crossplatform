@@ -1,12 +1,15 @@
-import { getAlertList } from '../getAlertList';
+import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { getAlertList } from '../getAlertList';
 import { AlertType } from '../../model/alertTypes';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { get: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 const makeAlert = (overrides: Record<string, unknown> = {}) => ({
   id: 1,
@@ -20,58 +23,40 @@ const makeAlert = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-beforeEach(() => jest.clearAllMocks());
-
 describe('getAlertList', () => {
-  describe('성공 케이스', () => {
-    it('GET /alert 응답 data를 반환한다', async () => {
-      const alerts = [makeAlert()];
-      mockGet.mockResolvedValue({ data: alerts });
+  it('GET /alert 응답 data를 반환한다', async () => {
+    const alerts = [
+      makeAlert({ id: 1, alertType: AlertType.TRADE_COMPLETE }),
+      makeAlert({ id: 2, alertType: AlertType.REVIEW }),
+    ];
+    server.use(http.get(`${BASE}/alert`, () => HttpResponse.json(alerts)));
 
-      const result = await getAlertList();
-
-      expect(mockGet).toHaveBeenCalledWith('/alert');
-      expect(result).toEqual(alerts);
-    });
-
-    it('빈 배열 응답도 정상 반환한다', async () => {
-      mockGet.mockResolvedValue({ data: [] });
-
-      const result = await getAlertList();
-
-      expect(result).toEqual([]);
-    });
-
-    it('여러 알림을 포함한 응답을 반환한다', async () => {
-      const alerts = [
-        makeAlert({ id: 1, alertType: AlertType.TRADE_COMPLETE }),
-        makeAlert({ id: 2, alertType: AlertType.REVIEW }),
-      ];
-      mockGet.mockResolvedValue({ data: alerts });
-
-      const result = await getAlertList();
-
-      expect(result).toHaveLength(2);
-    });
+    await expect(getAlertList()).resolves.toEqual(alerts);
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockGet.mockRejectedValue(new Error('Not found'));
+  it('빈 배열 응답도 정상 반환한다', async () => {
+    server.use(http.get(`${BASE}/alert`, () => HttpResponse.json([])));
 
-      await expect(getAlertList()).rejects.toThrow();
-    });
+    await expect(getAlertList()).resolves.toEqual([]);
+  });
 
-    it('원본 에러를 그대로 전파한다', async () => {
-      mockGet.mockRejectedValue(new Error('Server error'));
+  it('실패하면 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/alert`, () =>
+        HttpResponse.json({ message: '알림을 불러오지 못했습니다' }, { status: 403 })
+      )
+    );
 
-      await expect(getAlertList()).rejects.toThrow('Server error');
-    });
+    const error = await getAlertList().catch((e: unknown) => e);
 
-    it('네트워크 에러 시 에러를 throw한다', async () => {
-      mockGet.mockRejectedValue(new Error('Network Error'));
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(403);
+    expect((error as Error).message).toBe('알림을 불러오지 못했습니다');
+  });
 
-      await expect(getAlertList()).rejects.toThrow('Network Error');
-    });
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.get(`${BASE}/alert`, () => HttpResponse.error()));
+
+    await expect(getAlertList()).rejects.toThrow();
   });
 });

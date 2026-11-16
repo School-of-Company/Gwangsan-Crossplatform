@@ -1,14 +1,5 @@
-import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  View,
-  Text,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import Toast from 'react-native-toast-message';
+import { FlatList, View, Text, RefreshControl } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -23,53 +14,16 @@ import type { ChatRoomListItem } from '~/entity/chat';
 import type { RoomId } from '~/shared/types/chatType';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import { BottomSheetModalWrapper } from '~/shared/ui/BottomSheetModalWrapper';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { ActionSheetRow } from '~/shared/ui/ActionSheetRow';
 import { Button } from '~/shared/ui/Button';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { acquireNavigationLock } from '~/shared/lib/navigationGuard';
 import { useBlockUser } from '~/entity/profile';
+import { Spinner } from '~/shared/ui/Spinner';
 
 const CHAT_ROOM_QUERY_KEY = chatRoomKeys.list();
-
-interface ActionSheetRowProps {
-  label: string;
-  labelClassName?: string;
-  disabled?: boolean;
-  onPress?: () => void;
-}
-
-// 채팅방 액션 시트(차단/신고/나가기) 버튼 한 줄. 눌렀을 때 살짝 작아지는 효과를 준다.
-const ActionSheetRow = ({
-  label,
-  labelClassName = 'text-gray-900',
-  disabled = false,
-  onPress,
-}: ActionSheetRowProps) => {
-  const scale = useState(() => new Animated.Value(1))[0];
-
-  const handlePressIn = useCallback(() => {
-    Animated.timing(scale, { toValue: 0.96, duration: 100, useNativeDriver: true }).start();
-  }, [scale]);
-
-  const handlePressOut = useCallback(() => {
-    Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
-  }, [scale]);
-
-  return (
-    <TouchableOpacity
-      activeOpacity={1}
-      disabled={disabled}
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      className={disabled ? 'opacity-50' : ''}>
-      <Animated.View
-        className="h-[56px] items-center justify-center"
-        style={{ transform: [{ scale }] }}>
-        <Text className={`text-lg font-medium ${labelClassName}`}>{label}</Text>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-};
 
 export function ChatRoomList() {
   const router = useRouter();
@@ -98,17 +52,12 @@ export function ChatRoomList() {
 
   // 받아둔 목록이 있는 상태에서 조회가 실패하면 목록은 그대로 두고 실패만 알린다.
   // 30초 폴링이 연달아 실패해도 토스트가 반복되지 않도록 에러 상태로 바뀌는 순간에만 띄운다.
-  useEffect(() => {
-    if (!isError || !hasRooms) return;
-    Toast.show({
-      type: 'error',
-      text1: '채팅 목록을 새로 불러오지 못했어요',
-      text2: '아래로 당겨 다시 시도해 주세요.',
-      visibilityTime: 3000,
-    });
-    // hasRooms가 바뀔 때마다 다시 띄우지 않도록 isError 전환만 따른다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError]);
+  useErrorToastOnTransition(
+    isError,
+    '채팅 목록을 새로 불러오지 못했어요',
+    '아래로 당겨 다시 시도해 주세요.',
+    hasRooms
+  );
 
   const { joinRoom } = useChatSocket({
     autoConnect: true,
@@ -169,15 +118,7 @@ export function ChatRoomList() {
   );
 
   // 30초 폴링에도 isRefetching이 켜지므로, 사용자가 당겨서 새로고침한 동안만 스피너를 유지한다
-  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
-  const handleRefresh = useCallback(async () => {
-    setIsPullRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setIsPullRefreshing(false);
-    }
-  }, [refetch]);
+  const { refreshing: isPullRefreshing, onRefresh: handleRefresh } = usePullToRefresh(refetch);
 
   const handleChatRoomLongPress = useCallback((roomId: RoomId) => {
     setActionTargetRoomId(roomId);
@@ -301,7 +242,7 @@ export function ChatRoomList() {
   // 첫 조회가 길어질 때 당겨서 새로고침 스피너만 보이면 빈 회색 화면처럼 보여, 가운데에 로딩을 표시한다
   const renderLoadingState = () => (
     <View testID="chat-room-list-loading" className="flex-1 items-center justify-center py-20">
-      <ActivityIndicator size="large" color="#8FC31D" />
+      <Spinner size="large" />
     </View>
   );
 

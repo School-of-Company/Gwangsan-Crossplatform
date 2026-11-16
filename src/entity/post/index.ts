@@ -1,11 +1,9 @@
 export { useDeletePost } from './model/useDeletePost';
 export { useGetItem } from './model/useGetItem';
 export { useGetPosts } from './model/useGetPosts';
-export { requestTrade } from './api/requestTrade';
-export { withdrawTrade } from './api/withdrawTrade';
-export { createReview } from './api/createReview';
-export { makeReservation } from './api/makeReservation';
-export { cancelReservation } from './api/cancelReservation';
+export { useRequestTrade } from './model/useRequestTrade';
+export { useWithdrawTrade } from './model/useWithdrawTrade';
+export { useReservation } from './model/useReservation';
 export { returnValue, handleCategory } from './model/handleCategory';
 export type { Category } from './model/category';
 export { default as MiniProfile } from './ui/miniProfile';

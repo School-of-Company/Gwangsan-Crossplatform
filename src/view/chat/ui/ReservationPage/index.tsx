@@ -45,13 +45,11 @@ export default function ReservationPage() {
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [isTimeSheetVisible, setIsTimeSheetVisible] = useState(false);
 
-  const {
-    latitude,
-    longitude,
-    address,
-    placeName,
-    reset: resetLocation,
-  } = useReservationLocationStore();
+  const latitude = useReservationLocationStore((state) => state.latitude);
+  const longitude = useReservationLocationStore((state) => state.longitude);
+  const address = useReservationLocationStore((state) => state.address);
+  const placeName = useReservationLocationStore((state) => state.placeName);
+  const resetLocation = useReservationLocationStore((state) => state.reset);
 
   const minDate = useMemo(() => startOfDay(new Date()), []);
   const maxDate = useMemo(() => {

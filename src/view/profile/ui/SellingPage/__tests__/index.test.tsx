@@ -34,11 +34,7 @@ jest.mock('~/entity/profile/model/useGetMyInformation', () => ({
   useGetMyInformation: () => ({ data: { memberId: 1 } }),
 }));
 
-jest.mock('~/shared/ui', () => ({
-  Header: ({ headerTitle, showBackButton }: any) => {
-    const { Text } = require('react-native');
-    return <Text testID="header">{JSON.stringify({ headerTitle, showBackButton })}</Text>;
-  },
+jest.mock('~/shared/ui/PillTabs', () => ({
   PillTabs: ({ tabs, value, onChange, testIDPrefix }: any) => {
     const { Text, TouchableOpacity, View } = require('react-native');
     return (
@@ -53,6 +49,13 @@ jest.mock('~/shared/ui', () => ({
         ))}
       </View>
     );
+  },
+}));
+
+jest.mock('~/shared/ui', () => ({
+  Header: ({ headerTitle, showBackButton }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="header">{JSON.stringify({ headerTitle, showBackButton })}</Text>;
   },
   BottomSheetModalWrapper: ({ isVisible, children }: any) => (isVisible ? children : null),
   Button: ({ children, onPress, disabled, testID }: any) => {
@@ -156,6 +159,15 @@ describe('SellingPageView', () => {
 
     const header = JSON.parse(getByTestId('header').props.children);
     expect(header.headerTitle).toBe('상대방님의 판매 목록');
+  });
+
+  it('상대방 프로필을 아직 불러오지 못했으면 닉네임 없이 타이틀을 표시한다', () => {
+    mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+
+    const { getByTestId } = renderWithProviders(<SellingPageView />);
+
+    const header = JSON.parse(getByTestId('header').props.children);
+    expect(header.headerTitle).toBe('님의 판매 목록');
   });
 
   it('기본 탭은 "판매중"이며, 게시물이 없으면 두 패널 모두 안내 문구를 표시한다', () => {

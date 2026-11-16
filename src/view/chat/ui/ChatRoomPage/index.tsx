@@ -1,5 +1,6 @@
+import { useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { AlertModal } from '~/shared/ui/AlertModal';
 import {
@@ -17,6 +18,7 @@ import { Header } from '~/shared/ui/Header';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { formatDateDividerLabel, formatMessageTime } from '~/entity/chat';
 import { useChatRoomPage } from '~/view/chat/model/useChatRoomPage';
+import { Spinner } from '~/shared/ui/Spinner';
 
 export default function ChatRoomPage() {
   const {
@@ -67,14 +69,26 @@ export default function ChatRoomPage() {
     handleReviewButtonPress,
   } = useChatRoomPage();
 
-  const renderHeader = () => (
-    <ChatRoomHeader
-      otherUserNickname={otherUserInfo.nickname}
-      otherUserId={otherUserInfo.id}
-      lastMessageDate={formatLastMessageDate(visibleMessages)}
-      onProfilePress={navigationHandlers.goToOtherUserProfile}
-    />
+  const lastMessageDate = formatLastMessageDate(visibleMessages);
+
+  const renderHeader = useCallback(
+    () => (
+      <ChatRoomHeader
+        otherUserNickname={otherUserInfo.nickname}
+        otherUserId={otherUserInfo.id}
+        lastMessageDate={lastMessageDate}
+        onProfilePress={navigationHandlers.goToOtherUserProfile}
+      />
+    ),
+    [
+      otherUserInfo.nickname,
+      otherUserInfo.id,
+      lastMessageDate,
+      navigationHandlers.goToOtherUserProfile,
+    ]
   );
+
+  const handleScrollToEnd = useCallback(() => scrollToEnd(true), [scrollToEnd]);
 
   const renderTradeCompletedInfo = () => (
     <View testID="trade-completed-banner" className="items-end gap-0.5">
@@ -144,7 +158,7 @@ export default function ChatRoomPage() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#8FC31D" />
+        <Spinner size="large" />
       </SafeAreaView>
     );
   }
@@ -191,7 +205,7 @@ export default function ChatRoomPage() {
         flatListRef={flatListRef}
         renderHeader={renderHeader}
         onProfilePress={navigationHandlers.goToProfile}
-        onScrollToEnd={() => scrollToEnd(true)}
+        onScrollToEnd={handleScrollToEnd}
         tradeEmbedConfig={tradeEmbedConfig}
         onReviewButtonPress={handleReviewButtonPress}
         showReviewButton={isTradeCompleted}

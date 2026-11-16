@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Dimensions, ScrollView } from 'react-native';
+import { View, ScrollView, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 
 import image1 from '~/shared/assets/png/mainSlides/slide1.png';
@@ -10,18 +10,19 @@ import image5 from '~/shared/assets/png/mainSlides/slide5.png';
 import image6 from '~/shared/assets/png/mainSlides/slide6.png';
 
 const images = [image1, image2, image3, image4, image5, image6];
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDE_HEIGHT = 210;
 
 const MainSlideViewer = () => {
+  const { width: screenWidth } = useWindowDimensions();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
 
+  const currentRef = useRef(0);
+
   useEffect(() => {
-    let current = 0;
     intervalRef.current = setInterval(() => {
-      current = (current + 1) % images.length;
-      scrollViewRef.current?.scrollTo({ x: SCREEN_WIDTH * current, animated: true });
+      currentRef.current = (currentRef.current + 1) % images.length;
+      scrollViewRef.current?.scrollTo({ x: screenWidth * currentRef.current, animated: true });
     }, 3000);
 
     return () => {
@@ -29,7 +30,7 @@ const MainSlideViewer = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, []);
+  }, [screenWidth]);
 
   return (
     <View className="flex flex-col items-center justify-center gap-2 border-b border-b-gray-400 py-6">
@@ -43,7 +44,7 @@ const MainSlideViewer = () => {
           <Image
             key={idx}
             source={img}
-            style={{ width: SCREEN_WIDTH, height: SLIDE_HEIGHT }}
+            style={{ width: screenWidth, height: SLIDE_HEIGHT }}
             contentFit="contain"
             transition={0}
             priority={idx === 0 ? 'high' : 'low'}

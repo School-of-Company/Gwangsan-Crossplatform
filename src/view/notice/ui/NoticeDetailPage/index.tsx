@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
@@ -6,6 +6,7 @@ import { NoticeDetailSlideViewer } from '~/widget/notice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetNoticeDetail } from '~/entity/notice';
 import { formatDateTime } from '~/shared/lib/formatDateTime';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 const NoticeDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,9 +16,7 @@ const NoticeDetailPage = () => {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <Header headerTitle="공지" />
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#8FC31D" />
-        </View>
+        <LoadingView size="large" />
       </SafeAreaView>
     );
   }

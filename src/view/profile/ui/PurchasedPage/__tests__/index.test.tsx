@@ -25,11 +25,7 @@ jest.mock('~/entity/profile/model/useGetProfile', () => ({ useGetProfile: jest.f
 jest.mock('~/entity/profile/model/useGetMyPosts', () => ({ useGetMyPosts: jest.fn() }));
 jest.mock('~/entity/profile/model/useGetMemberPosts', () => ({ useGetMemberPosts: jest.fn() }));
 
-jest.mock('~/shared/ui', () => ({
-  Header: ({ headerTitle, showBackButton }: any) => {
-    const { Text } = require('react-native');
-    return <Text testID="header">{JSON.stringify({ headerTitle, showBackButton })}</Text>;
-  },
+jest.mock('~/shared/ui/PillTabs', () => ({
   PillTabs: ({ tabs, value, onChange, testIDPrefix }: any) => {
     const { Text, TouchableOpacity, View } = require('react-native');
     return (
@@ -44,6 +40,13 @@ jest.mock('~/shared/ui', () => ({
         ))}
       </View>
     );
+  },
+}));
+
+jest.mock('~/shared/ui', () => ({
+  Header: ({ headerTitle, showBackButton }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="header">{JSON.stringify({ headerTitle, showBackButton })}</Text>;
   },
 }));
 
@@ -183,6 +186,29 @@ describe('PurchasedPageView', () => {
     fireEvent.press(getByTestId('purchased-card-2'));
 
     expect(push).toHaveBeenCalledWith('/post/2');
+  });
+
+  it('임시 게시글(id < 0) 카드는 눌러도 이동하지 않는다', () => {
+    mockUseGetMyPosts.mockReturnValue({
+      data: [{ id: -1, title: '임시글', gwangsan: 2, mode: 'RECEIVER', isCompleted: true }],
+      error: null,
+      isError: false,
+    });
+
+    const { getByTestId } = render(<PurchasedPageView />);
+
+    fireEvent.press(getByTestId('purchased-card--1'));
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('상대방 프로필을 아직 불러오지 못했으면 닉네임 없이 타이틀을 표시한다', () => {
+    mockUseLocalSearchParams.mockReturnValue({ id: '5' });
+
+    const { getByTestId } = render(<PurchasedPageView />);
+
+    const header = JSON.parse(getByTestId('header').props.children);
+    expect(header.headerTitle).toBe('님의 거래 내역');
   });
 
   it('첫 조회 중에는 빈 상태 문구 대신 로딩을 표시한다', () => {

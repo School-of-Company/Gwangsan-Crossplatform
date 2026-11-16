@@ -25,11 +25,7 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
 }));
 
-jest.mock('~/shared/ui', () => ({
-  Header: ({ headerTitle }: any) => {
-    const { Text } = require('react-native');
-    return <Text testID="header-title">{headerTitle}</Text>;
-  },
+jest.mock('~/shared/ui/PillTabs', () => ({
   PillTabs: ({ tabs, value, onChange, testIDPrefix }: any) => {
     const { Text, TouchableOpacity, View } = require('react-native');
     return (
@@ -44,6 +40,13 @@ jest.mock('~/shared/ui', () => ({
         ))}
       </View>
     );
+  },
+}));
+
+jest.mock('~/shared/ui', () => ({
+  Header: ({ headerTitle }: any) => {
+    const { Text } = require('react-native');
+    return <Text testID="header-title">{headerTitle}</Text>;
   },
 }));
 

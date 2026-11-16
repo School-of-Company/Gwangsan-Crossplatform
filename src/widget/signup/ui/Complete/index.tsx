@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useSignupStore } from '~/shared/store/useSignupStore';
 
 export default function Complete() {
-  const { resetStore } = useSignupStore();
+  const resetStore = useSignupStore((state) => state.resetStore);
 
   const handleNext = () => {
     router.navigate('/signin/nickname');

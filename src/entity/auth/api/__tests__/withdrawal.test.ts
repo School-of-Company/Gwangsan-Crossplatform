@@ -1,60 +1,40 @@
-import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
 import { withdrawal } from '../withdrawal';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: {
-    post: jest.fn(),
-    delete: jest.fn(),
-    get: jest.fn(),
-  },
-}));
+const BASE = 'http://test-api.com';
 
-const mockInstance = instance as jest.Mocked<typeof instance>;
-
-beforeEach(() => {
-  jest.clearAllMocks();
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
 });
 
 describe('withdrawal', () => {
-  it('탈퇴 성공 시 응답을 반환한다', async () => {
-    mockInstance.delete.mockResolvedValue({ data: { message: 'success' } });
+  it('DELETE /member 성공 시 응답을 반환한다', async () => {
+    server.use(http.delete(`${BASE}/member`, () => HttpResponse.json({ message: 'success' })));
 
-    const result = await withdrawal();
-
-    expect(result).toEqual({ message: 'success' });
+    await expect(withdrawal()).resolves.toEqual({ message: 'success' });
   });
 
-  it('/member 엔드포인트로 DELETE 요청을 보낸다', async () => {
-    mockInstance.delete.mockResolvedValue({ data: { message: 'ok' } });
-
-    await withdrawal();
-
-    expect(mockInstance.delete).toHaveBeenCalledWith('/member');
-  });
-
-  it('서버 에러 시 에러를 throw한다', async () => {
-    const error = new AxiosError('Forbidden');
-    (error as any).response = {
-      status: 403,
-      data: { message: '탈퇴 처리 중 오류가 발생했습니다' },
-    };
-    mockInstance.delete.mockRejectedValue(error);
+  it('서버 에러 시 서버 메시지로 에러를 throw한다', async () => {
+    server.use(
+      http.delete(`${BASE}/member`, () =>
+        HttpResponse.json({ message: '탈퇴 처리 중 오류가 발생했습니다' }, { status: 403 })
+      )
+    );
 
     await expect(withdrawal()).rejects.toThrow('탈퇴 처리 중 오류가 발생했습니다');
   });
 
-  it('네트워크 에러 시 에러를 throw한다', async () => {
-    mockInstance.delete.mockRejectedValue(new Error('Network Error'));
-
-    await expect(withdrawal()).rejects.toThrow('Network Error');
-  });
-
-  it('응답에 status가 있으면 코드 기반 에러 메시지를 throw한다', async () => {
-    const error = new AxiosError('Internal Server Error');
-    (error as any).response = { status: 500, data: {} };
-    mockInstance.delete.mockRejectedValue(error);
+  it('5xx는 상태 코드 기반 에러 메시지를 throw한다', async () => {
+    server.use(http.delete(`${BASE}/member`, () => HttpResponse.json({}, { status: 500 })));
 
     await expect(withdrawal()).rejects.toThrow('요청이 실패했습니다. (500)');
+  });
+
+  it('네트워크 오류는 에러를 throw한다', async () => {
+    server.use(http.delete(`${BASE}/member`, () => HttpResponse.error()));
+
+    await expect(withdrawal()).rejects.toThrow();
   });
 });

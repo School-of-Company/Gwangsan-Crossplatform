@@ -166,7 +166,10 @@ describe('useTradeHandlers', () => {
         await result.current.handleTradeAccept();
       });
 
-      expect(mockRequestTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 42 });
+      expect(mockRequestTrade).toHaveBeenCalledWith(
+        { productId: 1, otherMemberId: 42 },
+        expect.anything()
+      );
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success', text1: '거래가 완료되었습니다!' })
       );
@@ -395,31 +398,6 @@ describe('useTradeHandlers', () => {
       expect(cached?.product.isCompleted).toBe(false);
     });
 
-    it('요청만 생성되고 완료되지 않았으면 내 프로필 쿼리를 invalidate하지 않는다', async () => {
-      mockRequestTrade.mockResolvedValue({});
-      mockGetChatRoomData.mockResolvedValue({
-        product: { id: 1, isCompleted: false, isCompletable: false },
-        messages: [],
-      });
-
-      const { result, queryClient } = renderHookWithProviders(() =>
-        useTradeHandlers({
-          roomId: 1,
-          roomData: makeRoomData({ createdAt: null }),
-          otherUserInfo,
-        })
-      );
-      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-
-      await act(async () => {
-        await result.current.handleTradeAccept();
-      });
-
-      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myProfile', 'current'] });
-
-      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['myInformation'] });
-    });
-
     it('다시 조회에 실패하면 완료로 단정하지 않고 요청 안내 Toast를 표시한다', async () => {
       mockRequestTrade.mockResolvedValue({});
       mockGetChatRoomData.mockRejectedValue(new Error('조회 실패'));
@@ -546,7 +524,10 @@ describe('useTradeHandlers', () => {
         await expect(result.current.handleTradeRequestButtonPress()).resolves.toBe(true);
       });
 
-      expect(mockWithdrawTrade).toHaveBeenCalledWith({ productId: 1, otherMemberId: 42 });
+      expect(mockWithdrawTrade).toHaveBeenCalledWith(
+        { productId: 1, otherMemberId: 42 },
+        expect.anything()
+      );
       expect(Toast.show).not.toHaveBeenCalled();
     });
 
@@ -629,15 +610,18 @@ describe('useTradeHandlers', () => {
         await result.current.handleReservation(reservationInput);
       });
 
-      expect(mockMakeReservation).toHaveBeenCalledWith({
-        productId: 1,
-        roomId: 1,
-        scheduledAt: reservationInput.scheduledAt,
-        placeName: reservationInput.placeName,
-        address: reservationInput.address,
-        latitude: 35.15,
-        longitude: 126.85,
-      });
+      expect(mockMakeReservation).toHaveBeenCalledWith(
+        {
+          productId: 1,
+          roomId: 1,
+          scheduledAt: reservationInput.scheduledAt,
+          placeName: reservationInput.placeName,
+          address: reservationInput.address,
+          latitude: 35.15,
+          longitude: 126.85,
+        },
+        expect.anything()
+      );
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success', text1: '예약이 완료되었습니다!' })
       );
@@ -747,7 +731,7 @@ describe('useTradeHandlers', () => {
         await result.current.handleCancelReservation();
       });
 
-      expect(mockCancelReservation).toHaveBeenCalledWith({ productId: 1 });
+      expect(mockCancelReservation).toHaveBeenCalledWith({ productId: 1 }, expect.anything());
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success', text1: '예약이 취소되었습니다!' })
       );

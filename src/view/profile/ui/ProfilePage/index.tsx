@@ -1,5 +1,4 @@
-import { ScrollView, View, RefreshControl, ActivityIndicator } from 'react-native';
-import { useEffect, useState } from 'react';
+import { ScrollView, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Gwangsan,
@@ -10,10 +9,12 @@ import {
   useGetBlockList,
 } from '~/entity/profile';
 import { Introduce, ProfileMenu } from '~/widget/profile';
-import Toast from 'react-native-toast-message';
 import { useLocalSearchParams } from 'expo-router';
 import { Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
+import { usePullToRefresh } from '~/shared/model/usePullToRefresh';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 export default function ProfilePageView() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,28 +50,13 @@ export default function ProfilePageView() {
 
   const activeMemberId = isMe ? myProfileData?.memberId : profileData?.memberId;
 
-  const [refreshing, setRefreshing] = useState(false);
+  const { refreshing, onRefresh } = usePullToRefresh(refetchActiveProfile);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await refetchActiveProfile();
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 토스트가 반복되므로, 실패로 바뀌는 순간에만 띄운다
-  useEffect(() => {
-    if (!activeIsError) return;
-    Toast.show({
-      type: 'error',
-      text1: '프로필을 불러오는데 실패했습니다.',
-      text2: activeError?.message || '잠시 후 다시 시도해주세요.',
-    });
-    // 같은 실패가 이어지는 동안 에러 객체가 바뀌어도 다시 띄우지 않는다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIsError]);
+  useErrorToastOnTransition(
+    activeIsError,
+    '프로필을 불러오는데 실패했습니다.',
+    activeError?.message
+  );
 
   // 조회가 늦어지거나 실패했을 때 값이 모두 비어 있는 빈 레이아웃(회색 화면)이 남지 않도록,
   // 받아둔 프로필이 없으면 로딩 표시나 다시 시도 화면을 보여준다
@@ -81,9 +67,7 @@ export default function ProfilePageView() {
         {activeIsError ? (
           <ErrorFallback onRetry={() => refetchActiveProfile()} />
         ) : (
-          <View testID="profile-loading" className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#8FC31D" />
-          </View>
+          <LoadingView testID="profile-loading" size="large" />
         )}
       </SafeAreaView>
     );

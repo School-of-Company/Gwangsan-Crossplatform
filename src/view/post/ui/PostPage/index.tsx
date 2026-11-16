@@ -1,10 +1,10 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePostAction, PostPageContent } from '~/widget/post';
 import { ReviewsModal } from '~/entity/post';
 import { AlertModal, Header } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
+import { Spinner } from '~/shared/ui/Spinner';
 
 export default function PostPageView() {
   const { id, review } = useLocalSearchParams<{ id: string; review?: string }>();
@@ -33,7 +33,7 @@ export default function PostPageView() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#8FC31D" />
+        <Spinner size="large" />
       </SafeAreaView>
     );
   }

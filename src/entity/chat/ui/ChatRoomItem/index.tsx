@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { memo, useEffect } from 'react';
 import Animated, {
   cancelAnimation,
@@ -16,7 +16,6 @@ import type { RoomId } from '~/shared/types/chatType';
 import { CachedImage } from '~/shared/ui/CachedImage';
 import { useThemeColors } from '~/shared/lib/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const EXIT_DURATION = 220;
 const EXIT_EASING = Easing.out(Easing.cubic);
 const REFLOW_DURATION = 220;
@@ -62,13 +61,14 @@ const ChatRoomItemComponent = ({
   onExited,
 }: ChatRoomItemProps) => {
   const colors = useThemeColors();
+  const { width: screenWidth } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
 
   useEffect(() => {
     if (!isExiting) return;
 
-    translateX.value = withTiming(-SCREEN_WIDTH, {
+    translateX.value = withTiming(-screenWidth, {
       duration: EXIT_DURATION,
       easing: EXIT_EASING,
       reduceMotion: ReduceMotion.Never,
@@ -87,7 +87,7 @@ const ChatRoomItemComponent = ({
       cancelAnimation(translateX);
       cancelAnimation(opacity);
     };
-  }, [isExiting, room.roomId, onExited, translateX, opacity]);
+  }, [isExiting, room.roomId, onExited, translateX, opacity, screenWidth]);
 
   const exitStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

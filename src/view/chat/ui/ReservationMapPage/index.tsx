@@ -82,7 +82,8 @@ function NearbyPlacesSkeleton() {
 
 export function ReservationMapPage() {
   const router = useRouter();
-  const { setCoordinates, setPlaceName } = useReservationLocationStore();
+  const setCoordinates = useReservationLocationStore((state) => state.setCoordinates);
+  const setPlaceName = useReservationLocationStore((state) => state.setPlaceName);
 
   const {
     searchQuery,

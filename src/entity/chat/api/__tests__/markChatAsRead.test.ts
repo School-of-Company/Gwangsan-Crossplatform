@@ -1,49 +1,42 @@
-import { markChatAsRead } from '../markChatAsRead';
-import { instance } from '~/shared/lib/axios';
+import { http, HttpResponse } from 'msw';
 import Toast from 'react-native-toast-message';
-
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { patch: jest.fn() },
-}));
+import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { markChatAsRead } from '../markChatAsRead';
 
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
 
-const mockPatch = instance.patch as jest.Mock;
+const BASE = 'http://test-api.com';
 
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('markChatAsRead', () => {
-  describe('성공 케이스', () => {
-    it('PATCH /chat/read 요청을 roomId, lastMessageId와 함께 보낸다', async () => {
-      mockPatch.mockResolvedValue({ data: undefined });
+  it('PATCH /chat/read 요청을 roomId, lastMessageId와 함께 보낸다', async () => {
+    const received = jest.fn();
+    server.use(
+      http.patch(`${BASE}/chat/read`, async ({ request }) => {
+        received(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
 
-      await markChatAsRead(1, 100);
-
-      expect(mockPatch).toHaveBeenCalledWith('/chat/read', {
-        roomId: 1,
-        lastMessageId: 100,
-      });
-    });
-
-    it('반환값이 없다', async () => {
-      mockPatch.mockResolvedValue({ data: undefined });
-
-      const result = await markChatAsRead(1, 100);
-
-      expect(result).toBeUndefined();
-    });
+    await expect(markChatAsRead(1, 100)).resolves.toBeUndefined();
+    expect(received).toHaveBeenCalledWith({ roomId: 1, lastMessageId: 100 });
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 토스트 없이 에러를 throw한다(#739)', async () => {
-      mockPatch.mockRejectedValue(new Error('Network error'));
+  it('API 실패 시 토스트 없이 서버 메시지를 담은 에러를 던진다', async () => {
+    server.use(
+      http.patch(`${BASE}/chat/read`, () =>
+        HttpResponse.json({ message: '채팅방을 찾을 수 없습니다' }, { status: 404 })
+      )
+    );
 
-      await expect(markChatAsRead(1, 100)).rejects.toThrow('Network error');
-
-      expect(Toast.show).not.toHaveBeenCalled();
-    });
+    await expect(markChatAsRead(1, 100)).rejects.toThrow('채팅방을 찾을 수 없습니다');
+    expect(Toast.show).not.toHaveBeenCalled();
   });
 });

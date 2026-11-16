@@ -1,58 +1,56 @@
-import { deletePost } from '../deletePost';
+import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { deletePost } from '../deletePost';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { delete: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockDelete = instance.delete as jest.Mock;
-
-beforeEach(() => jest.clearAllMocks());
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 describe('deletePost', () => {
-  describe('성공 케이스', () => {
-    it('DELETE /post/:id를 호출한다', async () => {
-      mockDelete.mockResolvedValue({});
+  it('DELETE /post/:id를 호출하고 아무것도 반환하지 않는다', async () => {
+    const requested = jest.fn();
+    server.use(
+      http.delete(`${BASE}/post/:id`, ({ params }) => {
+        requested(params.id);
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
 
-      await deletePost(1);
-
-      expect(mockDelete).toHaveBeenCalledWith('/post/1');
-    });
-
-    it('다른 postId로 올바른 경로를 요청한다', async () => {
-      mockDelete.mockResolvedValue({});
-
-      await deletePost(99);
-
-      expect(mockDelete).toHaveBeenCalledWith('/post/99');
-    });
-
-    it('반환값이 없다 (void)', async () => {
-      mockDelete.mockResolvedValue({});
-
-      const result = await deletePost(1);
-
-      expect(result).toBeUndefined();
-    });
+    await expect(deletePost(99)).resolves.toBeUndefined();
+    expect(requested).toHaveBeenCalledWith('99');
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockDelete.mockRejectedValue(new Error('Not found'));
+  it('4xx 응답은 서버 메시지를 담은 에러로 던진다', async () => {
+    server.use(
+      http.delete(`${BASE}/post/999`, () =>
+        HttpResponse.json({ message: '게시글을 찾을 수 없습니다' }, { status: 404 })
+      )
+    );
 
-      await expect(deletePost(999)).rejects.toThrow();
-    });
+    const error = await deletePost(999).catch((e: unknown) => e);
 
-    it('에러 메시지가 전파된다', async () => {
-      mockDelete.mockRejectedValue(new Error('Server error'));
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(404);
+    expect((error as Error).message).toBe('게시글을 찾을 수 없습니다');
+  });
 
-      await expect(deletePost(1)).rejects.toThrow('Server error');
-    });
+  it('5xx 응답은 상태 코드만 알리는 에러로 던진다', async () => {
+    server.use(http.delete(`${BASE}/post/1`, () => new HttpResponse(null, { status: 500 })));
 
-    it('네트워크 에러 시 에러를 throw한다', async () => {
-      mockDelete.mockRejectedValue(new Error('Network Error'));
+    const error = await deletePost(1).catch((e: unknown) => e);
 
-      await expect(deletePost(1)).rejects.toThrow('Network Error');
-    });
+    expect(error).toBeInstanceOf(AxiosError);
+    expect((error as AxiosError).response?.status).toBe(500);
+    expect((error as Error).message).toBe('요청이 실패했습니다. (500)');
+  });
+
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.delete(`${BASE}/post/1`, () => HttpResponse.error()));
+
+    await expect(deletePost(1)).rejects.toThrow();
   });
 });

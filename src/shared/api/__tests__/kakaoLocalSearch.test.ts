@@ -76,6 +76,21 @@ describe('searchPlaces', () => {
   });
 });
 
+describe('요청 오류 변환', () => {
+  it('응답 없이 실패한 네트워크 오류는 원본 에러를 그대로 던진다', async () => {
+    const networkError = new AxiosError('Network Error', 'ERR_NETWORK');
+    mockGet.mockImplementationOnce(() => Promise.reject(networkError));
+
+    await expect(searchPlaces('상무역')).rejects.toBe(networkError);
+  });
+
+  it('Error가 아닌 값으로 reject되면 안내 문구로 감싼다', async () => {
+    mockGet.mockImplementationOnce(() => Promise.reject('timeout'));
+
+    await expect(searchPlaces('상무역')).rejects.toThrow('장소 검색 요청이 실패했습니다.');
+  });
+});
+
 describe('searchNearbyPlaces', () => {
   const coordinate = { latitude: 35.0, longitude: 126.0 };
 
@@ -160,6 +175,14 @@ describe('getAddressName', () => {
 
     const result = await getAddressName(coordinate);
     expect(result).toBe('광주 광산구 지번주소');
+  });
+
+  it('도로명·지번 주소가 모두 없으면 빈 문자열을 반환한다', async () => {
+    mockGet.mockImplementationOnce(() =>
+      makeResponse(true, { documents: [{ address: null, road_address: null }] })
+    );
+
+    await expect(getAddressName(coordinate)).resolves.toBe('');
   });
 
   it('documents가 비어있으면 빈 문자열을 반환한다', async () => {

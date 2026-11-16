@@ -1,58 +1,53 @@
-import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { clearAuthTokens } from '~/shared/lib/auth';
+import { server } from '~/mocks/server';
 import { signout } from '../signout';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: {
-    post: jest.fn(),
-    delete: jest.fn(),
-    get: jest.fn(),
-  },
-}));
+// 요청 인터셉터가 getAccessToken을 쓰므로 토큰 삭제만 mock으로 바꾼다
 jest.mock('~/shared/lib/auth', () => ({
+  ...jest.requireActual('~/shared/lib/auth'),
   clearAuthTokens: jest.fn(),
 }));
 
-const mockInstance = instance as jest.Mocked<typeof instance>;
 const mockClearAuthTokens = clearAuthTokens as jest.MockedFunction<typeof clearAuthTokens>;
 
+const BASE = 'http://test-api.com';
+
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
+
 beforeEach(() => {
-  jest.clearAllMocks();
+  mockClearAuthTokens.mockReset();
   mockClearAuthTokens.mockResolvedValue(undefined);
 });
 
 describe('signout', () => {
-  it('로그아웃 성공 시 응답 메시지를 반환하고 토큰을 초기화한다', async () => {
-    mockInstance.delete.mockResolvedValue({ data: { message: 'success' } });
+  it('DELETE /auth/signout 성공 시 응답 메시지를 반환하고 토큰을 초기화한다', async () => {
+    server.use(
+      http.delete(`${BASE}/auth/signout`, () => HttpResponse.json({ message: 'success' }))
+    );
 
-    const result = await signout();
-
-    expect(result).toEqual({ message: 'success' });
+    await expect(signout()).resolves.toEqual({ message: 'success' });
     expect(mockClearAuthTokens).toHaveBeenCalledTimes(1);
   });
 
-  it('/auth/signout 엔드포인트로 DELETE 요청을 보낸다', async () => {
-    mockInstance.delete.mockResolvedValue({ data: { message: 'ok' } });
-
-    await signout();
-
-    expect(mockInstance.delete).toHaveBeenCalledWith('/auth/signout');
-  });
-
-  it('서버 에러(네트워크 등) 시에도 토큰을 초기화하고 에러를 throw한다', async () => {
-    mockInstance.delete.mockRejectedValue(new Error('Network Error'));
-
-    await expect(signout()).rejects.toThrow('Network Error');
-    expect(mockClearAuthTokens).toHaveBeenCalledTimes(1);
-  });
-
-  it('axios 에러 응답 메시지를 파싱해서 throw한다', async () => {
-    const error = new AxiosError('Forbidden');
-    (error as any).response = { status: 403, data: { message: '이미 로그아웃된 상태입니다' } };
-    mockInstance.delete.mockRejectedValue(error);
+  it('서버 에러 응답이어도 토큰을 초기화하고 서버 메시지로 에러를 throw한다', async () => {
+    server.use(
+      http.delete(`${BASE}/auth/signout`, () =>
+        HttpResponse.json({ message: '이미 로그아웃된 상태입니다' }, { status: 403 })
+      )
+    );
 
     await expect(signout()).rejects.toThrow('이미 로그아웃된 상태입니다');
+    expect(mockClearAuthTokens).toHaveBeenCalledTimes(1);
+  });
+
+  it('네트워크 오류여도 토큰을 초기화하고 에러를 throw한다', async () => {
+    server.use(http.delete(`${BASE}/auth/signout`, () => HttpResponse.error()));
+
+    await expect(signout()).rejects.toThrow();
     expect(mockClearAuthTokens).toHaveBeenCalledTimes(1);
   });
 });

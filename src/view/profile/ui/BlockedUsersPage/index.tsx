@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
 import { AlertModal, Header } from '~/shared/ui';
 import { useBlockUser, useGetBlockList } from '~/entity/profile';
 import type { BlockedMember } from '~/entity/profile';
+import { useErrorToastOnTransition } from '~/shared/model/useErrorToastOnTransition';
 
 interface BlockedUserRowProps {
   member: BlockedMember;
@@ -56,16 +56,7 @@ const BlockedUserRow = ({ member }: BlockedUserRowProps) => {
 export default function BlockedUsersPageView() {
   const { data: blockList, isLoading, isError, error } = useGetBlockList();
 
-  // 렌더 중에 Toast.show를 부르면 리렌더될 때마다 반복되므로 실패로 바뀌는 순간에만 띄운다
-  useEffect(() => {
-    if (!isError) return;
-    Toast.show({
-      type: 'error',
-      text1: '차단 목록을 불러오는데 실패했습니다.',
-      text2: error?.message || '잠시 후 다시 시도해주세요.',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isError]);
+  useErrorToastOnTransition(isError, '차단 목록을 불러오는데 실패했습니다.', error?.message);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'left', 'right']}>

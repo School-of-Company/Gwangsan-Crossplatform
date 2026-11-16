@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import { server } from '~/mocks/server';
 import { QueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
@@ -42,17 +42,11 @@ const mockSetData = setData as jest.MockedFunction<typeof setData>;
 const mockSentry = Sentry as jest.Mocked<typeof Sentry>;
 
 const BASE = 'http://test-api.com';
-const server = setupServer();
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
-  server.listen({ onUnhandledRequest: 'error' });
 });
-afterEach(() => {
-  server.resetHandlers();
-  jest.clearAllMocks();
-});
-afterAll(() => server.close());
+afterEach(() => jest.clearAllMocks());
 
 describe('setQueryClientInstance', () => {
   it('QueryClient 인스턴스를 저장한다', () => {

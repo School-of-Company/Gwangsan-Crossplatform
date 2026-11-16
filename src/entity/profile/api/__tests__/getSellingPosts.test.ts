@@ -1,96 +1,107 @@
 import { AxiosError } from 'axios';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
 import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvider';
-import { createAxiosError } from '~/test-utils/axiosError';
 import { getSellingPosts, SELLING_PAGE_SIZE } from '../getSellingPosts';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: {
-    get: jest.fn(),
-  },
-}));
+const BASE = 'http://test-api.com';
 
-const mockGet = instance.get as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
-beforeEach(() => jest.clearAllMocks());
+// 요청이 도착한 경로와 쿼리 파라미터를 기록하고 주어진 응답을 돌려준다
+const captureRequest = (path: string, response: unknown = []) => {
+  const received = jest.fn();
+  server.use(
+    http.get(`${BASE}${path}`, ({ request }) => {
+      received(Object.fromEntries(new URL(request.url).searchParams));
+      return HttpResponse.json(response as never);
+    })
+  );
+  return received;
+};
 
 describe('getSellingPosts', () => {
   it('본인 목록은 /post/current를 mode=GIVER, 기본 size와 함께 조회한다', async () => {
-    mockGet.mockResolvedValue({ data: [] });
+    const received = captureRequest('/post/current');
 
     await getSellingPosts({});
 
-    expect(mockGet).toHaveBeenCalledWith('/post/current', {
-      params: { mode: 'GIVER', size: SELLING_PAGE_SIZE },
-    });
+    expect(received).toHaveBeenCalledWith({ mode: 'GIVER', size: String(SELLING_PAGE_SIZE) });
   });
 
   it('다른 회원 목록은 /post/member/{id}를 조회한다', async () => {
-    mockGet.mockResolvedValue({ data: [] });
+    const received = captureRequest('/post/member/5');
 
     await getSellingPosts({ memberId: '5' });
 
-    expect(mockGet).toHaveBeenCalledWith('/post/member/5', {
-      params: { mode: 'GIVER', size: SELLING_PAGE_SIZE },
-    });
+    expect(received).toHaveBeenCalledWith({ mode: 'GIVER', size: String(SELLING_PAGE_SIZE) });
   });
 
   it('첫 요청에는 last_id를 보내지 않는다', async () => {
-    mockGet.mockResolvedValue({ data: [] });
+    const received = captureRequest('/post/current');
 
     await getSellingPosts({ completed: false, lastId: null });
 
-    expect(mockGet.mock.calls[0][1].params).toEqual({
+    expect(received).toHaveBeenCalledWith({
       mode: 'GIVER',
-      size: SELLING_PAGE_SIZE,
-      completed: false,
+      size: String(SELLING_PAGE_SIZE),
+      completed: 'false',
     });
   });
 
   it('다음 요청에는 last_id와 completed, size를 함께 보낸다', async () => {
-    mockGet.mockResolvedValue({ data: [] });
+    const received = captureRequest('/post/current');
 
     await getSellingPosts({ completed: true, lastId: 42, size: 10 });
 
-    expect(mockGet.mock.calls[0][1].params).toEqual({
+    expect(received).toHaveBeenCalledWith({
       mode: 'GIVER',
-      size: 10,
-      completed: true,
-      last_id: 42,
+      size: '10',
+      completed: 'true',
+      last_id: '42',
     });
   });
 
   it('type이 있으면 함께 전달한다', async () => {
-    mockGet.mockResolvedValue({ data: [] });
+    const received = captureRequest('/post/current');
 
     await getSellingPosts({ type: 'SERVICE' });
 
-    expect(mockGet.mock.calls[0][1].params).toMatchObject({ type: 'SERVICE' });
+    expect(received).toHaveBeenCalledWith(expect.objectContaining({ type: 'SERVICE' }));
   });
 
   it('응답 배열을 그대로 반환한다', async () => {
     const posts = [{ id: 2 }, { id: 1 }];
-    mockGet.mockResolvedValue({ data: posts });
+    captureRequest('/post/current', posts);
 
     await expect(getSellingPosts({})).resolves.toEqual(posts);
   });
 
   it('배열이 아닌 응답은 빈 배열로 보정한다', async () => {
-    mockGet.mockResolvedValue({ data: null });
+    captureRequest('/post/current', null);
 
     await expect(getSellingPosts({})).resolves.toEqual([]);
   });
 
-  it('실패 시 getErrorMessage로 변환된 Error를 던진다', async () => {
-    const error = new AxiosError('fail');
-    error.response = { status: 404, data: { message: '게시글을 찾을 수 없습니다.' } } as never;
-    mockGet.mockRejectedValue(error);
+  it('실패 시 서버 메시지로 변환된 에러를 던진다', async () => {
+    server.use(
+      http.get(`${BASE}/post/current`, () =>
+        HttpResponse.json({ message: '게시글을 찾을 수 없습니다.' }, { status: 404 })
+      )
+    );
 
     await expect(getSellingPosts({})).rejects.toThrow('게시글을 찾을 수 없습니다.');
   });
 
   it('4xx는 상태 코드를 유지한 채 던져 재시도하지 않는다', async () => {
-    mockGet.mockRejectedValue(createAxiosError(404, { message: '게시글을 찾을 수 없습니다.' }));
+    server.use(
+      http.get(`${BASE}/post/current`, () =>
+        HttpResponse.json({ message: '게시글을 찾을 수 없습니다.' }, { status: 404 })
+      )
+    );
 
     const error = await getSellingPosts({}).catch((e: unknown) => e);
 
@@ -101,7 +112,7 @@ describe('getSellingPosts', () => {
   });
 
   it('5xx는 재시도하고 캐시가 없으면 ErrorBoundary로 보낸다', async () => {
-    mockGet.mockRejectedValue(createAxiosError(500));
+    server.use(http.get(`${BASE}/post/current`, () => new HttpResponse(null, { status: 500 })));
 
     const error = await getSellingPosts({}).catch((e: unknown) => e);
 

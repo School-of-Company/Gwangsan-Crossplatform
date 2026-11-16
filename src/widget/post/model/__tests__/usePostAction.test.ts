@@ -1,7 +1,8 @@
 import { act, waitFor } from '@testing-library/react-native';
 import { renderHookWithProviders } from '~/test-utils';
 import { usePostAction } from '../usePostAction';
-import { useGetItem, useDeletePost, createReview } from '~/entity/post';
+import { useGetItem, useDeletePost } from '~/entity/post';
+import { createReview } from '~/entity/reviews/api/createReview';
 import { useTradeRequest } from '~/widget/post/model/useTradeRequest';
 import { useChatEntry } from '~/entity/chat/model/useChatEntry';
 import { checkIsMyPost } from '~/shared/lib/userUtils';
@@ -10,8 +11,8 @@ import Toast from 'react-native-toast-message';
 jest.mock('~/entity/post', () => ({
   useGetItem: jest.fn(),
   useDeletePost: jest.fn(),
-  createReview: jest.fn(),
 }));
+jest.mock('~/entity/reviews/api/createReview', () => ({ createReview: jest.fn() }));
 jest.mock('~/widget/post/model/useTradeRequest', () => ({ useTradeRequest: jest.fn() }));
 jest.mock('~/entity/chat/model/useChatEntry', () => ({ useChatEntry: jest.fn() }));
 jest.mock('~/shared/lib/userUtils', () => ({ checkIsMyPost: jest.fn() }));
@@ -264,12 +265,15 @@ describe('usePostAction', () => {
         await result.current.reviewHandlers.onSubmit(80, '좋았어요');
       });
 
-      expect(mockCreateReview).toHaveBeenCalledWith({
-        productId: 1,
-        otherMemberId: 42,
-        content: '좋았어요',
-        light: 80,
-      });
+      expect(mockCreateReview).toHaveBeenCalledWith(
+        {
+          productId: 1,
+          otherMemberId: 42,
+          content: '좋았어요',
+          light: 80,
+        },
+        expect.anything()
+      );
       expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
       expect(result.current.isReviewModalVisible).toBe(false);
     });

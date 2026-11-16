@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   ListRenderItemInfo,
   RefreshControl,
@@ -12,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Header } from '~/shared/ui';
 import { FeedbackCard, useGetMyFeedbacks, type MyFeedbackResponse } from '~/entity/feedback';
+import { Spinner } from '~/shared/ui/Spinner';
 
 const keyExtractor = (item: MyFeedbackResponse) => String(item.feedbackId);
 
@@ -48,7 +48,7 @@ export default function FeedbackListPage() {
     if (isPending) {
       return (
         <View testID="feedback-list-loading" className="pt-20">
-          <ActivityIndicator color="#8FC31D" />
+          <Spinner />
         </View>
       );
     }
@@ -82,7 +82,7 @@ export default function FeedbackListPage() {
     if (isFetchingNextPage) {
       return (
         <View testID="feedback-list-loading-more" className="items-center py-4">
-          <ActivityIndicator color="#8FC31D" />
+          <Spinner />
         </View>
       );
     }

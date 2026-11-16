@@ -1,5 +1,5 @@
 import { useMemo, useCallback, memo, useState, useEffect, useRef } from 'react';
-import { View, ScrollView, Dimensions } from 'react-native';
+import { View, ScrollView, useWindowDimensions } from 'react-native';
 import { TextField } from '~/shared/ui/TextField';
 import { Button } from '~/shared/ui/Button';
 import { BottomSheetModalWrapper, ProgressBar } from '~/shared/ui';
@@ -62,7 +62,8 @@ const ReviewsModal = ({
     setLocalContents(text);
   }, []);
 
-  const maxTextFieldHeight = useMemo(() => Dimensions.get('window').height * 0.2, []);
+  const { height: windowHeight } = useWindowDimensions();
+  const maxTextFieldHeight = windowHeight * 0.2;
 
   return (
     <BottomSheetModalWrapper

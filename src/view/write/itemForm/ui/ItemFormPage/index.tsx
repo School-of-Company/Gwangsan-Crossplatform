@@ -1,12 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { logger } from '~/shared/lib/logger';
 import { Button, Header, Input } from '~/shared/ui';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
@@ -28,6 +21,7 @@ import { ProductType } from '~/shared/types/type';
 import { ModeType } from '~/shared/types/mode';
 import { useEditPost, useGetItem } from '~/entity/post';
 import { useLeaveConfirm } from '../../model/useLeaveConfirm';
+import { Spinner } from '~/shared/ui/Spinner';
 
 const ItemFormPage = () => {
   const [title, setTitle] = useState('');
@@ -205,7 +199,7 @@ const ItemFormPage = () => {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#8FC31D" />
+        <Spinner size="large" />
       </SafeAreaView>
     );
   }

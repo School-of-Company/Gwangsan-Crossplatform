@@ -6,6 +6,7 @@ process.env.TZ = 'Asia/Seoul';
 module.exports = {
   preset: 'jest-expo',
   setupFiles: ['./jest.setup.js'],
+  setupFilesAfterEnv: ['./jest.setup.after-env.js'],
   transform: {
     '^.+\\.mjs$': 'babel-jest',
   },
@@ -29,16 +30,22 @@ module.exports = {
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
   // src/app/**는 대부분 Expo Router 라우트 파일(로직 없는 화면 매핑)이라 전부 제외했으나,
   // 실제 로직이 있는 파일은 테스트를 추가하며 하나씩 화이트리스트에 되돌린다.
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/app/**', 'src/app/index.tsx'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/app/**',
+    'src/app/index.tsx',
+    '!src/test-utils/**',
+    '!src/mocks/**',
+  ],
   coverageReporters: ['json-summary', 'text', 'lcov'],
-  // 실제 커버리지(lines 98.4 / statements 97.5 / functions 96.5 / branches 91.6) 바로 아래로 둬서,
-  // 테스트 없는 코드가 크게 늘면 PR이 실패하게 한다. 예전 기준(45/40)은 사실상 아무것도 막지 못했다(#741)
+  // 경로별 기준은 실제 커버리지(2026-11 기준 레이어별 lines 99 / branches 94~95) 바로 아래로 둔다.
+  // 경로 기준에 걸린 파일은 global 계산에서 빠지므로, global은 나머지(src/app/index.tsx)만 본다
   coverageThreshold: {
-    global: {
-      lines: 95,
-      statements: 95,
-      functions: 93,
-      branches: 88,
-    },
+    global: { lines: 95, statements: 95, functions: 85, branches: 65 },
+    './src/entity/': { lines: 97, statements: 97, functions: 97, branches: 92 },
+    './src/shared/': { lines: 97, statements: 96, functions: 96, branches: 92 },
+    './src/widget/': { lines: 97, statements: 96, functions: 94, branches: 91 },
+    './src/view/': { lines: 97, statements: 95, functions: 95, branches: 91 },
   },
 };

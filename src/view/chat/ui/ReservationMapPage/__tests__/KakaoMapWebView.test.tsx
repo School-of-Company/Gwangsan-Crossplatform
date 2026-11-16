@@ -1,5 +1,5 @@
 import { ActivityIndicator } from 'react-native';
-import { act, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { KakaoMapWebView } from '../KakaoMapWebView';
 
 const KAKAO_JS_KEY = process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
@@ -152,5 +152,37 @@ describe('KakaoMapWebView', () => {
     expect(lastWebViewProps.source.html).toBe(originalHtml);
     expect(lastWebViewProps.source.html).toContain(String(center.latitude));
     expect(lastWebViewProps.source.html).not.toContain(String(newCenter.latitude));
+  });
+  it('카카오 JS 키가 없으면 WebView 대신 안내 문구를 보여준다', () => {
+    const original = process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
+    delete process.env.EXPO_PUBLIC_KAKAO_JS_KEY;
+    try {
+      const { getByText, queryByTestId } = render(
+        <KakaoMapWebView center={center} onCameraMove={jest.fn()} />
+      );
+
+      expect(getByText(/카카오 JavaScript 키가 설정되지 않았습니다/)).toBeTruthy();
+      expect(queryByTestId('kakao-webview')).toBeNull();
+    } finally {
+      process.env.EXPO_PUBLIC_KAKAO_JS_KEY = original;
+    }
+  });
+
+  it('로드에 실패하면 오류 안내와 다시 시도 버튼을 보여주고, 누르면 스피너로 돌아간다', () => {
+    const { getByText, queryByText, UNSAFE_queryByType } = render(
+      <KakaoMapWebView center={center} onCameraMove={jest.fn()} />
+    );
+
+    act(() => {
+      lastWebViewProps.onError();
+    });
+
+    expect(getByText(/지도를 불러오지 못했습니다/)).toBeTruthy();
+    expect(UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+
+    fireEvent.press(getByText('다시 시도'));
+
+    expect(queryByText(/지도를 불러오지 못했습니다/)).toBeNull();
+    expect(UNSAFE_queryByType(ActivityIndicator)).toBeTruthy();
   });
 });

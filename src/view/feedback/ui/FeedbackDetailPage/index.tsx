@@ -1,4 +1,4 @@
-import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CachedImage, Header } from '~/shared/ui';
@@ -9,6 +9,7 @@ import {
   formatFeedbackDate,
   useGetMyFeedback,
 } from '~/entity/feedback';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 const HEADER_TITLE = '문의 상세';
 
@@ -32,11 +33,7 @@ export default function FeedbackDetailPage() {
   const renderBody = () => {
     if (!feedbackId) return <Message text="문의를 찾을 수 없습니다." />;
     if (isPending) {
-      return (
-        <View testID="feedback-detail-loading" className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#8FC31D" />
-        </View>
-      );
+      return <LoadingView testID="feedback-detail-loading" size="large" />;
     }
     if (!feedback) {
       return isError ? (

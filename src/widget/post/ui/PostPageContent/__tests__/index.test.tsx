@@ -1,4 +1,5 @@
 import React from 'react';
+import { Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { render, fireEvent } from '@testing-library/react-native';
 import { PostPageContent } from '../index';
@@ -136,6 +137,39 @@ describe('PostPageContent', () => {
           typeof node.props.className === 'string' && node.props.className.includes('rounded-full')
       );
       expect(dots.length).toBeGreaterThanOrEqual(3);
+    });
+
+    // View mock이 점마다 노드를 두 번 노출하므로 한 개씩만 취한다
+    const dots = (root: any) =>
+      root
+        .findAll(
+          (node: any) =>
+            typeof node.props.className === 'string' &&
+            node.props.className.includes('rounded-full')
+        )
+        .filter((_: unknown, i: number) => i % 2 === 0);
+    const activeIndex = (root: any) =>
+      dots(root).findIndex((node: any) => node.props.className.includes('bg-lime-500'));
+
+    it('인디케이터 점을 누르면 해당 사진이 현재 위치로 표시된다', () => {
+      const { UNSAFE_root } = render(<PostPageContent {...makeProps({ data: multiImageData })} />);
+      expect(activeIndex(UNSAFE_root)).toBe(0);
+
+      fireEvent.press(dots(UNSAFE_root)[2]);
+
+      expect(activeIndex(UNSAFE_root)).toBe(2);
+    });
+
+    it('가로 스크롤이 끝나면 스크롤 위치에 맞는 사진으로 인디케이터가 바뀐다', () => {
+      const { UNSAFE_root } = render(<PostPageContent {...makeProps({ data: multiImageData })} />);
+      const scroller = UNSAFE_root.findAll((node) => !!node.props.onMomentumScrollEnd)[0];
+      const { width } = Dimensions.get('window');
+
+      fireEvent(scroller, 'momentumScrollEnd', {
+        nativeEvent: { contentOffset: { x: width * 2 } },
+      });
+
+      expect(activeIndex(UNSAFE_root)).toBe(2);
     });
 
     it('사진이 1장이면 슬라이드 인디케이터를 표시하지 않는다', () => {

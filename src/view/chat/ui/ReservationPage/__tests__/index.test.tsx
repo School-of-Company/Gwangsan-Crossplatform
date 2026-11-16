@@ -9,6 +9,29 @@ import { useReservationLocationStore } from '~/shared/store/useReservationLocati
 import { logger } from '~/shared/lib/logger';
 import ReservationPage from '../index';
 
+// "오늘"에 의존하는 날짜 계산이 실행일에 따라 흔들리지 않도록 시각만 고정한다.
+// 타이머는 건드리지 않아 waitFor 등은 실제 시간으로 동작한다.
+jest.useFakeTimers({
+  now: new Date(2026, 10, 15, 12, 0, 0),
+  doNotFake: [
+    'setTimeout',
+    'clearTimeout',
+    'setInterval',
+    'clearInterval',
+    'setImmediate',
+    'clearImmediate',
+    'nextTick',
+    'queueMicrotask',
+    'requestAnimationFrame',
+    'cancelAnimationFrame',
+    'requestIdleCallback',
+    'cancelIdleCallback',
+    'performance',
+    'hrtime',
+  ],
+});
+afterAll(() => jest.useRealTimers());
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),
@@ -89,6 +112,10 @@ const mockUseChatRoomData = useChatRoomData as jest.Mock;
 const mockUseChatOtherUser = useChatOtherUser as jest.Mock;
 const mockUseTradeHandlers = useTradeHandlers as jest.Mock;
 const mockUseReservationLocationStore = useReservationLocationStore as unknown as jest.Mock;
+const mockStore = (state: unknown) =>
+  mockUseReservationLocationStore.mockImplementation((selector: (s: unknown) => unknown) =>
+    selector(state)
+  );
 const mockLoggerError = logger.error as jest.Mock;
 
 // calendar-sheet-select 목이 고르는 "오늘이 아닌 날짜"(오늘 + 5일)와 동일한 계산으로
@@ -140,7 +167,7 @@ beforeEach(() => {
   mockUseChatOtherUser.mockReturnValue({ nickname: '상대방', id: 7 });
   mockHandleReservation.mockResolvedValue(undefined);
   mockUseTradeHandlers.mockReturnValue({ handleReservation: mockHandleReservation });
-  mockUseReservationLocationStore.mockReturnValue(makeLocationStoreReturn());
+  mockStore(makeLocationStoreReturn());
 });
 
 describe('ReservationPage', () => {
@@ -252,7 +279,7 @@ describe('ReservationPage', () => {
   });
 
   it('장소가 선택되면 주소가 함께 표시된다', () => {
-    mockUseReservationLocationStore.mockReturnValue(
+    mockStore(
       makeLocationStoreReturn({
         latitude: 37.1,
         longitude: 126.9,
@@ -268,7 +295,7 @@ describe('ReservationPage', () => {
   });
 
   it('주소 앞에 "전남광주통합특별시"가 붙어 있으면 화면에는 그 뒤부터만 보여준다', () => {
-    mockUseReservationLocationStore.mockReturnValue(
+    mockStore(
       makeLocationStoreReturn({
         latitude: 37.1,
         longitude: 126.9,
@@ -306,7 +333,7 @@ describe('ReservationPage', () => {
     });
 
     it('placeName이 공백뿐이면 장소가 있는 것으로 간주하지 않는다', () => {
-      mockUseReservationLocationStore.mockReturnValue(
+      mockStore(
         makeLocationStoreReturn({
           latitude: 37.1,
           longitude: 126.9,
@@ -337,7 +364,7 @@ describe('ReservationPage', () => {
     };
 
     beforeEach(() => {
-      mockUseReservationLocationStore.mockReturnValue(
+      mockStore(
         makeLocationStoreReturn({
           latitude: 37.1234,
           longitude: 126.9876,

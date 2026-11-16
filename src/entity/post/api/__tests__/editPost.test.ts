@@ -1,11 +1,13 @@
-import { editPost } from '../editPost';
+import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
+import { server } from '~/mocks/server';
+import { editPost } from '../editPost';
 
-jest.mock('~/shared/lib/axios', () => ({
-  instance: { patch: jest.fn() },
-}));
+const BASE = 'http://test-api.com';
 
-const mockPatch = instance.patch as jest.Mock;
+beforeAll(() => {
+  instance.defaults.baseURL = BASE;
+});
 
 const makeEditData = (overrides: Record<string, unknown> = {}) => ({
   type: 'OBJECT',
@@ -17,57 +19,34 @@ const makeEditData = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-beforeEach(() => jest.clearAllMocks());
-
 describe('editPost', () => {
-  describe('성공 케이스', () => {
-    it('PATCH /post/:id를 올바른 payload로 호출하고 응답 data를 반환한다', async () => {
-      const data = makeEditData();
-      const responseData = { id: 1, ...data };
-      mockPatch.mockResolvedValue({ data: responseData });
+  it('PATCH /post/:id에 payload를 보내고 응답 data를 반환한다', async () => {
+    const data = makeEditData({ imageIds: [] });
+    const received = jest.fn();
+    server.use(
+      http.patch(`${BASE}/post/:id`, async ({ params, request }) => {
+        received(params.id, await request.json());
+        return HttpResponse.json({ id: 99, ...data });
+      })
+    );
 
-      const result = await editPost('1', data);
-
-      expect(mockPatch).toHaveBeenCalledWith('/post/1', data);
-      expect(result).toEqual(responseData);
-    });
-
-    it('다른 postId로 올바른 경로를 요청한다', async () => {
-      const data = makeEditData();
-      mockPatch.mockResolvedValue({ data: {} });
-
-      await editPost('99', data);
-
-      expect(mockPatch).toHaveBeenCalledWith('/post/99', data);
-    });
-
-    it('imageIds가 빈 배열이어도 정상 요청한다', async () => {
-      const data = makeEditData({ imageIds: [] });
-      mockPatch.mockResolvedValue({ data: {} });
-
-      await editPost('1', data);
-
-      expect(mockPatch).toHaveBeenCalledWith('/post/1', expect.objectContaining({ imageIds: [] }));
-    });
+    await expect(editPost('99', data)).resolves.toEqual({ id: 99, ...data });
+    expect(received).toHaveBeenCalledWith('99', data);
   });
 
-  describe('에러 케이스', () => {
-    it('API 실패 시 에러를 throw한다', async () => {
-      mockPatch.mockRejectedValue(new Error('Bad Request'));
+  it('4xx 응답은 서버 메시지를 담은 에러로 던진다', async () => {
+    server.use(
+      http.patch(`${BASE}/post/1`, () =>
+        HttpResponse.json({ message: '수정 권한이 없습니다' }, { status: 403 })
+      )
+    );
 
-      await expect(editPost('1', makeEditData())).rejects.toThrow();
-    });
+    await expect(editPost('1', makeEditData())).rejects.toThrow('수정 권한이 없습니다');
+  });
 
-    it('에러 메시지가 전파된다', async () => {
-      mockPatch.mockRejectedValue(new Error('Server error'));
+  it('네트워크 오류는 에러를 던진다', async () => {
+    server.use(http.patch(`${BASE}/post/1`, () => HttpResponse.error()));
 
-      await expect(editPost('1', makeEditData())).rejects.toThrow('Server error');
-    });
-
-    it('네트워크 에러 시 에러를 throw한다', async () => {
-      mockPatch.mockRejectedValue(new Error('Network Error'));
-
-      await expect(editPost('1', makeEditData())).rejects.toThrow('Network Error');
-    });
+    await expect(editPost('1', makeEditData())).rejects.toThrow();
   });
 });

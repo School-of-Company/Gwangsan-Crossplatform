@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Header, LightBar } from '~/shared/ui';
 import { useGetReview } from '~/entity/reviews';
@@ -7,6 +7,7 @@ import { useCallback, useEffect } from 'react';
 import { ErrorFallback } from '~/shared/ui/ErrorFallback';
 import { logger } from '~/shared/lib/logger';
 import { CachedImage } from '~/shared/ui/CachedImage';
+import { LoadingView } from '~/shared/ui/LoadingView';
 
 export default function CancelTradeView() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -37,9 +38,7 @@ export default function CancelTradeView() {
         {isReviewError ? (
           <ErrorFallback onRetry={() => refetchReview()} />
         ) : (
-          <View testID="cancel-trade-loading" className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#8FC31D" />
-          </View>
+          <LoadingView testID="cancel-trade-loading" />
         )}
       </SafeAreaView>
     );

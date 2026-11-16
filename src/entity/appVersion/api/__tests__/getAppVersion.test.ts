@@ -1,9 +1,9 @@
 import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
 import { instance } from '~/shared/lib/axios';
 import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvider';
-import { appVersionHandlers, makeAppVersion } from '~/mocks/handlers/appVersion';
+import { server } from '~/mocks/server';
+import { makeAppVersion } from '~/mocks/handlers/appVersion';
 import { getAppVersion } from '../getAppVersion';
 
 jest.mock('expo-constants', () => ({
@@ -26,14 +26,10 @@ jest.mock('react-native-toast-message', () => ({
 }));
 
 const BASE = 'http://test-api.com';
-const server = setupServer(...appVersionHandlers);
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
-  server.listen({ onUnhandledRequest: 'error' });
 });
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 
 describe('getAppVersion', () => {
   it('GET /app/version에 platform 쿼리를 붙여 버전 정보를 받아온다', async () => {
