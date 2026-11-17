@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
-
-const BASE = 'http://test-api.com';
+import { BASE } from '../constants';
 
 export const authHandlers = [
   http.post(`${BASE}/auth/signin`, () =>

@@ -3,13 +3,12 @@ import Toast from 'react-native-toast-message';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { getChatRoomData, getChatMessages, CHAT_MESSAGE_PAGE_SIZE } from '../getChatMessages';
+import { BASE } from '~/mocks/constants';
 
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
