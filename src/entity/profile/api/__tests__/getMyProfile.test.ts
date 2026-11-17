@@ -1,10 +1,9 @@
-import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { getMyProfile } from '../getMyProfile';
-
-const BASE = 'http://test-api.com';
+import { BASE } from '~/mocks/constants';
+import { expectAppError } from '~/test-utils/expectAppError';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
@@ -25,11 +24,7 @@ describe('getMyProfile', () => {
       )
     );
 
-    const error = await getMyProfile().catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(AxiosError);
-    expect((error as AxiosError).response?.status).toBe(403);
-    expect((error as Error).message).toBe('접근 권한이 없습니다');
+    await expectAppError(getMyProfile(), 403, '접근 권한이 없습니다');
   });
 
   it('네트워크 오류는 에러를 던진다', async () => {

@@ -4,14 +4,13 @@ import { logger } from '~/shared/lib/logger';
 import { server } from '~/mocks/server';
 import { createItem } from '../createItem';
 import { ItemFormRequestBody } from '../../model/itemFormSchema';
+import { BASE } from '~/mocks/constants';
 
 jest.mock('~/shared/lib/logger', () => ({
   logger: { error: jest.fn() },
 }));
 
 const mockLoggerError = logger.error as jest.Mock;
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;

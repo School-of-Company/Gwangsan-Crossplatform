@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
@@ -6,6 +5,8 @@ import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { prepareImageForUpload } from '~/shared/lib/prepareImageForUpload';
 import { uploadImage, UPLOAD_TIMEOUT_MS } from '../uploadImage';
+import { BASE } from '~/mocks/constants';
+import { expectAppError } from '~/test-utils/expectAppError';
 
 jest.mock('expo-file-system', () => ({
   File: jest.fn().mockReturnValue({ exists: true, size: 0 }),
@@ -17,7 +18,6 @@ jest.mock('~/shared/lib/prepareImageForUpload', () => ({
 
 const MockFile = FileSystem.File as unknown as jest.Mock;
 
-const BASE = 'http://test-api.com';
 const IMAGE = { imageId: 1, imageUrl: 'https://cdn.example.com/img.jpg' };
 
 beforeAll(() => {
@@ -142,11 +142,11 @@ describe('uploadImage', () => {
       )
     );
 
-    const error = await uploadImage('file:///local/path/photo.jpg').catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(AxiosError);
-    expect((error as AxiosError).response?.status).toBe(413);
-    expect((error as Error).message).toBe('업로드할 수 있는 크기를 초과했습니다.');
+    await expectAppError(
+      uploadImage('file:///local/path/photo.jpg'),
+      413,
+      '업로드할 수 있는 크기를 초과했습니다.'
+    );
   });
 
   it('네트워크 오류는 에러를 던진다', async () => {

@@ -8,6 +8,7 @@ import { renderHookWithProviders } from '~/test-utils';
 import { server } from '~/mocks/server';
 import { makeAppVersion } from '~/mocks/handlers/appVersion';
 import { useAppVersion } from '../useAppVersion';
+import { BASE } from '~/mocks/constants';
 
 jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { apiUrl: 'http://test-api.com' } } },
@@ -27,8 +28,6 @@ jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
