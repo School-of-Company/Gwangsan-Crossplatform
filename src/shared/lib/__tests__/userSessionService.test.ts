@@ -3,14 +3,13 @@ import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { createUserSessionService } from '../userSessionService';
+import { BASE } from '~/mocks/constants';
 
 jest.mock('~/shared/lib/getData', () => ({
   getData: jest.fn(),
 }));
 
 const mockGetData = getData as jest.MockedFunction<typeof getData>;
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;

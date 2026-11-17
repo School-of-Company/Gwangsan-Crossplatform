@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
-
-const BASE = 'http://test-api.com';
+import { BASE } from '../constants';
 
 export const makeAppVersion = (overrides: Record<string, unknown> = {}) => ({
   latestVersion: '1.3.0',
