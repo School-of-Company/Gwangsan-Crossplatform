@@ -1,11 +1,10 @@
-import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { shouldRetryQuery, shouldThrowQueryError } from '~/shared/lib/QueryProvider';
 import { getMyReceivedReview, getReceiveReview, getTossReview } from '../getReviews';
-
-const BASE = 'http://test-api.com';
+import { BASE } from '~/mocks/constants';
+import { expectAppError } from '~/test-utils/expectAppError';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
@@ -98,11 +97,7 @@ describe('에러 정책', () => {
         )
       );
 
-      const error = await call().catch((e: unknown) => e);
-
-      expect(error).toBeInstanceOf(AxiosError);
-      expect((error as AxiosError).response?.status).toBe(404);
-      expect((error as Error).message).toBe('후기를 찾을 수 없습니다.');
+      const error = await expectAppError(call(), 404, '후기를 찾을 수 없습니다.');
       expect(shouldRetryQuery(0, error)).toBe(false);
       expect(shouldThrowQueryError(error, false)).toBe(false);
     }
