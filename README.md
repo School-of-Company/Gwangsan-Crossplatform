@@ -141,16 +141,16 @@ sequenceDiagram
 
 ## CI/CD
 
-| 워크플로                                                                                            | 트리거                                  | 내용                                                                                                                           |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [`ci.yml`](.github/workflows/ci.yml)                                                                | `main`·`develop` push / PR              | lint, `tsc --noEmit`, 단위 테스트(PR은 커버리지 리포트 코멘트), `expo install --check`, `npm audit`                            |
-| [`test-ios.yml`](.github/workflows/test-ios.yml)                                                    | `main` 대상 PR, PR 코멘트 `/run-e2e`    | Detox iOS E2E. ccache·CocoaPods·Detox 프레임워크 캐시로 빌드 시간을 줄이고, `/run-e2e coverage`면 E2E 커버리지를 코멘트로 남김 |
-| [`ios_cd.yml`](.github/workflows/ios_cd.yml) / [`android_cd.yml`](.github/workflows/android_cd.yml) | `main` push                             | EAS 클라우드 빌드 후 스토어 제출                                                                                               |
-| [`pr-template-check.yml`](.github/workflows/pr-template-check.yml)                                  | PR                                      | PR 본문에 `## 💡 PR 요약`이 채워져 있지 않으면 실패 (`develop → main` PR 제외)                                                 |
-| [`secret-scan.yml`](.github/workflows/secret-scan.yml)                                              | `main`·`develop` push / PR              | gitleaks CLI로 시크릿 유출 검사                                                                                                |
-| [`codeql.yml`](.github/workflows/codeql.yml)                                                        | `main`·`develop` push / PR, 매주 일요일 | CodeQL 정적 분석                                                                                                               |
-| [`weekly-pr.yml`](.github/workflows/weekly-pr.yml)                                                  | 매주 금요일                             | `develop → main` PR 자동 생성                                                                                                  |
-| [`auto-update-prs.yml`](.github/workflows/auto-update-prs.yml)                                      | `develop`·`main` push                   | 열린 PR 브랜치를 최신 베이스로 갱신                                                                                            |
+| 워크플로                                                           | 트리거                                    | 내용                                                                                                                           |
+| ------------------------------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`ci.yml`](.github/workflows/ci.yml)                               | `main`·`develop` push / PR                | lint, `tsc --noEmit`, 단위 테스트(PR은 커버리지 리포트 코멘트), `expo install --check`, `npm audit`                            |
+| [`test-ios.yml`](.github/workflows/test-ios.yml)                   | `main` 대상 PR, PR 코멘트 `/run-e2e`      | Detox iOS E2E. ccache·CocoaPods·Detox 프레임워크 캐시로 빌드 시간을 줄이고, `/run-e2e coverage`면 E2E 커버리지를 코멘트로 남김 |
+| [`cd.yml`](.github/workflows/cd.yml)                               | `main` push의 `ci.yml` 성공 후, 수동 실행 | iOS·Android matrix로 EAS 클라우드 빌드 후 스토어 제출. `production` environment로 승인 게이트를 걸 수 있음                     |
+| [`pr-template-check.yml`](.github/workflows/pr-template-check.yml) | PR                                        | PR 본문에 `## 💡 PR 요약`이 채워져 있지 않으면 실패 (`develop → main` PR 제외)                                                 |
+| [`secret-scan.yml`](.github/workflows/secret-scan.yml)             | `main`·`develop` push / PR                | gitleaks CLI로 시크릿 유출 검사                                                                                                |
+| [`codeql.yml`](.github/workflows/codeql.yml)                       | `main`·`develop` push / PR, 매주 일요일   | CodeQL 정적 분석                                                                                                               |
+| [`weekly-pr.yml`](.github/workflows/weekly-pr.yml)                 | 매주 금요일                               | `develop → main` PR 자동 생성                                                                                                  |
+| [`auto-update-prs.yml`](.github/workflows/auto-update-prs.yml)     | `develop`·`main` push                     | 열린 PR 브랜치를 최신 베이스로 갱신                                                                                            |
 
 ## 시작하기
 
