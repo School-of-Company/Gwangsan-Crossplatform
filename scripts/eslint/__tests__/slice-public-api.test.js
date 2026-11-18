@@ -2,7 +2,7 @@ const path = require('path');
 const { RuleTester } = require('eslint');
 const rule = require('../slice-public-api');
 
-const file = (relative) => path.join('/project/src', relative);
+const file = (relative) => path.resolve('/project/src', relative);
 
 const ruleTester = new RuleTester({
   languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
@@ -34,7 +34,10 @@ ruleTester.run('slice-public-api', rule, {
       filename: file('entity/chat/ui/a.tsx'),
     },
     { code: "import React from 'react';", filename: file('entity/chat/ui/a.tsx') },
-    { code: "import x from '~/entity/chat/model/x';", filename: '/project/scripts/a.js' },
+    {
+      code: "import x from '~/entity/chat/model/x';",
+      filename: path.resolve('/project/scripts/a.js'),
+    },
   ],
   invalid: [
     {
