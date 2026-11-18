@@ -8,8 +8,9 @@ on:
   workflow_dispatch:
 
 # PR은 새 push가 오면 이전 실행을 취소한다. main/develop push는 커밋마다 결과를 남기도록 끝까지 돌린다
+# auto-update-prs의 봇 최신화 run은 job이 전부 skip되므로 별도 그룹으로 빼서 진행 중인 PR run을 취소하지 않게 한다
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ github.actor == 'github-actions[bot]' && '-bot' || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
