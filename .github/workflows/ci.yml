@@ -7,6 +7,12 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+# PR은 새 push가 오면 이전 실행을 취소한다. main/develop push는 커밋마다 결과를 남기도록 끝까지 돌린다
+# auto-update-prs의 봇 최신화 run은 job이 전부 skip되므로 별도 그룹으로 빼서 진행 중인 PR run을 취소하지 않게 한다
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ github.actor == 'github-actions[bot]' && '-bot' || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint-and-test:
     name: Lint & Test
@@ -35,16 +41,7 @@ jobs:
         run: npx tsc --noEmit
 
       # PR에서는 아래 unit-coverage job이 테스트를 돌리므로, main/develop에 직접 push된 경우에만
-      # 여기서 실행한다. 예전에는 push 때 단위 테스트가 전혀 돌지 않았다(#741)
-      - name: Create env file for tests
-        if: github.event_name != 'pull_request'
-        run: |
-          cat <<'EOF' > .env
-          EXPO_PUBLIC_SENTRY_DSN=https://test-placeholder@sentry.io/0
-          EXPO_PUBLIC_KAKAO_REST_API_KEY=test-placeholder-kakao-rest-key
-          EXPO_PUBLIC_KAKAO_JS_KEY=test-placeholder-kakao-js-key
-          EOF
-
+      # 여기서 실행한다. EXPO_PUBLIC_* 값은 jest.setup.js가 고정하므로 .env가 필요 없다
       - name: Unit tests
         if: github.event_name != 'pull_request'
         run: npm test -- --ci
@@ -70,14 +67,6 @@ jobs:
       - name: Update npm
         run: npm install -g npm@11
 
-      - name: Create env file for tests
-        run: |
-          cat <<'EOF' > .env
-          EXPO_PUBLIC_SENTRY_DSN=https://test-placeholder@sentry.io/0
-          EXPO_PUBLIC_KAKAO_REST_API_KEY=test-placeholder-kakao-rest-key
-          EXPO_PUBLIC_KAKAO_JS_KEY=test-placeholder-kakao-js-key
-          EOF
-
       - name: Report unit test coverage
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
@@ -90,7 +79,6 @@ jobs:
     name: Expo Configuration Check
     runs-on: ubuntu-latest
     if: github.actor != 'github-actions[bot]'
-    needs: lint-and-test
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -136,16 +124,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
+      # audit은 package-lock.json만 보므로 의존성 설치(npm ci)를 하지 않는다
       # critical은 0건이라 실패 게이트로 둔다. 남은 high(@expo/cli의 zod 3, metro의 image-size,
       # expo-router의 query-string → decode-uri-component)는 Expo SDK 메이저 업그레이드로만 해소돼 리포트만 남긴다.
       - name: Run npm audit (blocking on critical)
-        run: npm audit --omit=dev --audit-level=critical
+        run: npm audit --package-lock-only --omit=dev --audit-level=critical
 
       - name: Run npm audit (report high, not blocking)
         continue-on-error: true
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --package-lock-only --omit=dev --audit-level=high
