@@ -19,8 +19,7 @@ interface FooterProps extends BottomTabBarProps {
   totalUnreadCount?: number;
 }
 
-const TAB_ROUTE_NAMES = ['main', 'chatting', 'notice', 'profile'] as const;
-type TabRouteName = (typeof TAB_ROUTE_NAMES)[number];
+type TabRouteName = 'main' | 'chatting' | 'notice' | 'profile';
 
 const SHOW_DURATION = 150; // 모달이 닫히고 푸터가 다시 올라오는 시간 — 빠르고 즉각적으로
 const FALLBACK_HIDE_OFFSET = 90; // 레이아웃 측정 전에 숨김이 트리거될 때의 대체 이동 거리

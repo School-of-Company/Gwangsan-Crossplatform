@@ -2,7 +2,7 @@ const path = require('path');
 const { RuleTester } = require('eslint');
 const rule = require('../fsd-layers');
 
-const file = (relative) => path.join('/project/src', relative);
+const file = (relative) => path.resolve('/project/src', relative);
 
 const ruleTester = new RuleTester({
   languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
@@ -38,7 +38,7 @@ ruleTester.run('fsd-layers', rule, {
     // 외부 패키지는 검사하지 않음
     { code: "import React from 'react';", filename: file('shared/ui/a.tsx') },
     // src 밖 파일은 검사하지 않음
-    { code: "import x from '~/view/chat';", filename: '/project/scripts/a.js' },
+    { code: "import x from '~/view/chat';", filename: path.resolve('/project/scripts/a.js') },
   ],
   invalid: [
     {
