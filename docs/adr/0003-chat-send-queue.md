@@ -26,7 +26,7 @@
 
 ### 3. 전송·재시도
 
-[`useResilientMessageSender`](../../src/entity/chat/hooks/useResilientMessageSender.ts)
+[`useResilientMessageSender`](../../src/entity/chat/model/useResilientMessageSender.ts)
 
 - 연결돼 있으면 `sending`으로 바꾸고 emit, 연결이 없으면 `pending`으로 둡니다.
 - 10초 안에 echo로 확정되지 않으면 `failed`로 바꾸고 "탭해서 재시도" 토스트를 띄웁니다.

@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { withdrawal } from '../../api/withdrawal';
 import { removeData } from '~/shared/lib/removeData';
 import { clearAuthTokens } from '~/shared/lib/auth';
-import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import Toast from 'react-native-toast-message';
 import { useWithdrawal } from '../useWithdrawal';
 
@@ -20,9 +19,6 @@ jest.mock('~/shared/lib/removeData', () => ({
 jest.mock('~/shared/lib/auth', () => ({
   clearAuthTokens: jest.fn(),
 }));
-jest.mock('~/shared/lib/getCurrentUserId', () => ({
-  clearCurrentUserId: jest.fn(),
-}));
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
@@ -35,7 +31,6 @@ const mockUseRouter = useRouter as jest.Mock;
 const mockWithdrawal = withdrawal as jest.Mock;
 const mockRemoveData = removeData as jest.Mock;
 const mockClearAuthTokens = clearAuthTokens as jest.Mock;
-const mockClearCurrentUserId = clearCurrentUserId as jest.Mock;
 
 describe('useWithdrawal', () => {
   const mockReplace = jest.fn();
@@ -67,7 +62,6 @@ describe('useWithdrawal', () => {
     await waitFor(() => {
       expect(mockClearAuthTokens).toHaveBeenCalled();
       expect(mockRemoveData).toHaveBeenCalledWith('memberId');
-      expect(mockClearCurrentUserId).toHaveBeenCalled();
       expect(mockReplace).toHaveBeenCalledWith('/onboarding');
     });
   });
@@ -81,9 +75,6 @@ describe('useWithdrawal', () => {
     });
     mockRemoveData.mockImplementation(async () => {
       callOrder.push('removeData');
-    });
-    mockClearCurrentUserId.mockImplementation(() => {
-      callOrder.push('clearCurrentUserId');
     });
     mockReplace.mockImplementation(() => {
       callOrder.push('replace');
