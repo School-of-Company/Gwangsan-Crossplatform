@@ -1,0 +1,462 @@
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
+import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
+import { AxiosError, AxiosHeaders } from 'axios';
+
+import {
+  CHAT_BACKGROUND_TASK,
+  registerChatBackgroundTask,
+  unregisterChatBackgroundTask,
+  clearChatUnreadState,
+} from '../chatBackgroundTask';
+
+jest.mock('expo-background-fetch', () => ({
+  BackgroundFetchResult: { NoData: 'NoData', Failed: 'Failed', NewData: 'NewData' },
+  BackgroundFetchStatus: { Denied: 'Denied', Restricted: 'Restricted', Available: 'Available' },
+  getStatusAsync: jest.fn(),
+  registerTaskAsync: jest.fn(),
+  unregisterTaskAsync: jest.fn(),
+}));
+
+jest.mock('expo-task-manager', () => ({
+  defineTask: jest.fn(),
+  isTaskRegisteredAsync: jest.fn(),
+}));
+
+jest.mock('expo-notifications', () => ({
+  scheduleNotificationAsync: jest.fn(),
+  setBadgeCountAsync: jest.fn(),
+}));
+
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(),
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+}));
+
+jest.mock('@sentry/react-native', () => ({
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+}));
+
+jest.mock('~/shared/lib/publicInstance', () => ({ publicInstance: { get: jest.fn() } }));
+
+const mockDefineTask = TaskManager.defineTask as jest.Mock;
+const mockIsTaskRegisteredAsync = TaskManager.isTaskRegisteredAsync as jest.Mock;
+const mockGetStatusAsync = BackgroundFetch.getStatusAsync as jest.Mock;
+const mockRegisterTaskAsync = BackgroundFetch.registerTaskAsync as jest.Mock;
+const mockUnregisterTaskAsync = BackgroundFetch.unregisterTaskAsync as jest.Mock;
+const mockGetItemAsync = SecureStore.getItemAsync as jest.Mock;
+const mockScheduleNotificationAsync = Notifications.scheduleNotificationAsync as jest.Mock;
+const mockSetBadgeCountAsync = Notifications.setBadgeCountAsync as jest.Mock;
+const mockAsyncGetItem = AsyncStorage.getItem as jest.Mock;
+const mockAsyncSetItem = AsyncStorage.setItem as jest.Mock;
+const mockAsyncRemoveItem = AsyncStorage.removeItem as jest.Mock;
+const mockAddBreadcrumb = Sentry.addBreadcrumb as jest.Mock;
+
+const axiosErrorWithStatus = (status: number) =>
+  new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+    status,
+    statusText: '',
+    data: {},
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+  });
+
+// TaskManager.defineTask is called synchronously at module import time, so the
+// registered handler must be captured immediately, before any beforeEach clears it.
+const defineTaskCall = mockDefineTask.mock.calls[0];
+const taskHandler = defineTaskCall[1] as () => Promise<unknown>;
+
+const { publicInstance } = jest.requireMock('~/shared/lib/publicInstance');
+const mockGet = publicInstance.get as jest.Mock;
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockAsyncGetItem.mockResolvedValue(null);
+  mockAsyncSetItem.mockResolvedValue(undefined);
+  mockAsyncRemoveItem.mockResolvedValue(undefined);
+  mockScheduleNotificationAsync.mockResolvedValue(undefined);
+  mockSetBadgeCountAsync.mockResolvedValue(undefined);
+  mockGetItemAsync.mockResolvedValue(null);
+});
+
+function mockFetchResponse(ok: boolean, rooms: unknown[] = []) {
+  if (ok) {
+    mockGet.mockResolvedValue({ data: rooms });
+  } else {
+    mockGet.mockRejectedValue(new Error('Request failed with status code 500'));
+  }
+}
+
+describe('CHAT_BACKGROUND_TASK handler', () => {
+  it('is registered with the correct task name', () => {
+    expect(defineTaskCall[0]).toBe(CHAT_BACKGROUND_TASK);
+    expect(typeof taskHandler).toBe('function');
+    expect(CHAT_BACKGROUND_TASK).toBe('chat-background-fetch');
+  });
+
+  it('returns NoData without fetching when there is no access token', async () => {
+    mockGetItemAsync.mockResolvedValue(null);
+
+    const result = await taskHandler();
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
+  });
+
+  it('returns Failed when the fetch response is not ok', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockFetchResponse(false);
+
+    const result = await taskHandler();
+
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('resets stored state and returns NoData when there are no unread rooms', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockFetchResponse(true, [{ roomId: 1, unreadMessageCount: 0 }]);
+
+    const result = await taskHandler();
+
+    expect(mockAsyncSetItem).toHaveBeenCalledWith('chatLastUnreadState', JSON.stringify({}));
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
+  });
+
+  it('on the first run (no stored state) saves state without notifying', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(null);
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 2,
+        member: { nickname: 'A' },
+        lastMessageType: 'TEXT',
+        lastMessage: 'hi',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(mockAsyncSetItem).toHaveBeenCalledWith(
+      'chatLastUnreadState',
+      JSON.stringify({ '1': 2 })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
+  });
+
+  it('notifies only rooms whose unread count increased and returns NewData', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({ '1': 1, '2': 3 }));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 2,
+        member: { nickname: 'A' },
+        lastMessageType: 'TEXT',
+        lastMessage: '새 메시지',
+      },
+      {
+        roomId: 2,
+        unreadMessageCount: 3,
+        member: { nickname: 'B' },
+        lastMessageType: 'TEXT',
+        lastMessage: '변화없음',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledTimes(1);
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith({
+      content: { title: 'A', body: '새 메시지', data: { roomId: 1 } },
+      trigger: null,
+    });
+    expect(mockAsyncSetItem).toHaveBeenCalledWith(
+      'chatLastUnreadState',
+      JSON.stringify({ '1': 2, '2': 3 })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NewData);
+  });
+
+  it('shows an image placeholder body for IMAGE messages', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({ '1': 0 }));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 1,
+        member: { nickname: 'A' },
+        lastMessageType: 'IMAGE',
+        lastMessage: null,
+      },
+    ]);
+
+    await taskHandler();
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ body: '사진을 보냈습니다.' }) })
+    );
+  });
+
+  it('마지막 메시지가 SYSTEM이면 서버 푸시와 겹치므로 알림을 만들지 않는다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({ '1': 0 }));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 1,
+        member: { nickname: 'A' },
+        lastMessageType: 'SYSTEM',
+        lastMessage: 'A님이 예약을 취소했어요',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
+  });
+
+  it('falls back to a default title when the room has no member nickname', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({}));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 1,
+        member: undefined,
+        lastMessageType: 'TEXT',
+        lastMessage: '메시지',
+      },
+    ]);
+
+    await taskHandler();
+
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ title: '새로운 메시지' }) })
+    );
+  });
+
+  it('returns NoData without notifying when no room increased its unread count', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue(JSON.stringify({ '1': 5 }));
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 5,
+        member: { nickname: 'A' },
+        lastMessageType: 'TEXT',
+        lastMessage: 'x',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NoData);
+  });
+
+  it('clears storage and continues when stored state fails to parse', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockAsyncGetItem.mockResolvedValue('not-json{{{');
+    mockFetchResponse(true, [
+      {
+        roomId: 1,
+        unreadMessageCount: 1,
+        member: { nickname: 'A' },
+        lastMessageType: 'TEXT',
+        lastMessage: 'hi',
+      },
+    ]);
+
+    const result = await taskHandler();
+
+    expect(mockAsyncRemoveItem).toHaveBeenCalledWith('chatLastUnreadState');
+    expect(mockScheduleNotificationAsync).toHaveBeenCalledTimes(1);
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.NewData);
+  });
+
+  it('기기가 잠겨 토큰을 읽지 못하면 요청 없이 Failed를 반환하고 breadcrumb을 남긴다', async () => {
+    mockGetItemAsync.mockRejectedValue(new Error('User interaction is not allowed.'));
+
+    const result = await taskHandler();
+
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'chat-background',
+        message: 'Chat background fetch skipped: token storage unavailable',
+      })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('401이면 재발급하지 않고 Failed를 반환하며, 토큰 없이 사유만 breadcrumb으로 남긴다', async () => {
+    mockGetItemAsync.mockResolvedValue('secret-token');
+    mockGet.mockRejectedValue(axiosErrorWithStatus(401));
+
+    const result = await taskHandler();
+
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: unauthorized',
+        data: { status: 401 },
+      })
+    );
+    expect(JSON.stringify(mockAddBreadcrumb.mock.calls)).not.toContain('secret-token');
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('네트워크 오류면 network 사유로 breadcrumb을 남긴다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockGet.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
+
+    const result = await taskHandler();
+
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: network or timeout',
+        data: { status: undefined },
+      })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+
+  it('그 밖의 요청 실패는 상태 코드와 함께 남긴다', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockGet.mockRejectedValue(axiosErrorWithStatus(500));
+
+    await taskHandler();
+
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: request failed',
+        data: { status: 500 },
+      })
+    );
+  });
+
+  it('returns Failed when an unexpected error is thrown', async () => {
+    mockGetItemAsync.mockResolvedValue('token');
+    mockFetchResponse(true, [{ roomId: 1, unreadMessageCount: 1 }]);
+    mockAsyncGetItem.mockRejectedValue(new TypeError('boom'));
+
+    const result = await taskHandler();
+
+    expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Chat background fetch skipped: unexpected error',
+        data: { name: 'TypeError' },
+      })
+    );
+    expect(result).toBe(BackgroundFetch.BackgroundFetchResult.Failed);
+  });
+});
+
+describe('registerChatBackgroundTask', () => {
+  it('does not register when the status is Restricted', async () => {
+    mockGetStatusAsync.mockResolvedValue(BackgroundFetch.BackgroundFetchStatus.Restricted);
+
+    await registerChatBackgroundTask();
+
+    expect(mockIsTaskRegisteredAsync).not.toHaveBeenCalled();
+    expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
+  });
+
+  it('does not register when the status is Denied', async () => {
+    mockGetStatusAsync.mockResolvedValue(BackgroundFetch.BackgroundFetchStatus.Denied);
+
+    await registerChatBackgroundTask();
+
+    expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
+  });
+
+  it('registers the task when available', async () => {
+    mockGetStatusAsync.mockResolvedValue(BackgroundFetch.BackgroundFetchStatus.Available);
+
+    await registerChatBackgroundTask();
+
+    expect(mockRegisterTaskAsync).toHaveBeenCalledWith(
+      CHAT_BACKGROUND_TASK,
+      expect.objectContaining({
+        minimumInterval: 60 * 5,
+        stopOnTerminate: false,
+        startOnBoot: true,
+      })
+    );
+  });
+
+  it('re-registers even when the native flag already reports it as registered', async () => {
+    // isTaskRegisteredAsync only reflects a persisted native flag, not whether the alarm
+    // actually survived a process restart, so registration always re-runs (safe to repeat).
+    mockGetStatusAsync.mockResolvedValue(BackgroundFetch.BackgroundFetchStatus.Available);
+    mockIsTaskRegisteredAsync.mockResolvedValue(true);
+
+    await registerChatBackgroundTask();
+
+    expect(mockRegisterTaskAsync).toHaveBeenCalledWith(
+      CHAT_BACKGROUND_TASK,
+      expect.objectContaining({
+        minimumInterval: 60 * 5,
+        stopOnTerminate: false,
+        startOnBoot: true,
+      })
+    );
+  });
+
+  it('silently ignores unexpected errors', async () => {
+    mockGetStatusAsync.mockRejectedValue(new Error('fail'));
+
+    await expect(registerChatBackgroundTask()).resolves.toBeUndefined();
+  });
+});
+
+describe('unregisterChatBackgroundTask', () => {
+  it('unregisters when the task is registered', async () => {
+    mockIsTaskRegisteredAsync.mockResolvedValue(true);
+
+    await unregisterChatBackgroundTask();
+
+    expect(mockUnregisterTaskAsync).toHaveBeenCalledWith(CHAT_BACKGROUND_TASK);
+  });
+
+  it('does nothing when the task is not registered', async () => {
+    mockIsTaskRegisteredAsync.mockResolvedValue(false);
+
+    await unregisterChatBackgroundTask();
+
+    expect(mockUnregisterTaskAsync).not.toHaveBeenCalled();
+  });
+
+  it('silently ignores unexpected errors', async () => {
+    mockIsTaskRegisteredAsync.mockRejectedValue(new Error('fail'));
+
+    await expect(unregisterChatBackgroundTask()).resolves.toBeUndefined();
+  });
+});
+
+describe('clearChatUnreadState', () => {
+  it('removes the stored unread state', async () => {
+    await clearChatUnreadState();
+
+    expect(mockAsyncRemoveItem).toHaveBeenCalledWith('chatLastUnreadState');
+  });
+
+  it('does not throw when removal fails', async () => {
+    mockAsyncRemoveItem.mockRejectedValue(new Error('fail'));
+
+    await expect(clearChatUnreadState()).resolves.toBeUndefined();
+  });
+});
