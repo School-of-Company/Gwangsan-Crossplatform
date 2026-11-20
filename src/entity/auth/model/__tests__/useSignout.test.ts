@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { signout } from '../../api/signout';
 import { removeData } from '~/shared/lib/removeData';
 import { clearAuthTokens } from '~/shared/lib/auth';
-import { clearCurrentUserId } from '~/shared/lib/getCurrentUserId';
 import { renderHookWithProviders } from '~/test-utils';
 import { useSignout } from '../useSignout';
 
@@ -19,9 +18,6 @@ jest.mock('~/shared/lib/removeData', () => ({
 jest.mock('~/shared/lib/auth', () => ({
   clearAuthTokens: jest.fn(),
 }));
-jest.mock('~/shared/lib/getCurrentUserId', () => ({
-  clearCurrentUserId: jest.fn(),
-}));
 jest.mock('~/shared/lib/sessionCleanup', () => ({
   cleanupNotificationSession: jest.fn(),
 }));
@@ -30,7 +26,6 @@ const mockUseRouter = useRouter as jest.Mock;
 const mockSignout = signout as jest.Mock;
 const mockRemoveData = removeData as jest.Mock;
 const mockClearAuthTokens = clearAuthTokens as jest.Mock;
-const mockClearCurrentUserId = clearCurrentUserId as jest.Mock;
 
 describe('useSignout', () => {
   const mockReplace = jest.fn();
@@ -62,7 +57,6 @@ describe('useSignout', () => {
     await waitFor(() => {
       expect(mockClearAuthTokens).toHaveBeenCalled();
       expect(mockRemoveData).toHaveBeenCalledWith('memberId');
-      expect(mockClearCurrentUserId).toHaveBeenCalled();
       expect(mockReplace).toHaveBeenCalledWith('/onboarding');
     });
   });
@@ -156,7 +150,6 @@ describe('useSignout', () => {
       await waitFor(() => {
         expect(mockClearAuthTokens).toHaveBeenCalled();
         expect(mockRemoveData).toHaveBeenCalledWith('memberId');
-        expect(mockClearCurrentUserId).toHaveBeenCalled();
         expect(mockReplace).toHaveBeenCalledWith('/onboarding');
       });
     });

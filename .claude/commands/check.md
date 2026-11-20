@@ -2,7 +2,7 @@ Run the full local quality gate — same checks as CI.
 
 ## Steps
 
-Run the three checks **sequentially** and report a clear pass/fail summary at the end.
+Run the four checks **sequentially** and report a clear pass/fail summary at the end.
 
 ### 1. Lint
 
@@ -20,7 +20,15 @@ npx tsc --noEmit --skipLibCheck 2>&1
 
 List each error file + message. If there are more than 30 errors, show the first 30 and report the total count.
 
-### 3. Unit tests
+### 3. Circular imports
+
+```bash
+npm run check:circular
+```
+
+List each cycle if any are found.
+
+### 4. Unit tests
 
 ```bash
 npm test -- --passWithNoTests 2>&1 | tail -30
@@ -30,12 +38,13 @@ Show the last 30 lines. List any failing test names.
 
 ## Output format
 
-After all three checks, print a summary table:
+After all four checks, print a summary table:
 
 | Check | Status | Notes |
 |-------|--------|-------|
 | Lint | ✓ / ✗ | error count or "clean" |
 | TypeScript | ✓ / ✗ | error count or "no errors" |
+| Circular | ✓ / ✗ | cycle count or "none" |
 | Tests | ✓ / ✗ | pass/fail counts |
 
 If any check failed, list the specific files/errors that need fixing.

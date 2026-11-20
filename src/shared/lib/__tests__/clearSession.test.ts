@@ -3,7 +3,6 @@ import * as Sentry from '@sentry/react-native';
 import { clearSession } from '../clearSession';
 import { clearAuthTokens } from '../auth';
 import { removeData } from '../removeData';
-import { clearCurrentUserId } from '../getCurrentUserId';
 import { cleanupNotificationSession } from '../sessionCleanup';
 import { chatSocket } from '../socket';
 import { useChatQueueStore } from '~/shared/store/useChatQueueStore';
@@ -11,7 +10,6 @@ import { useReadRoomsStore } from '~/shared/store/useReadRoomsStore';
 
 jest.mock('../auth', () => ({ clearAuthTokens: jest.fn() }));
 jest.mock('../removeData', () => ({ removeData: jest.fn() }));
-jest.mock('../getCurrentUserId', () => ({ clearCurrentUserId: jest.fn() }));
 jest.mock('../sessionCleanup', () => ({ cleanupNotificationSession: jest.fn() }));
 jest.mock('../socket', () => ({ chatSocket: { disconnect: jest.fn() } }));
 jest.mock('@sentry/react-native', () => ({ setUser: jest.fn() }));
@@ -23,13 +21,12 @@ beforeEach(() => {
 });
 
 describe('clearSession', () => {
-  it('토큰·memberId·알림 세션·현재 사용자·Sentry 사용자를 모두 정리한다', async () => {
+  it('토큰·memberId·알림 세션·Sentry 사용자를 모두 정리한다', async () => {
     await clearSession();
 
     expect(clearAuthTokens).toHaveBeenCalled();
     expect(removeData).toHaveBeenCalledWith('memberId');
     expect(cleanupNotificationSession).toHaveBeenCalled();
-    expect(clearCurrentUserId).toHaveBeenCalled();
     expect(Sentry.setUser).toHaveBeenCalledWith(null);
   });
 
@@ -68,7 +65,6 @@ describe('clearSession', () => {
 
     await expect(clearSession()).resolves.toBeUndefined();
 
-    expect(clearCurrentUserId).toHaveBeenCalled();
     expect(useChatQueueStore.getState().pendingMessages).toEqual([]);
   });
 

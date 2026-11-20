@@ -103,8 +103,7 @@ export const useGlobalChatNotifications = () => {
 
   useEffect(() => {
     const handleReceiveMessage = async (message: ChatMessageResponse) => {
-      // 서버가 이미 발신자 기준으로 정확한 isMine을 계산해서 보내므로, 로컬 세션 캐시
-      // (getCurrentUserId)와 senderId를 다시 비교해 본인 메시지 여부를 재계산하지 않는다.
+      // 서버가 발신자 기준으로 isMine을 계산해 보내므로 senderId로 본인 메시지 여부를 다시 판정하지 않는다
       if (message.isMine) return;
 
       // 예약 취소 같은 SYSTEM 메시지는 서버가 따로 푸시를 보내므로(Gwangsan-Server#426) 로컬 알림을
