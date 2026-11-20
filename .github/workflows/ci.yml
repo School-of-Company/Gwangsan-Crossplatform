@@ -37,6 +37,9 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      - name: Check circular imports
+        run: npm run check:circular
+
       - name: Type check
         run: npx tsc --noEmit
 
