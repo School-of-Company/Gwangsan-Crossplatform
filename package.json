@@ -11,6 +11,7 @@
     "test:watch": "jest --watchAll",
     "test:coverage": "jest --coverage",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --max-warnings 0 && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
+    "check:circular": "npx --yes madge@8.0.0 --circular --extensions ts,tsx --ts-config tsconfig.json src",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
     "web": "expo start --web",
     "e2e:build:ios": "detox build --configuration ios.sim.debug",

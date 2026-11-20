@@ -9,7 +9,7 @@ import type {
 } from '~/shared/types/chatType';
 
 // 서버 응답(wire) 타입은 shared 계층(백그라운드 태스크, 알림 등)에서도 쓰므로 shared/types에 두고
-// entity의 공개 API로는 그대로 다시 내보낸다(#741)
+// entity의 공개 API로는 그대로 다시 내보낸다
 export type {
   ProductImage,
   ProductInfo,
@@ -32,10 +32,9 @@ export interface TradeProduct {
   readonly images: readonly ProductImage[];
   readonly createdAt: string | null;
   readonly isSeller: boolean;
-  // 게시글 작성자 여부(School-of-Company/Gwangsan-Server#397). 예약 생성 권한은 Mode 기준
-  // 판매자(isSeller)가 아니라 게시글 작성자에게만 있어(#357), 예약 관련 버튼 노출은 이 값을
-  // 기준으로 삼아야 한다. 서버가 아직 필드를 내려주지 않는 동안은 undefined이므로, 사용하는
-  // 쪽에서 `isAuthor ?? isSeller`로 기존 동작을 유지해야 한다(#397 배포 전까지의 임시 fallback).
+  // 게시글 작성자 여부(Gwangsan-Server#397). 예약 생성 권한은 Mode 기준 판매자(isSeller)가 아니라
+  // 게시글 작성자에게 있다(Gwangsan-Server#357). 이 필드가 없는 응답에 대비해 사용하는 쪽에서
+  // `isAuthor ?? isSeller`로 fallback한다.
   readonly isAuthor?: boolean;
   readonly isCompletable: boolean;
   readonly isCompleted: boolean;

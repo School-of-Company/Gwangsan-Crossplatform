@@ -38,7 +38,7 @@ import { useChatRooms } from '~/entity/chat'; // ✗ own barrel → circular imp
 
 - Every slice has an `index.ts`. Add a new export there when another slice starts using it
 - Never import your own slice's barrel; the barrel imports your file back and creates a cycle
-- After changing barrels, check cycles: `npx madge --circular --extensions ts,tsx --ts-config tsconfig.json src`
+- After changing barrels, check cycles: `npm run check:circular` (also runs in CI)
 - In tests, `jest.mock('~/entity/chat/model/useChatRooms')` still applies when the code imports
   `~/entity/chat`, because the barrel re-exports the mocked module. A factory mock of the barrel itself
   (`jest.mock('~/entity/chat', () => ({ ... }))`) must list every export the code under test uses,

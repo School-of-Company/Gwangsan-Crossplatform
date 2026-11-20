@@ -2,7 +2,6 @@ import type { QueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { clearAuthTokens } from './auth';
 import { removeData } from './removeData';
-import { clearCurrentUserId } from './getCurrentUserId';
 import { cleanupNotificationSession } from './sessionCleanup';
 import { chatSocket } from './socket';
 import { logger } from './logger';
@@ -26,7 +25,6 @@ export const clearSession = async (queryClient?: QueryClient | null): Promise<vo
     cleanupNotificationSession(),
   ]);
 
-  clearCurrentUserId();
   Sentry.setUser(null);
   useChatQueueStore.getState().reset();
   useReadRoomsStore.getState().reset();
