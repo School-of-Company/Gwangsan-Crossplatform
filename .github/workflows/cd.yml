@@ -1,0 +1,111 @@
+name: CD
+
+on:
+  # main push로 돈 CI가 성공해야 배포한다. workflow_run은 기본 브랜치(develop)의 이 파일로 실행되므로
+  # 아래 checkout에서 반드시 CI가 검사한 커밋(head_sha)을 받아야 한다
+  workflow_run:
+    workflows: ['gwangsan-ci']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: '배포할 플랫폼'
+        type: choice
+        options: [all, ios, android]
+        default: all
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy (${{ matrix.platform }})
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    # Settings → Environments → production에 Required reviewers를 걸면 배포 전 승인 단계가 생긴다
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        # 수동 실행에서 플랫폼을 골랐으면 그 플랫폼만, 아니면 둘 다 배포한다
+        platform: ${{ fromJSON((github.event.inputs.platform == 'ios' && '["ios"]') || (github.event.inputs.platform == 'android' && '["android"]') || '["ios","android"]') }}
+    concurrency:
+      group: cd-${{ matrix.platform }}
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Expo & EAS
+        uses: expo/expo-github-action@v9
+        with:
+          eas-version: 27.10.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Create Google Play service account json
+        if: matrix.platform == 'android'
+        env:
+          SA_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: |
+          printf '%s' "$SA_JSON" > service_account.json
+          if [ ! -s service_account.json ]; then
+            echo "SERVICE_ACCOUNT_JSON secret is empty or missing"
+            exit 1
+          fi
+
+      # submit --latest와 태그가 빌드 결과에 의존하므로 빌드 완료까지 기다린다.
+      # public repo라 ubuntu 러너 시간은 과금되지 않는다
+      - name: EAS Build
+        run: eas build --platform ${{ matrix.platform }} --profile production --non-interactive --wait
+
+      - name: EAS Submit
+        run: eas submit --platform ${{ matrix.platform }} --profile production --latest --non-interactive
+
+      - name: Tag release
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          TAG="${{ matrix.platform }}-v${VERSION}-${{ github.run_number }}"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          PLATFORM: ${{ matrix.platform == 'ios' && 'iOS' || 'Android' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "Discord webhook URL not set, skipping"
+            exit 0
+          fi
+
+          if [ "$JOB_STATUS" == "success" ]; then
+            TITLE="✅ ${PLATFORM} 프로덕션 배포 성공"
+            COLOR=3066993
+          else
+            TITLE="❌ ${PLATFORM} 프로덕션 배포 실패"
+            COLOR=15158332
+          fi
+
+          curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"$TITLE\",\"color\":$COLOR,\"fields\":[{\"name\":\"워크플로우\",\"value\":\"[보기]($RUN_URL)\"}]}]}"
