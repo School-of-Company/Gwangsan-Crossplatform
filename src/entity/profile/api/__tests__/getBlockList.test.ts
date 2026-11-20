@@ -2,8 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { getBlockList } from '../getBlockList';
-
-const BASE = 'http://test-api.com';
+import { BASE } from '~/mocks/constants';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;

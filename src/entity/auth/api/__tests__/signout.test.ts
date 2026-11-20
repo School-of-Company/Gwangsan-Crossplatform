@@ -3,6 +3,7 @@ import { instance } from '~/shared/lib/axios';
 import { clearAuthTokens } from '~/shared/lib/auth';
 import { server } from '~/mocks/server';
 import { signout } from '../signout';
+import { BASE } from '~/mocks/constants';
 
 // 요청 인터셉터가 getAccessToken을 쓰므로 토큰 삭제만 mock으로 바꾼다
 jest.mock('~/shared/lib/auth', () => ({
@@ -11,8 +12,6 @@ jest.mock('~/shared/lib/auth', () => ({
 }));
 
 const mockClearAuthTokens = clearAuthTokens as jest.MockedFunction<typeof clearAuthTokens>;
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;

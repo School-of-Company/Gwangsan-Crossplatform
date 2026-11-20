@@ -1,16 +1,15 @@
-import { AxiosError } from 'axios';
 import { http, HttpResponse } from 'msw';
 import Toast from 'react-native-toast-message';
 import { instance } from '~/shared/lib/axios';
 import { server } from '~/mocks/server';
 import { createChatRoom } from '../createChatRoom';
+import { BASE } from '~/mocks/constants';
+import { expectAppError } from '~/test-utils/expectAppError';
 
 jest.mock('react-native-toast-message', () => ({
   __esModule: true,
   default: { show: jest.fn() },
 }));
-
-const BASE = 'http://test-api.com';
 
 beforeAll(() => {
   instance.defaults.baseURL = BASE;
@@ -37,21 +36,13 @@ describe('createChatRoom', () => {
       )
     );
 
-    const error = await createChatRoom(1).catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(AxiosError);
-    expect((error as AxiosError).response?.status).toBe(400);
-    expect((error as Error).message).toBe('본인 상품에는 채팅할 수 없습니다');
+    await expectAppError(createChatRoom(1), 400, '본인 상품에는 채팅할 수 없습니다');
     expect(Toast.show).not.toHaveBeenCalled();
   });
 
   it('5xx는 상태 코드만 알리는 에러를 던진다', async () => {
     server.use(http.post(`${BASE}/chat/room/1`, () => new HttpResponse(null, { status: 500 })));
 
-    const error = await createChatRoom(1).catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(AxiosError);
-    expect((error as AxiosError).response?.status).toBe(500);
-    expect((error as Error).message).toBe('요청이 실패했습니다. (500)');
+    await expectAppError(createChatRoom(1), 500, '요청이 실패했습니다. (500)');
   });
 });

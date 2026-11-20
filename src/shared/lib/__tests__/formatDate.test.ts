@@ -113,6 +113,8 @@ describe('formatDate', () => {
 
     it('내부 처리 중 예외가 발생하면 원본 문자열을 그대로 반환한다', () => {
       const original = Date.prototype.toLocaleDateString;
+      // formatDate 내부의 예외 경로를 만들려면 내장 메서드를 잠시 바꿔야 한다. finally에서 되돌린다
+      // eslint-disable-next-line no-extend-native
       Date.prototype.toLocaleDateString = jest.fn(() => {
         throw new Error('toLocaleDateString failure');
       });
@@ -121,6 +123,7 @@ describe('formatDate', () => {
         const dateStr = msAgo(10 * DAY);
         expect(formatDate(dateStr)).toBe(dateStr);
       } finally {
+        // eslint-disable-next-line no-extend-native
         Date.prototype.toLocaleDateString = original;
       }
     });
