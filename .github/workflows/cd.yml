@@ -81,7 +81,8 @@ jobs:
       - name: Tag release
         run: |
           VERSION=$(node -p "require('./app.json').expo.version")
-          TAG="${{ matrix.platform }}-v${VERSION}-${{ github.run_number }}"
+          # ios_cd.yml·android_cd.yml의 마지막 태그 번호(67)에 이어서 매긴다
+          TAG="${{ matrix.platform }}-v${VERSION}-$(( ${{ github.run_number }} + 67 ))"
           git tag "$TAG"
           git push origin "$TAG"
 
