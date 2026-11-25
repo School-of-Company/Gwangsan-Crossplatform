@@ -8,7 +8,7 @@ import type {
   ChatRoomListItem,
 } from '~/shared/types/chatType';
 
-// 서버 응답(wire) 타입은 shared 계층(백그라운드 태스크, 알림 등)에서도 쓰므로 shared/types에 두고
+// 서버 응답(wire) 타입은 shared 계층(소켓, 채팅 스토어 등)에서도 쓰므로 shared/types에 두고
 // entity의 공개 API로는 그대로 다시 내보낸다
 export type {
   ProductImage,
