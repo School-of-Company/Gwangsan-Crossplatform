@@ -93,7 +93,11 @@ jobs:
           sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g/' gradle.properties
           ./gradlew assembleRelease assembleAndroidTest -DtestBuildType=release \
             -PreactNativeArchitectures=x86_64 --stacktrace 2>&1 | tee /tmp/gradle-build.log
-          exit ${PIPESTATUS[0]}
+          STATUS=${PIPESTATUS[0]}
+          # 빌드가 끝난 Gradle·Kotlin 데몬(합쳐 수 GB)이 남아 있으면 에뮬레이터와 메모리를 다투다 러너가 끊긴다
+          ./gradlew --stop
+          pkill -f KotlinCompileDaemon || true
+          exit $STATUS
 
       - name: Show build log on failure
         if: failure()
@@ -107,12 +111,14 @@ jobs:
 
       # .detoxrc.js의 avdName과 같은 이름으로 만들어, Detox가 이미 떠 있는 에뮬레이터를 그대로 쓰게 한다
       - name: Run Detox E2E tests
+        timeout-minutes: 40
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
           target: google_apis
           arch: x86_64
           avd-name: Pixel_7_API_33
+          ram-size: 3072M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: npm run e2e:test:android:release
