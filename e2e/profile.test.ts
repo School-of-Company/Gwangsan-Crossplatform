@@ -30,7 +30,8 @@ describe('프로필', () => {
 
   it('프로필 화면을 스크롤할 수 있다', async () => {
     await element(by.id('Information-nickname')).swipe('up', 'slow');
-    await element(by.text('판매관리')).swipe('down', 'slow');
+    // 메뉴 텍스트는 기기에 따라 하단 탭에 일부 가려져(Android 에뮬레이터) 스와이프 대상이 될 수 없으므로 스크롤 뷰를 민다
+    await element(by.id('profile-scroll')).swipe('down', 'slow');
 
     await expect(element(by.id('Information-nickname'))).toBeVisible();
   });

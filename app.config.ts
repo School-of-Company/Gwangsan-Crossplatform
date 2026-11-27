@@ -16,7 +16,12 @@ export default ({ config }: { config: ExpoConfig }) => {
       ...androidConfig,
       ...(hasGoogleServices ? { googleServicesFile } : {}),
     },
-    plugins: [...(config.plugins ?? []), './plugins/withNetworkSecurityConfig'],
+    plugins: [
+      ...(config.plugins ?? []),
+      './plugins/withNetworkSecurityConfig',
+      // Android E2E(Detox) 빌드에서만 켠다. 스토어 빌드에는 테스트 의존성·localhost cleartext가 들어가지 않는다
+      ...(process.env.DETOX_ANDROID_E2E === 'true' ? ['./plugins/withDetoxAndroid'] : []),
+    ],
     extra: {
       ...config.extra,
       // env 미주입 시 app.json의 extra.apiUrl을 undefined로 덮어쓰지 않는다.
