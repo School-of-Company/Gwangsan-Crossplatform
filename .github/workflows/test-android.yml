@@ -88,7 +88,9 @@ jobs:
         env:
           SENTRY_DISABLE_AUTO_UPLOAD: 'true'
         working-directory: android
+        # prebuild 기본 힙(2GB)으로는 R8이 GC만 반복하다 시간 초과되므로 러너 메모리(16GB)에 맞게 늘린다
         run: |
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g/' gradle.properties
           ./gradlew assembleRelease assembleAndroidTest -DtestBuildType=release \
             -PreactNativeArchitectures=x86_64 --stacktrace 2>&1 | tee /tmp/gradle-build.log
           exit ${PIPESTATUS[0]}
