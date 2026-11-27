@@ -85,3 +85,19 @@ export async function launchAppResilient(config: Detox.DeviceLaunchAppConfig): P
 
   throw lastError;
 }
+
+// 다른 테스트가 로그인해 두면 저장된 토큰으로 홈에 바로 들어가므로 로그아웃 상태로 실행한다.
+// iOS는 앱을 지워도 키체인이 남아 키체인을 비우고, Android는 clearKeychain이 동작하지 않아 앱을 재설치한다
+export async function launchSignedOut(): Promise<void> {
+  const isAndroid = device.getPlatform() === 'android';
+  if (!isAndroid) await device.clearKeychain();
+  await launchAppResilient({
+    newInstance: true,
+    delete: isAndroid,
+    launchArgs: { detoxDisableSynchronization: 1 },
+    permissions: { notifications: 'YES' },
+  });
+  // Detox가 RN 0.85 Fabric의 mount-item dispatcher를 리플렉션으로 조회하다 실패해
+  // 첫 element 매칭에서 연결이 끊기는 문제 우회 (https://github.com/wix/Detox/issues/4963)
+  await device.disableSynchronization();
+}

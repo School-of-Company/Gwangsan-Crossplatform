@@ -1,22 +1,11 @@
-import { device, expect, element, by, waitFor } from 'detox';
+import { expect, element, by, waitFor } from 'detox';
 import { collectCoverage } from './coverage';
-import { FIRST_SCREEN_TIMEOUT_MS, launchAppResilient } from './launchApp';
+import { FIRST_SCREEN_TIMEOUT_MS, launchSignedOut } from './launchApp';
 
 describe('로그인', () => {
   afterAll(collectCoverage);
 
-  beforeAll(async () => {
-    // 다른 테스트가 로그인해 두면 키체인에 토큰이 남아 홈으로 바로 들어가므로 로그아웃 상태로 시작한다
-    await device.clearKeychain();
-    await launchAppResilient({
-      newInstance: true,
-      launchArgs: { detoxDisableSynchronization: 1 },
-      permissions: { notifications: 'YES' },
-    });
-    // Detox가 RN 0.85 Fabric의 mount-item dispatcher를 리플렉션으로 조회하다 실패해
-    // 첫 element 매칭에서 연결이 끊기는 문제 우회 (https://github.com/wix/Detox/issues/4963)
-    await device.disableSynchronization();
-  }, 300000);
+  beforeAll(launchSignedOut, 300000);
 
   it('로그인 버튼을 탭하면 별칭 입력 화면으로 이동한다', async () => {
     // Debug 빌드는 첫 실행 때 Metro에서 번들을 받아 올리느라 CI에서 10초를 넘기기도 한다
