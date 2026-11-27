@@ -19,7 +19,6 @@ import { useBottomSheetPortalStore } from '~/shared/store/useBottomSheetPortalSt
 import { RootErrorBoundary } from '~/shared/ui/RootErrorBoundary';
 import * as Notifications from 'expo-notifications';
 import { useChatEntry, useGlobalChatNotifications, useChatQueueRecovery } from '~/entity/chat';
-import { registerChatBackgroundTask } from '~/shared/lib/chatBackgroundTask';
 import { VersionUpdateModal } from '~/widget/appVersion';
 import {
   createNotificationDedupeGuard,
@@ -60,10 +59,6 @@ function ChatNotificationHandler() {
   useEffect(() => {
     routerRef.current = router;
   }, [router]);
-
-  useEffect(() => {
-    registerChatBackgroundTask();
-  }, []);
 
   const dedupeGuardRef = useRef(createNotificationDedupeGuard());
 

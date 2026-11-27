@@ -29,8 +29,11 @@ DerivedData/
 .idea/
 
 # Temporary files created by Metro to check the health of the file watcher
-.metro-health-check*google-services.json
+.metro-health-check*
+
+# Firebase 설정·Play Console 서비스 계정 키
 /google-services.json
+/service_account.json
 .env.local
 
 artifacts/

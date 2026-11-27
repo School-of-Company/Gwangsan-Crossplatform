@@ -2,18 +2,6 @@ import * as Keychain from 'react-native-keychain';
 import { getData } from './getData';
 import { removeData } from './removeData';
 
-type AuthConfig = {
-  signInPage: string;
-  protectedPages: readonly string[];
-  publicPages: readonly string[];
-};
-
-export const authConfig: AuthConfig = {
-  signInPage: '/signin/nickname',
-  protectedPages: [],
-  publicPages: ['/signin/nickname', '/signin/password', '/signup/terms', '/onboarding'],
-} as const;
-
 export const getAccessToken = async (): Promise<string | null> => {
   return await getData('accessToken');
 };

@@ -3,8 +3,8 @@ import { http, HttpResponse } from 'msw';
 import { server } from '../server';
 import { authHandlers } from '../handlers/auth';
 import { postHandlers, makePostListItem, makePostDetail } from '../handlers/post';
+import { BASE } from '~/mocks/constants';
 
-const BASE = 'http://test-api.com';
 const client = axios.create({ baseURL: BASE });
 
 describe('authHandlers', () => {
