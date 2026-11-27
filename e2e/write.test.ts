@@ -1,4 +1,4 @@
-import { expect, element, by, waitFor } from 'detox';
+import { device, expect, element, by, waitFor } from 'detox';
 import { collectCoverage } from './coverage';
 import { launchAndSignIn } from './login';
 
@@ -31,7 +31,13 @@ describe('게시글 작성', () => {
   it('주제·내용·광산을 입력할 수 있고 광산에는 숫자만 남는다', async () => {
     // 화면이 작은 기기에서는 키보드가 올라오면 맨 아래 광산 입력이 가려지므로 광산부터 입력한다
     await element(by.id('ItemForm-gwangsan-input')).tap();
-    await element(by.id('ItemForm-gwangsan-input')).typeText('1a2');
+    // Android 숫자 키패드는 문자를 입력할 수 없어 키 입력(typeText)이 들어가지 않으므로 값을 직접 넣어
+    // onChangeText의 숫자 필터만 확인한다. iOS 키보드(numbers-and-punctuation)는 문자를 입력할 수 있다
+    if (device.getPlatform() === 'android') {
+      await element(by.id('ItemForm-gwangsan-input')).replaceText('1a2');
+    } else {
+      await element(by.id('ItemForm-gwangsan-input')).typeText('1a2');
+    }
     await element(by.id('ItemForm-title-input')).tap();
     await element(by.id('ItemForm-title-input')).replaceText('E2E 테스트 글');
     await element(by.id('ItemForm-content-input')).tap();
